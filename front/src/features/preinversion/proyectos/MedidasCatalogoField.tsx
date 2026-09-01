@@ -49,11 +49,10 @@ export function MedidasCatalogoField({ tipo, label, value, onChange, disabled }:
     onChange(value.includes(codigo) ? value.filter((c) => c !== codigo) : [...value, codigo]);
 
   return (
-    <div>
-      <div className="form-check">
+    <div className={`medida${activa ? ' on' : ''}`}>
+      <label className="medida-tit" htmlFor={`categoria-${tipo}`}>
         <input
           type="checkbox"
-          className="form-check-input"
           id={`categoria-${tipo}`}
           checked={completa}
           // `indeterminate` no es un atributo HTML: sólo se fija sobre el nodo.
@@ -64,30 +63,27 @@ export function MedidasCatalogoField({ tipo, label, value, onChange, disabled }:
           onChange={alternarCategoria}
           disabled={disabled || opciones.length === 0}
         />
-        <label className="form-check-label fw-semibold" htmlFor={`categoria-${tipo}`}>
-          {label}
-        </label>
-      </div>
+        {label}
+      </label>
 
-      {/* Sangría con guía vertical: el cliente pidió que se vea de un vistazo
-          que las opciones dependen de la categoría. */}
-      <div className="ms-3 ps-3 border-start mt-1">
-      {opciones.map((opcion) => (
-        <div className="form-check" key={opcion.codigo}>
-          <input
-            type="checkbox"
-            className="form-check-input"
-            id={`${tipo}-${opcion.codigo}`}
-            checked={value.includes(opcion.codigo)}
+      <div className="medida-lista">
+        {opciones.map((opcion) => (
+          <label
+            key={opcion.codigo}
+            className={activa ? undefined : 'apagado'}
+            htmlFor={`${tipo}-${opcion.codigo}`}
+          >
+            <input
+              type="checkbox"
+              id={`${tipo}-${opcion.codigo}`}
+              checked={value.includes(opcion.codigo)}
               onChange={() => alternarOpcion(opcion.codigo)}
               disabled={disabled || !activa}
-          />
-          <label className="form-check-label" htmlFor={`${tipo}-${opcion.codigo}`}>
+            />
             {opcion.descripcion}
           </label>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -7,7 +7,10 @@
     "aceptar": "Aceptar",
     "cancelar": "Cancelar",
     "cerrar": "Cerrar",
-    "seleccione": "Seleccione..."
+    "seleccione": "Seleccione...",
+    "si": "Sí",
+    "no": "No",
+    "noAplica": "No aplica"
   },
   "errores": {
     "validacion": "Hay campos con datos inválidos. Revise los mensajes indicados en cada campo.",
@@ -129,7 +132,13 @@
       "guardarAntesDeSolicitar": "Guarde los cambios antes de solicitar el CUP.",
       "cupSolicitado": "La solicitud de CUP ha sido enviada exitosamente.",
       "errorCargar": "No se pudo cargar el listado de proyectos.",
-      "errorCargarProyecto": "No se pudo cargar el proyecto."
+      "errorCargarProyecto": "No se pudo cargar el proyecto.",
+      "sinRespaldo": "Campos del diseño que todavía no existen en el API:",
+      "sinRespaldoNota": "Hay que definirlos en el contrato o retirarlos del diseño. Hasta entonces no se pueden guardar.",
+      "ayudaMedidas": "(cada listado se habilita al activar su opción · selección múltiple)",
+      "campoMedidas": "Medidas de GRD / GRC / ACC",
+      "phNombre": "Máximo 250 caracteres",
+      "phDescripcion": "Máximo 1,000 caracteres"
     },
     "revisionPre": {
       "titulo": "Revisión PRE",

@@ -13,23 +13,31 @@ interface FormRowProps {
   controlId?: string;
   required?: boolean;
   error?: string;
+  /** Ocupa las dos columnas de la rejilla, como en el diseño aprobado. */
+  ancho?: boolean;
+  /** Texto gris junto a la etiqueta (p. ej. la ayuda de las medidas). */
+  ayuda?: string;
   children: ReactNode;
 }
 
-// Equivalente a fragments/forms.html::inputRow + fieldErrors: fila con label
-// (col-md-2) + control (col-md-10) + mensaje de error bajo el control.
-export function FormRow({ label, controlId, required, error, children }: FormRowProps) {
+/**
+ * Campo del formulario, con el marcado del diseño aprobado en solodevs.net:
+ * etiqueta encima del control, asterisco rojo si es obligatorio y el error
+ * debajo. La rejilla de dos columnas la pone el contenedor `.fr`; un campo
+ * marcado con `ancho` ocupa la fila entera.
+ *
+ * Sustituye a la fila de Bootstrap (col-md-2 / col-md-10) del front Java.
+ */
+export function FormRow({ label, controlId, required, error, ancho, ayuda, children }: FormRowProps) {
   return (
-    <div className="row mb-3">
-      <label className="col-md-2 col-form-label" htmlFor={controlId}>
+    <div className={`f${ancho ? ' w' : ''}`}>
+      <label htmlFor={controlId}>
         {label}
-        {required ? '*' : ''}
+        {required && <span className="req">*</span>}
+        {ayuda && <span className="ayuda">{ayuda}</span>}
       </label>
-      <div className="col-md-10">
-        {children}
-        {error && <div className="invalid-feedback d-block">{error}</div>}
-      </div>
+      {children}
+      {error && <span className="error">{error}</span>}
     </div>
   );
 }
-

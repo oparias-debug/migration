@@ -65,6 +65,19 @@ function formValuesToRequest(valores: ProyectoFormValues): ProyectoRequest {
 
 // Pantalla "Nuevo registro" (Anexo A.2): crea (SF-1/SF-1.1) o edita (SF-2) un
 // proyecto, según haya o no un :id en la ruta.
+/**
+ * Campos que aparecen en el diseño del cliente pero no existen en
+ * ProyectoRequest. Se muestran como aviso para que se definan en el contrato
+ * o se retiren del diseño; hasta entonces no se pueden guardar.
+ */
+const CAMPOS_SIN_RESPALDO = [
+  'Fuente de financiamiento',
+  'Unidad formuladora',
+  'Responsable',
+  'Fecha solicitada',
+  'Documentos adjuntos',
+];
+
 export function ProyectoFormPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
@@ -276,7 +289,7 @@ export function ProyectoFormPage() {
   if (errorCarga) {
     return (
       <div className="alert alert-danger" role="alert">
-        <p className="mb-2">{errorCarga}</p>
+        <p>{errorCarga}</p>
         <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => navigate('/preinversion/proyectos')}>
           {t('preinversion.registro.botonRegresar')}
         </button>
@@ -286,46 +299,49 @@ export function ProyectoFormPage() {
 
   return (
     <>
-      <div className="d-flex align-items-center gap-3 mb-2">
-        <h1 className="mb-0">{t(esNuevo ? 'preinversion.registro.tituloNuevo' : 'preinversion.registro.tituloEditar')}</h1>
-        {estadoActual && (
-          <span className="badge text-bg-secondary" aria-label={t('preinversion.registro.estadoActual')}>
-            {formatEstado(estadoActual)}
-          </span>
-        )}
-      </div>
-
       {/* Escenario "Solo consulta mientras el proyecto está Enviado a DGICP":
           los campos ya van deshabilitados, pero sin decir por qué el usuario
           solo ve una pantalla muerta. */}
       {!esNuevo && !puedeEditar && estadoActual && (
-        <div className="alert alert-info" role="status">
+        <div className="aviso-consulta" role="status">
           {t('preinversion.registro.soloConsulta', { estado: formatEstado(estadoActual) })}
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <FormRow label={t('preinversion.registro.campoIniciativa')} required error={errors.iniciativaInversion?.message}>
-          {INICIATIVA_OPCIONES.map((opcion) => (
-            <div className="form-check form-check-inline" key={opcion.valor}>
-              <input
-                type="radio"
-                className={`form-check-input${errors.iniciativaInversion ? ' is-invalid' : ''}`}
-                id={`iniciativa-${opcion.valor}`}
-                value={opcion.valor}
-                disabled={!puedeEditar}
-                {...register('iniciativaInversion')}
-              />
-              <label className="form-check-label" htmlFor={`iniciativa-${opcion.valor}`}>
+        <div className="formcard">
+          <div className="formhead">
+            <span>{t(esNuevo ? 'preinversion.registro.tituloNuevo' : 'preinversion.registro.tituloEditar')}</span>
+            {estadoActual && (
+              <span className="marca-estado" aria-label={t('preinversion.registro.estadoActual')}>
+                {formatEstado(estadoActual)}
+              </span>
+            )}
+          </div>
+          <div className="formbody">
+            <div className="fr">
+        <FormRow label={t('preinversion.registro.campoIniciativa')} required ancho error={errors.iniciativaInversion?.message}>
+          <div className="radios">
+            {INICIATIVA_OPCIONES.map((opcion) => (
+              <label key={opcion.valor} htmlFor={`iniciativa-${opcion.valor}`}>
+                <input
+                  type="radio"
+                  className={errors.iniciativaInversion ? 'malo' : undefined}
+                  id={`iniciativa-${opcion.valor}`}
+                  value={opcion.valor}
+                  disabled={!puedeEditar}
+                  {...register('iniciativaInversion')}
+                />
                 {t(opcion.labelKey)}
               </label>
-            </div>
-          ))}
+            ))}
+          </div>
         </FormRow>
 
-        <FormRow controlId="nombre" label={t('preinversion.registro.campoNombre')} required error={errors.nombre?.message}>
+        <FormRow controlId="nombre" label={t('preinversion.registro.campoNombre')} required ancho error={errors.nombre?.message}>
           <input
-            className={`form-control${errors.nombre ? ' is-invalid' : ''}`}
+            className={errors.nombre ? 'malo' : undefined}
+            placeholder={t('preinversion.registro.phNombre')}
             disabled={!puedeEditar}
             id="nombre"
             {...register('nombre')}
@@ -337,7 +353,8 @@ export function ProyectoFormPage() {
             type="number"
             step="0.01"
             min="0"
-            className={`form-control${errors.montoEstimadoInversion ? ' is-invalid' : ''}`}
+            className={errors.montoEstimadoInversion ? 'malo' : undefined}
+            placeholder="0.00"
             disabled={!puedeEditar}
             id="montoEstimadoInversion"
             {...register('montoEstimadoInversion')}
@@ -346,7 +363,7 @@ export function ProyectoFormPage() {
 
         <FormRow controlId="idSector" label={t('preinversion.registro.campoSector')} required error={errors.idSector?.message}>
           <select
-            className={`form-select${errors.idSector ? ' is-invalid' : ''}`}
+            className={errors.idSector ? 'malo' : undefined}
             disabled={!puedeEditar}
             id="idSector"
             {...register('idSector')}
@@ -360,9 +377,9 @@ export function ProyectoFormPage() {
           </select>
         </FormRow>
 
-        <FormRow controlId="idEjeTematico" label={t('preinversion.registro.campoEjeTematico')} required error={errors.idEjeTematico?.message}>
+        <FormRow controlId="idEjeTematico" label={t('preinversion.registro.campoEjeTematico')} required ancho error={errors.idEjeTematico?.message}>
           <select
-            className={`form-select${errors.idEjeTematico ? ' is-invalid' : ''}`}
+            className={errors.idEjeTematico ? 'malo' : undefined}
             disabled={!puedeEditar}
             id="idEjeTematico"
             {...register('idEjeTematico')}
@@ -377,9 +394,9 @@ export function ProyectoFormPage() {
         </FormRow>
 
         <FormRow controlId="idEjePlanGobierno" label={t('preinversion.registro.campoEjePlanGobierno')} error={errors.idEjePlanGobierno?.message}>
-          <select className={`form-select${errors.idEjePlanGobierno ? ' is-invalid' : ''}`} disabled={!puedeEditar} id="idEjePlanGobierno"
+          <select className={errors.idEjePlanGobierno ? 'malo' : undefined} disabled={!puedeEditar} id="idEjePlanGobierno"
             {...register('idEjePlanGobierno')}>
-            <option value="">{t('common.seleccione')}</option>
+            <option value="">{t('common.noAplica')}</option>
             {ejesPlanGobierno.map((eje) => (
               <option key={eje.idEjePlanGobierno} value={eje.idEjePlanGobierno}>
                 {eje.nombre}
@@ -389,9 +406,9 @@ export function ProyectoFormPage() {
         </FormRow>
 
         <FormRow controlId="idPlanSectorialRegional" label={t('preinversion.registro.campoPlanSectorialRegional')} error={errors.idPlanSectorialRegional?.message}>
-          <select className={`form-select${errors.idPlanSectorialRegional ? ' is-invalid' : ''}`} disabled={!puedeEditar} id="idPlanSectorialRegional"
+          <select className={errors.idPlanSectorialRegional ? 'malo' : undefined} disabled={!puedeEditar} id="idPlanSectorialRegional"
             {...register('idPlanSectorialRegional')}>
-            <option value="">{t('common.seleccione')}</option>
+            <option value="">{t('common.noAplica')}</option>
             {planesSectoriales.map((plan) => (
               <option key={plan.idPlanSectorialRegional} value={plan.idPlanSectorialRegional}>
                 {plan.nombre}
@@ -400,15 +417,17 @@ export function ProyectoFormPage() {
           </select>
         </FormRow>
 
-        <div className="row mb-3">
-          <div className="col-md-2">
-            <button type="button" className="btn btn-link p-0" onClick={() => setMostrarCategorias(true)}>
+        <div className="f w">
+          <label>
+            {t('preinversion.registro.campoMedidas')}
+            <span className="ayuda">{t('preinversion.registro.ayudaMedidas')}</span>
+            <button type="button" className="enlace" onClick={() => setMostrarCategorias(true)}>
               {t('preinversion.registro.botonVerCategorias')}
             </button>
-          </div>
-          <div className="col-md-10">
-            <div className="row">
-              <div className="col-md-4">
+          </label>
+          <div>
+            <div className="medidas">
+              <div>
                 <MedidasCatalogoField
                   tipo={TipoMedidaCatalogo.Grd}
                   label={t('preinversion.registro.campoMedidasGrd')}
@@ -416,9 +435,9 @@ export function ProyectoFormPage() {
                   onChange={(valor) => setValue('medidasGrd', valor, { shouldDirty: true })}
                   disabled={!puedeEditar}
                 />
-                {errors.medidasGrd && <div className="invalid-feedback d-block">{errors.medidasGrd.message}</div>}
+                {errors.medidasGrd && <span className="error">{errors.medidasGrd.message}</span>}
               </div>
-              <div className="col-md-4">
+              <div>
                 <MedidasCatalogoField
                   tipo={TipoMedidaCatalogo.Grc}
                   label={t('preinversion.registro.campoMedidasGrc')}
@@ -426,9 +445,9 @@ export function ProyectoFormPage() {
                   onChange={(valor) => setValue('medidasGrc', valor, { shouldDirty: true })}
                   disabled={!puedeEditar}
                 />
-                {errors.medidasGrc && <div className="invalid-feedback d-block">{errors.medidasGrc.message}</div>}
+                {errors.medidasGrc && <span className="error">{errors.medidasGrc.message}</span>}
               </div>
-              <div className="col-md-4">
+              <div>
                 <MedidasCatalogoField
                   tipo={TipoMedidaCatalogo.Acc}
                   label={t('preinversion.registro.campoMedidasAcc')}
@@ -436,22 +455,34 @@ export function ProyectoFormPage() {
                   onChange={(valor) => setValue('medidasAcc', valor, { shouldDirty: true })}
                   disabled={!puedeEditar}
                 />
-                {errors.medidasAcc && <div className="invalid-feedback d-block">{errors.medidasAcc.message}</div>}
+                {errors.medidasAcc && <span className="error">{errors.medidasAcc.message}</span>}
               </div>
             </div>
           </div>
         </div>
 
-        <FormRow controlId="esProyectoEmergencia" label={t('preinversion.registro.campoEmergencia')} error={errors.esProyectoEmergencia?.message}>
-          <input type="checkbox" className={`form-check-input${errors.esProyectoEmergencia ? ' is-invalid' : ''}`} disabled={!puedeEditar} id="esProyectoEmergencia"
-            {...register('esProyectoEmergencia')} />
+        <FormRow label={t('preinversion.registro.campoEmergencia')} ancho error={errors.esProyectoEmergencia?.message}>
+          <div className="radios">
+            <label htmlFor="emergencia-si">
+              <input type="radio" id="emergencia-si" disabled={!puedeEditar}
+                checked={esProyectoEmergencia === true}
+                onChange={() => setValue('esProyectoEmergencia', true, { shouldDirty: true })} />
+              {t('common.si')}
+            </label>
+            <label htmlFor="emergencia-no">
+              <input type="radio" id="emergencia-no" disabled={!puedeEditar}
+                checked={esProyectoEmergencia !== true}
+                onChange={() => setValue('esProyectoEmergencia', false, { shouldDirty: true })} />
+              {t('common.no')}
+            </label>
+          </div>
         </FormRow>
 
         {esProyectoEmergencia && (
           <>
             <FormRow controlId="tipoEvento" label={t('preinversion.registro.campoTipoEvento')} required error={errors.tipoEvento?.message}>
               <input
-                className={`form-control${errors.tipoEvento ? ' is-invalid' : ''}`}
+                className={errors.tipoEvento ? 'malo' : undefined}
                 disabled={!puedeEditar}
                 id="tipoEvento"
             {...register('tipoEvento')}
@@ -459,7 +490,7 @@ export function ProyectoFormPage() {
             </FormRow>
             <FormRow controlId="numeroDecretoLegislativo" label={t('preinversion.registro.campoNumeroDecreto')} required error={errors.numeroDecretoLegislativo?.message}>
               <input
-                className={`form-control${errors.numeroDecretoLegislativo ? ' is-invalid' : ''}`}
+                className={errors.numeroDecretoLegislativo ? 'malo' : undefined}
                 disabled={!puedeEditar}
                 id="numeroDecretoLegislativo"
             {...register('numeroDecretoLegislativo')}
@@ -468,9 +499,10 @@ export function ProyectoFormPage() {
           </>
         )}
 
-        <FormRow controlId="descripcionProyecto" label={t('preinversion.registro.campoDescripcion')} required error={errors.descripcionProyecto?.message}>
+        <FormRow controlId="descripcionProyecto" label={t('preinversion.registro.campoDescripcion')} required ancho error={errors.descripcionProyecto?.message}>
           <textarea
-            className={`form-control${errors.descripcionProyecto ? ' is-invalid' : ''}`}
+            className={errors.descripcionProyecto ? 'malo' : undefined}
+            placeholder={t('preinversion.registro.phDescripcion')}
             rows={4}
             disabled={!puedeEditar}
             id="descripcionProyecto"
@@ -488,12 +520,29 @@ export function ProyectoFormPage() {
           />
         )}
 
-        <div className="d-flex gap-2">
-          <button type="button" className="btn btn-secondary" onClick={regresar} disabled={guardando}>
+            </div>
+
+            {/* Campos que están en el diseño pero no en el contrato del API.
+                Se listan en vez de dibujarlos: si se dibujaran, el usuario los
+                rellenaría y al guardar se perderían sin aviso. */}
+            <div className="sin-respaldo">
+              <b>{t('preinversion.registro.sinRespaldo')}</b>
+              <ul>
+                {CAMPOS_SIN_RESPALDO.map((campo) => (
+                  <li key={campo}>{campo}</li>
+                ))}
+              </ul>
+              <span>{t('preinversion.registro.sinRespaldoNota')}</span>
+            </div>
+          </div>
+
+        <div className="acciones-form">
+          <button type="button" className="btn neutro" onClick={regresar} disabled={guardando}>
             {t('preinversion.registro.botonRegresar')}
           </button>
+          <div className="esp" />
           {puedeEditar && (
-            <button type="submit" className="btn btn-primary" disabled={guardando}>
+            <button type="submit" className="btn primario" disabled={guardando}>
               {t('preinversion.registro.botonGuardar')}
             </button>
           )}
@@ -504,7 +553,7 @@ export function ProyectoFormPage() {
           {puedeEditar && !esNuevo && (
             <button
               type="button"
-              className="btn btn-success"
+              className="btn secundario"
               onClick={solicitarCup}
               disabled={guardando || isDirty}
               title={isDirty ? t('preinversion.registro.guardarAntesDeSolicitar') : undefined}
@@ -513,8 +562,9 @@ export function ProyectoFormPage() {
             </button>
           )}
         </div>
+        </div>
         {puedeEditar && !esNuevo && isDirty && (
-          <p className="form-text mt-2">{t('preinversion.registro.guardarAntesDeSolicitar')}</p>
+          <p className="nota-form">{t('preinversion.registro.guardarAntesDeSolicitar')}</p>
         )}
       </form>
 
