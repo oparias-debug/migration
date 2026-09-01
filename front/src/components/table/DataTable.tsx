@@ -12,16 +12,13 @@ interface DataTableProps<T> {
   renderActions: (row: T) => ReactNode;
 }
 
-// Equivalente a fragments/tabla.html: tabla genérica con columnas configurables
-// + columna de acciones (editar/eliminar).
+// Tabla genérica con columnas configurables + columna de acciones. El estilo
+// sale de base.css (thead th / tbody td), como en el diseño aprobado: la fila
+// vacía va DENTRO de la tabla para no perder las cabeceras cuando no hay datos.
 export function DataTable<T>({ columns, rows, emptyMessage, renderActions }: DataTableProps<T>) {
-  if (rows.length === 0) {
-    return <div>{emptyMessage}</div>;
-  }
-
   return (
-    <div className="table-responsive">
-      <table className="table table-striped table-hover align-middle">
+    <div className="tabla-cont">
+      <table>
         <thead>
           <tr>
             {columns.map((col) => (
@@ -33,13 +30,20 @@ export function DataTable<T>({ columns, rows, emptyMessage, renderActions }: Dat
           </tr>
         </thead>
         <tbody>
+          {rows.length === 0 && (
+            <tr>
+              <td className="vacio" colSpan={columns.length + 1}>
+                {emptyMessage}
+              </td>
+            </tr>
+          )}
           {rows.map((row, index) => (
             <tr key={index}>
               {columns.map((col) => (
                 <td key={col.header}>{col.render(row)}</td>
               ))}
               <td>
-                <div className="float-end text-nowrap">{renderActions(row)}</div>
+                {renderActions(row)}
               </td>
             </tr>
           ))}

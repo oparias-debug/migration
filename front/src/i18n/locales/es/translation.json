@@ -10,7 +10,9 @@
     "seleccione": "Seleccione...",
     "si": "Sí",
     "no": "No",
-    "noAplica": "No aplica"
+    "noAplica": "No aplica",
+    "pagina": "Página",
+    "de": "de"
   },
   "errores": {
     "validacion": "Hay campos con datos inválidos. Revise los mensajes indicados en cada campo.",

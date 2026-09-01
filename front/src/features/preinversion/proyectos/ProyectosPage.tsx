@@ -73,39 +73,43 @@ export function ProyectosPage() {
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1>{t('preinversion.registro.tituloBandeja')}</h1>
-        {hasRole('TECNICO_URP') && (
-          <button type="button" className="btn btn-primary" onClick={() => navigate('/preinversion/proyectos/nuevo')}>
-            {t('preinversion.registro.nuevoRegistro')}
-          </button>
-        )}
-      </div>
-
       {error && (
-        <div className="alert alert-danger d-flex justify-content-between align-items-center" role="alert">
+        <div className="aviso-error" role="alert">
           <span>{error}</span>
-          <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => cargar(pagina)}>
+          <button type="button" className="btn neutro" onClick={() => cargar(pagina)}>
             {t('errores.reintentar')}
           </button>
         </div>
       )}
 
-      {cargando ? (
-        <p>{t('common.cargando')}</p>
-      ) : error ? null : (
-        <DataTable columns={columns} rows={proyectos} emptyMessage={t('preinversion.registro.sinRegistros')} renderActions={() => null} />
-      )}
+      <div className="tarjeta">
+        <div className="filtros">
+          <div className="campo crece" />
+          {hasRole('TECNICO_URP') && (
+            <div className="campo">
+              <button type="button" className="btn primario" onClick={() => navigate('/preinversion/proyectos/nuevo')}>
+                {t('preinversion.registro.nuevoRegistro')}
+              </button>
+            </div>
+          )}
+        </div>
 
-      {!error && (
-      <Pagination
-        currentPage={pagina}
-        totalPages={totalPaginas}
-        first={pagina <= 0}
-        last={pagina >= totalPaginas - 1}
-        onPageChange={cargar}
-      />
-      )}
+        {cargando ? (
+          <p className="cargando">{t('common.cargando')}</p>
+        ) : error ? null : (
+          <DataTable columns={columns} rows={proyectos} emptyMessage={t('preinversion.registro.sinRegistros')} renderActions={() => null} />
+        )}
+
+        {!error && (
+          <Pagination
+            currentPage={pagina}
+            totalPages={totalPaginas}
+            first={pagina <= 0}
+            last={pagina >= totalPaginas - 1}
+            onPageChange={cargar}
+          />
+        )}
+      </div>
     </>
   );
 }
