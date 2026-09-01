@@ -1,121 +1,151 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
-import { ROLES_CON_ACCESO_REGISTRO_PROYECTO } from '../features/preinversion/proyectos/proyectoLabels';
+import { IconoMascara } from '../components/Icono';
+import { MODULOS, type Modulo, type SubModulo } from './navegacion';
 
-// Equivalente a fragments/sidebar.html. Los data-bs-toggle="collapse" siguen
-// funcionando porque bootstrap/dist/js/bootstrap.bundle.min.js se importa
-// como side-effect global en main.tsx.
-export function Sidebar() {
+/**
+ * Menú lateral, según el diseño aprobado (siip-INICIO-NUEVA-GRIS /
+ * siip-asignacion-CUP-NUEVA-GRIS). Sustituye al sidebar de Bootstrap heredado
+ * del front Java: se conservan TODAS sus rutas y su control de rol, cambia
+ * únicamente el marcado y los estilos.
+ *
+ * Los cinco estados del ítem viven en base.css:
+ *   reposo · hover (píldora #0073E3) · seleccionado (panel #D5E0F1)
+ *   · foco de teclado · deshabilitado
+ *
+ * El azul vivo del mockup de Inicio es el HOVER, no el seleccionado; el estado
+ * seleccionado con submenú desplegado es el panel claro de la pantalla de CUP.
+ */
+export function Sidebar({ abierto = false, alNavegar }: { abierto?: boolean; alNavegar?: () => void }) {
   const { t } = useTranslation();
-  const { hasRole } = useAuth();
-  const puedeVerRegistroProyecto = ROLES_CON_ACCESO_REGISTRO_PROYECTO.some(hasRole);
+  const { hasRole, username, roles } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  const visible = (sub: SubModulo) => !sub.rolesRequeridos || sub.rolesRequeridos.some(hasRole);
+  const submenuDe = (m: Modulo) => m.submenu?.filter(visible) ?? [];
+
+  // Qué está seleccionado se deduce de la URL, no de un estado paralelo.
+  const subActivo =
+    MODULOS.flatMap(submenuDe).find(
+      (s) => pathname === s.ruta || pathname.startsWith(`${s.ruta}/`),
+    ) ?? null;
+  const moduloConSub = subActivo
+    ? (MODULOS.find((m) => submenuDe(m).some((s) => s.clave === subActivo.clave)) ?? null)
+    : null;
+  const claveActiva = moduloConSub?.clave ?? (pathname === '/' ? 'inicio' : null);
+
+  // El despliegue sí es estado local: se puede plegar sin salir de la pantalla.
+  const [desplegado, setDesplegado] = useState<string | null>(moduloConSub?.clave ?? null);
+  useEffect(() => {
+    if (moduloConSub) setDesplegado(moduloConSub.clave);
+  }, [moduloConSub, pathname]);
+
+  const ir = (ruta: string) => {
+    navigate(ruta);
+    alNavegar?.();
+  };
+
+  function pulsar(modulo: Modulo) {
+    if (submenuDe(modulo).length > 0) {
+      // Un clic abre, otro cierra, y cerrarlo no saca al usuario de su pantalla.
+      setDesplegado((abierto) => (abierto === modulo.clave ? null : modulo.clave));
+      return;
+    }
+    if (modulo.ruta) ir(modulo.ruta);
+  }
 
   return (
-    <div className="bg-dark text-white p-3 vh-100">
-      <h4>{t('sidebar.title')}</h4>
-      <ul className="nav flex-column">
-        <li className="nav-item">
-          <a className="nav-link" role="button" data-bs-toggle="collapse" data-bs-target="#admin">
-            {t('sidebar.administracion')}
-          </a>
-          <ul className="collapse nav flex-column ms-3" id="admin">
-            <li className="nav-item">
-              <a className="nav-link" role="button" data-bs-toggle="collapse" data-bs-target="#catalogos">
-                {t('sidebar.catalogos')}
-              </a>
-              <ul className="collapse nav flex-column ms-3" id="catalogos">
-                <li>
-                  <Link className="nav-link" to="/catalogos-generales">
-                    {t('sidebar.generales')}
-                  </Link>
-                </li>
-                <li>
-                  <Link className="nav-link" to="/tablas-rangos">
-                    {t('sidebar.tablasDeRangos')}
-                  </Link>
-                </li>
-              </ul>
-            </li>
-            <li>
-              <Link className="nav-link" to="/usuarios">
-                {t('sidebar.usuarios')}
-              </Link>
-            </li>
-          </ul>
-        </li>
+    <aside className={`menu${abierto ? ' abierto' : ''}`} id="menu-lateral">
+      <div className="menu-marca">
+        <img src={`${import.meta.env.BASE_URL}escudo-solo-blanco.png`} alt="Gobierno de El Salvador" />
+        <div className="ministerio">
+          MINISTERIO
+          <br />
+          DE HACIENDA
+        </div>
+        <div className="sigla">SIIP</div>
+        <div className="nombre">{t('app.nombre')}</div>
+      </div>
 
-        <li className="nav-item">
-          <a className="nav-link" role="button" data-bs-toggle="collapse" data-bs-target="#preinversion">
-            {t('sidebar.preinversion')}
-          </a>
-          <ul className="collapse nav flex-column ms-3" id="preinversion">
-            {puedeVerRegistroProyecto && (
-              <li>
-                <Link className="nav-link" to="/preinversion/proyectos">
-                  {t('sidebar.registroProyecto')}
-                </Link>
-              </li>
-            )}
-            <li>
-              <Link className="nav-link" to="/programacion">
-                {t('sidebar.programacion')}
-              </Link>
-            </li>
-            <li>
-              <Link className="nav-link" to="/seguimiento">
-                {t('sidebar.seguimiento')}
-              </Link>
-            </li>
-          </ul>
-        </li>
+      {/* Bloque de usuario del diseño, con los datos reales del token. */}
+      <div className="menu-usuario">
+        <div className="avatar" aria-hidden="true">{iniciales(username)}</div>
+        <div>
+          <div className="nom">{(username ?? '').toUpperCase()}</div>
+          <div className="rol">{roles[0] ?? ''}</div>
+        </div>
+      </div>
 
-        <li className="nav-item">
-          <a className="nav-link" role="button" data-bs-toggle="collapse" data-bs-target="#programacionGroup">
-            {t('sidebar.programacionGroup')}
-          </a>
-          <ul className="collapse nav flex-column ms-3" id="programacionGroup">
-            <li>
-              <Link className="nav-link" to="/ingreso">
-                {t('sidebar.ingreso')}
-              </Link>
-            </li>
-            <li>
-              <Link className="nav-link" to="/pripme">
-                {t('sidebar.pripme')}
-              </Link>
-            </li>
-          </ul>
-        </li>
+      <nav className="menu-nav" aria-label={t('app.nombre')}>
+        {MODULOS.map((modulo) => {
+          const subs = submenuDe(modulo);
+          const activo = claveActiva === modulo.clave;
+          const abiertoAqui = subs.length > 0 && desplegado === modulo.clave;
+          return (
+            <div key={modulo.clave}>
+              <button
+                type="button"
+                className={
+                  `ni${activo ? ' activo' : ''}` +
+                  `${activo && !abiertoAqui ? ' plegado' : ''}` +
+                  `${activo && subs.length === 0 ? ' pildora' : ''}`
+                }
+                aria-expanded={subs.length > 0 ? abiertoAqui : undefined}
+                aria-controls={subs.length > 0 ? `sub-${modulo.clave}` : undefined}
+                aria-current={activo && subs.length === 0 ? 'page' : undefined}
+                onClick={() => pulsar(modulo)}
+              >
+                <IconoMascara nombre={modulo.icono} />
+                {t(modulo.texto)}
+                {modulo.clave !== 'inicio' && (
+                  <IconoMascara
+                    nombre="ui-chevron"
+                    tam={7}
+                    className="chevron"
+                    style={{
+                      height: 11,
+                      opacity: subs.length > 0 ? undefined : 0.6,
+                      transform: abiertoAqui ? 'rotate(90deg)' : undefined,
+                    }}
+                  />
+                )}
+              </button>
 
-        <li className="nav-item">
-          <a className="nav-link" role="button" data-bs-toggle="collapse" data-bs-target="#seguimientoGroup">
-            {t('sidebar.seguimientoGroup')}
-          </a>
-          <ul className="collapse nav flex-column ms-3" id="seguimientoGroup">
-            <li>
-              <Link className="nav-link" to="/financiero">
-                {t('sidebar.financiero')}
-              </Link>
-            </li>
-            <li>
-              <Link className="nav-link" to="/geografico">
-                {t('sidebar.geografico')}
-              </Link>
-            </li>
-            <li>
-              <Link className="nav-link" to="/fisico">
-                {t('sidebar.fisico')}
-              </Link>
-            </li>
-            <li>
-              <Link className="nav-link" to="/procesos">
-                {t('sidebar.procesos')}
-              </Link>
-            </li>
-          </ul>
-        </li>
-      </ul>
+              {subs.length > 0 && (
+                <div
+                  id={`sub-${modulo.clave}`}
+                  className={`submenu${abiertoAqui ? '' : ' plegado'}`}
+                  aria-hidden={!abiertoAqui}
+                >
+                  {subs.map((sub) => (
+                    <button
+                      key={sub.clave}
+                      type="button"
+                      tabIndex={abiertoAqui ? 0 : -1}
+                      className={`sni${subActivo?.clave === sub.clave ? ' activo' : ''}`}
+                      aria-current={subActivo?.clave === sub.clave ? 'page' : undefined}
+                      onClick={() => ir(sub.ruta)}
+                    >
+                      {t(sub.texto)}
+                    </button>
+                  ))}
     </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+    </aside>
   );
+}
+
+/** Iniciales para el avatar; dos letras como en el diseño. */
+function iniciales(username: string | null): string {
+  if (!username) return '··';
+  const partes = username.split(/[.\s_-]+/).filter(Boolean);
+  const letras = partes.length > 1 ? partes[0][0] + partes[1][0] : username.slice(0, 2);
+  return letras.toUpperCase();
 }

@@ -109,4 +109,3 @@ export function erroresPorCampo(error: ErrorApi): Record<string, string> {
 export function mensajeDeError(error: ErrorApi, t: (clave: string) => string): string {
   return error.mensaje ?? t(CLAVE_MENSAJE[error.clase]);
 }
-

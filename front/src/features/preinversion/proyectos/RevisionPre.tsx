@@ -94,4 +94,3 @@ export function RevisionPre({ comentarios, puedeResponder, enviando, errorRespue
     </section>
   );
 }
-

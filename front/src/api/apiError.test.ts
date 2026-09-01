@@ -1,115 +1,95 @@
-import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
-import { CLAVE_MENSAJE, erroresPorCampo, mensajeDeError, toErrorApi } from './apiError';
+import { AxiosError, AxiosHeaders } from 'axios';
+import { erroresPorCampo, mensajeDeError, toErrorApi } from './apiError';
+import type { ModelError } from './generated/preinversion';
 
-/** Error de axios con respuesta del back, como el que ve el catch de una llamada real. */
-function errorConRespuesta(status: number, data: unknown): AxiosError {
+function respuestaDe(status: number, data?: ModelError): AxiosError {
   const config = { headers: new AxiosHeaders() };
-  return new AxiosError('Request failed', String(status), config, {}, {
+  return new AxiosError('fallo', String(status), config, null, {
     status,
     statusText: '',
-    data,
     headers: {},
     config,
+    data,
   });
 }
 
-/** Error de axios sin respuesta: el servidor nunca contestó. */
-function errorSinRespuesta(): AxiosError {
-  return new AxiosError('Network Error', AxiosError.ERR_NETWORK, { headers: new AxiosHeaders() });
-}
+const errorDeValidacion: ModelError = {
+  codigo: 'VALIDACION',
+  mensaje: 'Existen campos obligatorios sin completar.',
+  timestamp: '2026-08-29T10:00:00Z',
+  detalles: [
+    { campo: 'nombre', mensaje: '*Campo obligatorio' },
+    { campo: 'idSector', mensaje: '*Campo obligatorio' },
+  ],
+};
 
 describe('toErrorApi', () => {
-  it('clasifica como "red" el fallo sin respuesta del servidor', () => {
-    const error = toErrorApi(errorSinRespuesta());
-
-    expect(error.clase).toBe('red');
-    expect(error.estadoHttp).toBe(0);
-    expect(error.mensaje).toBeNull();
-    expect(error.detalleTecnico).toBe('Network Error');
+  it('clasifica cada código de estado del contrato', () => {
+    expect(toErrorApi(respuestaDe(400)).clase).toBe('validacion');
+    expect(toErrorApi(respuestaDe(401)).clase).toBe('sesion');
+    expect(toErrorApi(respuestaDe(403)).clase).toBe('permiso');
+    expect(toErrorApi(respuestaDe(404)).clase).toBe('inexistente');
+    expect(toErrorApi(respuestaDe(409)).clase).toBe('conflicto');
+    expect(toErrorApi(respuestaDe(500)).clase).toBe('servidor');
   });
 
-  it('clasifica el 400 como "validacion" y conserva detalles[] por campo', () => {
-    const error = toErrorApi(
-      errorConRespuesta(400, {
-        codigo: 'VALIDACION',
-        mensaje: 'Existen campos de catálogo con identificadores inválidos.',
-        detalles: [
-          { campo: 'nombre', mensaje: '*Campo obligatorio' },
-          { campo: 'idSector', mensaje: 'El catálogo referenciado no existe.' },
-        ],
-      }),
-    );
-
-    expect(error.clase).toBe('validacion');
-    expect(error.codigo).toBe('VALIDACION');
-    expect(error.detalles).toHaveLength(2);
+  it('conserva codigo, mensaje y detalles del schema Error', () => {
+    const resultado = toErrorApi(respuestaDe(400, errorDeValidacion));
+    expect(resultado.codigo).toBe('VALIDACION');
+    expect(resultado.mensaje).toBe('Existen campos obligatorios sin completar.');
+    expect(resultado.detalles).toHaveLength(2);
   });
 
-  it('clasifica el 401 como "sesion" (el refresh de httpClient ya falló)', () => {
-    expect(toErrorApi(errorConRespuesta(401, {})).clase).toBe('sesion');
+  it('no revienta cuando la respuesta de error no trae cuerpo', () => {
+    const resultado = toErrorApi(respuestaDe(409));
+    expect(resultado.codigo).toBeNull();
+    expect(resultado.mensaje).toBeNull();
+    expect(resultado.detalles).toEqual([]);
   });
 
-  it('clasifica el 403 como "permiso"', () => {
-    expect(toErrorApi(errorConRespuesta(403, {})).clase).toBe('permiso');
+  it('distingue un fallo de red de un error del servidor', () => {
+    const sinRespuesta = new AxiosError('Network Error');
+    expect(toErrorApi(sinRespuesta).clase).toBe('red');
+    expect(toErrorApi(sinRespuesta).estadoHttp).toBe(0);
   });
 
-  it('clasifica el 404 como "inexistente"', () => {
-    expect(toErrorApi(errorConRespuesta(404, {})).clase).toBe('inexistente');
+  it('no expone el texto técnico de axios como mensaje al usuario', () => {
+    const sinRespuesta = toErrorApi(new AxiosError('Network Error'));
+    expect(sinRespuesta.mensaje).toBeNull();
+    expect(sinRespuesta.detalleTecnico).toBe('Network Error');
   });
 
-  it('clasifica el 409 como "conflicto" (RN 1.c / RN 2.2.b)', () => {
-    const error = toErrorApi(
-      errorConRespuesta(409, { mensaje: 'El proyecto no se encuentra en un estado que permita esta accion.' }),
-    );
-
-    expect(error.clase).toBe('conflicto');
-    expect(error.mensaje).toBe('El proyecto no se encuentra en un estado que permita esta accion.');
-  });
-
-  it('cae a "servidor" ante un estado no contemplado, como el 500', () => {
-    const error = toErrorApi(errorConRespuesta(500, ''));
-
-    expect(error.clase).toBe('servidor');
-    expect(error.estadoHttp).toBe(500);
-    expect(error.detalles).toEqual([]);
-  });
-
-  it('cae a "servidor" si lo lanzado no es un error de axios', () => {
-    const error = toErrorApi(new Error('boom'));
-
-    expect(error.clase).toBe('servidor');
-    expect(error.detalleTecnico).toBe('boom');
+  it('tolera cualquier cosa que no sea un error de axios', () => {
+    expect(toErrorApi(new Error('roto')).clase).toBe('servidor');
+    expect(toErrorApi('roto').clase).toBe('servidor');
   });
 });
 
 describe('erroresPorCampo', () => {
-  it('convierte detalles[] en un mapa campo -> mensaje para setError', () => {
-    const error = toErrorApi(
-      errorConRespuesta(400, {
-        mensaje: 'Si el proyecto es de emergencia, el tipo de evento y el N. de DL son obligatorios.',
-        detalles: [
-          { campo: 'tipoEvento', mensaje: '*Campo obligatorio' },
-          { campo: 'numeroDecretoLegislativo', mensaje: '*Campo obligatorio' },
-        ],
-      }),
-    );
-
-    expect(erroresPorCampo(error)).toEqual({
-      tipoEvento: '*Campo obligatorio',
-      numeroDecretoLegislativo: '*Campo obligatorio',
+  it('convierte detalles[] en un mapa campo → mensaje', () => {
+    expect(erroresPorCampo(toErrorApi(respuestaDe(400, errorDeValidacion)))).toEqual({
+      nombre: '*Campo obligatorio',
+      idSector: '*Campo obligatorio',
     });
+  });
+
+  it('devuelve un mapa vacío si no hay detalles', () => {
+    expect(erroresPorCampo(toErrorApi(respuestaDe(500)))).toEqual({});
   });
 });
 
 describe('mensajeDeError', () => {
-  it('prefiere el mensaje del back y sólo cae a la clave i18n si no viene', () => {
-    const traducir = (clave: string) => `[${clave}]`;
+  const t = (clave: string) => `[${clave}]`;
 
-    const conMensaje = toErrorApi(errorConRespuesta(409, { mensaje: 'Ya tiene una solicitud de CUP registrada.' }));
-    const sinMensaje = toErrorApi(errorConRespuesta(409, {}));
+  it('prefiere el mensaje del back porque es el del Anexo B.2', () => {
+    expect(mensajeDeError(toErrorApi(respuestaDe(400, errorDeValidacion)), t)).toBe(
+      'Existen campos obligatorios sin completar.',
+    );
+  });
 
-    expect(mensajeDeError(conMensaje, traducir)).toBe('Ya tiene una solicitud de CUP registrada.');
-    expect(mensajeDeError(sinMensaje, traducir)).toBe(`[${CLAVE_MENSAJE.conflicto}]`);
+  it('cae a la clave de i18next cuando el back no manda mensaje', () => {
+    expect(mensajeDeError(toErrorApi(respuestaDe(409)), t)).toBe('[errores.conflicto]');
+    expect(mensajeDeError(toErrorApi(respuestaDe(403)), t)).toBe('[errores.permiso]');
   });
 });

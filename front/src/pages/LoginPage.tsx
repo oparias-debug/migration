@@ -2,12 +2,22 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
-import mhLogo from '../assets/img/mh_nuevologo.png';
+import minLogo from '../assets/img/min-logo-gob-el-salvador-negro.png';
+import logoSiip from '../assets/img/logo-siip-negro.png';
 import '../styles/login.css';
 
-// Equivalente a templates/login.html.
+/**
+ * Pantalla de inicio de sesión, según el diseño entregado por el cliente el
+ * 30/08/2026 (`inicio-SESION-2-SIIP-08-26.jpg`): tarjeta blanca centrada sobre
+ * la fotografía de San Salvador, con el logotipo del Ministerio y el del SIIP.
+ *
+ * Los logotipos son los archivos oficiales que envió el cliente, no recortes.
+ *
+ * Tres elementos del diseño quedan visibles pero inactivos porque hoy no tienen
+ * respaldo en el backend; cada uno está marcado más abajo.
+ */
 export function LoginPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -32,81 +42,93 @@ export function LoginPage() {
   };
 
   return (
-    <div className="login-page-body">
-      <div className="login-container">
-        <div className="w-50 login-info d-flex flex-column" style={{ height: '100vh' }}>
-          <div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center text-center px-4">
-            <img src={mhLogo} alt="Logo" style={{ maxWidth: 400, maxHeight: 300 }} />
-            <h2 className="mt-4">{t('login.appName')}</h2>
-            <p>
-              <b>{t('login.appDescription')}</b>
-            </p>
-            <p style={{ textAlign: 'center' }}>{t('login.notice')}</p>
-          </div>
-          <footer className="mt-auto">
-            <small>{t('login.footer')}</small>
-          </footer>
+    <div className="login-fondo">
+      {/* Selector de idioma. Sólo está cargado el español (ver i18n/i18n.ts):
+          el botón EN queda deshabilitado hasta que exista la traducción. */}
+      <div className="login-idioma">
+        <button type="button" className="es-activo" aria-current="true" onClick={() => i18n.changeLanguage('es')}>
+          ES
+        </button>
+        <span aria-hidden="true">|</span>
+        <button type="button" disabled title={t('login.idiomaPendiente')}>
+          EN
+        </button>
         </div>
 
-        <div className="d-flex align-items-center" style={{ height: '100vh' }}>
-          <div className="d-flex align-items-center justify-content-center" style={{ height: '100%', width: 20 }}>
-            <div style={{ width: 2, height: '50%', backgroundColor: '#ccc' }} />
-          </div>
-        </div>
+      <main className="login-tarjeta">
+        <img className="login-marca" src={minLogo} alt="Gobierno de El Salvador · Ministerio de Hacienda" />
+        <img className="login-siip" src={logoSiip} alt="SIIP · Sistema Integrado de Inversión Pública" />
 
-        <div className="w-50 login-form-container">
-          <div className="login-box">
-            <h4 className="mb-4 text-center">{t('login.title')}</h4>
-
+        <form onSubmit={handleSubmit} noValidate>
             {error && (
-              <div className="alert alert-danger" role="alert">
+            <div className="alert alert-danger py-2" role="alert">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3 position-relative">
-                <label htmlFor="username" className="form-label">
+          <div className="login-campo">
+            <label htmlFor="username" className="visually-hidden">
                   {t('login.username')}
                 </label>
+            <i className="bi bi-person-fill" aria-hidden="true" />
                 <input
                   type="text"
-                  className="form-control"
                   id="username"
+              autoComplete="username"
                   placeholder={t('login.username')}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
-              <div className="mb-3">
-                <label htmlFor="password" className="form-label">
+
+          <div className="login-campo">
+            <label htmlFor="password" className="visually-hidden">
                   {t('login.password')}
                 </label>
-                <div className="position-relative d-flex align-items-center">
+            <i className="bi bi-lock-fill" aria-hidden="true" />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    className="form-control pe-5"
                     id="password"
+              autoComplete="current-password"
                     placeholder={t('login.password')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                  <i
-                    className={`bi position-absolute end-0 me-3 ${showPassword ? 'bi-eye' : 'bi-eye-slash'}`}
-                    style={{ cursor: 'pointer' }}
+            <button
+              type="button"
+              className="login-ojo"
                     onClick={() => setShowPassword((prev) => !prev)}
-                  />
+              aria-label={t(showPassword ? 'login.ocultarPassword' : 'login.verPassword')}
+              aria-pressed={showPassword}
+            >
+              <i className={showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'} aria-hidden="true" />
+            </button>
                 </div>
+
+          {/* reCAPTCHA del diseño. No se integra todavía: requiere clave de sitio
+              y verificación en el servidor, y no está en el contrato. Se deja el
+              espacio maquetado para no cambiar la pantalla cuando exista. */}
+          <div className="login-captcha" role="note" aria-label={t('login.captchaPendiente')}>
+            <span className="login-captcha-caja" aria-hidden="true" />
+            <span className="login-captcha-texto">{t('login.noSoyRobot')}</span>
+            <span className="login-captcha-marca" aria-hidden="true">
+              reCAPTCHA
+            </span>
               </div>
-              <button type="submit" className="btn btn-dark w-100" disabled={submitting}>
-                {t('login.submit')}
+
+          <button type="submit" className="login-enviar" disabled={submitting}>
+            {submitting ? t('login.enviando') : t('login.submit')}
               </button>
             </form>
-          </div>
-        </div>
-      </div>
+
+        {/* Recuperación de contraseña: necesita el flujo correspondiente en
+            Keycloak. Sin endpoint todavía. */}
+        <button type="button" className="login-olvido" disabled title={t('login.olvidoPendiente')}>
+          {t('login.olvidoPassword')}
+        </button>
+      </main>
     </div>
   );
 }

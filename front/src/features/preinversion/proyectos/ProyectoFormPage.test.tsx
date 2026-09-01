@@ -1,274 +1,443 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../../i18n/i18n';
-import { ProyectoFormPage } from './ProyectoFormPage';
+import type { ModelError } from '../../../api/generated/preinversion';
+import i18n from '../../../i18n/i18n';
 
 const obtenerProyecto = vi.fn();
+const registrarProyecto = vi.fn();
 const actualizarProyecto = vi.fn();
 const solicitarCup = vi.fn();
 const responderObservacionCup = vi.fn();
-const navigate = vi.fn();
-const confirmDialog = vi.fn();
-const swalFire = vi.fn();
+const listarSectores = vi.fn().mockResolvedValue({ data: [{ idSector: 1, nombre: 'Salud' }] });
+const listarEjesTematicos = vi.fn().mockResolvedValue({ data: [{ idEjeTematico: 7, nombre: 'Infraestructura de salud' }] });
+const listarCatalogo = vi.fn().mockResolvedValue({ data: [] });
+const swalFire = vi.fn().mockResolvedValue({ isConfirmed: true });
 
-// Se conservan los enums reales (proyectoLabels y proyectoFormSchema los importan
-// de este mismo módulo); sólo se sustituyen los clientes que salen a la red.
-vi.mock('../../../api/preinversionApi', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../api/preinversionApi')>();
-  const listaVacia = () => Promise.resolve({ data: [] });
-  return {
-    ...actual,
-    preinversionApi: {
-      obtenerProyecto: (...a: unknown[]) => obtenerProyecto(...a),
-      actualizarProyecto: (...a: unknown[]) => actualizarProyecto(...a),
-      solicitarCup: (...a: unknown[]) => solicitarCup(...a),
-      responderObservacionCup: (...a: unknown[]) => responderObservacionCup(...a),
-      registrarProyecto: vi.fn(),
-    },
-    catalogoPreinversionApi: {
-      listarSectores: listaVacia,
-      listarEjesTematicos: listaVacia,
-      listarEjesPlanGobierno: listaVacia,
-      listarPlanesSectoriales: listaVacia,
-      listarMedidasCatalogo: listaVacia,
-    },
-  };
-});
+vi.mock('../../../api/preinversionApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../api/preinversionApi')>()),
+  preinversionApi: {
+    obtenerProyecto: (...a: unknown[]) => obtenerProyecto(...a),
+    registrarProyecto: (...a: unknown[]) => registrarProyecto(...a),
+    actualizarProyecto: (...a: unknown[]) => actualizarProyecto(...a),
+    solicitarCup: (...a: unknown[]) => solicitarCup(...a),
+    responderObservacionCup: (...a: unknown[]) => responderObservacionCup(...a),
+  },
+  catalogoPreinversionApi: {
+    listarSectores: () => listarSectores(),
+    listarEjesTematicos: () => listarEjesTematicos(),
+    listarEjesPlanGobierno: () => listarCatalogo(),
+    listarPlanesSectoriales: () => listarCatalogo(),
+    listarMedidasCatalogo: () => listarCatalogo(),
+  },
+}));
 
 vi.mock('../../../auth/useAuth', () => ({ useAuth: () => ({ hasRole: () => true }) }));
-vi.mock('../../../components/ConfirmDialog', () => ({ confirmDialog: (...a: unknown[]) => confirmDialog(...a) }));
 vi.mock('sweetalert2', () => ({ default: { fire: (...a: unknown[]) => swalFire(...a) } }));
 
-vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-router-dom')>();
-  return { ...actual, useNavigate: () => navigate };
-});
+const { ProyectoFormPage } = await import('./ProyectoFormPage');
 
-function proyecto(estado: string, revisionPre: unknown[] = []) {
-  return {
-    idProyecto: 7,
-    nombre: 'Construcción de puente sobre el río Lempa',
-    iniciativaInversion: 'PROYECTO',
-    montoEstimadoInversion: 150000,
-    institucion: { idInstitucion: 1, nombre: 'Ministerio de Obras Públicas' },
-    unidadEjecutora: { idUnidadEjecutora: 1, nombre: 'Unidad de Inversión Pública' },
-    sector: { idSector: 3, nombre: 'Transporte', macrosector: { idMacrosector: 1, nombre: 'Infraestructura' } },
-    ejeTematico: { idEjeTematico: 2, nombre: 'Conectividad' },
-    medidasGrd: [],
-    medidasGrc: [],
-    medidasAcc: [],
-    esProyectoEmergencia: false,
-    descripcionProyecto: 'Puente de dos carriles sobre el río Lempa.',
-    estado,
-    fechaIngreso: '2026-02-10T09:00:00',
-    revisionPre,
-  };
-}
-
-function error400(detalles: { campo: string; mensaje: string }[]) {
+function errorHttp(status: number, data?: ModelError): AxiosError {
   const config = { headers: new AxiosHeaders() };
-  return new AxiosError('Request failed', '400', config, {}, {
-    status: 400,
-    statusText: '',
-    data: { codigo: 'VALIDACION', mensaje: 'Existen campos con datos inválidos.', detalles },
-    headers: {},
-    config,
-  });
-}
-
-function error(status: number, mensaje: string) {
-  const config = { headers: new AxiosHeaders() };
-  return new AxiosError('Request failed', String(status), config, {}, {
+  return new AxiosError('fallo', String(status), config, null, {
     status,
     statusText: '',
-    data: { mensaje },
     headers: {},
     config,
+    data,
   });
 }
 
-function renderizar() {
-  return render(
-    <MemoryRouter initialEntries={['/preinversion/proyectos/7']}>
+const montarNuevo = () =>
+  render(
+    <MemoryRouter initialEntries={['/preinversion/proyectos/nuevo']}>
+      <Routes>
+        <Route path="/preinversion/proyectos/nuevo" element={<ProyectoFormPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+const montarEdicion = (id = '7') =>
+  render(
+    <MemoryRouter initialEntries={[`/preinversion/proyectos/${id}`]}>
       <Routes>
         <Route path="/preinversion/proyectos/:id" element={<ProyectoFormPage />} />
       </Routes>
     </MemoryRouter>,
   );
+
+// Rellena los seis obligatorios de ProyectoRequest para que zod deje pasar el
+// submit: lo que se prueba aquí es qué hace la pantalla con la respuesta del
+// back, no la validación en cliente.
+async function completarMinimos() {
+  await screen.findByRole('option', { name: 'Salud' });
+  fireEvent.click(screen.getByLabelText('Proyecto'));
+  fireEvent.change(screen.getByLabelText(/Nombre del proyecto/i), { target: { value: 'Proyecto de prueba' } });
+  fireEvent.change(screen.getByLabelText(/Inversión Estimada/i), { target: { value: '1000' } });
+  fireEvent.change(screen.getByLabelText(/^Sector/i), { target: { value: '1' } });
+  fireEvent.change(screen.getByLabelText(/Eje temático/i), { target: { value: '7' } });
+  fireEvent.change(screen.getByLabelText(/Descripción del proyecto/i), { target: { value: 'Descripción de prueba' } });
 }
 
-beforeEach(() => {
-  [obtenerProyecto, actualizarProyecto, solicitarCup, responderObservacionCup, navigate, confirmDialog, swalFire].forEach(
-    (mock) => mock.mockReset(),
-  );
-  confirmDialog.mockResolvedValue(true);
-  swalFire.mockResolvedValue({ isConfirmed: true });
-});
-
-describe('ProyectoFormPage — solicitar CUP', () => {
-  it('confirma, llama al back y regresa a la bandeja (SF-1.2 / FA-1)', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
-    solicitarCup.mockResolvedValue({ data: proyecto('ENVIADO_DGICP_REGISTRO') });
-
-    renderizar();
-    fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
-
-    await waitFor(() => expect(solicitarCup).toHaveBeenCalledWith({ idProyecto: 7 }));
-    expect(confirmDialog).toHaveBeenCalled();
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos'));
+describe('ProyectoFormPage', () => {
+  beforeEach(() => {
+    obtenerProyecto.mockReset();
+    registrarProyecto.mockReset();
+    actualizarProyecto.mockReset();
+    solicitarCup.mockReset();
+    responderObservacionCup.mockReset();
+    swalFire.mockClear();
   });
 
-  it('no llama al back si el usuario cancela la confirmación', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
-    confirmDialog.mockResolvedValue(false);
-
-    renderizar();
-    fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
-
-    await waitFor(() => expect(confirmDialog).toHaveBeenCalled());
-    expect(solicitarCup).not.toHaveBeenCalled();
-  });
-
-  it('marca cada campo devuelto en detalles[] de un 400, sin abrir el modal genérico', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
-    solicitarCup.mockRejectedValue(
-      error400([
-        { campo: 'nombre', mensaje: '*Campo obligatorio' },
-        { campo: 'descripcionProyecto', mensaje: '*Campo obligatorio' },
-      ]),
+  // El defecto que se corrige: los 400 del back traen detalles[].campo y se
+  // descartaban en un modal genérico. El escenario "Solicitar el CUP con campos
+  // incompletos" exige marcar cada campo con su mensaje del Anexo B.2.
+  it('pinta sobre cada campo el mensaje que devuelve el back en un 400', async () => {
+    registrarProyecto.mockRejectedValue(
+      errorHttp(400, {
+        codigo: 'VALIDACION',
+        mensaje: 'Existen campos obligatorios sin completar.',
+        timestamp: '2026-08-29T10:00:00Z',
+        detalles: [
+          { campo: 'nombre', mensaje: '*Campo obligatorio' },
+          { campo: 'descripcionProyecto', mensaje: 'Máximo 1000 caracteres' },
+        ],
+      }),
     );
 
-    renderizar();
-    fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
+    montarNuevo();
+    await completarMinimos();
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
 
-    // El escenario "Solicitar el CUP con campos incompletos" pide el mensaje
-    // sobre el campo, no un aviso general.
-    await waitFor(() => expect(screen.getAllByText('*Campo obligatorio')).toHaveLength(2));
+    await waitFor(() => expect(screen.getByText('*Campo obligatorio')).toBeInTheDocument());
+    expect(screen.getByText('Máximo 1000 caracteres')).toBeInTheDocument();
+    // Los detalles ya se ven en los campos: no se duplica con un modal.
     expect(swalFire).not.toHaveBeenCalled();
   });
 
-  it('muestra en el modal el detalle de un campo que no está en pantalla', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
-    // tipoEvento sólo se renderiza con "Proyecto de emergencia" marcado: marcarlo
-    // no lo haría visible, así que el mensaje tiene que salir arriba.
-    solicitarCup.mockRejectedValue(error400([{ campo: 'tipoEvento', mensaje: '*Campo obligatorio' }]));
+  it('un 409 explica que el estado no permite la acción, no "error al guardar"', async () => {
+    registrarProyecto.mockRejectedValue(
+      errorHttp(409, {
+        codigo: 'ESTADO_NO_EDITABLE',
+        mensaje: 'El proyecto está en ENVIADO_DGICP_REGISTRO y no admite edición.',
+        timestamp: '2026-08-29T10:00:00Z',
+      }),
+    );
 
-    renderizar();
+    montarNuevo();
+    await completarMinimos();
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(swalFire).toHaveBeenCalled());
+    expect(swalFire.mock.calls[0][0]).toMatchObject({
+      icon: 'error',
+      text: 'El proyecto está en ENVIADO_DGICP_REGISTRO y no admite edición.',
+    });
+  });
+
+  it('un 403 avisa que el rol no tiene permiso', async () => {
+    registrarProyecto.mockRejectedValue(errorHttp(403));
+
+    montarNuevo();
+    await completarMinimos();
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(swalFire).toHaveBeenCalled());
+    expect(swalFire.mock.calls[0][0]).toMatchObject({
+      text: i18n.t('errores.permiso'),
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // CU-PRE-01-solicitar-cup.feature
+  // ---------------------------------------------------------------------
+
+  const proyectoEn = (estado: string) => ({
+    data: {
+      idProyecto: 7,
+      cup: null,
+      nombre: 'Equipamiento del hospital regional',
+      iniciativaInversion: 'PROYECTO',
+      montoEstimadoInversion: 1000,
+      sector: { idSector: 1, nombre: 'Salud' },
+      ejeTematico: { idEjeTematico: 7, nombre: 'Infraestructura de salud' },
+      descripcionProyecto: 'Descripción',
+      medidasGrd: [], medidasGrc: [], medidasAcc: [],
+      esProyectoEmergencia: false,
+      institucion: { idInstitucion: 1, nombre: 'MINSAL' },
+      unidadEjecutora: { idUnidadEjecutora: 4501, nombre: 'MINSAL' },
+      estado,
+      fechaIngreso: '2026-08-18T09:00:00Z',
+      revisionPre: [],
+    },
+  });
+
+  it('camino feliz: solicita el CUP y vuelve al listado', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoEn('EN_REGISTRO'));
+    solicitarCup.mockResolvedValue(proyectoEn('ENVIADO_DGICP_REGISTRO'));
+
+    montarEdicion('7');
+    fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
+
+    await waitFor(() => expect(solicitarCup).toHaveBeenCalledWith({ idProyecto: 7 }));
+    expect(swalFire).toHaveBeenCalledWith(expect.objectContaining({ icon: 'success' }));
+  });
+
+  it('con campos incompletos: marca cada campo y no sale de la pantalla', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoEn('EN_REGISTRO'));
+    solicitarCup.mockRejectedValue(
+      errorHttp(400, {
+        codigo: 'VALIDACION',
+        mensaje: 'Existen inconsistencias.',
+        timestamp: '2026-08-29T10:00:00Z',
+        detalles: [{ campo: 'descripcionProyecto', mensaje: '*Campo obligatorio' }],
+      }),
+    );
+
+    montarEdicion('7');
+    fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
+
+    expect(await screen.findByText('*Campo obligatorio')).toBeInTheDocument();
+    // Se cancela la acción y se sigue en "Nuevo registro".
+    expect(screen.getByRole('button', { name: 'Solicitar CUP' })).toBeInTheDocument();
+  });
+
+  it('un 409 al solicitar explica que el estado no lo permite', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoEn('EN_REGISTRO'));
+    solicitarCup.mockRejectedValue(
+      errorHttp(409, { codigo: 'ESTADO', mensaje: 'No se puede solicitar el CUP desde este estado.', timestamp: '' }),
+    );
+
+    montarEdicion('7');
     fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
 
     await waitFor(() => expect(swalFire).toHaveBeenCalled());
-    expect(swalFire.mock.calls[0][0].text).toContain('*Campo obligatorio');
+    expect(swalFire.mock.calls.at(-1)?.[0]).toMatchObject({
+      text: 'No se puede solicitar el CUP desde este estado.',
+    });
   });
-});
 
-describe('ProyectoFormPage — Revisión PRE', () => {
-  const OBSERVACION = {
-    idComentario: 1,
-    autor: { idUsuario: 9, nombreCompleto: 'Ana Pérez', rol: 'TECNICO_PRE' },
-    texto: 'Falta detallar el alcance del componente 2.',
-    fechaComentario: '2026-02-11T10:00:00',
+  // Escenario "Solo consulta mientras el proyecto está Enviado a DGICP".
+  it('un proyecto enviado a DGICP es solo de consulta', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoEn('ENVIADO_DGICP_REGISTRO'));
+
+    montarEdicion('7');
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      i18n.t('preinversion.registro.soloConsulta', { estado: 'Enviado DGICP (Registro)' }),
+    );
+    expect(screen.queryByRole('button', { name: 'Solicitar CUP' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Nombre del proyecto/i)).toBeDisabled();
+  });
+
+  it('no deja solicitar el CUP con cambios sin guardar', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoEn('EN_REGISTRO'));
+
+    montarEdicion('7');
+    fireEvent.change(await screen.findByLabelText(/Nombre del proyecto/i), { target: { value: ' modificado' } });
+
+    expect(screen.getByRole('button', { name: 'Solicitar CUP' })).toBeDisabled();
+    expect(screen.getByText('Guarde los cambios antes de solicitar el CUP.')).toBeInTheDocument();
+    expect(solicitarCup).not.toHaveBeenCalled();
+  });
+
+  // "el sistema sombrea en rojo el contorno de cada campo con inconsistencia
+  //  y muestra en cada campo los mensajes descritos en el Anexo B.2".
+  // Se comprueba campo por campo: seis de ellos no tenían dónde pintar el error
+  // y el mensaje del back se perdía en silencio.
+  it.each([
+    'iniciativaInversion',
+    'nombre',
+    'montoEstimadoInversion',
+    'idSector',
+    'idEjeTematico',
+    'medidasGrd',
+    'medidasGrc',
+    'medidasAcc',
+    'esProyectoEmergencia',
+    'idEjePlanGobierno',
+    'idPlanSectorialRegional',
+    'descripcionProyecto',
+  ])('un 400 sobre "%s" se ve en pantalla', async (campo) => {
+    obtenerProyecto.mockResolvedValue(proyectoEn('EN_REGISTRO'));
+    solicitarCup.mockRejectedValue(
+      errorHttp(400, {
+        codigo: 'VALIDACION',
+        mensaje: 'Existen inconsistencias.',
+        timestamp: '',
+        detalles: [{ campo, mensaje: `Mensaje del Anexo B.2 para ${campo}` }],
+      }),
+    );
+
+    montarEdicion('7');
+    fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
+
+    expect(await screen.findByText(`Mensaje del Anexo B.2 para ${campo}`)).toBeInTheDocument();
+    // Si el mensaje ya está en su campo, no se duplica en un modal.
+    expect(swalFire).not.toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' }));
+  });
+
+  // tipoEvento y numeroDecretoLegislativo sólo existen en pantalla con
+  // "Proyecto de emergencia" marcado, que es cuando el contrato los exige.
+  it.each(['tipoEvento', 'numeroDecretoLegislativo'])(
+    'un 400 sobre "%s" se ve en su campo cuando es proyecto de emergencia',
+    async (campo) => {
+      const p = proyectoEn('EN_REGISTRO');
+      obtenerProyecto.mockResolvedValue({ data: { ...p.data, esProyectoEmergencia: true, tipoEvento: 'Sismo', numeroDecretoLegislativo: 'DL-1' } });
+      solicitarCup.mockRejectedValue(
+        errorHttp(400, {
+          codigo: 'VALIDACION',
+          mensaje: 'Existen inconsistencias.',
+          timestamp: '',
+          detalles: [{ campo, mensaje: `Mensaje del Anexo B.2 para ${campo}` }],
+        }),
+      );
+
+      montarEdicion('7');
+      fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
+
+      expect(await screen.findByText(`Mensaje del Anexo B.2 para ${campo}`)).toBeInTheDocument();
+    },
+  );
+
+  // Y si llega un error sobre un campo que no está en pantalla, no se pierde:
+  // se muestra arriba con su texto en lugar de desaparecer.
+  it('un error sobre un campo oculto se muestra igualmente', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoEn('EN_REGISTRO'));
+    solicitarCup.mockRejectedValue(
+      errorHttp(400, {
+        codigo: 'VALIDACION',
+        mensaje: 'Existen inconsistencias.',
+        timestamp: '',
+        detalles: [{ campo: 'tipoEvento', mensaje: 'Debe indicar el tipo de evento' }],
+      }),
+    );
+
+    montarEdicion('7');
+    fireEvent.click(await screen.findByRole('button', { name: 'Solicitar CUP' }));
+
+    await waitFor(() => expect(swalFire).toHaveBeenCalled());
+    expect(swalFire.mock.calls.at(-1)?.[0]).toMatchObject({
+      text: expect.stringContaining('Debe indicar el tipo de evento'),
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // CU-PRE-01-responder-observaciones.feature
+  // ---------------------------------------------------------------------
+
+  const observacionDelPre = {
+    idComentario: 901,
+    autor: { idUsuario: 301, nombreCompleto: 'Carlos Méndez', rol: 'TECNICO_PRE' },
+    texto: 'Detallar el alcance por departamento.',
+    fechaComentario: '2026-08-20T15:20:00Z',
   };
 
-  it('muestra el hilo y permite responder con el proyecto observado (RN 2.9)', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('OBSERVADO_DGICP_REGISTRO', [OBSERVACION]) });
-    responderObservacionCup.mockResolvedValue({ data: proyecto('ENVIADO_DGICP_REGISTRO', [OBSERVACION]) });
+  const proyectoObservado = () => {
+    const p = proyectoEn('OBSERVADO_DGICP_REGISTRO');
+    return { data: { ...p.data, revisionPre: [observacionDelPre] } };
+  };
 
-    renderizar();
+  it('muestra los comentarios del Técnico PRE en la sección Revisión PRE', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoObservado());
 
-    expect(await screen.findByText('Falta detallar el alcance del componente 2.')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/Respuesta/), { target: { value: 'Se amplió el alcance.' } });
+    montarEdicion('7');
+
+    expect(await screen.findByText('Detallar el alcance por departamento.')).toBeInTheDocument();
+    expect(screen.getByText('Carlos Méndez')).toBeInTheDocument();
+  });
+
+  it('habilita el campo Respuesta sólo con el proyecto observado', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoEn('EN_REGISTRO'));
+    montarEdicion('7');
+    await screen.findByRole('heading', { name: 'Revisión PRE' });
+    expect(screen.queryByLabelText(/Respuesta/i)).not.toBeInTheDocument();
+  });
+
+  it('camino feliz: responde la observación y actualiza el hilo', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoObservado());
+    const respuestaDelUrp = {
+      idComentario: 902,
+      autor: { idUsuario: 101, nombreCompleto: 'Ana Beltrán', rol: 'TECNICO_URP' },
+      texto: 'Se detalla el alcance por departamento.',
+      fechaComentario: '2026-08-21T09:00:00Z',
+    };
+    responderObservacionCup.mockResolvedValue({
+      data: { ...proyectoObservado().data, estado: 'ENVIADO_DGICP_REGISTRO', revisionPre: [observacionDelPre, respuestaDelUrp] },
+    });
+
+    montarEdicion('7');
+    fireEvent.change(await screen.findByLabelText(/Respuesta/i), { target: { value: 'Se detalla el alcance por departamento.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
     await waitFor(() =>
       expect(responderObservacionCup).toHaveBeenCalledWith({
         idProyecto: 7,
-        respuestaObservacionRequest: { respuesta: 'Se amplió el alcance.' },
+        respuestaObservacionRequest: { respuesta: 'Se detalla el alcance por departamento.' },
       }),
+    );
+    expect(await screen.findByText('Se detalla el alcance por departamento.')).toBeInTheDocument();
+  });
+
+  it('guarda los cambios del formulario antes de enviar la respuesta', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoObservado());
+    actualizarProyecto.mockResolvedValue(proyectoObservado());
+    responderObservacionCup.mockResolvedValue(proyectoObservado());
+
+    montarEdicion('7');
+    fireEvent.change(await screen.findByLabelText(/Nombre del proyecto/i), { target: { value: ' corregido' } });
+    fireEvent.change(screen.getByLabelText(/Respuesta/i), { target: { value: 'Corregido.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+    await waitFor(() => expect(responderObservacionCup).toHaveBeenCalled());
+    expect(actualizarProyecto).toHaveBeenCalled();
+    // El PUT va antes que el POST: el back guarda y luego recibe la respuesta.
+    expect(actualizarProyecto.mock.invocationCallOrder[0]).toBeLessThan(
+      responderObservacionCup.mock.invocationCallOrder[0],
     );
   });
 
-  it('exige la respuesta antes de llamar al back', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('OBSERVADO_DGICP_REGISTRO', [OBSERVACION]) });
+  it('no envía una respuesta vacía y lo marca en el campo', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoObservado());
 
-    renderizar();
-    fireEvent.click(await screen.findByRole('button', { name: 'Enviar' }));
+    montarEdicion('7');
+    await screen.findByLabelText(/Respuesta/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
     expect(await screen.findByText('*Campo obligatorio')).toBeInTheDocument();
     expect(responderObservacionCup).not.toHaveBeenCalled();
   });
 
-  it('no ofrece responder mientras el proyecto sigue enviado a DGICP', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('ENVIADO_DGICP_REGISTRO', [OBSERVACION]) });
+  it('un 400 del back sobre el campo respuesta se muestra bajo el campo', async () => {
+    obtenerProyecto.mockResolvedValue(proyectoObservado());
+    responderObservacionCup.mockRejectedValue(
+      errorHttp(400, {
+        codigo: 'VALIDACION',
+        mensaje: 'El campo Respuesta es obligatorio.',
+        timestamp: '',
+        detalles: [{ campo: 'respuesta', mensaje: 'No puede quedar vacío' }],
+      }),
+    );
 
-    renderizar();
+    montarEdicion('7');
+    fireEvent.change(await screen.findByLabelText(/Respuesta/i), { target: { value: 'algo' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
-    expect(await screen.findByText('Revisión PRE')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Enviar' })).not.toBeInTheDocument();
+    expect(await screen.findByText('No puede quedar vacío')).toBeInTheDocument();
+    expect(swalFire).not.toHaveBeenCalled();
   });
-});
 
-describe('ProyectoFormPage — carga', () => {
-  it('muestra el error y deja salir si el proyecto no existe (404)', async () => {
-    obtenerProyecto.mockRejectedValue(error(404, 'El proyecto 7 no existe.'));
+  // El defecto que se corrige: obtenerProyecto sin .catch dejaba la pantalla
+  // colgada en "Cargando..." para siempre.
+  it('un 404 al abrir un proyecto muestra el error en vez de quedarse cargando', async () => {
+    obtenerProyecto.mockRejectedValue(errorHttp(404));
 
-    renderizar();
+    montarEdicion('999');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('El proyecto 7 no existe.');
-    // Sin catch la pantalla quedaba colgada en "Cargando...".
+    const aviso = await screen.findByRole('alert');
+    expect(aviso).toHaveTextContent(i18n.t('errores.inexistente'));
     expect(screen.queryByText('Cargando...')).not.toBeInTheDocument();
-  });
-});
-
-describe('ProyectoFormPage — formulario', () => {
-  it('guarda los cambios del formulario con PUT /proyectos/{id} (SF-2)', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
-    actualizarProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
-
-    renderizar();
-
-    fireEvent.change(await screen.findByLabelText('Nombre del proyecto*'), {
-      target: { value: 'Puente sobre el río Lempa — fase II' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
-
-    await waitFor(() => expect(actualizarProyecto).toHaveBeenCalled());
-    expect(actualizarProyecto.mock.calls[0][0].proyectoRequest.nombre).toBe('Puente sobre el río Lempa — fase II');
-  });
-
-  it('bloquea el guardado y marca el campo vacío sin llamar al back', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
-
-    renderizar();
-
-    fireEvent.change(await screen.findByLabelText('Nombre del proyecto*'), { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
-
-    expect(await screen.findByText('*Campo obligatorio')).toBeInTheDocument();
-    expect(actualizarProyecto).not.toHaveBeenCalled();
-  });
-
-  it('revela tipo de evento y N° de DL sólo al marcar "Proyecto de emergencia"', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
-
-    renderizar();
-
-    expect(screen.queryByLabelText('Tipo de evento*')).not.toBeInTheDocument();
-    fireEvent.click(await screen.findByLabelText('Proyecto de emergencia'));
-
-    expect(await screen.findByLabelText('Tipo de evento*')).toBeInTheDocument();
-    expect(screen.getByLabelText('N° de DL*')).toBeInTheDocument();
-  });
-
-  it('deja la pantalla en sólo consulta mientras está enviado a DGICP', async () => {
-    obtenerProyecto.mockResolvedValue({ data: proyecto('ENVIADO_DGICP_REGISTRO') });
-
-    renderizar();
-
-    // Sin este aviso el usuario sólo ve una pantalla muerta.
-    expect(await screen.findByRole('status')).toHaveTextContent('Enviado DGICP (Registro)');
-    expect(screen.getByLabelText('Nombre del proyecto*')).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
   });
 });

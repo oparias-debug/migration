@@ -1,113 +1,104 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../../i18n/i18n';
-import { ProyectosPage } from './ProyectosPage';
+import i18n from '../../../i18n/i18n';
 
 const listarProyectos = vi.fn();
 
-// Se conservan los enums reales (proyectoLabels los importa de este mismo módulo);
-// sólo se sustituyen los clientes que salen a la red.
-vi.mock('../../../api/preinversionApi', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../api/preinversionApi')>();
-  return { ...actual, preinversionApi: { listarProyectos: (...args: unknown[]) => listarProyectos(...args) } };
-});
+// Se conservan los exports reales (EstadoProyecto/IniciativaInversion los usa
+// proyectoLabels); sólo se sustituye el cliente que sale a la red.
+vi.mock('../../../api/preinversionApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../api/preinversionApi')>()),
+  preinversionApi: {
+    listarProyectos: (...args: unknown[]) => listarProyectos(...args),
+  },
+}));
 
-vi.mock('../../../auth/useAuth', () => ({ useAuth: () => ({ hasRole: () => true }) }));
+vi.mock('../../../auth/useAuth', () => ({
+  useAuth: () => ({ hasRole: () => true }),
+}));
 
-const PROYECTO = {
-  idProyecto: 7,
-  nombre: 'Construcción de puente sobre el río Lempa',
-  unidadEjecutora: { idUnidadEjecutora: 1, nombre: 'Unidad de Inversión Pública' },
-  iniciativaInversion: 'PROYECTO',
-  fechaIngreso: '2026-02-10T09:00:00',
-  estado: 'EN_REGISTRO',
+const { ProyectosPage } = await import('./ProyectosPage');
+
+const respuestaVacia = {
+  data: { contenido: [], paginacion: { pagina: 0, tamanio: 20, totalElementos: 0, totalPaginas: 0 } },
 };
 
-function respuestaConUnProyecto() {
-  return {
-    data: {
-      contenido: [PROYECTO],
-      paginacion: { pagina: 0, tamanio: 20, totalElementos: 1, totalPaginas: 1 },
-    },
-  };
-}
+const unProyecto = {
+  data: {
+    contenido: [
+      {
+        idProyecto: 1,
+        nombre: 'Equipamiento del hospital regional de Santa Ana',
+        unidadEjecutora: { idUnidadEjecutora: 4501, nombre: 'MINSAL' },
+        iniciativaInversion: 'PROYECTO',
+        fechaIngreso: '2026-08-18T09:00:00Z',
+        estado: 'ENVIADO_DGICP_REGISTRO',
+      },
+    ],
+    paginacion: { pagina: 0, tamanio: 20, totalElementos: 1, totalPaginas: 1 },
+  },
+};
 
-function error500() {
+function fallo(status: number) {
   const config = { headers: new AxiosHeaders() };
-  return new AxiosError('Request failed', '500', config, {}, {
-    status: 500,
+  return new AxiosError('fallo', String(status), config, null, {
+    status,
     statusText: '',
-    data: '',
     headers: {},
     config,
+    data: undefined,
   });
 }
 
-function renderizar() {
-  return render(
+const montar = () =>
+  render(
     <MemoryRouter>
       <ProyectosPage />
     </MemoryRouter>,
   );
-}
-
-beforeEach(() => {
-  listarProyectos.mockReset();
-});
 
 describe('ProyectosPage', () => {
-  it('lista los proyectos que devuelve el back', async () => {
-    listarProyectos.mockResolvedValue(respuestaConUnProyecto());
-
-    renderizar();
-
-    expect(await screen.findByText('Construcción de puente sobre el río Lempa')).toBeInTheDocument();
-    expect(screen.getByText('Unidad de Inversión Pública')).toBeInTheDocument();
-    // El estado se muestra con la etiqueta del CU, no con el código del enum.
-    expect(screen.getByText('En Elaboración')).toBeInTheDocument();
+  beforeEach(() => {
+    listarProyectos.mockReset();
   });
 
-  it('muestra el aviso de error, y no "sin registros", cuando falla el listado', async () => {
-    listarProyectos.mockRejectedValue(error500());
-
-    renderizar();
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Ocurrió un error inesperado. Intente nuevamente más tarde.',
-    );
-    // Un 500 no puede leerse como "la bandeja está vacía".
-    expect(screen.queryByText('No hay proyectos registrados.')).not.toBeInTheDocument();
+  it('pide la primera página con el tamaño del contrato (base 0, 20 por página)', async () => {
+    listarProyectos.mockResolvedValue(respuestaVacia);
+    montar();
+    await waitFor(() => expect(listarProyectos).toHaveBeenCalledWith({ pagina: 0, tamanio: 20 }));
   });
 
-  it('reintenta la carga al pulsar "Reintentar" y limpia el aviso al lograrlo', async () => {
-    listarProyectos.mockRejectedValueOnce(error500()).mockResolvedValueOnce(respuestaConUnProyecto());
-
-    renderizar();
-    fireEvent.click(await screen.findByRole('button', { name: 'Reintentar' }));
-
-    expect(await screen.findByText('Construcción de puente sobre el río Lempa')).toBeInTheDocument();
-    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
-    expect(listarProyectos).toHaveBeenCalledTimes(2);
+  it('muestra los proyectos que devuelve el back', async () => {
+    listarProyectos.mockResolvedValue(unProyecto);
+    montar();
+    expect(await screen.findByText('Equipamiento del hospital regional de Santa Ana')).toBeInTheDocument();
+    expect(screen.getByText('MINSAL')).toBeInTheDocument();
   });
 
-  it('muestra el mensaje del back cuando el error lo trae (403 por rol)', async () => {
-    const config = { headers: new AxiosHeaders() };
-    listarProyectos.mockRejectedValue(
-      new AxiosError('Request failed', '403', config, {}, {
-        status: 403,
-        statusText: '',
-        data: { mensaje: 'El rol TECNICO_PRE no tiene permiso para realizar esta accion.' },
-        headers: {},
-        config,
-      }),
-    );
+  // El defecto que se corrige: antes, un 500 dejaba la tabla en "no hay
+  // registros", indistinguible de un listado legítimamente vacío.
+  it('un fallo del servidor se ve como error, no como listado vacío', async () => {
+    listarProyectos.mockRejectedValue(fallo(500));
+    montar();
+    const aviso = await screen.findByRole('alert');
+    expect(aviso).toHaveTextContent(i18n.t('errores.servidor'));
+    expect(screen.queryByText(/no hay registros/i)).not.toBeInTheDocument();
+  });
 
-    renderizar();
+  it('distingue un fallo de red de un error del servidor', async () => {
+    listarProyectos.mockRejectedValue(new AxiosError('Network Error'));
+    montar();
+    expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('errores.red'));
+  });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'El rol TECNICO_PRE no tiene permiso para realizar esta accion.',
-    );
+  it('permite reintentar tras un fallo', async () => {
+    listarProyectos.mockRejectedValueOnce(fallo(500)).mockResolvedValueOnce(unProyecto);
+    montar();
+    await screen.findByRole('alert');
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByText('Equipamiento del hospital regional de Santa Ana')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

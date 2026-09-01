@@ -1,38 +1,197 @@
-/* Portado de las reglas inline de templates/login.html */
-.login-page-body {
-  height: 100%;
-  margin: 0;
-  background-color: #ecf0f3;
-  color: black;
-}
+/* =============================================================================
+   Pantalla de inicio de sesión
+   Diseño: data/attach/inicio-SESION-2-SIIP-08-26.jpg (cliente, 30/08/2026)
+   ============================================================================= */
 
-.login-container {
-  height: 100vh;
+.login-fondo {
+  min-height: 100vh;
   display: flex;
-}
-
-.login-info {
-  background-color: #ecf0f3;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  padding: 2rem;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  /* PENDIENTE: la fotografía del mockup (torre Cuscatlán y bulevar) no venía
+     entre los archivos; el cliente envió dos aéreas de la plaza. Se usa la más
+     parecida hasta que nos pasen la original. */
+  background-image: url('../assets/img/fondo-ciudad.png');
+  background-size: cover;
+  background-position: center;
+  background-color: #0b2a5b; /* por si la imagen aún no cargó */
+}
+
+/* Velo muy leve: la foto es nocturna y ya tiene contraste, pero garantiza que
+   el texto blanco del selector de idioma se lea sobre cualquier zona clara. */
+.login-fondo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(4, 20, 48, 0.35) 0%, rgba(4, 20, 48, 0.1) 40%);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ IDIOMA -- */
+.login-idioma {
+  position: absolute;
+  top: 26px;
+  right: 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 15px;
+  z-index: 1;
+}
+.login-idioma button {
+  background: none;
+  border: 0;
+  color: #fff;
+  font: inherit;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.login-idioma button.es-activo {
+  font-weight: 700;
+}
+.login-idioma button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------------------------- TARJETA -- */
+.login-tarjeta {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 338px;
+  background: #fff;
+  border-radius: 4px;
+  padding: 34px 32px 28px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
   text-align: center;
 }
 
-.login-form-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
+.login-marca {
+  width: 244px;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto 22px;
+}
+.login-siip {
+  width: 246px;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto 30px;
 }
 
-.login-box {
-  background: white;
-  padding: 2rem;
-  border-radius: 20px;
-  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+/* ------------------------------------------------------------------ CAMPOS -- */
+.login-campo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.login-campo > i {
+  position: absolute;
+  left: 13px;
+  color: #8a93a6;
+  font-size: 15px;
+  pointer-events: none;
+}
+.login-campo input {
   width: 100%;
-  max-width: 500px;
+  padding: 11px 14px 11px 38px;
+  font-size: 14px;
+  color: #1f2937;
+  background: #eef2f9;
+  border: 1px solid #e2e8f2;
+  border-radius: 4px;
+}
+.login-campo input::placeholder {
+  color: #9aa3b4;
+}
+.login-campo input:focus {
+  outline: 2px solid #1b3a7a;
+  outline-offset: -1px;
+  background: #fff;
+}
+.login-ojo {
+  position: absolute;
+  right: 4px;
+  background: none;
+  border: 0;
+  color: #6b7280;
+  padding: 8px 10px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* ---------------------------------------------------------------- CAPTCHA -- */
+/* Maquetado, no funcional: ver comentario en LoginPage.tsx. */
+.login-captcha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d7dde8;
+  border-radius: 4px;
+  background: #f9fafc;
+  padding: 12px 14px;
+  margin: 14px 0 16px;
+  text-align: left;
+}
+.login-captcha-caja {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #c1c8d6;
+  border-radius: 2px;
+  background: #fff;
+  flex-shrink: 0;
+}
+.login-captcha-texto {
+  font-size: 13.5px;
+  color: #3f4757;
+}
+.login-captcha-marca {
+  margin-left: auto;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  color: #9aa3b4;
+}
+
+/* ----------------------------------------------------------------- BOTONES -- */
+.login-enviar {
+  width: 100%;
+  padding: 11px 16px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #fff;
+  background: #12275c;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.login-enviar:hover:not(:disabled) {
+  background: #0d1d47;
+}
+.login-enviar:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.login-olvido {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: 0;
+  font-size: 13.5px;
+  color: #12275c;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.login-olvido:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 420px) {
+  .login-tarjeta { padding: 26px 20px 22px; }
 }

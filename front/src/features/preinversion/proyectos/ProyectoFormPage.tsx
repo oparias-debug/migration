@@ -409,9 +409,9 @@ export function ProyectoFormPage() {
           <div className="col-md-10">
             <div className="row">
               <div className="col-md-4">
-                <label className="form-label">{t('preinversion.registro.campoMedidasGrd')}</label>
                 <MedidasCatalogoField
                   tipo={TipoMedidaCatalogo.Grd}
+                  label={t('preinversion.registro.campoMedidasGrd')}
                   value={medidasGrd}
                   onChange={(valor) => setValue('medidasGrd', valor, { shouldDirty: true })}
                   disabled={!puedeEditar}
@@ -419,9 +419,9 @@ export function ProyectoFormPage() {
                 {errors.medidasGrd && <div className="invalid-feedback d-block">{errors.medidasGrd.message}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label">{t('preinversion.registro.campoMedidasGrc')}</label>
                 <MedidasCatalogoField
                   tipo={TipoMedidaCatalogo.Grc}
+                  label={t('preinversion.registro.campoMedidasGrc')}
                   value={medidasGrc}
                   onChange={(valor) => setValue('medidasGrc', valor, { shouldDirty: true })}
                   disabled={!puedeEditar}
@@ -429,9 +429,9 @@ export function ProyectoFormPage() {
                 {errors.medidasGrc && <div className="invalid-feedback d-block">{errors.medidasGrc.message}</div>}
               </div>
               <div className="col-md-4">
-                <label className="form-label">{t('preinversion.registro.campoMedidasAcc')}</label>
                 <MedidasCatalogoField
                   tipo={TipoMedidaCatalogo.Acc}
+                  label={t('preinversion.registro.campoMedidasAcc')}
                   value={medidasAcc}
                   onChange={(valor) => setValue('medidasAcc', valor, { shouldDirty: true })}
                   disabled={!puedeEditar}

@@ -32,8 +32,16 @@
     "footer": "© 2025 Ministerio de Hacienda. Todos los derechos reservados.",
     "username": "Usuario",
     "password": "Contraseña",
-    "submit": "Ingresar",
-    "invalidCredentials": "Usuario o contraseña incorrectos."
+    "submit": "Iniciar sesión",
+    "invalidCredentials": "Usuario o contraseña incorrectos.",
+    "enviando": "Iniciando sesión...",
+    "verPassword": "Mostrar contraseña",
+    "ocultarPassword": "Ocultar contraseña",
+    "noSoyRobot": "No soy un robot",
+    "olvidoPassword": "¿Olvidó su contraseña?",
+    "olvidoPendiente": "Pendiente: requiere el flujo de recuperación en Keycloak.",
+    "captchaPendiente": "Pendiente: requiere clave de sitio y verificación en el servidor.",
+    "idiomaPendiente": "Pendiente: sólo está cargado el español."
   },
   "sidebar": {
     "title": "Menú",
@@ -56,7 +64,14 @@
     "procesos": "Procesos Administrativos"
   },
   "topbar": {
-    "title": "Nuevo SIIP"
+    "title": "Nuevo SIIP",
+    "buscar": "Buscar proyectos, procesos, documentos...",
+    "favoritos": "Favoritos",
+    "notificaciones": "Notificaciones",
+    "configuracion": "Configuración",
+    "pendiente": "Pendiente: aún no tiene soporte en el API",
+    "abrirMenu": "Abrir menú",
+    "cerrarMenu": "Cerrar menú"
   },
   "placeholder": {
     "title": "🚧 Página en Construcción",
@@ -112,7 +127,9 @@
       "botonSolicitarCup": "Solicitar CUP",
       "confirmarSolicitarCup": "¿Está seguro de solicitar el CUP para este proyecto?",
       "guardarAntesDeSolicitar": "Guarde los cambios antes de solicitar el CUP.",
-      "cupSolicitado": "La solicitud de CUP ha sido enviada exitosamente."
+      "cupSolicitado": "La solicitud de CUP ha sido enviada exitosamente.",
+      "errorCargar": "No se pudo cargar el listado de proyectos.",
+      "errorCargarProyecto": "No se pudo cargar el proyecto."
     },
     "revisionPre": {
       "titulo": "Revisión PRE",
@@ -122,5 +139,61 @@
       "respuestaObligatoria": "*Campo obligatorio",
       "enviada": "Su respuesta ha sido enviada exitosamente."
     }
+  },
+  "app": {
+    "nombre": "Sistema Integrado de Inversión Pública"
+  },
+  "menu": {
+    "inicio": "Inicio",
+    "administracion": "Administración",
+    "busquedas": "Búsquedas",
+    "banco": "Banco de Proyectos",
+    "preinversion": "Preinversión",
+    "programacion": "Programación",
+    "ejecucion": "Ejecución",
+    "seguimiento": "Seguimiento",
+    "reportes": "Reportes",
+    "catalogosGenerales": "Catálogos generales",
+    "tablasRangos": "Tablas de rangos",
+    "usuarios": "Usuarios",
+    "registroProyecto": "Registro de Proyecto",
+    "ingreso": "Ingreso de proyectos",
+    "pripme": "PRIPME",
+    "financiero": "Financiero",
+    "geografico": "Geográfico",
+    "fisico": "Físico",
+    "procesos": "Procesos"
+  },
+  "ruta": {
+    "migas": "Ruta de navegación",
+    "nuevo": "Nuevo registro",
+    "detalle": "Detalle"
+  },
+  "inicio": {
+    "bienvenido": "BIENVENIDO A",
+    "lema": "Plataforma integrada para la gestión eficiente del ciclo de vida de proyectos de inversión pública.",
+    "modulos": "Módulos principales",
+    "resumen": "Accesos rápidos",
+    "resumenNota": "Abren el listado de proyectos con el filtro aplicado."
+  },
+  "mod": {
+    "preinversion": {
+      "desc": "Gestione estudios y evaluaciones previas."
+    },
+    "programacion": {
+      "desc": "Programe y planifique los proyectos de inversión."
+    },
+    "ejecucion": {
+      "desc": "Monitoree la ejecución de los proyectos."
+    },
+    "seguimiento": {
+      "desc": "Dé seguimiento y evalúe el avance de los proyectos."
+    }
+  },
+  "ind": {
+    "formulacion": "En formulación",
+    "ejecucion": "En ejecución",
+    "seguimiento": "En seguimiento",
+    "completados": "Completados"
   }
 }

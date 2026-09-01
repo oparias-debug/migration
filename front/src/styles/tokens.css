@@ -1,0 +1,126 @@
+/* =============================================================================
+   SIIP · Tokens de diseño
+   -----------------------------------------------------------------------------
+   MARCO DE REFERENCIA DEL DISEÑO — leer antes de tocar cualquier medida.
+
+   Los archivos del diseñador son exportaciones a 3× de un lienzo de
+   1331 × 787 px CSS:
+
+       siip-INICIO-NUEVA-GRIS.jpg          3992 × 2362  → 1331 × 787
+       siip-asignacion-CUP-NUEVA-GRIS.jpg  4202 × 2362  → 1401 × 787
+       inicio-SESION-2-SIIP-08-26.jpg      1326 ×  784  (captura 1×, confirma la altura)
+
+   Por tanto: **toda medida tomada sobre esos JPG se divide entre 3** para
+   obtener el valor en px CSS. Nada de estimar proporciones contra un ancho
+   supuesto: eso fue lo que infló toda la barra lateral un 22%.
+   ============================================================================= */
+/* (cabecera original)
+   SIIP · Tokens de diseño
+   -----------------------------------------------------------------------------
+   Todos los valores están MEDIDOS sobre los archivos del diseñador
+   (data/graphic design/siip-pantalla-INICIO-1.png y siip-pantalla-asignacion-CUP-1.png),
+   no estimados a ojo. Regla D-01.
+
+   Cuando exista el archivo de Figma con variables, estos nombres son los que
+   deben espejarse allí.
+   ============================================================================= */
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400 800;          /* variable: cubre los pesos 400, 700 y 800 en uso */
+  font-display: swap;
+  src: url('/fonts/roboto-400-800-latin.woff2') format('woff2');
+  /* Subconjunto «latin» de Google Fonts: U+0000-00FF incluye á é í ó ú ñ ü ¿ ¡ */
+}
+
+:root {
+  /* --- Marca institucional -------------------------------------------------
+     #313945 es PANTONE 432 C, el "fondo de color habitual" del manual de marca.
+     Es el gris que pidió Rocío para el menú (el SIIP de Colombia es azul). */
+  /* El diseño del 30/08/2026 (siip-INICIO-NUEVA-GRIS) usa #222222.
+     Es más oscuro que el #313945 (PANTONE 432 C) del manual de marca: se sigue
+     al diseñador porque es la entrega más reciente y aprobada, pero conviene
+     que quede constancia de que se aparta del manual. */
+  --menu:        #222222;
+  --menu-2:      #181818;
+  --arena:       #c9a892;   /* acento del manual */
+
+  /* --- Azules del diseño (medidos) ---------------------------------------- */
+  --navy:        #002469;   /* menú del mockup, encabezado de formulario, hero */
+  --navy-2:      #00266D;   /* extremo claro del hero */
+  --azul-vivo:   #0073E3;   /* HOVER del menú — no es el estado seleccionado */
+  --azul:        #003DB9;   /* botón primario, enlaces, foco */
+  --azul-suave:  #DFEDFE;   /* tinte azul (tarjeta "En formulación") */
+
+  /* --- Estados del menú lateral (medidos sobre la pantalla Asignación CUP) --
+     El azul brillante del mockup de Inicio es el HOVER.
+     El panel claro de la pantalla CUP es el SELECCIONADO. Regla D-04. */
+  --nav-txt:     #EAEEF4;   /* ítem en reposo */
+  --nav-hover:   var(--azul-vivo);
+  --sel:         #D5E0F1;   /* panel del ítem seleccionado */
+  --sel-txt:     #002469;   /* texto e icono del seleccionado */
+  --sub:         #DBE4F2;   /* panel del submenú */
+  --sub-txt:     #002469;   /* subítem en reposo */
+  --sub-on:      #003DB9;   /* subítem activo */
+
+  /* --- Colores de módulo (medidos sobre los iconos del diseño) ------------- */
+  --preinv:      #00A093;   /* gráfico */
+  --preinv-txt:  #00735A;   /* texto — versión que cumple AA. Regla D-03 */
+  --preinv-bg:   #D1EFE6;
+  --progra:      #492DB0;
+  --progra-bg:   #EBE6F7;
+  --ejec:        #FF6000;   /* gráfico — 3.0:1, no apto para texto */
+  --ejec-txt:    #C24700;   /* texto — 5.0:1 */
+  --ejec-bg:     #FFE6CE;
+  --segui:       #001FE4;
+  --grafito:     #515459;   /* engranaje y moneda de los iconos */
+
+  /* --- Trama de puntos del hero (medida: rejilla 12 × 14 px) --------------- */
+  --puntos:      #005CBB;
+  --puntos-x:    12px;
+  --puntos-y:    14px;
+  --puntos-ancho: 23.2%;    /* porción derecha del hero que ocupa la trama */
+
+  /* --- Neutros (sesgados hacia el azul institucional, no grises puros) ----- */
+  --n50:  #FAFAFB;
+  --n100: #EEF1F5;
+  --n200: #DEE3EA;
+  --n300: #C4CCD8;
+  --n500: #5C6672;
+  --n700: #3B4453;
+  --n900: #1F2530;
+
+  /* --- Semánticos --------------------------------------------------------- */
+  --ok:      #00735A;  --ok-bg:   #D1EFE6;
+  --aviso:   #C24700;  --aviso-bg:#FFE6CE;
+  --info:    #003DB9;  --info-bg: #DFEDFE;
+  --neutro-bg: #EEF1F5;
+  --error:   #C62828;
+
+  /* --- Tipografía --------------------------------------------------------- */
+  /* Roboto, confirmada por el cliente el 31/08/2026 ("Usa la Roboto").
+     Coincide con lo medido: el cotejo glifo a glifo del logotipo oficial
+     (docs/tipografia/) descarta Montserrat — queda última de 19 candidatas —
+     y sitúa el diseño en la familia Helvetica/Roboto.
+     Se aparta del manual de marca, que pide Bembo Std para titulares y
+     Museo Sans para textos; manda la indicación del cliente. Museo Sans es
+     además comercial y exigiría comprar licencia web.
+     Titulares y texto comparten familia: en las maquetas no hay ninguna
+     serifa, sólo cambia el peso. */
+  --tipo-titulo: 'Roboto', -apple-system, "Segoe UI", Arial, sans-serif;
+  --tipo-texto:  'Roboto', -apple-system, "Segoe UI", Arial, sans-serif;
+  --icono-menu:  22px;      /* el diseño da 17 (51 ÷ 3); el cliente los prefiere algo mayores */
+  --tipo-mono:   Menlo, Consolas, 'Courier New', monospace;
+
+  /* --- Geometría ---------------------------------------------------------- */
+  --r:   6px;
+  --r2:  10px;
+  --menu-ancho: 204px;      /* 611 px del export ÷ 3 */
+  --topbar-alto: 59px;
+  --sombra: 0 1px 2px rgba(0,36,105,.06), 0 4px 12px rgba(0,36,105,.05);
+
+  /* --- Marca en el menú (proporciones del mockup: 87 de 209 = 41.6%) ------- */
+  --escudo-menu: 83px;      /* 249 ÷ 3 */
+  --escudo-hero: 141px;     /* deja el escudo del hero en 118 px */
+}

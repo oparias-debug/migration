@@ -1,4 +1,32 @@
-/* Portado de static/css/estilos.css (front Java original) */
+/* =============================================================================
+   Tipografía
+   -----------------------------------------------------------------------------
+   Roboto, confirmada por el cliente el 31/08/2026. El cotejo glifo a glifo del
+   logotipo oficial (logo-SIIP-NEGRO) descarta Montserrat: queda última de 19
+   candidatas y resulta un 10-29% más ancha que el diseño.
+
+   Se aparta del manual de marca del GOES, que pide Bembo Std para titulares y
+   Museo Sans para cuerpos de texto; manda la indicación del cliente. Museo Sans
+   es además comercial y exigiría comprar licencia web.
+
+   Se sirve desde el propio bundle, no desde fonts.googleapis.com: el SIIP es un
+   sistema interno y no debe depender de un tercero para renderizar texto.
+   ============================================================================= */
+/* La @font-face de Roboto vive en tokens.css, con el resto del sistema de diseño. */
+
+/* Bootstrap resuelve la tipografía de body, titulares y controles a través de
+   esta variable, así que basta redefinirla una vez. */
+:root {
+  --bs-body-font-family: 'Roboto', -apple-system, "Segoe UI", Arial, sans-serif;
+}
+
+/* Portado de static/css/estilos.css (front Java original).
+   Sólo quedan las dos reglas que siguen en uso. Se retiraron `nav`, `h4`,
+   `.nav-link`, `.nav-item` y `.collapse .nav-link`: daban estilo al sidebar de
+   Bootstrap heredado, que se sustituyó por el del diseño aprobado, y ya no
+   tienen ningún uso (0 referencias en src/). La regla `nav { background:#000 }`
+   además pintaba de negro la paginación de las tablas, porque era un selector
+   de elemento y alcanzaba a cualquier <nav> de la aplicación. */
 .card {
   border-radius: 1rem;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
@@ -6,37 +34,4 @@
 
 .form-control:focus {
   box-shadow: none;
-}
-
-nav {
-  background-color: #000;
-  padding: 15px;
-  border-radius: 5px;
-}
-
-h4 {
-  color: #fff;
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.nav-link {
-  color: #ddd;
-  font-size: 16px;
-  padding: 10px;
-}
-
-.nav-link:hover {
-  color: #fff;
-  background-color: #333;
-  border-radius: 5px;
-}
-
-.nav-item {
-  margin-bottom: 5px;
-}
-
-.collapse .nav-link {
-  padding-left: 20px;
 }
