@@ -1,0 +1,13 @@
+spring:
+    application.name: back
+    profiles.active: prod
+    datasource:
+      url: ${DB_URL}
+      driver-class-name: ${DB_DRIVER_CLASS_NAME}
+      username: ${DB_USER}
+      password: ${DB_PASSWORD}
+    jpa:
+      show-sql: true
+      hibernate:
+        ddl-auto: create-drop
+        properties.hibernate.default_schema: ${DB_SCHEMA:public}

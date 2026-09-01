@@ -1,0 +1,931 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-01 Registro y Solicitud de CUP
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-01 "Registro y Solicitud de CUP" y su
+    historia BDD (CU-PRE-01.feature). Actor principal: Técnico URP.
+    No incluye las acciones de "Revisión y Emisión de CUP" (Técnico PRE),
+    que corresponden al fragmento de CU-PRE-01.5.
+
+paths:
+
+  /proyectos:
+    post:
+      operationId: registrarProyecto
+      summary: Registrar un nuevo proyecto, programa o estudio general (SF-1 + SF-1.1 Guardar)
+      description: >
+        Crea un nuevo registro en estado EN_REGISTRO ("En Elaboración"). Institución y
+        Unidad Ejecutora se asignan automáticamente por el servidor según las
+        credenciales del Técnico URP autenticado; no se reciben en el cuerpo de la solicitud.
+      tags: [Preinversión - Registro y Solicitud de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProyectoRequest'
+      responses:
+        "201":
+          description: Proyecto registrado correctamente (mensaje "Guardado", Anexo A.2.2).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        "400":
+          description: Existen campos obligatorios sin completar o inconsistencias de validación (Anexo B.2).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (botón "Nuevo Registro" no disponible para otros actores).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      operationId: listarProyectos
+      summary: Listar los registros de la bandeja "Registro de Proyecto"
+      description: >
+        Devuelve el listado paginado visible en la pantalla "Registro de Proyecto".
+        El alcance de Unidades Ejecutoras visibles se determina por las credenciales
+        del actor autenticado (RN 1).
+      tags: [Preinversión - Registro y Solicitud de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Administrador del Sistema, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      parameters:
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+        - name: estado
+          in: query
+          description: Filtro opcional por estado del proyecto.
+          schema:
+            $ref: '#/components/schemas/EstadoProyecto'
+      responses:
+        "200":
+          description: Listado paginado de proyectos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProyectoListResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /proyectos/{idProyecto}:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerProyecto
+      summary: Consultar un registro de proyecto (SF-3 Ver Registro)
+      description: >
+        Todos los actores pueden consultar la pantalla "Nuevo Registro" en modo lectura,
+        sujeto a las credenciales de Unidad Ejecutora del actor autenticado.
+      tags: [Preinversión - Registro y Solicitud de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Administrador del Sistema, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Información del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: El proyecto no pertenece a una Unidad Ejecutora dentro de las credenciales del actor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      operationId: actualizarProyecto
+      summary: Editar un registro de proyecto (SF-2 Editar Registro / botón Guardar)
+      description: >
+        Solo permitido para el Técnico URP, y solo cuando el proyecto está en estado
+        EN_REGISTRO u OBSERVADO_DGICP_REGISTRO (RN 1.c, RN 2.2.b).
+      tags: [Preinversión - Registro y Solicitud de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProyectoRequest'
+      responses:
+        "200":
+          description: Proyecto actualizado correctamente (mensaje "Guardado", Anexo A.2.2).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        "400":
+          description: Existen campos obligatorios sin completar o inconsistencias de validación (Anexo B.2).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: >
+            El proyecto no se encuentra en un estado editable (por ejemplo,
+            ENVIADO_DGICP_REGISTRO u otro estado posterior).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      operationId: eliminarProyecto
+      summary: Eliminar un registro de proyecto antes de la primera solicitud de CUP (RN 4)
+      description: >
+        Solo permitido para el Técnico URP, y solo mientras el proyecto nunca ha tenido una
+        solicitud de CUP (RN 4). El CU no describe el mecanismo de interfaz de esta eliminación
+        (botón, mensaje de confirmación) ni si otro actor puede eliminar manualmente un registro;
+        solo enuncia la regla de negocio [SUPUESTO — validar con el CU original].
+      tags: [Preinversión - Registro y Solicitud de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "204":
+          description: Proyecto eliminado; deja de aparecer en la Bandeja de Registro de Proyectos.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: El proyecto ya tiene una solicitud de CUP registrada; no puede eliminarse manualmente (RN 4).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/solicitudes-cup:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: solicitarCup
+      summary: Solicitar a la DGICP la asignación del CUP (botón "Solicitar CUP", SF-1.2/FA-1)
+      description: >
+        Ejecuta las validaciones del Anexo B.2. Si no hay inconsistencias, transiciona
+        el proyecto a ENVIADO_DGICP_REGISTRO, deshabilita la edición y notifica al
+        Coordinador PRE (correo, modelo A.3.1). El expediente pasa a la Bandeja de
+        Preinversión (CU-PRE-02) para su asignación y posterior revisión en CU-PRE-01.5.
+      tags: [Preinversión - Registro y Solicitud de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Solicitud de CUP enviada; proyecto en estado ENVIADO_DGICP_REGISTRO.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        "400":
+          description: >
+            El Sistema encontró inconsistencias en las validaciones del Anexo B.2;
+            la acción se cancela y el proyecto permanece sin cambios.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (botón "Solicitar CUP" no disponible para otros actores).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: El proyecto no se encuentra en un estado desde el cual pueda solicitarse el CUP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/respuestas-observacion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: responderObservacionCup
+      summary: Responder a las observaciones de la DGICP (sección "Revisión PRE", botón "Enviar")
+      description: >
+        Solo disponible cuando el proyecto está en estado OBSERVADO_DGICP_REGISTRO
+        (RN 6 — el campo "Respuesta" solo se habilita tras una acción de "Devolver"
+        del Técnico PRE, ver CU-PRE-01.5). Registra el comentario de respuesta,
+        notifica al Técnico PRE (correo, modelo A.3.3) y retorna el control a
+        CU-PRE-01.5 para una nueva revisión.
+      tags: [Preinversión - Registro y Solicitud de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespuestaObservacionRequest'
+      responses:
+        "200":
+          description: Respuesta registrada; proyecto en estado ENVIADO_DGICP_REGISTRO nuevamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        "400":
+          description: El campo "Respuesta" es obligatorio y no fue completado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: >
+            El proyecto no está en estado OBSERVADO_DGICP_REGISTRO; el campo
+            "Respuesta" no está habilitado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/unidad-ejecutora:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: cambiarUnidadEjecutoraProyecto
+      summary: Cambiar la Unidad Ejecutora de un proyecto (RN 4)
+      description: >
+        Único cambio administrativo permitido en cualquier etapa/estado del proyecto.
+        Reservado exclusivamente al Administrador del Sistema en la DGICP.
+      tags: [Preinversión - Registro y Solicitud de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Administrador del Sistema]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambioUnidadEjecutoraRequest'
+      responses:
+        "200":
+          description: Unidad Ejecutora actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Administrador del Sistema.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: El proyecto o la Unidad Ejecutora destino no existen.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /catalogos/medidas:
+    get:
+      operationId: listarMedidasCatalogo
+      summary: >
+        Consultar el catálogo de medidas de GRD/GRC/ACC (botón "Ver descripción de categorías",
+        Anexos C.1, C.1.5 y C.2; también fuente del listado seleccionable de los campos
+        medidasGrd/medidasGrc/medidasAcc en la pantalla "Nuevo registro")
+      description: >
+        Disponible para cualquier actor autenticado; no restringe por rol.
+      tags: [Catálogos Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Administrador del Sistema, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      parameters:
+        - name: tipo
+          in: query
+          required: true
+          description: Anexo C.1 (GRD), C.1.5 (GRC) o C.2 (ACC).
+          schema:
+            $ref: '#/components/schemas/TipoMedidaCatalogo'
+      responses:
+        "200":
+          description: Listado del catálogo solicitado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedidaCatalogo'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /catalogos/sectores:
+    get:
+      operationId: listarSectores
+      summary: >
+        Consultar el catálogo "Macrosectores y sectores" (Anexo C.5) — fuente del
+        listado seleccionable del campo "Sector" en la pantalla "Nuevo registro"
+      description: >
+        Cada Sector incluye su Macrosector asociado, ya que el campo "Macrosector" se
+        asigna automáticamente según el Sector elegido y no es seleccionable
+        directamente por el Técnico URP.
+      tags: [Catálogos Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Administrador del Sistema, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Listado de sectores.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SectorResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /catalogos/ejes-tematicos:
+    get:
+      operationId: listarEjesTematicos
+      summary: >
+        Consultar el catálogo "Eje temático" (Anexo C.6) — fuente del listado
+        seleccionable del campo "Eje temático" en la pantalla "Nuevo registro"
+      tags: [Catálogos Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Administrador del Sistema, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Listado de ejes temáticos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EjeTematicoResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /catalogos/ejes-plan-gobierno:
+    get:
+      operationId: listarEjesPlanGobierno
+      summary: >
+        Consultar el catálogo de Ejes del Plan Cuscatlán (Anexo C.3) — fuente del
+        listado seleccionable del campo "Línea/Eje del Plan de Gobierno"
+      tags: [Catálogos Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Administrador del Sistema, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Listado de ejes del Plan de Gobierno.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EjePlanGobiernoResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /catalogos/planes-sectoriales:
+    get:
+      operationId: listarPlanesSectoriales
+      summary: >
+        Consultar el catálogo de Planes Sectoriales/Regionales (Anexo C.4) — fuente
+        del listado seleccionable del campo "Plan Sectorial/Regional al que contribuye"
+      tags: [Catálogos Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Administrador del Sistema, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Listado de planes sectoriales/regionales.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanSectorialRegionalResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TipoMedidaCatalogo:
+      type: string
+      description: >
+        Tipo de catálogo de medidas referenciado por el botón "Ver descripción de categorías".
+      enum: [GRD, GRC, ACC]
+
+    MedidaCatalogo:
+      type: object
+      description: Entrada del catálogo de medidas (Anexos C.1 GRD, C.1.5 GRC, C.2 ACC).
+      required: [codigo, descripcion]
+      properties:
+        codigo:
+          type: string
+          description: Código a persistir en medidasGrd/medidasGrc/medidasAcc de ProyectoRequest.
+        descripcion:
+          type: string
+
+    MacrosectorResumen:
+      type: object
+      description: >
+        Catálogo "Macrosectores y sectores" (Anexo C.5), nivel Macrosector. Se asigna
+        automáticamente según el Sector elegido; no es seleccionable directamente.
+      required: [idMacrosector, nombre]
+      properties:
+        idMacrosector: { type: integer, format: int64 }
+        codigo: { type: string }
+        nombre: { type: string }
+
+    SectorResumen:
+      type: object
+      description: Catálogo "Macrosectores y sectores" (Anexo C.5), nivel Sector.
+      required: [idSector, nombre, macrosector]
+      properties:
+        idSector: { type: integer, format: int64 }
+        codigo: { type: string }
+        nombre: { type: string }
+        macrosector:
+          $ref: '#/components/schemas/MacrosectorResumen'
+
+    EjeTematicoResumen:
+      type: object
+      description: Catálogo "Eje temático" (Anexo C.6).
+      required: [idEjeTematico, nombre]
+      properties:
+        idEjeTematico: { type: integer, format: int64 }
+        codigo: { type: string }
+        nombre: { type: string }
+
+    EjePlanGobiernoResumen:
+      type: object
+      description: Catálogo de Ejes del Plan Cuscatlán (Anexo C.3).
+      required: [idEjePlanGobierno, nombre]
+      properties:
+        idEjePlanGobierno: { type: integer, format: int64 }
+        codigo: { type: string }
+        nombre: { type: string }
+
+    PlanSectorialRegionalResumen:
+      type: object
+      description: Catálogo de Planes Sectoriales/Regionales (Anexo C.4).
+      required: [idPlanSectorialRegional, nombre]
+      properties:
+        idPlanSectorialRegional: { type: integer, format: int64 }
+        codigo: { type: string }
+        nombre: { type: string }
+
+    IniciativaInversion:
+      type: string
+      description: Tipo de iniciativa de inversión (campo "Iniciativa de inversión").
+      enum: [PROGRAMA, PROYECTO, ESTUDIO_GENERAL]
+
+    EstadoProyecto:
+      type: string
+      description: >
+        Estado del ciclo de vida del Proyecto. Catálogo oficial confirmado por
+        RN04 de CU-PRE-03 "Captura de Proyectos" (13 estados documentados
+        explícitamente, con la descripción textual de cada transición). Los
+        primeros 4 valores además coinciden con el CHECK CK_PROYECTO_ESTADO del
+        modelo de dominio (schema_preinversion.sql). Corrección aplicada al
+        procesar CU-PRE-03 (ver contrato-CU-PRE-01.md y contrato-CU-PRE-03.md
+        para el detalle de la corrección): se agregaron PROYECTO_FORMULADO,
+        OBSERVADO, EN_ELEGIBILIDAD, EN_OT y PROYECTO_CON_OT (documentados por
+        RN04 pero ausentes del CHECK SQL original), y se retiraron NO_VIABLE y
+        NO_ELEGIBLE (no existen en RN04, que usa el único estado OBSERVADO como
+        retroalimentación genérica tanto para viabilidad como para elegibilidad,
+        en vez de dos estados terminales negativos distintos).
+      enum:
+        - EN_REGISTRO
+        - ENVIADO_DGICP_REGISTRO
+        - OBSERVADO_DGICP_REGISTRO
+        - CUP_ASIGNADO
+        - EN_FORMULACION
+        - PROYECTO_FORMULADO
+        - OBSERVADO
+        - EN_VIABILIDAD
+        - VIABLE
+        - EN_ELEGIBILIDAD
+        - ELEGIBLE
+        - EN_OT
+        - PROYECTO_CON_OT
+        - PRIORIZADO
+        - EN_BANCO_PROYECTOS
+        - EN_EJECUCION
+        - FINALIZADO
+        - ARCHIVADO
+
+    InstitucionResumen:
+      type: object
+      description: Vista resumida de Institución (catálogo administrado fuera de este CU).
+      required: [idInstitucion, nombre]
+      properties:
+        idInstitucion: { type: integer, format: int64 }
+        codigo: { type: string }
+        nombre: { type: string }
+
+    UnidadEjecutoraResumen:
+      type: object
+      description: Vista resumida de Unidad Ejecutora (catálogo administrado fuera de este CU).
+      required: [idUnidadEjecutora, nombre]
+      properties:
+        idUnidadEjecutora: { type: integer, format: int64 }
+        codigo: { type: string }
+        nombre: { type: string }
+
+    UsuarioResumen:
+      type: object
+      required: [idUsuario, nombreCompleto]
+      properties:
+        idUsuario: { type: integer, format: int64 }
+        nombreCompleto: { type: string }
+        rol: { type: string }
+
+    ComentarioSolicitud:
+      type: object
+      description: >
+        Entrada individual de la sección "Revisión PRE": puede ser un comentario del
+        Técnico PRE (lado izquierdo) o una respuesta del Técnico URP (lado derecho,
+        RN 6), distinguibles por el rol de `autor`.
+      required: [idComentario, autor, texto, fechaComentario]
+      properties:
+        idComentario: { type: integer, format: int64 }
+        autor:
+          $ref: '#/components/schemas/UsuarioResumen'
+        texto: { type: string }
+        fechaComentario: { type: string, format: date-time }
+
+    ProyectoRequest:
+      type: object
+      description: >
+        Cuerpo de creación/edición de la pantalla "Nuevo Registro". Institución y
+        Unidad Ejecutora no se incluyen: el servidor las asigna automáticamente
+        según las credenciales del Técnico URP autenticado.
+      required:
+        - iniciativaInversion
+        - nombre
+        - montoEstimadoInversion
+        - idSector
+        - idEjeTematico
+        - descripcionProyecto
+      properties:
+        iniciativaInversion:
+          $ref: '#/components/schemas/IniciativaInversion'
+        nombre:
+          type: string
+          maxLength: 250
+          description: Campo "Nombre del proyecto".
+        montoEstimadoInversion:
+          type: number
+          format: double
+          minimum: 0
+          description: Campo "Monto Estimado de Inversión".
+        idSector:
+          type: integer
+          format: int64
+          description: >
+            Identificador del Sector elegido, tomado del catálogo expuesto en
+            GET /catalogos/sectores (Anexo C.5, "Macrosectores y sectores"). El
+            Macrosector correspondiente lo asigna el servidor automáticamente
+            a partir de este Sector; no se recibe en el cuerpo de la solicitud.
+        idEjeTematico:
+          type: integer
+          format: int64
+          description: >
+            Identificador del Eje temático elegido, tomado del catálogo expuesto
+            en GET /catalogos/ejes-tematicos (Anexo C.6).
+        medidasGrd:
+          type: array
+          items: { type: string }
+          description: >
+            Códigos de categorías de GRD seleccionadas, tomados del catálogo expuesto
+            en GET /catalogos/medidas?tipo=GRD (Anexo C.1). Condicional.
+        medidasGrc:
+          type: array
+          items: { type: string }
+          description: >
+            Códigos de categorías de GRC seleccionadas, tomados del catálogo expuesto
+            en GET /catalogos/medidas?tipo=GRC (Anexo C.1.5). Condicional.
+        medidasAcc:
+          type: array
+          items: { type: string }
+          description: >
+            Códigos de categorías de ACC seleccionadas, tomados del catálogo expuesto
+            en GET /catalogos/medidas?tipo=ACC (Anexo C.2). Condicional.
+        esProyectoEmergencia:
+          type: boolean
+          description: Campo "Proyecto de emergencia".
+        tipoEvento:
+          type: string
+          description: Obligatorio si esProyectoEmergencia = true.
+        numeroDecretoLegislativo:
+          type: string
+          description: Campo "N° de DL". Obligatorio si esProyectoEmergencia = true.
+        idEjePlanGobierno:
+          type: integer
+          format: int64
+          description: >
+            Identificador del eje del Plan Cuscatlán elegido, tomado del catálogo
+            expuesto en GET /catalogos/ejes-plan-gobierno (Anexo C.3). Condicional.
+        idPlanSectorialRegional:
+          type: integer
+          format: int64
+          description: >
+            Identificador del Plan Sectorial/Regional elegido, tomado del catálogo
+            expuesto en GET /catalogos/planes-sectoriales (Anexo C.4). Condicional.
+        descripcionProyecto:
+          type: string
+          maxLength: 1000
+          description: Campo "Descripción del proyecto".
+
+    Proyecto:
+      type: object
+      description: >
+        Forma de lectura de un proyecto. A diferencia de ProyectoRequest, los campos
+        de catálogo (sector, ejeTematico, medidas*, ejePlanGobierno, planSectorialRegional,
+        institucion, unidadEjecutora) se devuelven como objetos resumen ya resueltos
+        (id + nombre/descripción), no como los identificadores planos que se envían al crear/editar.
+      required:
+        - idProyecto
+        - nombre
+        - iniciativaInversion
+        - montoEstimadoInversion
+        - institucion
+        - unidadEjecutora
+        - sector
+        - ejeTematico
+        - descripcionProyecto
+        - estado
+        - fechaIngreso
+      properties:
+        idProyecto: { type: integer, format: int64 }
+        cup:
+          type: string
+          nullable: true
+          description: Código Único de Proyecto; nulo hasta que el estado sea CUP_ASIGNADO.
+        nombre:
+          type: string
+          maxLength: 250
+        iniciativaInversion:
+          $ref: '#/components/schemas/IniciativaInversion'
+        montoEstimadoInversion:
+          type: number
+          format: double
+        institucion:
+          $ref: '#/components/schemas/InstitucionResumen'
+        unidadEjecutora:
+          $ref: '#/components/schemas/UnidadEjecutoraResumen'
+        sector:
+          $ref: '#/components/schemas/SectorResumen'
+        ejeTematico:
+          $ref: '#/components/schemas/EjeTematicoResumen'
+        medidasGrd:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedidaCatalogo'
+        medidasGrc:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedidaCatalogo'
+        medidasAcc:
+          type: array
+          items:
+            $ref: '#/components/schemas/MedidaCatalogo'
+        esProyectoEmergencia:
+          type: boolean
+        tipoEvento:
+          type: string
+          nullable: true
+        numeroDecretoLegislativo:
+          type: string
+          nullable: true
+        ejePlanGobierno:
+          $ref: '#/components/schemas/EjePlanGobiernoResumen'
+          nullable: true
+        planSectorialRegional:
+          $ref: '#/components/schemas/PlanSectorialRegionalResumen'
+          nullable: true
+        descripcionProyecto:
+          type: string
+          maxLength: 1000
+        estado:
+          $ref: '#/components/schemas/EstadoProyecto'
+        fechaIngreso:
+          type: string
+          format: date-time
+          description: Fecha de la última actualización de la solicitud.
+        fechaCupAsignado:
+          type: string
+          format: date-time
+          nullable: true
+        revisionPre:
+          type: array
+          description: Historial de la sección "Revisión PRE" (comentarios y respuestas).
+          items:
+            $ref: '#/components/schemas/ComentarioSolicitud'
+
+    ProyectoListItem:
+      type: object
+      description: Fila del listado "Registro de Proyecto" (subconjunto de campos, no editable).
+      required: [idProyecto, nombre, unidadEjecutora, iniciativaInversion, fechaIngreso, estado]
+      properties:
+        idProyecto: { type: integer, format: int64 }
+        nombre: { type: string }
+        unidadEjecutora:
+          $ref: '#/components/schemas/UnidadEjecutoraResumen'
+        iniciativaInversion:
+          $ref: '#/components/schemas/IniciativaInversion'
+        fechaIngreso: { type: string, format: date-time }
+        estado:
+          $ref: '#/components/schemas/EstadoProyecto'
+
+    PaginacionMetadata:
+      type: object
+      description: Metadatos de paginación reutilizables para cualquier listado del contrato.
+      required: [pagina, tamanio, totalElementos, totalPaginas]
+      properties:
+        pagina: { type: integer }
+        tamanio: { type: integer }
+        totalElementos: { type: integer, format: int64 }
+        totalPaginas: { type: integer }
+
+    ProyectoListResponse:
+      type: object
+      required: [contenido, paginacion]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProyectoListItem'
+        paginacion:
+          $ref: '#/components/schemas/PaginacionMetadata'
+
+    RespuestaObservacionRequest:
+      type: object
+      required: [respuesta]
+      properties:
+        respuesta:
+          type: string
+          description: Comentario justificativo del Técnico URP (campo "Respuesta", sección "Revisión PRE").
+
+    CambioUnidadEjecutoraRequest:
+      type: object
+      required: [idUnidadEjecutora]
+      properties:
+        idUnidadEjecutora:
+          type: integer
+          format: int64
+          description: Identificador de la nueva Unidad Ejecutora a asignar al proyecto.
+
+    ErrorDetalle:
+      type: object
+      description: Detalle de un error de validación a nivel de campo (Anexo B.2).
+      required: [campo, mensaje]
+      properties:
+        campo: { type: string }
+        mensaje: { type: string }
+
+    Error:
+      type: object
+      description: Esquema estándar de error para todas las respuestas 4xx/5xx del proyecto SIIP v2.
+      required: [codigo, mensaje, timestamp]
+      properties:
+        codigo: { type: string }
+        mensaje: { type: string }
+        timestamp: { type: string, format: date-time }
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetalle'

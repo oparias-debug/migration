@@ -1,0 +1,324 @@
+{
+  "realm": "siip-api",
+  "enabled": true,
+  "displayName": "SIIP API Realm",
+
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMINISTRADOR_DEL_SISTEMA",
+        "description": "Administrador del Sistema (SIIP). Gestión de solicitudes de CUP y programación cuatrimestral de Preinversión (3 CU)."
+      },
+      {
+        "name": "COORDINADOR_PRE",
+        "description": "Coordinador de Preinversión (SIIP). Revisión/emisión de CUP, priorización, opinión técnica, banco de proyectos y programación/avance cuatrimestral de Preinversión (10 CU)."
+      },
+      {
+        "name": "COORDINADOR_PRO",
+        "description": "Coordinador de Programación y Análisis (SIIP). Monitoreo de programación del PAIP/PAP y presupuesto de inversión (9 CU)."
+      },
+      {
+        "name": "COORDINADOR_SYMP",
+        "description": "Coordinador de Seguimiento y Monitoreo de Proyectos (SIIP). Presupuesto de inversión, priorización y programación de metas físicas (5 CU)."
+      },
+      {
+        "name": "JEFE_DGI",
+        "description": "Jefe DGI (SIIP). Priorización y programación/avance cuatrimestral financiero y de metas físicas de Preinversión (5 CU)."
+      },
+      {
+        "name": "SUBJEFE_DGI",
+        "description": "Subjefe DGI (SIIP). Priorización y programación/avance cuatrimestral financiero y de metas físicas de Preinversión (5 CU)."
+      },
+      {
+        "name": "TECNICO_PRE",
+        "description": "Técnico de Preinversión (SIIP). Registro y análisis del ciclo de proyectos en fase de Preinversión: área de influencia, mercado, técnica, ambiental, riesgo, legal, presupuesto, indicadores y elegibilidad (25 CU)."
+      },
+      {
+        "name": "TECNICO_PRO",
+        "description": "Técnico de Programación y Análisis (SIIP). Agrupa Coordinador/Técnico de Seguimiento y Monitoreo de Proyectos y Coordinador/Técnico de Programación y Análisis. Monitoreo de programación del PAIP/PAP y presupuesto de inversión (9 CU)."
+      },
+      {
+        "name": "TECNICO_SYMP",
+        "description": "Técnico de Seguimiento y Monitoreo de Proyectos (SIIP). Escenarios de programación, consolidado de techos, monitoreo mensual del PAIP y visitas de campo (11 CU)."
+      },
+      {
+        "name": "TECNICO_UAL",
+        "description": "Técnico de la Unidad de Asesoría Legal (SIIP). Registro, modificación y ficha de convenios (4 CU)."
+      },
+      {
+        "name": "TECNICO_URP",
+        "description": "Técnico de la Unidad Responsable de Proyecto (SIIP). Identificación, análisis y programación/avance financiero y físico del proyecto a lo largo de todo el ciclo (41 CU)."
+      },
+      {
+        "name": "USUARIOS_INTERNOS",
+        "description": "Usuarios Internos (SIIP). Consulta del presupuesto de inversión y del banco de proyectos (2 CU)."
+      },
+      {
+        "name": "VIABILIZADOR",
+        "description": "Viabilizador (SIIP). Evaluación de viabilidad, elegibilidad y opinión técnica de proyectos (4 CU)."
+      }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "swagger-ui",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "redirectUris": [
+        "http://localhost:8080/swagger-ui/oauth2-redirect.html"
+      ],
+      "webOrigins": ["+"],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    },
+    {
+      "clientId": "api-gateway",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "secret": "dvUYyLd427TYWY5KKzGu4KCTj8s02A5x",
+      "publicClient": false,
+      "redirectUris": [],
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": [
+        "roles"
+      ]
+    }
+  ],
+
+  "clientScopes": [
+    {
+      "name": "roles",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "user.attribute": "role",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "username",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "preferred_username",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@example.com",
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMINISTRADOR_DEL_SISTEMA"
+      ]
+    },
+    {
+      "username": "user",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "user@example.com",
+      "firstName": "User",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "USUARIOS_INTERNOS"
+      ]
+    },
+    {
+      "username": "coordinador.pre",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "coordinador.pre@example.com",
+      "firstName": "Coordinador",
+      "lastName": "PRE",
+      "credentials": [
+        { "type": "password", "value": "coordinadorPre123", "temporary": false }
+      ],
+      "realmRoles": [
+        "COORDINADOR_PRE"
+      ]
+    },
+    {
+      "username": "coordinador.pro",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "coordinador.pro@example.com",
+      "firstName": "Coordinador",
+      "lastName": "PRO",
+      "credentials": [
+        { "type": "password", "value": "coordinadorPro123", "temporary": false }
+      ],
+      "realmRoles": [
+        "COORDINADOR_PRO"
+      ]
+    },
+    {
+      "username": "coordinador.symp",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "coordinador.symp@example.com",
+      "firstName": "Coordinador",
+      "lastName": "SYMP",
+      "credentials": [
+        { "type": "password", "value": "coordinadorSymp123", "temporary": false }
+      ],
+      "realmRoles": [
+        "COORDINADOR_SYMP"
+      ]
+    },
+    {
+      "username": "jefe.dgi",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "jefe.dgi@example.com",
+      "firstName": "Jefe",
+      "lastName": "DGI",
+      "credentials": [
+        { "type": "password", "value": "jefeDgi123", "temporary": false }
+      ],
+      "realmRoles": [
+        "JEFE_DGI"
+      ]
+    },
+    {
+      "username": "subjefe.dgi",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "subjefe.dgi@example.com",
+      "firstName": "Subjefe",
+      "lastName": "DGI",
+      "credentials": [
+        { "type": "password", "value": "subjefeDgi123", "temporary": false }
+      ],
+      "realmRoles": [
+        "SUBJEFE_DGI"
+      ]
+    },
+    {
+      "username": "tecnico.pre",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.pre@example.com",
+      "firstName": "Tecnico",
+      "lastName": "PRE",
+      "credentials": [
+        { "type": "password", "value": "tecnicoPre123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_PRE"
+      ]
+    },
+    {
+      "username": "tecnico.pro",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.pro@example.com",
+      "firstName": "Tecnico",
+      "lastName": "PRO",
+      "credentials": [
+        { "type": "password", "value": "tecnicoPro123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_PRO"
+      ]
+    },
+    {
+      "username": "tecnico.symp",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.symp@example.com",
+      "firstName": "Tecnico",
+      "lastName": "SYMP",
+      "credentials": [
+        { "type": "password", "value": "tecnicoSymp123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_SYMP"
+      ]
+    },
+    {
+      "username": "tecnico.ual",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.ual@example.com",
+      "firstName": "Tecnico",
+      "lastName": "UAL",
+      "credentials": [
+        { "type": "password", "value": "tecnicoUal123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_UAL"
+      ]
+    },
+    {
+      "username": "tecnico.urp",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.urp@example.com",
+      "firstName": "Tecnico",
+      "lastName": "URP",
+      "credentials": [
+        { "type": "password", "value": "tecnicoUrp123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_URP"
+      ]
+    },
+    {
+      "username": "viabilizador",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "viabilizador@example.com",
+      "firstName": "Viabilizador",
+      "lastName": "SIIP",
+      "credentials": [
+        { "type": "password", "value": "viabilizador123", "temporary": false }
+      ],
+      "realmRoles": [
+        "VIABILIZADOR"
+      ]
+    }
+  ]
+}

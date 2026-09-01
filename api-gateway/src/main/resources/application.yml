@@ -1,0 +1,54 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: swagger-ui
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/swagger-ui/oauth2-redirect.html"
+            scope: openid,profile,email
+        provider:
+          keycloak:
+            issuer-uri: ${keycloak.internal-url}/realms/${KEYCLOAK_REALM}
+            user-name-attribute: preferred_username
+
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.internal-url}/realms/${KEYCLOAK_REALM}
+
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay
+      server.webflux.routes:
+        - id: back
+          uri: http://back:8081
+          predicates:
+            - Path=/back/**
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/back/(?<segment>.*), /${segment}
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: swagger-ui
+      use-pkce-with-authorization-code-grant: true
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - name: back
+        url: /back/v3/api-docs
+
+keycloak:
+  internal-url: ${KEYCLOAK_INTERNAL_URL}  
+  token-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+  client-id: ${KEYCLOAK_CLIENT_ID}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET}

@@ -1,0 +1,28 @@
+spring:
+  application.name: back
+  datasource:
+    url: ${DB_URL}
+    driver-class-name: ${DB_DRIVER_CLASS_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate.ddl-auto: create-drop
+    properties.hibernate.default_schema: ${DB_SCHEMA:public}
+    show-sql: true
+  h2.console.enabled: true
+
+logging.level.org.springframework: INFO
+server.port: 8081
+
+# El path interno del microservicio debe seguir siendo el estándar
+springdoc:
+  api-docs.path: /v3/api-docs
+  swagger-ui.path: /swagger-ui.html
+  swagger-ui.use-root-path: true
+
+keycloak:
+  url: ${KEYCLOAK_EXTERNAL_URL}
+  realm: ${KEYCLOAK_REALM}
+
+gateway.url: ${GATEWAY_URL}
+flowable.databaseSchema: flowable

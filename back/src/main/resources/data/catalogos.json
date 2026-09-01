@@ -1,0 +1,185 @@
+[
+    {
+        "codigo": 0,
+        "descripcion": "Catálogos Generales",
+        "abreviatura": "CATALOGOS",
+        "estado": "ACTIVO",
+        "children": [
+            {
+                "codigo": 1,
+                "descripcion": "Macrosectores",
+                "abreviatura": "MACRO",
+                "estado": "ACTIVO",
+                "children": [
+                    {
+                        "codigo": 1,
+                        "descripcion": "DESARROLLO ECONOMICO",
+                        "abreviatura": "DESA_ECON",
+                        "estado": "ACTIVO",
+                        "children": [
+                            {
+                                "codigo": 1,
+                                "descripcion": "SECTOR 1",
+                                "abreviatura": "SECT1",
+                                "estado": "ACTIVO"
+                            },
+                            {
+                                "codigo": 2,
+                                "descripcion": "SECTOR 2",
+                                "abreviatura": "SECT2",
+                                "estado": "ACTIVO"
+                            }
+
+                        ]
+                    },
+                    {
+                        "codigo": 2,
+                        "descripcion": "DESARROLLO SOCIAL",
+                        "abreviatura": "DESA_SOCIAL",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 3,
+                        "descripcion": "SEGURIDAD PUBLICA Y JUSTICIA",
+                        "abreviatura": "SEG_JUST",
+                        "estado": "ACTIVO"
+                    }
+                ]
+            },
+            {
+                "codigo": 2,
+                "descripcion": "Estados de Proyecto",
+                "abreviatura": "ESTADO_PROY",
+                "estado": "ACTIVO",
+                "children": [
+                    {
+                        "codigo": 1,
+                        "descripcion": "En Estudio",
+                        "abreviatura": "ESTUDIO",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 2,
+                        "descripcion": "En ejecución",
+                        "abreviatura": "EJECUCION",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 3,
+                        "descripcion": "Suspendido",
+                        "abreviatura": "SUSPENDIDO",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 4,
+                        "descripcion": "Finalizado",
+                        "abreviatura": "FINALIZADO",
+                        "estado": "ACTIVO"
+                    }
+                ]
+            },
+            {
+                "codigo": 3,
+                "descripcion": "Tipo de Proyecto",
+                "abreviatura": "TIPO",
+                "estado": "ACTIVO"
+            },
+            {
+                "codigo": 4,
+                "descripcion": "Fase del Proyecto",
+                "abreviatura": "FASES",
+                "estado": "ACTIVO",
+                "children": [
+                    {
+                        "codigo": 1,
+                        "descripcion": "PREINVERSION",
+                        "abreviatura": "PRE",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 1,
+                        "descripcion": "INVERSION",
+                        "abreviatura": "INV",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 2,
+                        "descripcion": "OPERACION",
+                        "abreviatura": "OPER",
+                        "estado": "ACTIVO"
+                    }
+                ]
+            },
+            {
+                "codigo": 5,
+                "descripcion": "Monedas",
+                "abreviatura": "MONEDA",
+                "estado": "ACTIVO",
+                "children": [
+                    {
+                        "codigo": 1,
+                        "descripcion": "DOLAR ESTADOUNIDENSE",
+                        "abreviatura": "USD",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 2,
+                        "descripcion": "COLON SALVADOREÑO",
+                        "abreviatura": "SVC",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 3,
+                        "descripcion": "EURO",
+                        "abreviatura": "EUR",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 4,
+                        "descripcion": "YEN JAPONÉS",
+                        "abreviatura": "JPY",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 5,
+                        "descripcion": "YUANES",
+                        "abreviatura": "CNY",
+                        "estado": "ACTIVO"
+                    }
+                ]
+            },
+            {
+                "codigo": 6,
+                "descripcion": "REGIONES",
+                "abreviatura": "REGION",
+                "estado": "ACTIVO",
+                "children": [
+                    {
+                        "codigo": 1,
+                        "descripcion": "Región Central",
+                        "abreviatura": "CENTRAL",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 2,
+                        "descripcion": "Región Occidental",
+                        "abreviatura": "OCCIDENTAL",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 3,
+                        "descripcion": "Región Oriental",
+                        "abreviatura": "ORIENTAL",
+                        "estado": "ACTIVO"
+                    },
+                    {
+                        "codigo": 4,
+                        "descripcion": "Región Paracentral",
+                        "abreviatura": "PARACENTRAL",
+                        "estado": "ACTIVO"
+                    }
+                ]
+            }
+        ]
+    }
+]

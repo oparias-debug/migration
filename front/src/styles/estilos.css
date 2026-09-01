@@ -1,0 +1,42 @@
+/* Portado de static/css/estilos.css (front Java original) */
+.card {
+  border-radius: 1rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.form-control:focus {
+  box-shadow: none;
+}
+
+nav {
+  background-color: #000;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+h4 {
+  color: #fff;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.nav-link {
+  color: #ddd;
+  font-size: 16px;
+  padding: 10px;
+}
+
+.nav-link:hover {
+  color: #fff;
+  background-color: #333;
+  border-radius: 5px;
+}
+
+.nav-item {
+  margin-bottom: 5px;
+}
+
+.collapse .nav-link {
+  padding-left: 20px;
+}

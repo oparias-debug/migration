@@ -1,0 +1,23 @@
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.local
+
+# Cliente generado desde openapi/*.yaml (npm run generate:api) - no se versiona,
+# igual que back/target/generated-sources/openapi.
+src/api/generated/
+.openapi-generator/
+.openapi-generator-ignore
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# Env
+.env
+.env.*.local

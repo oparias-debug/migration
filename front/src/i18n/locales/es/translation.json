@@ -1,0 +1,126 @@
+{
+  "common": {
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "logout": "Logout",
+    "cargando": "Cargando...",
+    "aceptar": "Aceptar",
+    "cancelar": "Cancelar",
+    "cerrar": "Cerrar",
+    "seleccione": "Seleccione..."
+  },
+  "errores": {
+    "validacion": "Hay campos con datos inválidos. Revise los mensajes indicados en cada campo.",
+    "sesion": "Su sesión ha expirado. Vuelva a iniciar sesión.",
+    "permiso": "Su usuario no tiene permisos para realizar esta acción.",
+    "inexistente": "El registro solicitado no existe o ya fue eliminado.",
+    "conflicto": "El estado actual del proyecto no permite realizar esta acción.",
+    "servidor": "Ocurrió un error inesperado. Intente nuevamente más tarde.",
+    "red": "No fue posible conectarse con el servidor. Verifique su conexión.",
+    "reintentar": "Reintentar"
+  },
+  "home": {
+    "title": "Bienvenido al Sistema SIIP",
+    "panelTitle": "Panel de Control",
+    "panelText": "Bienvenido al sistema de información."
+  },
+  "login": {
+    "title": "Iniciar Sesión",
+    "appName": "SIIP2",
+    "appDescription": "Sistema de Información de Inversión Pública",
+    "notice": "Estimado usuario, está por ingresar a un Sistema de Información en la red del Ministerio de Hacienda, las actividades realizadas estarán siendo registradas, solamente los usuarios autorizados pueden acceder al sistema y el uso no autorizado o abuso del sistema será sujeto a lo establecido en las disposiciones legales correspondientes. Lo antes descrito es conforme a las Políticas de Seguridad del Ministerio de Hacienda.",
+    "footer": "© 2025 Ministerio de Hacienda. Todos los derechos reservados.",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "submit": "Ingresar",
+    "invalidCredentials": "Usuario o contraseña incorrectos."
+  },
+  "sidebar": {
+    "title": "Menú",
+    "administracion": "Administración",
+    "catalogos": "Catálogos",
+    "generales": "Generales",
+    "tablasDeRangos": "Tablas de Rangos",
+    "usuarios": "Usuarios",
+    "preinversion": "Preinversión",
+    "registroProyecto": "Registro de Proyecto",
+    "programacionGroup": "Programación",
+    "seguimientoGroup": "Seguimiento",
+    "programacion": "Programación",
+    "seguimiento": "Seguimiento",
+    "ingreso": "Ingreso de Programación",
+    "pripme": "PRIPME",
+    "financiero": "Financiero",
+    "geografico": "Geográfico",
+    "fisico": "Físico",
+    "procesos": "Procesos Administrativos"
+  },
+  "topbar": {
+    "title": "Nuevo SIIP"
+  },
+  "placeholder": {
+    "title": "🚧 Página en Construcción",
+    "text": "La sección que buscas aún no está disponible. Estamos trabajando en ello.",
+    "backHome": "Volver al inicio"
+  },
+  "notFound": {
+    "title": "Página no encontrada"
+  },
+  "preinversion": {
+    "registro": {
+      "tituloBandeja": "Registro de Proyecto",
+      "nuevoRegistro": "Nuevo Registro",
+      "columnaNombre": "Nombre",
+      "columnaUnidadEjecutora": "Unidad Ejecutora",
+      "columnaIniciativa": "Iniciativa de Inversión",
+      "columnaFechaIngreso": "Fecha de Ingreso",
+      "columnaEstado": "Estado",
+      "sinRegistros": "No hay proyectos registrados.",
+      "tituloNuevo": "Nuevo registro",
+      "tituloEditar": "Editar registro",
+      "campoIniciativa": "Iniciativa de inversión",
+      "opcionPrograma": "Programa",
+      "opcionProyecto": "Proyecto",
+      "opcionEstudioGeneral": "Estudios Generales",
+      "campoNombre": "Nombre del proyecto",
+      "campoMonto": "Inversión Estimada",
+      "campoSector": "Sector",
+      "campoEjeTematico": "Eje temático",
+      "campoMedidasGrd": "Categorías de GRD",
+      "campoMedidasGrc": "Categorías de GRC",
+      "campoMedidasAcc": "Categorías de ACC",
+      "campoEmergencia": "Proyecto de emergencia",
+      "campoTipoEvento": "Tipo de evento",
+      "campoNumeroDecreto": "N° de DL",
+      "campoEjePlanGobierno": "Eje del Plan Cuscatlán",
+      "campoPlanSectorialRegional": "Plan Sectorial/Regional",
+      "campoDescripcion": "Descripción del proyecto",
+      "botonGuardar": "Guardar",
+      "botonRegresar": "Regresar",
+      "botonVerCategorias": "Ver descripción de categorías",
+      "mensajeGuardado": "¡Guardado! Sus datos han sido guardados exitosamente.",
+      "confirmarRegresar": "¿Está seguro? ¡Se borrarán todos los datos ingresados!",
+      "categoriasTitulo": "Descripción de categorías",
+      "categoriasGrd": "GRD",
+      "categoriasGrc": "GRC",
+      "categoriasAcc": "ACC",
+      "categoriasCodigo": "Código",
+      "categoriasDescripcion": "Descripción",
+      "errorGuardar": "No fue posible guardar el proyecto.",
+      "estadoActual": "Estado actual",
+      "soloConsulta": "El proyecto se encuentra en estado {{estado}}; únicamente puede consultarse.",
+      "botonSolicitarCup": "Solicitar CUP",
+      "confirmarSolicitarCup": "¿Está seguro de solicitar el CUP para este proyecto?",
+      "guardarAntesDeSolicitar": "Guarde los cambios antes de solicitar el CUP.",
+      "cupSolicitado": "La solicitud de CUP ha sido enviada exitosamente."
+    },
+    "revisionPre": {
+      "titulo": "Revisión PRE",
+      "sinComentarios": "Aún no hay observaciones registradas.",
+      "campoRespuesta": "Respuesta",
+      "botonEnviar": "Enviar",
+      "respuestaObligatoria": "*Campo obligatorio",
+      "enviada": "Su respuesta ha sido enviada exitosamente."
+    }
+  }
+}

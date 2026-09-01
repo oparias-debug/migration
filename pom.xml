@@ -1,0 +1,99 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>sv.gob.mh.siip</groupId>
+    <artifactId>siip</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>SIIP Proyecto con Microservicios</name>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.16</version>
+        <relativePath /> <!-- usa el repo central -->
+    </parent>
+
+    <modules>
+        <module>api-gateway</module>
+        <module>back</module>
+    </modules>
+
+    <properties>
+        <java.version>25</java.version>
+        <lombok.version>1.18.46</lombok.version>
+        <mockito.version>5.18.0</mockito.version>
+        <modelmapper.version>3.2.4</modelmapper.version>
+        <springdoc.version>2.8.9</springdoc.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+    </properties>
+
+    <dependencies>
+        <!-- Centralizar dependencias comunes -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.13</version>
+                <configuration>
+                    <!-- Excluye los paquetes api/dto generados por openapi-generator-maven-plugin
+                         (ver comentario en back/pom.xml sobre la convención de un .yaml por
+                         dominio -> sv.gob.mh.siip.model.<dominio>.api/.dto): son getters/setters/
+                         builders sin lógica propia y no deben contarse en la cobertura. -->
+                    <excludes>
+                        <exclude>sv/gob/mh/siip/model/*/api/**</exclude>
+                        <exclude>sv/gob/mh/siip/model/*/dto/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <!-- Prepara el agente de JaCoCo -->
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- Genera el reporte después de los tests -->
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

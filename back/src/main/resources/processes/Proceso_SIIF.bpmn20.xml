@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://siip.com/bpmn/proceso-proyecto">
+
+  <process id="proceso_ciclo_vida_proyecto_siip" name="Ciclo de Vida del Proyecto SIIP" isExecutable="true">
+
+    <startEvent id="start1" name="Nuevo Proyecto"/>
+
+    <!-- ===================== REGISTRO Y SOLICITUD DE CUP ===================== -->
+
+    <userTask id="UT_EnElaboracion" name="Registro de Proyecto y Solicitud de CUP (CU-PRE-01)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_start_a_elaboracion" sourceRef="start1" targetRef="UT_EnElaboracion"/>
+
+    <sequenceFlow id="sf1_solicitar_cup" name="Solicitar CUP" sourceRef="UT_EnElaboracion" targetRef="UT_RevisionCUP">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionCUP" name="Revisión y Emisión de CUP / Opinión Técnica (CU-PRE-01.5 / CU-PRE-26)" flowable:candidateGroups="Técnico PRE"/>
+
+    <sequenceFlow id="sf_revisioncup_a_gw1" sourceRef="UT_RevisionCUP" targetRef="gw1"/>
+
+    <exclusiveGateway id="gw1" name="¿Resultado de la revisión de CUP?"/>
+
+    <sequenceFlow id="sf2_devolver" name="Devolver" sourceRef="gw1" targetRef="UT_ObservadoDGICP">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionRevisionCUP == 'devolver'}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="UT_ObservadoDGICP" name="Atención de Observaciones DGICP (Registro) (CU-PRE-01)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf3_reenvio_cup" name="Solicitar CUP nuevamente / Enviar respuesta" sourceRef="UT_ObservadoDGICP" targetRef="UT_RevisionCUP">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf4_emitir_cup" name="Emitir CUP" sourceRef="gw1" targetRef="UT_CUPAsignado">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionRevisionCUP == 'emitir'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== CUP ASIGNADO / FORMULACIÓN Y EVALUACIÓN ===================== -->
+
+    <userTask id="UT_CUPAsignado" name="Proyecto con CUP Asignado (CU-PRE-03)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf5_iniciar_identificacion" name="Iniciar Identificación (CU-PRE-04)" sourceRef="UT_CUPAsignado" targetRef="UT_FormulacionEvaluacion">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_FormulacionEvaluacion" name="Formulación y Evaluación del Proyecto (CU-PRE-04 a CU-PRE-23)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf6_finalizar_indicadores" name="Finalizar Indicadores del Proyecto (CU-PRE-23)" sourceRef="UT_FormulacionEvaluacion" targetRef="UT_ProyectoFormulado">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_ProyectoFormulado" name="Proyecto Formulado — Pendiente de Solicitar Viabilidad" flowable:candidateGroups="Técnico URP"/>
+
+    <!-- Conflicto C5: no hay botón/pantalla documentado para esta acción -->
+    <sequenceFlow id="sf7_solicitar_viabilidad" name="Solicitar Viabilidad (condición no documentada — ver Conflicto C5)" sourceRef="UT_ProyectoFormulado" targetRef="UT_RevisionViabilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <!-- ===================== VIABILIDAD ===================== -->
+
+    <userTask id="UT_RevisionViabilidad" name="Revisión de Viabilidad (CU-PRE-24)" flowable:candidateGroups="Viabilizador"/>
+
+    <sequenceFlow id="sf_viabilidad_a_gw2" sourceRef="UT_RevisionViabilidad" targetRef="gw2"/>
+
+    <exclusiveGateway id="gw2" name="¿Resultado de la Viabilidad?"/>
+
+    <sequenceFlow id="sf8_observar_viabilidad" name="Enviar Comentarios" sourceRef="gw2" targetRef="UT_ObservadoViabilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidad == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="UT_ObservadoViabilidad" name="Atención de Observaciones de Viabilidad (CU-PRE-24, FA01)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf9_reiniciar_viabilidad" name="Reiniciar Solicitud de Viabilidad" sourceRef="UT_ObservadoViabilidad" targetRef="UT_RevisionViabilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf10_emitir_viabilidad" name="Emitir Viabilidad" sourceRef="gw2" targetRef="gw2b">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidad == 'viable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== ELEGIBILIDAD ===================== -->
+    <!-- Conflicto C2: "En elegibilidad" no tiene entrada/salida independiente en CU-PRE-25; se fusiona con "Proyecto viable" -->
+
+    <exclusiveGateway id="gw2b" name="¿El proyecto ya cuenta con Elegibilidad? (CU-PRE-24, FA02)"/>
+
+    <sequenceFlow id="sf11_a_elegibilidad" name="No cuenta con Elegibilidad — Ir a Elegibilidad" sourceRef="gw2b" targetRef="UT_Elegibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == false}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf12_directo_a_ot" name="Ya cuenta con Elegibilidad — Ir a OT" sourceRef="gw2b" targetRef="UT_RevisionOT">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == true}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="UT_Elegibilidad" name="Gestión de Elegibilidad del Proyecto (CU-PRE-25)" flowable:candidateGroups="Viabilizador"/>
+
+    <sequenceFlow id="sf13_emitir_elegibilidad" name="Emitir Elegibilidad" sourceRef="UT_Elegibilidad" targetRef="UT_RevisionOT">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <!-- ===================== OPINIÓN TÉCNICA ===================== -->
+
+    <userTask id="UT_RevisionOT" name="Revisión de Opinión Técnica (CU-PRE-26)" flowable:candidateGroups="Técnico PRE"/>
+
+    <sequenceFlow id="sf_ot_a_gw3" sourceRef="UT_RevisionOT" targetRef="gw3"/>
+
+    <exclusiveGateway id="gw3" name="¿Resultado de la Opinión Técnica?"/>
+
+    <sequenceFlow id="sf14_observar_ot" name="Enviar Comentarios (OT)" sourceRef="gw3" targetRef="UT_ObservadoOT">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionOT == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="UT_ObservadoOT" name="Atención de Observaciones de Opinión Técnica (CU-PRE-26, FA03)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf15_reenviar_ot" name="Reenviar tras Ajustes (Viabilidad/Elegibilidad)" sourceRef="UT_ObservadoOT" targetRef="UT_RevisionOT">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf16_ot_favorable" name="OT Favorable" sourceRef="gw3" targetRef="UT_PostOT">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionOT == 'favorable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== PROYECTO CON O.T. / PRIORIZACIÓN ===================== -->
+
+    <userTask id="UT_PostOT" name="Priorización y Gestión Post-OT (CU-PRE-26.5)" flowable:candidateGroups="Coordinador PRE"/>
+
+    <sequenceFlow id="sf_postot_a_gw4" sourceRef="UT_PostOT" targetRef="gw4"/>
+
+    <exclusiveGateway id="gw4" name="¿Siguiente paso del proyecto con O.T.?"/>
+
+    <sequenceFlow id="sf17_actualizar_ot" name="Solicitar OT para otra etapa / Actualización" sourceRef="gw4" targetRef="UT_FormulacionEvaluacion">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOT == 'actualizarOT'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Conflicto C7: brecha no confirmada del ciclo de vida. Sin executionListener a propósito: no hay CU que respalde esta transición como cambio real de "Estado del Proyecto". -->
+    <sequenceFlow id="sf18_avanzar_ejecucion" name="Avanzar a Ejecución (transición NO confirmada — ver Conflicto C7)" sourceRef="gw4" targetRef="UT_CierreFinanciero">
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOT == 'avanzarEjecucion'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== CIERRE FÍSICO Y FINANCIERO ===================== -->
+
+    <userTask id="UT_CierreFinanciero" name="Registro de Cierre Físico y Financiero (CU-EJE-07, SF2.6 / SF-3 Cierre por Excepción)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_cierre_a_revisionsymp" sourceRef="UT_CierreFinanciero" targetRef="UT_RevisionSYMP"/>
+
+    <userTask id="UT_RevisionSYMP" name="Revisión de Cierre Financiero (CU-EJE-07)" flowable:candidateGroups="Técnico SYMP"/>
+
+    <sequenceFlow id="sf_revisionsymp_a_gw5" sourceRef="UT_RevisionSYMP" targetRef="gw5"/>
+
+    <exclusiveGateway id="gw5" name="¿Resultado de la revisión de Cierre?"/>
+
+    <!-- Ciclo interno de revisión Técnico SYMP <-> Técnico URP: no cambia el "Estado del Proyecto" del catálogo RN04, por lo que no lleva executionListener -->
+    <sequenceFlow id="sf19_observado_cierre" name="Observado (revisión interna, no es transición de estado del catálogo)" sourceRef="gw5" targetRef="UT_CierreFinanciero">
+      <conditionExpression xsi:type="tFormalExpression">${decisionCierreSYMP == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf20_cierre_definitivo" name="Cierre Definitivo" sourceRef="gw5" targetRef="end1">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionCierreSYMP == 'definitivo'}</conditionExpression>
+    </sequenceFlow>
+
+    <endEvent id="end1" name="Proyecto Cerrado"/>
+
+  </process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_proceso_ciclo_vida_proyecto_siip">
+    <bpmndi:BPMNPlane bpmnElement="proceso_ciclo_vida_proyecto_siip" id="BPMNPlane_proceso_ciclo_vida_proyecto_siip">
+
+      <bpmndi:BPMNShape bpmnElement="start1" id="Shape_start1">
+        <omgdc:Bounds x="100" y="112" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_EnElaboracion" id="Shape_UT_EnElaboracion">
+        <omgdc:Bounds x="200" y="100" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionCUP" id="Shape_UT_RevisionCUP">
+        <omgdc:Bounds x="380" y="100" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="gw1" id="Shape_gw1">
+        <omgdc:Bounds x="560" y="120" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_ObservadoDGICP" id="Shape_UT_ObservadoDGICP">
+        <omgdc:Bounds x="660" y="100" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_CUPAsignado" id="Shape_UT_CUPAsignado">
+        <omgdc:Bounds x="840" y="100" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_FormulacionEvaluacion" id="Shape_UT_FormulacionEvaluacion">
+        <omgdc:Bounds x="100" y="280" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_ProyectoFormulado" id="Shape_UT_ProyectoFormulado">
+        <omgdc:Bounds x="300" y="280" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionViabilidad" id="Shape_UT_RevisionViabilidad">
+        <omgdc:Bounds x="500" y="280" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="gw2" id="Shape_gw2">
+        <omgdc:Bounds x="700" y="300" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_ObservadoViabilidad" id="Shape_UT_ObservadoViabilidad">
+        <omgdc:Bounds x="800" y="280" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="gw2b" id="Shape_gw2b">
+        <omgdc:Bounds x="700" y="440" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_Elegibilidad" id="Shape_UT_Elegibilidad">
+        <omgdc:Bounds x="500" y="460" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOT" id="Shape_UT_RevisionOT">
+        <omgdc:Bounds x="300" y="460" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="gw3" id="Shape_gw3">
+        <omgdc:Bounds x="240" y="480" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_ObservadoOT" id="Shape_UT_ObservadoOT">
+        <omgdc:Bounds x="100" y="460" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_PostOT" id="Shape_UT_PostOT">
+        <omgdc:Bounds x="300" y="620" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="gw4" id="Shape_gw4">
+        <omgdc:Bounds x="500" y="640" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_CierreFinanciero" id="Shape_UT_CierreFinanciero">
+        <omgdc:Bounds x="600" y="620" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionSYMP" id="Shape_UT_RevisionSYMP">
+        <omgdc:Bounds x="800" y="620" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="gw5" id="Shape_gw5">
+        <omgdc:Bounds x="1000" y="640" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="end1" id="Shape_end1">
+        <omgdc:Bounds x="1100" y="642" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges (simples, cuadrícula; el equipo las reordena en Flowable Modeler) -->
+      <bpmndi:BPMNEdge bpmnElement="sf_start_a_elaboracion" id="Edge_sf_start_a_elaboracion">
+        <omgdi:waypoint x="136" y="130"/>
+        <omgdi:waypoint x="200" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf1_solicitar_cup" id="Edge_sf1">
+        <omgdi:waypoint x="320" y="140"/>
+        <omgdi:waypoint x="380" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_revisioncup_a_gw1" id="Edge_sf_revisioncup_a_gw1">
+        <omgdi:waypoint x="500" y="140"/>
+        <omgdi:waypoint x="560" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf2_devolver" id="Edge_sf2">
+        <omgdi:waypoint x="600" y="140"/>
+        <omgdi:waypoint x="660" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf3_reenvio_cup" id="Edge_sf3">
+        <omgdi:waypoint x="700" y="180"/>
+        <omgdi:waypoint x="440" y="180"/>
+        <omgdi:waypoint x="440" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf4_emitir_cup" id="Edge_sf4">
+        <omgdi:waypoint x="580" y="160"/>
+        <omgdi:waypoint x="580" y="200"/>
+        <omgdi:waypoint x="840" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf5_iniciar_identificacion" id="Edge_sf5">
+        <omgdi:waypoint x="900" y="180"/>
+        <omgdi:waypoint x="900" y="320"/>
+        <omgdi:waypoint x="240" y="320"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf6_finalizar_indicadores" id="Edge_sf6">
+        <omgdi:waypoint x="240" y="320"/>
+        <omgdi:waypoint x="300" y="320"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf7_solicitar_viabilidad" id="Edge_sf7">
+        <omgdi:waypoint x="440" y="320"/>
+        <omgdi:waypoint x="500" y="320"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_viabilidad_a_gw2" id="Edge_sf_viabilidad_a_gw2">
+        <omgdi:waypoint x="640" y="320"/>
+        <omgdi:waypoint x="700" y="320"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf8_observar_viabilidad" id="Edge_sf8">
+        <omgdi:waypoint x="740" y="320"/>
+        <omgdi:waypoint x="800" y="320"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf9_reiniciar_viabilidad" id="Edge_sf9">
+        <omgdi:waypoint x="870" y="280"/>
+        <omgdi:waypoint x="870" y="240"/>
+        <omgdi:waypoint x="570" y="280"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf10_emitir_viabilidad" id="Edge_sf10">
+        <omgdi:waypoint x="720" y="340"/>
+        <omgdi:waypoint x="720" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf11_a_elegibilidad" id="Edge_sf11">
+        <omgdi:waypoint x="700" y="460"/>
+        <omgdi:waypoint x="640" y="480"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf12_directo_a_ot" id="Edge_sf12">
+        <omgdi:waypoint x="700" y="480"/>
+        <omgdi:waypoint x="370" y="500"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf13_emitir_elegibilidad" id="Edge_sf13">
+        <omgdi:waypoint x="500" y="500"/>
+        <omgdi:waypoint x="440" y="500"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_ot_a_gw3" id="Edge_sf_ot_a_gw3">
+        <omgdi:waypoint x="300" y="500"/>
+        <omgdi:waypoint x="280" y="500"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf14_observar_ot" id="Edge_sf14">
+        <omgdi:waypoint x="240" y="500"/>
+        <omgdi:waypoint x="220" y="500"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf15_reenviar_ot" id="Edge_sf15">
+        <omgdi:waypoint x="160" y="460"/>
+        <omgdi:waypoint x="160" y="420"/>
+        <omgdi:waypoint x="360" y="460"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf16_ot_favorable" id="Edge_sf16">
+        <omgdi:waypoint x="260" y="520"/>
+        <omgdi:waypoint x="260" y="600"/>
+        <omgdi:waypoint x="370" y="620"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_postot_a_gw4" id="Edge_sf_postot_a_gw4">
+        <omgdi:waypoint x="440" y="660"/>
+        <omgdi:waypoint x="500" y="660"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf17_actualizar_ot" id="Edge_sf17">
+        <omgdi:waypoint x="520" y="640"/>
+        <omgdi:waypoint x="520" y="500"/>
+        <omgdi:waypoint x="170" y="360"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf18_avanzar_ejecucion" id="Edge_sf18">
+        <omgdi:waypoint x="540" y="660"/>
+        <omgdi:waypoint x="600" y="660"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_cierre_a_revisionsymp" id="Edge_sf_cierre_a_revisionsymp">
+        <omgdi:waypoint x="740" y="660"/>
+        <omgdi:waypoint x="800" y="660"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_revisionsymp_a_gw5" id="Edge_sf_revisionsymp_a_gw5">
+        <omgdi:waypoint x="940" y="660"/>
+        <omgdi:waypoint x="1000" y="660"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf19_observado_cierre" id="Edge_sf19">
+        <omgdi:waypoint x="1020" y="640"/>
+        <omgdi:waypoint x="1020" y="600"/>
+        <omgdi:waypoint x="670" y="620"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf20_cierre_definitivo" id="Edge_sf20">
+        <omgdi:waypoint x="1040" y="660"/>
+        <omgdi:waypoint x="1100" y="660"/>
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>
