@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
@@ -14,9 +15,22 @@ import { IconoColor } from '../components/Icono';
  */
 export function Topbar({ titulo, alAbrirMenu }: { titulo: string; alAbrirMenu: () => void }) {
   const { t } = useTranslation();
-  const { logout } = useAuth();
+  const { logout, username, roles } = useAuth();
   const navigate = useNavigate();
   const base = import.meta.env.BASE_URL;
+
+  const [abierto, setAbierto] = useState(false);
+  const caja = useRef<HTMLDivElement>(null);
+
+  // Un clic fuera cierra el desplegable, como espera cualquier menú de usuario.
+  useEffect(() => {
+    if (!abierto) return;
+    const fuera = (e: MouseEvent) => {
+      if (caja.current && !caja.current.contains(e.target as Node)) setAbierto(false);
+    };
+    document.addEventListener('mousedown', fuera);
+    return () => document.removeEventListener('mousedown', fuera);
+  }, [abierto]);
 
   const cerrarSesion = () => {
     logout();
@@ -67,9 +81,29 @@ export function Topbar({ titulo, alAbrirMenu }: { titulo: string; alAbrirMenu: (
           <IconoColor nombre="ui-config" style={{ width: 19, height: 19, objectFit: 'contain', display: 'block' }} />
         </button>
 
-        <button type="button" className="topbar-salir" onClick={cerrarSesion}>
-        {t('common.logout')}
-      </button>
+        {/* En el diseño este sitio lo ocupa un selector de rol de demostración.
+            Aquí el rol viene del token y no se elige, así que la misma píldora
+            muestra al usuario real y despliega el cierre de sesión. */}
+        <div className="usuario-menu" ref={caja}>
+          <button
+            type="button"
+            className="selector-rol"
+            aria-haspopup="menu"
+            aria-expanded={abierto}
+            onClick={() => setAbierto((v) => !v)}
+          >
+            {username ?? ''}
+            {roles[0] ? ` · ${roles[0]}` : ''}
+            <span className="flecha" aria-hidden="true">▾</span>
+          </button>
+          {abierto && (
+            <div className="usuario-desplegable" role="menu">
+              <button type="button" role="menuitem" onClick={cerrarSesion}>
+                {t('common.logout')}
+              </button>
+            </div>
+          )}
+        </div>
     </div>
     </header>
   );

@@ -485,3 +485,26 @@ tbody tr:hover td { background: var(--azul-suave); }
   font: inherit; font-size: 12px; font-weight: 700; margin-left: auto;
   background: none; border: 0; color: var(--azul); text-decoration: underline; cursor: pointer; padding: 0;
 }
+
+/* Píldora de usuario de la barra superior. En el diseño es un selector de rol;
+   aquí el rol sale del token, así que muestra al usuario y despliega el cierre
+   de sesión. */
+.usuario-menu { position: relative; }
+.usuario-menu .selector-rol {
+  display: flex; align-items: center; gap: 6px;
+  background: #fff; color: var(--n700); font-weight: 400; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.usuario-menu .selector-rol:hover { border-color: var(--n300); }
+.usuario-menu .flecha { color: var(--n500); font-size: 10px; }
+.usuario-desplegable {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+  background: #fff; border: 1px solid var(--n200); border-radius: var(--r);
+  box-shadow: var(--sombra); min-width: 160px; padding: 4px;
+}
+.usuario-desplegable button {
+  display: block; width: 100%; text-align: left; font: inherit; font-size: 12.5px;
+  background: none; border: 0; padding: 8px 10px; border-radius: 4px; cursor: pointer; color: var(--n700);
+}
+.usuario-desplegable button:hover { background: var(--n100); }
+.conteo-listado { padding: 10px 16px 0; margin: 0; font-size: 12.5px; color: var(--n500); }

@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { IconoColor } from '../components/Icono';
+import { EstadoProyecto } from '../api/preinversionApi';
+import { useConteosProyecto } from './useConteosProyecto';
 
 /**
- * Pantalla de inicio, según el diseño aprobado (siip-INICIO-NUEVA-GRIS):
- * banda de bienvenida, tarjetas de módulo y resumen de proyectos.
+ * Pantalla de inicio, según el diseño aprobado en solodevs.net: banda de
+ * bienvenida, "Mis pendientes", tarjetas de módulo y resumen de proyectos.
  *
- * Las tarjetas llevan a los módulos ya enrutados. El resumen todavía no tiene
- * endpoint que lo alimente — listarProyectos sólo filtra por estado y no
- * devuelve totales — así que de momento sólo enlaza al listado con el filtro
- * puesto, sin cifras inventadas.
+ * Las cifras salen de `paginacion.totalElementos` de listarProyectos, una
+ * consulta por estado. No hay ningún número de ejemplo en pantalla.
  */
 const MODULOS_TARJETA = [
   { clave: 'preinversion', icono: 'mod-preinversion', texto: 'menu.preinversion', desc: 'mod.preinversion.desc', color: 'var(--preinv-txt)', ruta: '/preinversion/proyectos' },
@@ -18,17 +18,33 @@ const MODULOS_TARJETA = [
   { clave: 'seguimiento', icono: 'mod-seguimiento', texto: 'menu.seguimiento', desc: 'mod.seguimiento.desc', color: 'var(--segui)', ruta: '/seguimiento' },
 ] as const;
 
-const ACCESOS = [
-  { icono: 'tile-formulacion', texto: 'ind.formulacion', color: 'var(--navy)', estado: 'EN_REGISTRO' },
-  { icono: 'tile-ejecucion', texto: 'ind.ejecucion', color: 'var(--preinv-txt)', estado: 'ENVIADO_DGICP_REGISTRO' },
-  { icono: 'tile-seguimiento', texto: 'ind.seguimiento', color: 'var(--ejec-txt)', estado: 'OBSERVADO_DGICP_REGISTRO' },
-  { icono: 'tile-completados', texto: 'ind.completados', color: 'var(--progra)', estado: 'CUP_ASIGNADO' },
+// Los tres estados de CU-PRE-01 sobre los que el Técnico URP tiene que actuar.
+const PENDIENTES = [
+  { estado: EstadoProyecto.ObservadoDgicpRegistro, tono: 'aviso', tit: 'pend.observadas', det: 'pend.observadasDet' },
+  { estado: EstadoProyecto.EnRegistro, tono: 'info', tit: 'pend.elaboracion', det: 'pend.elaboracionDet' },
+  { estado: EstadoProyecto.CupAsignado, tono: 'ok', tit: 'pend.conCup', det: 'pend.conCupDet' },
 ] as const;
+
+// Resumen del ciclo de vida. Se rotula cada casilla con el estado que de verdad
+// cuenta: el diseño decía "En seguimiento", que no corresponde a ningún estado
+// del contrato (ver nota para el cliente).
+const RESUMEN = [
+  { estado: EstadoProyecto.EnFormulacion, icono: 'tile-formulacion', texto: 'ind.formulacion', color: 'var(--navy)' },
+  { estado: EstadoProyecto.EnViabilidad, icono: 'tile-ejecucion', texto: 'ind.viabilidad', color: 'var(--preinv-txt)' },
+  { estado: EstadoProyecto.EnEjecucion, icono: 'tile-seguimiento', texto: 'ind.ejecucion', color: 'var(--ejec-txt)' },
+  { estado: EstadoProyecto.Finalizado, icono: 'tile-completados', texto: 'ind.finalizados', color: 'var(--progra)' },
+] as const;
+
+const TODOS = [...PENDIENTES.map((p) => p.estado), ...RESUMEN.map((r) => r.estado)];
 
 export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const base = import.meta.env.BASE_URL;
+  const { conteos, cargando } = useConteosProyecto(TODOS);
+
+  const irAlListado = (estado: EstadoProyecto) => navigate(`/preinversion/proyectos?estado=${estado}`);
+  const cifra = (estado: EstadoProyecto) => (cargando ? '·' : (conteos[estado] ?? 0));
 
   return (
     <>
@@ -38,11 +54,23 @@ export function HomePage() {
           <h1>SIIP</h1>
           <div className="lema">{t('app.nombre')}</div>
           <p>{t('inicio.lema')}</p>
-            </div>
+        </div>
         <div className="marca">
           <img src={`${base}min-logo-blanco.png`} alt="Gobierno de El Salvador · Ministerio de Hacienda" />
-          </div>
+        </div>
       </section>
+
+      <h2 className="seccion">{t('inicio.pendientes')}</h2>
+      <p className="nota">{t('inicio.pendientesNota')}</p>
+      <div className="pendientes">
+        {PENDIENTES.map((p) => (
+          <button key={p.estado} type="button" className={`pendiente ${p.tono}`} onClick={() => irAlListado(p.estado)}>
+            <div className="cifra">{cifra(p.estado)}</div>
+            <div className="tit">{t(p.tit)}</div>
+            <div className="det">{t(p.det)}</div>
+          </button>
+        ))}
+      </div>
 
       <h2 className="seccion">{t('inicio.modulos')}</h2>
       <div className="modulos">
@@ -53,7 +81,7 @@ export function HomePage() {
             <p>{t(m.desc)}</p>
             <div className="flecha" style={{ color: m.color }} aria-hidden="true">
               →
-        </div>
+            </div>
           </button>
         ))}
       </div>
@@ -61,16 +89,14 @@ export function HomePage() {
       <h2 className="seccion">{t('inicio.resumen')}</h2>
       <p className="nota">{t('inicio.resumenNota')}</p>
       <div className="indicadores">
-        {ACCESOS.map((a) => (
-          <button
-            key={a.texto}
-            type="button"
-            className="indicador"
-            onClick={() => navigate(`/preinversion/proyectos?estado=${a.estado}`)}
-          >
-            <IconoColor nombre={a.icono} />
+        {RESUMEN.map((r) => (
+          <button key={r.estado} type="button" className="indicador" onClick={() => irAlListado(r.estado)}>
+            <IconoColor nombre={r.icono} />
             <span>
-              <span className="etiqueta">{t(a.texto)}</span>
+              <span className="cifra" style={{ color: r.color, display: 'block' }}>
+                {cifra(r.estado)}
+              </span>
+              <span className="etiqueta">{t(r.texto)}</span>
             </span>
           </button>
         ))}

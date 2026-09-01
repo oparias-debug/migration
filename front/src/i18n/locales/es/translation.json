@@ -140,7 +140,12 @@
       "ayudaMedidas": "(cada listado se habilita al activar su opción · selección múltiple)",
       "campoMedidas": "Medidas de GRD / GRC / ACC",
       "phNombre": "Máximo 250 caracteres",
-      "phDescripcion": "Máximo 1,000 caracteres"
+      "phDescripcion": "Máximo 1,000 caracteres",
+      "filtroEstado": "Estado",
+      "filtroTodos": "Todos",
+      "conteo": "{{desde}}–{{hasta}} de {{total}} registros",
+      "sinRespaldoListado": "Columnas y filtros del diseño que todavía no existen en el API:",
+      "sinRespaldoListadoNota": "listarProyectos sólo admite el filtro por estado, y ProyectoListItem no devuelve CUP ni responsable asignado. Hay que ampliarlo en el contrato o retirarlos del diseño."
     },
     "revisionPre": {
       "titulo": "Revisión PRE",
@@ -184,8 +189,10 @@
     "bienvenido": "BIENVENIDO A",
     "lema": "Plataforma integrada para la gestión eficiente del ciclo de vida de proyectos de inversión pública.",
     "modulos": "Módulos principales",
-    "resumen": "Accesos rápidos",
-    "resumenNota": "Abren el listado de proyectos con el filtro aplicado."
+    "resumen": "Resumen de proyectos",
+    "resumenNota": "Cada indicador abre el listado ya filtrado por ese estado.",
+    "pendientes": "Mis pendientes",
+    "pendientesNota": "Lo que tienes que atender hoy. Cada tarjeta abre el listado ya filtrado."
   },
   "mod": {
     "preinversion": {
@@ -203,8 +210,16 @@
   },
   "ind": {
     "formulacion": "En formulación",
+    "viabilidad": "En viabilidad",
     "ejecucion": "En ejecución",
-    "seguimiento": "En seguimiento",
-    "completados": "Completados"
+    "finalizados": "Finalizados"
+  },
+  "pend": {
+    "observadas": "Solicitudes observadas",
+    "observadasDet": "Requieren tu corrección y reenvío",
+    "elaboracion": "En elaboración",
+    "elaboracionDet": "Borradores sin enviar a la DGICP",
+    "conCup": "Con CUP asignado",
+    "conCupDet": "Listas para continuar a la ruta de preinversión"
   }
 }
