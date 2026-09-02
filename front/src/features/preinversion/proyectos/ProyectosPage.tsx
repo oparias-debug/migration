@@ -94,7 +94,7 @@ export function ProyectosPage() {
       render: (proyecto) => (
         <button
           type="button"
-          className="btn btn-link p-0 align-baseline"
+          className="enlace-fila"
           onClick={() => navigate(`/preinversion/proyectos/${proyecto.idProyecto}`)}
         >
           {proyecto.nombre}

@@ -376,9 +376,9 @@ export function ProyectoFormPage() {
 
   if (errorCarga) {
     return (
-      <div className="alert alert-danger" role="alert">
+      <div className="aviso-error" role="alert">
         <p>{errorCarga}</p>
-        <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => navigate('/preinversion/proyectos')}>
+        <button type="button" className="btn neutro" onClick={() => navigate('/preinversion/proyectos')}>
           {t('preinversion.registro.botonRegresar')}
         </button>
       </div>
@@ -686,7 +686,7 @@ export function ProyectoFormPage() {
             </button>
           )}
           {puedeRevisarPre && (
-            <button type="button" className="btn btn-success" onClick={emitirCup} disabled={guardando}>
+            <button type="button" className="btn secundario" onClick={emitirCup} disabled={guardando}>
               {t('preinversion.registro.botonEmitirCup')}
             </button>
           )}

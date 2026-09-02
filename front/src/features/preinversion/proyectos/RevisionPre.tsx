@@ -103,14 +103,14 @@ export function RevisionPre({
           </label>
           <textarea
             id="respuesta"
-            className={`form-control${errorRespuesta ? ' is-invalid' : ''}`}
+            className={errorRespuesta ? 'malo' : undefined}
             rows={3}
             value={respuesta}
             onChange={(evento) => setRespuesta(evento.target.value)}
             disabled={enviando}
           />
           {errorRespuesta && <div className="invalid-feedback d-block">{errorRespuesta}</div>}
-          <button type="button" className="btn btn-primary mt-2" onClick={enviar} disabled={enviando}>
+          <button type="button" className="btn primario" onClick={enviar} disabled={enviando}>
             {t('preinversion.revisionPre.botonEnviar')}
           </button>
         </div>
@@ -123,13 +123,13 @@ export function RevisionPre({
           </label>
           <textarea
             id="comentarioPre"
-            className="form-control"
+            className={undefined}
             rows={3}
             value={comentario}
             onChange={(evento) => setComentario(evento.target.value)}
             disabled={enviando}
           />
-          <button type="button" className="btn btn-warning mt-2" onClick={devolver} disabled={enviando}>
+          <button type="button" className="btn secundario" onClick={devolver} disabled={enviando}>
             {t('preinversion.revisionPre.botonDevolver')}
           </button>
         </div>

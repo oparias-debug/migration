@@ -61,7 +61,7 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit} noValidate>
             {error && (
-            <div className="alert alert-danger py-2" role="alert">
+            <div className="login-error" role="alert">
                 {error}
               </div>
             )}

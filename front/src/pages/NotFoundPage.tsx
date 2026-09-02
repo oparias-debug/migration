@@ -8,7 +8,7 @@ export function NotFoundPage() {
     <div className="text-center p-5">
       <h1>404</h1>
       <p className="lead">{t('notFound.title')}</p>
-      <Link className="btn btn-primary mt-3" to="/">
+      <Link className="btn primario" to="/">
         {t('placeholder.backHome')}
       </Link>
     </div>

@@ -10,7 +10,7 @@ export function PlaceholderPage() {
     <div className="text-center p-5">
       <h1 className="display-4 text-warning">{t('placeholder.title')}</h1>
       <p className="lead">{t('placeholder.text')}</p>
-      <Link className="btn btn-primary mt-3" to="/">
+      <Link className="btn primario" to="/">
         {t('placeholder.backHome')}
       </Link>
     </div>

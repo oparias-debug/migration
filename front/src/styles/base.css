@@ -514,3 +514,21 @@ tbody tr:hover td { background: var(--azul-suave); }
   color: var(--n700); background: var(--n50);
   border: 1px solid var(--n200); border-radius: var(--r);
 }
+
+/* Aviso de error a ancho completo (carga fallida de una pantalla). */
+.aviso-error {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 14px; padding: 11px 15px; border-left: 3px solid var(--error);
+  background: #FDECEC; color: #9B1C1C; border-radius: 0 var(--r) var(--r) 0; font-size: 12.5px;
+}
+/* Nombre del proyecto en la tabla: enlace, no botón. */
+.enlace-fila {
+  font: inherit; background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--azul); text-decoration: underline; text-align: left;
+}
+.enlace-fila:hover { color: #002f92; }
+/* Aviso de credenciales en el acceso. */
+.login-error {
+  margin: 0 0 12px; padding: 9px 12px; border-radius: 4px;
+  background: #FDECEC; color: #9B1C1C; font-size: 12.5px; text-align: left;
+}

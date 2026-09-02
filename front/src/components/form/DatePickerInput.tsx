@@ -39,7 +39,7 @@ export function DatePickerInput({ value, onChange, hasError, name }: DatePickerI
     <input
       ref={inputRef}
       name={name}
-      className={`form-control${hasError ? ' is-invalid' : ''}`}
+      className={hasError ? 'malo' : undefined}
       defaultValue={value}
       onChange={(e) => onChange(e.target.value)}
     />
