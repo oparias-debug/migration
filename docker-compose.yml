@@ -88,9 +88,54 @@ services:
       - postgres
     networks:
       - microred
-      
+
+  # Base de datos propia de SonarQube (no reutiliza siip-db: Sonar exige su propio
+  # usuario/esquema y su ciclo de vida no debe acoplarse al de la base de negocio).
+  sonarqube-db:
+    image: postgres:17
+    container_name: siip-sonarqube-db
+    environment:
+      POSTGRES_USER: ${SONARQUBE_DB_USER}
+      POSTGRES_PASSWORD: ${SONARQUBE_DB_PASSWORD}
+      POSTGRES_DB: ${SONARQUBE_DB_DATABASE}
+    volumes:
+      - siip_sonarqube_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - microred
+
+  # Servidor SonarQube (análisis estático + cobertura). Ver REFERENCE.md#análisis-estático-sonarqube
+  # para cómo correr el análisis de back/api-gateway (Maven) y front (npm) contra este servidor.
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: siip-sonarqube
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/${SONARQUBE_DB_DATABASE}
+      SONAR_JDBC_USERNAME: ${SONARQUBE_DB_USER}
+      SONAR_JDBC_PASSWORD: ${SONARQUBE_DB_PASSWORD}
+    ports:
+      - "9000:9000"
+    volumes:
+      - siip_sonarqube_data:/opt/sonarqube/data
+      - siip_sonarqube_extensions:/opt/sonarqube/extensions
+      - siip_sonarqube_logs:/opt/sonarqube/logs
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    networks:
+      - microred
+
 networks:
   microred:
 
 volumes:
   siip_pgdata:
+  siip_sonarqube_db_data:
+  siip_sonarqube_data:
+  siip_sonarqube_extensions:
+  siip_sonarqube_logs:

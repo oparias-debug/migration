@@ -20,4 +20,10 @@ public interface NotificacionService {
 
     /** RN-4: alerta de posible eliminacion tras 3 meses sin solicitar el CUP. */
     void notificarAlertaEliminacion(Proyecto proyecto, Usuario destinatario);
+
+    /** Anexo A.3.2 (CU-PRE-01.5): notifica al Tecnico URP cuando el Tecnico PRE devuelve la solicitud con observaciones. */
+    void notificarDevolucionSolicitud(Proyecto proyecto, Usuario destinatario);
+
+    /** Anexo A.3.4 (CU-PRE-01.5): notifica al Tecnico URP cuando el Tecnico PRE emite el CUP. */
+    void notificarEmisionCup(Proyecto proyecto, Usuario destinatario);
 }

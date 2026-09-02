@@ -19,7 +19,9 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html'],
+      // 'lcov' es el formato que consume el analizador de SonarQube (sonar.javascript.lcov.reportPaths
+      // en sonar-project.properties); 'text'/'html' son para lectura humana en terminal/navegador.
+      reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/main.tsx', 'src/vite-env.d.ts', 'src/**/*.test.{ts,tsx}'],
     },

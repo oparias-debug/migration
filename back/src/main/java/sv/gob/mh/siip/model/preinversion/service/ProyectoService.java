@@ -6,13 +6,17 @@ import sv.gob.mh.siip.exception.NoAutenticadoException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.dto.CambioUnidadEjecutoraRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.DevolucionSolicitudRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.EstadoProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectoListResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectoRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RespuestaObservacionRequestDto;
 
-/** Reglas de negocio de CU-PRE-01 (Registro y Solicitud de CUP). Un metodo por operacion del contrato. */
+/**
+ * Reglas de negocio de CU-PRE-01 (Registro y Solicitud de CUP) y CU-PRE-01.5 (Revision y Emision
+ * de CUP). Un metodo por operacion del contrato.
+ */
 public interface ProyectoService {
 
     /**
@@ -81,6 +85,35 @@ public interface ProyectoService {
      * @throws ValidacionNegocioException si la respuesta viene vacía.
      */
     ProyectoDto responderObservacionCup(Long idProyecto, RespuestaObservacionRequestDto request);
+
+    /**
+     * Devuelve la solicitud de CUP vigente al Técnico URP con una observación (CU-PRE-01.5, RN 2.7,
+     * Anexo A.3.2): agrega el comentario del Técnico PRE (si lo hay) y regresa el proyecto a
+     * {@code OBSERVADO_DGICP_REGISTRO}, habilitando el campo "Respuesta" en CU-PRE-01. Solo
+     * permitido para el Técnico PRE al que se le asignó la solicitud en CU-PRE-02.
+     *
+     * @throws AccesoDenegadoException si el actor no es Técnico PRE, o siéndolo, la solicitud no le
+     *         fue asignada.
+     * @throws RecursoNoEncontradoException si el proyecto no existe.
+     * @throws ConflictoEstadoException si el proyecto no está en estado {@code ENVIADO_DGICP_REGISTRO}
+     *         o no tiene una solicitud de CUP vigente.
+     */
+    ProyectoDto devolverSolicitudCup(Long idProyecto, DevolucionSolicitudRequestDto request);
+
+    /**
+     * Emite el Código Único de Proyecto de la solicitud vigente (CU-PRE-01.5, RN 2.8.c, Anexo
+     * A.3.4): asigna un CUP consecutivo numérico de 5 dígitos desde 10000 en adelante y cambia el
+     * estado a {@code CUP_ASIGNADO}. El salto de numeración cada 53 códigos (RN 2.8.c) no se modela
+     * por no estar completamente especificado. Solo permitido para el Técnico PRE al que se le
+     * asignó la solicitud en CU-PRE-02.
+     *
+     * @throws AccesoDenegadoException si el actor no es Técnico PRE, o siéndolo, la solicitud no le
+     *         fue asignada.
+     * @throws RecursoNoEncontradoException si el proyecto no existe.
+     * @throws ConflictoEstadoException si el proyecto no está en estado {@code ENVIADO_DGICP_REGISTRO}
+     *         o no tiene una solicitud de CUP vigente.
+     */
+    ProyectoDto emitirCup(Long idProyecto);
 
     /** Reasigna el proyecto (y su Institución) a otra Unidad Ejecutora. Solo permitido al Administrador.
      *

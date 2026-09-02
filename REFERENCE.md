@@ -9,6 +9,7 @@ Cómo funciona internamente la generación de código desde OpenAPI (back y fron
 - [Contratos OpenAPI (front) — generación del cliente](#contratos-openapi-front--cómo-funciona-la-generación-del-cliente)
 - [Pruebas y calidad](#pruebas-y-calidad)
   - [Cobertura de pruebas](#cobertura-de-pruebas)
+  - [Análisis estático (SonarQube)](#análisis-estático-sonarqube)
   - [Pruebas BDD (Gherkin/Cucumber)](#pruebas-bdd-gherkincucumber--solo-en-back)
 
 ## Contratos OpenAPI (back) — cómo funciona la generación de código
@@ -94,7 +95,7 @@ Esto corre `openapi-generator-cli generate -i openapi/preinversion/CU-PRE-01.ope
 
 - Los tests unitarios se ubican por módulo en `src/test/java` (JUnit 5 + Mockito).
 - Cobertura con JaCoCo configurado en el `pom.xml` raíz (`prepare-agent` + `report` en fase `verify`).
-- Análisis estático con SonarQube/SonarCloud mediante `SONAR_TOKEN` (variable de entorno).
+- Análisis estático con SonarQube, corriendo como servicio `sonarqube` en `docker-compose.yml` (junto a su propia base `sonarqube-db`, separada de `siip-db`), autenticado con `SONAR_TOKEN` (variable de entorno).
 
 ### Cobertura de pruebas
 
@@ -116,6 +117,42 @@ npm run test:coverage    # corre los tests y genera el reporte de cobertura
 ```
 
 `test:coverage` imprime la tabla de cobertura en la terminal y además genera un reporte HTML en `front/coverage/index.html`. Los tests viven junto al código que prueban (`*.test.ts`/`*.test.tsx`, p. ej. `src/auth/tokenStore.test.ts`), usando Vitest + React Testing Library (`jsdom` como entorno DOM). Hoy la cobertura es baja porque recién se sentó la base de testing al migrar el front a React — hay que ir sumando tests a medida que se toca cada módulo.
+
+### Análisis estático (SonarQube)
+
+El servidor corre local vía Docker Compose (servicio `sonarqube`, imagen `sonarqube:lts-community`, con su propia Postgres `sonarqube-db` — separada de `siip-db` porque Sonar necesita su propio usuario/esquema y no debe compartir ciclo de vida con la base de negocio):
+
+```
+docker compose up -d sonarqube
+```
+
+La primera vez tarda un par de minutos en arrancar (Elasticsearch embebido). Si el contenedor muere con `max virtual memory areas vm.max_map_count [...] is too low`, hay que subir ese límite en el host/VM de Docker (en Docker Desktop con WSL2: `wsl -d docker-desktop sysctl -w vm.max_map_count=262144`, o agregarlo a `.wslconfig` para que sobreviva un reinicio).
+
+Una vez arriba, entrar a http://localhost:9000 (usuario/clave por defecto `admin`/`admin`, pide cambiarla al primer login), crear un token de usuario (**My Account → Security**, tipo *User Token*) y ponerlo en `SONAR_TOKEN` en el `.env` de la raíz (reemplaza cualquier valor previo — un token de otro servidor/organización no sirve acá).
+
+> **Sobre la versión y el token**: `sonarqube:lts-community` fija la última LTS 9.9.x. Se evaluó `sonarqube:community` (Community Build, la release rolling actual) pero no llegó a arrancar en este entorno (Elasticsearch embebido más pesado, timeout indexando en frío) — quedó descartada por ahora a favor de la 9.9.x, que sí es estable acá. La consecuencia práctica: 9.9.x solo acepta autenticación **Basic** con el token como usuario (`sonar.login`), no el Bearer que arman por defecto los scanners nuevos a partir de `sonar.token`/`SONAR_TOKEN` — con `sonar.token` sale `Not authorized`. Los comandos de abajo ya usan `sonar.login` (back) o el wrapper que lo hace por vos (front). Si el día de mañana se sube el servidor a una versión que soporte Bearer, ambos dejan de hacer falta.
+>
+> El análisis, sobre todo la primera vez (JVM en frío, sin caché de análisis), tarda varios minutos reales (~9 min en `back`, ~3-13 min en `front` según si `@sonar/scan` ya tiene el scanner-cli descargado) — no está colgado, `mvn`/`npx` simplemente no imprimen nada mientras el analizador Java/TS procesa los archivos. Dejalo correr en background si vas a hacer otra cosa mientras tanto.
+
+**Backend (`back` + `api-gateway`) — un solo proyecto Sonar (`siip-back`) para todo el reactor Maven, corrido desde la raíz:**
+
+```
+mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar -Dsonar.login=%SONAR_TOKEN%
+```
+
+(`$SONAR_TOKEN` en bash/mac/Linux). `sonar.projectKey`/`sonar.projectName`/`sonar.host.url` ya están en el `pom.xml` raíz — no hace falta repetirlos. El plugin no está declarado como dependencia fija del build (convención recomendada por Sonar: se invoca por coordenadas completas) así que `clean verify` corre antes para que JaCoCo genere `target/site/jacoco/jacoco.xml` por módulo, que el scanner detecta solo. El `argLine` de Surefire en el `pom.xml` raíz también lleva `-XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true`: sin eso, en JDK 21+ (JEP 451) el "inline mock maker" de Mockito falla al auto-adjuntarse y los tests con `@Mock`/`MockitoExtension` truenan.
+>
+> Un archivo no llega a parsearse con el analizador Java bundleado en esta versión de SonarQube: `back/src/main/java/sv/gob/mh/siip/security/ActorContexto.java` usa `_` como variable no nombrada (sintaxis Java 21+), que el plugin `java` de esta 9.9.x todavía no reconoce (`Parse error ... '_' is a keyword from source level 9 onwards`). Ese archivo queda sin issues/duplicación de código detectados; el resto del análisis no se ve afectado.
+
+**Frontend (`front`) — proyecto Sonar separado (`siip-front`, TypeScript/JS no es parte del reactor Maven):**
+
+```
+cd front
+$env:SONAR_TOKEN = (Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1]  # o export SONAR_TOKEN=... en bash
+npm run sonar
+```
+
+`npm run sonar` corre `test:coverage` (genera `coverage/lcov.info`, que lee `sonar.javascript.lcov.reportPaths` en `front/sonar-project.properties`) y después `scripts/run-sonar.mjs`, un wrapper chico en Node que llama a `@sonar/scan` (scanner oficial de Sonar, se descarga on-demand vía `npx`, no queda como dependencia instalada) inyectándole `sonar.login` vía la variable `SONARQUBE_SCANNER_PARAMS` (mecanismo estándar del `sonar-scanner-cli` para properties extra) — `@sonar/scan` no expone un env var propio para pasar `sonar.login`, así que hace falta este paso intermedio; ver el comentario en el wrapper. Excluye `src/api/generated/**` del análisis y de cobertura — es código generado por `openapi-generator-cli`, no se versiona y no tiene sentido auditarlo (mismo criterio que las exclusiones de JaCoCo en el `pom.xml` de `back` para `api/`/`dto/` generados).
 
 ### Pruebas BDD (Gherkin/Cucumber) — solo en `back`
 

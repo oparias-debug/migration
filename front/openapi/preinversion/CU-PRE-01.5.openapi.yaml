@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-01.5 Revisión y Emisión de CUP
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-01.5 "Revisión y Emisión de CUP"
+    (UC-PRE-01_5-Revision_y_Emision_de_CUP.md) y sus dos historias BDD
+    (CU-PRE-01_5-devolver.feature, CU-PRE-01_5-emitir-cup.feature).
+    Actor principal: Técnico PRE. Opera sobre el mismo recurso `Proyecto` introducido
+    en CU-PRE-01.openapi.yaml (ver ese fragmento para `registrarProyecto`,
+    `solicitarCup`, `responderObservacionCup`, etc.); este fragmento reutiliza sus
+    schemas vía referencia externa en vez de redefinirlos. No repite la consulta de
+    solo lectura (SF-3 Ver Registro / `obtenerProyecto`), ya cubierta en CU-PRE-01.
+
+paths:
+
+  /proyectos/{idProyecto}/devoluciones:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: devolverSolicitudCup
+      summary: Devolver la solicitud de CUP con observaciones (botón "Devolver")
+      description: >
+        Solo disponible cuando el proyecto está en estado ENVIADO_DGICP_REGISTRO
+        y la solicitud fue asignada al Técnico PRE autenticado por el Coordinador
+        PRE en CU-PRE-02 (Precondiciones 1 y 2 del CU). Registra el comentario de
+        observación (RN 2.7), cambia el estado a OBSERVADO_DGICP_REGISTRO, notifica
+        al Técnico URP (correo, modelo Anexo A.3.2) y habilita para el Técnico URP
+        el campo "Respuesta" en CU-PRE-01 (`responderObservacionCup`).
+      tags: [Preinversión - Revisión y Emisión de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico PRE]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevolucionSolicitudRequest'
+      responses:
+        "200":
+          description: Solicitud devuelta; proyecto en estado OBSERVADO_DGICP_REGISTRO.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Proyecto'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico PRE, o siéndolo, la solicitud no le
+            fue asignada por el Coordinador PRE en CU-PRE-02 (Precondición 2 del
+            CU). El CU documenta la precondición de asignación, pero ni el CU ni la
+            historia BDD describen si el Sistema distingue ambos casos con un
+            mensaje distinto; se modelan bajo el mismo código 403 hasta que se
+            confirme lo contrario.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            El proyecto no se encuentra en estado ENVIADO_DGICP_REGISTRO (precondición
+            de las "Antecedentes" de la historia BDD). Se infiere de la precondición
+            del escenario, no de un escenario negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/cup:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: emitirCup
+      summary: Emitir el Código Único de Proyecto (botón "Emitir CUP")
+      description: >
+        Solo disponible cuando el proyecto está en estado ENVIADO_DGICP_REGISTRO
+        y la solicitud fue asignada al Técnico PRE autenticado por el Coordinador
+        PRE en CU-PRE-02 (Precondiciones 1 y 2 del CU). Asigna un CUP consecutivo
+        numérico de 5 dígitos desde 10000 (RN 2.8.c / RN 4; el mecanismo exacto del
+        salto de numeración cada 53 códigos no está completamente especificado y no
+        se modela aquí, ver contrato-CU-PRE-01.5.md), notifica al Técnico URP
+        (correo, modelo Anexo A.3.4), cambia el estado a CUP_ASIGNADO y hace que el
+        proyecto quede disponible para UC-PRE-03 y CU-PRE-29 (fuera del alcance de
+        este fragmento). RN 4 establece que esta acción es de una única vez por
+        proyecto en todo su horizonte; el comportamiento exacto ante un reintento
+        no está descrito por el CU ni por la historia BDD (ver nota en el 409 de
+        abajo).
+      tags: [Preinversión - Revisión y Emisión de CUP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico PRE]
+      responses:
+        "200":
+          description: CUP emitido; proyecto en estado CUP_ASIGNADO.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Proyecto'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico PRE, o siéndolo, la solicitud no le
+            fue asignada por el Coordinador PRE en CU-PRE-02 (Precondición 2 del
+            CU). Mismo criterio que en `devolverSolicitudCup`: se modelan bajo el
+            mismo código 403 hasta que se confirme una distinción explícita.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            El proyecto no se encuentra en estado ENVIADO_DGICP_REGISTRO. Cubre tanto
+            un estado previo a la solicitud como el caso de un proyecto que ya tiene
+            CUP asignado (RN 4), pero el mensaje/comportamiento exacto de este último
+            caso no está confirmado por el negocio (ver historia BDD, nota pendiente).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    DevolucionSolicitudRequest:
+      type: object
+      description: >
+        Cuerpo del botón "Devolver" (RN 2.7). El campo `comentario` corresponde al
+        campo "Comentarios" de la sección "Revisión PRE" (se persiste como un
+        `ComentarioSolicitud` con autor = Técnico PRE autenticado y fecha asignada
+        por el servidor). No se marca como obligatorio: el CU lo confirma
+        explícitamente en su sección "Validaciones" ("el campo Comentarios no es
+        obligatorio según el documento fuente"); no es una omisión de este contrato.
+      properties:
+        comentario:
+          type: string

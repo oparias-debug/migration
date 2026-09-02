@@ -29,6 +29,16 @@
         <modelmapper.version>3.2.4</modelmapper.version>
         <springdoc.version>2.8.9</springdoc.version>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
+
+        <!-- SonarQube (mvn sonar:sonar). host.url apunta al puerto publicado por el servicio
+             sonarqube de docker-compose.yml; overrideable con -Dsonar.host.url si se corre contra
+             otro servidor. El token NO va acá: se pasa por -Dsonar.token=%SONAR_TOKEN% (o env var
+             SONAR_TOKEN, que el scanner lee solo automáticamente), ver REFERENCE.md. Esto cubre el
+             reactor completo (back + api-gateway) como un solo proyecto Sonar; front (npm/TS) se
+             analiza aparte, ver front/sonar-project.properties. -->
+        <sonar.projectKey>siip-back</sonar.projectKey>
+        <sonar.projectName>SIIP - Backend (back + api-gateway)</sonar.projectName>
+        <sonar.host.url>http://localhost:9000</sonar.host.url>
     </properties>
 
     <dependencies>
@@ -58,6 +68,18 @@
                             <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- JDK 25 exige opt-in explícito para que un agente se auto-adjunte en
+                         tiempo de ejecución (JEP 451); sin esto, el "inline mock maker" de
+                         Mockito (usado por @Mock/@ExtendWith(MockitoExtension.class) en los
+                         tests) falla con "Could not self-attach to current VM". @{argLine}
+                         (no ${argLine}) para no pisar el agente que inyecta JaCoCo arriba. -->
+                    <argLine>@{argLine} -XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true</argLine>
                 </configuration>
             </plugin>
             <plugin>

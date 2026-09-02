@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Swal from 'sweetalert2';
-import { preinversionApi, catalogoPreinversionApi, IniciativaInversion, TipoMedidaCatalogo } from '../../../api/preinversionApi';
+import { preinversionApi, catalogoPreinversionApi, revisionCupApi, IniciativaInversion, TipoMedidaCatalogo } from '../../../api/preinversionApi';
 import type { ComentarioSolicitud, Proyecto, ProyectoRequest } from '../../../api/preinversionApi';
 import { erroresPorCampo, mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
@@ -135,6 +135,9 @@ export function ProyectoFormPage() {
   const planesSectoriales = useCatalogo(() => catalogoPreinversionApi.listarPlanesSectoriales());
 
   const puedeEditar = hasRole('TECNICO_URP') && (esNuevo || (estadoActual !== null && ESTADOS_EDITABLES.includes(estadoActual)));
+  // CU-PRE-01.5 (Antecedentes): el Técnico PRE revisa el mismo registro desde la Bandeja
+  // Preinversión (CU-PRE-02) mientras está en ENVIADO_DGICP_REGISTRO; nunca edita los campos.
+  const puedeRevisarPre = hasRole('TECNICO_PRE') && !esNuevo && estadoActual === 'ENVIADO_DGICP_REGISTRO';
 
   const regresar = async () => {
     if (isDirty) {
@@ -259,6 +262,63 @@ export function ProyectoFormPage() {
       const detalleRespuesta = erroresPorCampo(toErrorApi(fallo)).respuesta;
       if (detalleRespuesta) setErrorRespuesta(detalleRespuesta);
       else await manejarErrorDelBack(fallo);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  /**
+   * Botón "Devolver" de la sección Revisión PRE (CU-PRE-01.5-devolver.feature).
+   *
+   * El comentario no es obligatorio (a diferencia de "Respuesta" del Técnico
+   * URP): se envía sólo si el Técnico PRE escribió algo.
+   */
+  const devolverSolicitud = async (comentario: string) => {
+    if (idProyecto === undefined) return;
+
+    const confirmado = await confirmDialog(t('preinversion.revisionPre.confirmarDevolver'), {
+      confirmButtonText: t('common.aceptar'),
+      cancelButtonText: t('common.cancelar'),
+    });
+    if (!confirmado) return;
+
+    setGuardando(true);
+    try {
+      const { data } = await revisionCupApi.devolverSolicitudCup({
+        idProyecto,
+        devolucionSolicitudRequest: comentario.trim() ? { comentario: comentario.trim() } : undefined,
+      });
+      setRevisionPre(data.revisionPre ?? []);
+      setEstadoActual(data.estado);
+      // "el sistema pasa a la pantalla Nuevo registro": se sigue aquí, igual que al responder.
+      await Swal.fire({ icon: 'success', text: t('preinversion.revisionPre.devuelta') });
+    } catch (fallo) {
+      await manejarErrorDelBack(fallo);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  /** Botón "Emitir CUP" (CU-PRE-01.5-emitir-cup.feature): asigna el CUP y envía a la bandeja. */
+  const emitirCup = async () => {
+    if (idProyecto === undefined) return;
+
+    const confirmado = await confirmDialog(t('preinversion.registro.confirmarEmitirCup'), {
+      confirmButtonText: t('common.aceptar'),
+      cancelButtonText: t('common.cancelar'),
+    });
+    if (!confirmado) return;
+
+    setGuardando(true);
+    try {
+      const { data } = await revisionCupApi.emitirCup({ idProyecto });
+      setEstadoActual(data.estado);
+      await Swal.fire({ icon: 'success', text: t('preinversion.registro.cupEmitido', { cup: data.cup ?? '' }) });
+      // "el sistema envía el proyecto a la pantalla Captura de Proyectos (UC-PRE-03)": fuera
+      // del alcance de este fragmento; se regresa al listado, como en "Solicitar CUP".
+      navigate('/preinversion/proyectos');
+    } catch (fallo) {
+      await manejarErrorDelBack(fallo);
     } finally {
       setGuardando(false);
     }
@@ -514,9 +574,11 @@ export function ProyectoFormPage() {
           <RevisionPre
             comentarios={revisionPre}
             puedeResponder={puedeEditar && estadoActual === 'OBSERVADO_DGICP_REGISTRO'}
+            puedeDevolver={puedeRevisarPre}
             enviando={guardando}
             errorRespuesta={errorRespuesta}
             onEnviar={enviarRespuesta}
+            onDevolver={devolverSolicitud}
           />
         )}
 
@@ -559,6 +621,11 @@ export function ProyectoFormPage() {
               title={isDirty ? t('preinversion.registro.guardarAntesDeSolicitar') : undefined}
             >
               {t('preinversion.registro.botonSolicitarCup')}
+            </button>
+          )}
+          {puedeRevisarPre && (
+            <button type="button" className="btn btn-success" onClick={emitirCup} disabled={guardando}>
+              {t('preinversion.registro.botonEmitirCup')}
             </button>
           )}
         </div>

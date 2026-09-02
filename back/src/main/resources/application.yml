@@ -1,13 +1,34 @@
 spring:
-    application.name: back
-    profiles.active: prod
-    datasource:
-      url: ${DB_URL}
-      driver-class-name: ${DB_DRIVER_CLASS_NAME}
-      username: ${DB_USER}
-      password: ${DB_PASSWORD}
-    jpa:
-      show-sql: true
-      hibernate:
-        ddl-auto: create-drop
-        properties.hibernate.default_schema: ${DB_SCHEMA:public}
+  application.name: back
+  profiles.active: prod
+  datasource:
+    url: ${DB_URL}
+    driver-class-name: ${DB_DRIVER_CLASS_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate.ddl-auto: create-drop
+    properties.hibernate.default_schema: ${DB_SCHEMA:public}
+    show-sql: true
+    
+logging.level.org.springframework: INFO
+server.port: 8081
+
+# El path interno del microservicio debe seguir siendo el estándar
+springdoc:
+  api-docs.path: /v3/api-docs
+  swagger-ui.path: /swagger-ui.html
+  swagger-ui.use-root-path: true
+
+keycloak:
+  url: ${KEYCLOAK_EXTERNAL_URL}
+  realm: ${KEYCLOAK_REALM}
+
+gateway.url: ${GATEWAY_URL}
+flowable:
+  databaseSchema: flowable
+  # Debe seguir a spring.jpa.hibernate.ddl-auto: create-drop de arriba: si el schema
+  # `public` se recrea en cada reinicio pero `flowable` no, los process instances/tasks
+  # de una corrida anterior quedan huérfanos y reusan el mismo businessKey (el id de
+  # proyecto vuelve a empezar en 1), causando "Query return 2 results instead of max 1".
+  database-schema-update: drop-create

@@ -1,4 +1,5 @@
 import { CatlogosPreinversinApi, PreinversinRegistroYSolicitudDeCUPApi } from './generated/preinversion';
+import { PreinversinRevisinYEmisinDeCUPApi } from './generated/preinversion-revision-cup';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -16,6 +17,10 @@ export const preinversionApi = new PreinversinRegistroYSolicitudDeCUPApi(undefin
 // sectoriales/regionales, medidas GRD/GRC/ACC): tag distinto en el OpenAPI, por eso el
 // generador los separó en su propia clase de cliente.
 export const catalogoPreinversionApi = new CatlogosPreinversinApi(undefined, undefined, preinversionAxios);
+// CU-PRE-01.5 (Revisión y Emisión de CUP): mismo recurso Proyecto y mismo basePath /back,
+// pero tag distinto en el OpenAPI -> fragmento y módulo generado propios
+// (generated/preinversion-revision-cup); comparte la instancia de axios de arriba.
+export const revisionCupApi = new PreinversinRevisinYEmisinDeCUPApi(undefined, undefined, preinversionAxios);
 
 export type {
   Proyecto,
@@ -37,3 +42,6 @@ export type {
   UnidadEjecutoraResumen,
 } from './generated/preinversion';
 export { EstadoProyecto, IniciativaInversion, TipoMedidaCatalogo } from './generated/preinversion';
+// Único tipo propio de este fragmento (el resto son los mismos schemas de CU-PRE-01,
+// duplicados por el generador en su módulo — ver comentario de revisionCupApi arriba).
+export type { DevolucionSolicitudRequest } from './generated/preinversion-revision-cup';

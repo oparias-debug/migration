@@ -25,4 +25,10 @@ keycloak:
   realm: ${KEYCLOAK_REALM}
 
 gateway.url: ${GATEWAY_URL}
-flowable.databaseSchema: flowable
+flowable:
+  databaseSchema: flowable
+  # Debe seguir a spring.jpa.hibernate.ddl-auto: create-drop de arriba: si el schema
+  # `public` se recrea en cada reinicio pero `flowable` no, los process instances/tasks
+  # de una corrida anterior quedan huérfanos y reusan el mismo businessKey (el id de
+  # proyecto vuelve a empezar en 1), causando "Query return 2 results instead of max 1".
+  database-schema-update: drop-create

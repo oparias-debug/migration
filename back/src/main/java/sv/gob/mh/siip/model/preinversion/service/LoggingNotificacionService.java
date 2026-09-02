@@ -33,6 +33,19 @@ public class LoggingNotificacionService implements NotificacionService {
                 proyecto.getNombre(), proyecto.getId(), destinatario == null ? "(sin usuario resuelto)" : destinatario.getCorreo());
     }
 
+    @Override
+    public void notificarDevolucionSolicitud(Proyecto proyecto, Usuario destinatario) {
+        logger.info("[Anexo A.3.2] Devolucion con observaciones del proyecto '{}' (id={}) -> Tecnico URP: {}",
+                proyecto.getNombre(), proyecto.getId(), destinatario == null ? "(sin usuario resuelto)" : destinatario.getCorreo());
+    }
+
+    @Override
+    public void notificarEmisionCup(Proyecto proyecto, Usuario destinatario) {
+        logger.info("[Anexo A.3.4] CUP {} emitido para el proyecto '{}' (id={}) -> Tecnico URP: {}",
+                proyecto.getCup(), proyecto.getNombre(), proyecto.getId(),
+                destinatario == null ? "(sin usuario resuelto)" : destinatario.getCorreo());
+    }
+
     private String correos(List<Usuario> usuarios) {
         return usuarios.isEmpty() ? "(sin destinatarios con rol COORDINADOR_PRE)"
                 : usuarios.stream().map(Usuario::getCorreo).toList().toString();

@@ -31,4 +31,10 @@ public interface ProyectoRepository extends JpaRepository<Proyecto, Long> {
     Page<Proyecto> findByActivoTrue(Pageable pageable);
 
     Page<Proyecto> findByActivoTrueAndEstado(EstadoProyecto estado, Pageable pageable);
+
+    /**
+     * CU-PRE-01.5, RN 2.8.c: ultimo CUP asignado, para calcular el siguiente consecutivo. CUP
+     * siempre tiene 5 digitos, asi que el orden lexicografico de string coincide con el numerico.
+     */
+    Optional<Proyecto> findFirstByCupIsNotNullOrderByCupDesc();
 }

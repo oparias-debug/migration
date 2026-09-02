@@ -35,6 +35,7 @@ import sv.gob.mh.siip.model.preinversion.domain.SolicitudPreinversion;
 import sv.gob.mh.siip.model.preinversion.enums.TipoMedidaCatalogo;
 import sv.gob.mh.siip.model.preinversion.enums.TipoSolicitud;
 import sv.gob.mh.siip.model.preinversion.dto.CambioUnidadEjecutoraRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.DevolucionSolicitudRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
 import sv.gob.mh.siip.model.preinversion.dto.MedidaCatalogoDto;
 import sv.gob.mh.siip.model.preinversion.dto.PaginacionMetadataDto;
@@ -141,9 +142,11 @@ public class ProyectoServiceImpl implements ProyectoService {
         Pageable pageable = PageRequest.of(pagina, tamanio);
         EstadoProyecto estado = estadoFiltro == null ? null : EstadoProyecto.valueOf(estadoFiltro.name());
 
-        boolean esAdministrador = actor.getRol() == RolUsuario.ADMINISTRADOR;
+        // Solo el Técnico URP está adscrito a una Unidad Ejecutora (RN 1); el resto de roles
+        // permitidos en esta bandeja (Técnico PRE, Administrador del Sistema, etc., ver x-roles
+        // en el OpenAPI) no tienen una y por lo tanto ven el listado sin acotar por UE.
         Page<Proyecto> paginaResultado;
-        if (esAdministrador) {
+        if (actor.getUnidadEjecutora() == null) {
             paginaResultado = estado == null ? proyectoRepository.findByActivoTrue(pageable)
                     : proyectoRepository.findByActivoTrueAndEstado(estado, pageable);
         } else {
@@ -248,6 +251,52 @@ public class ProyectoServiceImpl implements ProyectoService {
     }
 
     @Override
+    public ProyectoDto devolverSolicitudCup(Long idProyecto, DevolucionSolicitudRequestDto request) {
+        Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_PRE);
+        Proyecto entidad = buscarPorId(idProyecto);
+        SolicitudPreinversion solicitud = solicitudAsignadaVigente(entidad, actor);
+
+        String comentarioTexto = request == null ? null : request.getComentario();
+        if (comentarioTexto != null && !comentarioTexto.isBlank()) {
+            comentarioRepository.save(ComentarioSolicitud.builder()
+                    .solicitud(solicitud)
+                    .autor(actor)
+                    .texto(comentarioTexto)
+                    .fechaComentario(LocalDateTime.now(ZONA_EL_SALVADOR))
+                    .build());
+        }
+
+        solicitud.setEstado(EstadoSolicitud.OBSERVADA);
+        solicitudRepository.save(solicitud);
+
+        entidad.setEstado(EstadoProyecto.OBSERVADO_DGICP_REGISTRO);
+        entidad = proyectoRepository.save(entidad);
+
+        notificacionService.notificarDevolucionSolicitud(entidad, tecnicoUrpRegistrante(entidad));
+
+        return toDto(entidad);
+    }
+
+    @Override
+    public ProyectoDto emitirCup(Long idProyecto) {
+        Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_PRE);
+        Proyecto entidad = buscarPorId(idProyecto);
+        SolicitudPreinversion solicitud = solicitudAsignadaVigente(entidad, actor);
+
+        entidad.setCup(siguienteCup());
+        entidad.setFechaCupAsignado(LocalDateTime.now(ZONA_EL_SALVADOR));
+        entidad.setEstado(EstadoProyecto.CUP_ASIGNADO);
+        entidad = proyectoRepository.save(entidad);
+
+        solicitud.setEstado(EstadoSolicitud.APROBADA);
+        solicitudRepository.save(solicitud);
+
+        notificacionService.notificarEmisionCup(entidad, tecnicoUrpRegistrante(entidad));
+
+        return toDto(entidad);
+    }
+
+    @Override
     public ProyectoDto cambiarUnidadEjecutora(Long idProyecto, CambioUnidadEjecutoraRequestDto request) {
         actorContexto.exigirRol(RolUsuario.ADMINISTRADOR);
         Proyecto entidad = buscarPorId(idProyecto);
@@ -311,6 +360,45 @@ public class ProyectoServiceImpl implements ProyectoService {
         }
     }
 
+    /**
+     * CU-PRE-01.5, Precondiciones 1 y 2: la solicitud de CUP vigente del proyecto debe existir y
+     * estar asignada al Técnico PRE autenticado (asignación hecha por el Coordinador PRE en
+     * CU-PRE-02, fuera de este fragmento). El proyecto debe estar en estado ENVIADO_DGICP_REGISTRO.
+     */
+    private SolicitudPreinversion solicitudAsignadaVigente(Proyecto entidad, Usuario actor) {
+        if (entidad.getEstado() != EstadoProyecto.ENVIADO_DGICP_REGISTRO) {
+            throw new ConflictoEstadoException(
+                    "El proyecto no se encuentra en estado Enviado a DGICP (Registro).");
+        }
+        SolicitudPreinversion solicitud = solicitudRepository
+                .findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(entidad.getId(), TipoSolicitud.CUP)
+                .orElseThrow(() -> new ConflictoEstadoException(
+                        "El proyecto no tiene una solicitud de CUP vigente."));
+        Usuario tecnicoAsignado = solicitud.getTecnicoAsignado();
+        if (tecnicoAsignado == null || !tecnicoAsignado.getId().equals(actor.getId())) {
+            throw new AccesoDenegadoException(
+                    "La solicitud de CUP no fue asignada al Técnico PRE autenticado (CU-PRE-02).");
+        }
+        return solicitud;
+    }
+
+    /**
+     * Resuelve al Técnico URP a notificar (Anexo A.3.2/A.3.4): Proyecto no guarda un "responsable
+     * URP" propio, asi que se usa quien lo registro originalmente (usuarioCreacion, RN de auditoria
+     * de {@link sv.gob.mh.siip.model.common.domain.Auditable}).
+     */
+    private Usuario tecnicoUrpRegistrante(Proyecto entidad) {
+        return usuarioRepository.findByNombreUsuario(entidad.getUsuarioCreacion()).orElse(null);
+    }
+
+    /** CU-PRE-01.5, RN 2.8.c: siguiente CUP consecutivo de 5 digitos, partiendo de 10000. */
+    private String siguienteCup() {
+        int siguiente = proyectoRepository.findFirstByCupIsNotNullOrderByCupDesc()
+                .map(p -> Integer.parseInt(p.getCup()) + 1)
+                .orElse(10000);
+        return String.format("%05d", siguiente);
+    }
+
     private void exigirEstadoEditable(Proyecto entidad) {
         if (!ESTADOS_EDITABLES.contains(entidad.getEstado())) {
             throw new ConflictoEstadoException(
@@ -320,7 +408,8 @@ public class ProyectoServiceImpl implements ProyectoService {
     }
 
     private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto entidad) {
-        if (actor.getRol() != RolUsuario.ADMINISTRADOR
+        // Igual que en listar(): solo el Técnico URP está acotado a su propia Unidad Ejecutora.
+        if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(entidad.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
                     "El proyecto no pertenece a una Unidad Ejecutora dentro de las credenciales del actor.");

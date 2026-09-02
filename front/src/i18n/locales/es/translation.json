@@ -145,7 +145,10 @@
       "filtroTodos": "Todos",
       "conteo": "{{desde}}–{{hasta}} de {{total}} registros",
       "sinRespaldoListado": "Columnas y filtros del diseño que todavía no existen en el API:",
-      "sinRespaldoListadoNota": "listarProyectos sólo admite el filtro por estado, y ProyectoListItem no devuelve CUP ni responsable asignado. Hay que ampliarlo en el contrato o retirarlos del diseño."
+      "sinRespaldoListadoNota": "listarProyectos sólo admite el filtro por estado, y ProyectoListItem no devuelve CUP ni responsable asignado. Hay que ampliarlo en el contrato o retirarlos del diseño.",
+      "botonEmitirCup": "Emitir CUP",
+      "confirmarEmitirCup": "¿Está seguro de emitir el CUP para este proyecto?",
+      "cupEmitido": "El CUP {{cup}} ha sido emitido exitosamente."
     },
     "revisionPre": {
       "titulo": "Revisión PRE",
@@ -153,7 +156,11 @@
       "campoRespuesta": "Respuesta",
       "botonEnviar": "Enviar",
       "respuestaObligatoria": "*Campo obligatorio",
-      "enviada": "Su respuesta ha sido enviada exitosamente."
+      "enviada": "Su respuesta ha sido enviada exitosamente.",
+      "campoComentarios": "Comentarios",
+      "botonDevolver": "Devolver",
+      "confirmarDevolver": "¿Está seguro de devolver la solicitud con estas observaciones?",
+      "devuelta": "La solicitud ha sido devuelta con las observaciones registradas."
     }
   },
   "app": {

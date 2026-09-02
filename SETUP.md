@@ -59,7 +59,14 @@ KEYCLOAK_CLIENT_ID=
 KEYCLOAK_CLIENT_SECRET=
 GATEWAY_INTERNAL_URL=http://api-gateway:8080
 GATEWAY_URL=http://localhost:8080
+SONAR_HOST_URL=http://localhost:9000
+SONAR_TOKEN=
+SONARQUBE_DB_USER=
+SONARQUBE_DB_PASSWORD=
+SONARQUBE_DB_DATABASE=
 ```
+
+`SONAR_TOKEN` se genera desde la propia consola de SonarQube (http://localhost:9000, **My Account → Security**) una vez que el servicio está arriba — no hace falta completarlo antes del primer `docker-compose up` (ver [Análisis estático](./REFERENCE.md#análisis-estático-sonarqube)).
 
 > No versionar el `.env` con credenciales reales; usarlo solo como plantilla local.
 
@@ -133,4 +140,5 @@ docker run -p 8090:8080 flowable/flowable-ui
 | API Gateway / Swagger UI | http://localhost:8080/swagger-ui.html |
 | Keycloak | http://localhost:8085 |
 | PostgreSQL | localhost:5432 |
+| SonarQube | http://localhost:9000 |
 | Flowable UI (opcional, ver arriba) | http://localhost:8090 |
