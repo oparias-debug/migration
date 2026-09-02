@@ -7,6 +7,22 @@ const INICIATIVAS = [IniciativaInversion.Programa, IniciativaInversion.Proyecto,
 // obligatorio incompleto" (CU-PRE-01-registrar-nuevo-proyecto.feature).
 export const CAMPO_OBLIGATORIO = '*Campo obligatorio';
 
+/** El CU-PRE-01 §B.2 pide separador de miles en el monto; se quita para validar. */
+export const sinSeparadorDeMiles = (valor: string): string => valor.replace(/,/g, '');
+
+/**
+ * Agrega el separador de miles que exige el §B.2 ("El sistema deberá agregar el
+ * separador de miles (,)"). Sólo agrupa la parte entera y respeta lo que el
+ * usuario lleva escrito, incluido el punto decimal a medio teclear.
+ */
+export const conSeparadorDeMiles = (valor: string): string => {
+  const limpio = sinSeparadorDeMiles(valor).replace(/[^\d.]/g, '');
+  if (limpio === '') return '';
+  const [entera, ...resto] = limpio.split('.');
+  const agrupada = entera.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return resto.length > 0 ? `${agrupada}.${resto.join('')}` : agrupada;
+};
+
 // Los 6 campos requeridos por ProyectoRequest en el OpenAPI (iniciativaInversion,
 // nombre, montoEstimadoInversion, idSector, idEjeTematico, descripcionProyecto) son
 // exactamente los 6 de la tabla de Ejemplos del escenario. El resto de campos son
@@ -14,14 +30,20 @@ export const CAMPO_OBLIGATORIO = '*Campo obligatorio';
 export const proyectoFormSchema = z
   .object({
     iniciativaInversion: z.enum(INICIATIVAS, { required_error: CAMPO_OBLIGATORIO, invalid_type_error: CAMPO_OBLIGATORIO }),
-    nombre: z.string().trim().min(1, CAMPO_OBLIGATORIO).max(250),
+    nombre: z.string().trim().min(1, CAMPO_OBLIGATORIO).max(250, 'Máximo 250 caracteres'),
     // Se valida como string (no z.coerce.number) porque un campo vacío coercería a 0,
     // que es un monto "válido" y ocultaría el error de campo obligatorio.
     montoEstimadoInversion: z
       .string()
       .trim()
       .min(1, CAMPO_OBLIGATORIO)
-      .refine((valor) => !Number.isNaN(Number(valor)) && Number(valor) >= 0, { message: CAMPO_OBLIGATORIO }),
+      .refine(
+        (valor) => {
+          const limpio = sinSeparadorDeMiles(valor);
+          return limpio !== '' && !Number.isNaN(Number(limpio)) && Number(limpio) >= 0;
+        },
+        { message: CAMPO_OBLIGATORIO },
+      ),
     // idSector/idEjeTematico/idEjePlanGobierno/idPlanSectorialRegional son el value de un
     // <select> (siempre string en HTML, o '' si no hay opción elegida), convertidos a number
     // en formValuesToRequest.
@@ -35,7 +57,7 @@ export const proyectoFormSchema = z
     numeroDecretoLegislativo: z.string().trim().default(''),
     idEjePlanGobierno: z.string().trim().default(''),
     idPlanSectorialRegional: z.string().trim().default(''),
-    descripcionProyecto: z.string().trim().min(1, CAMPO_OBLIGATORIO).max(1000),
+    descripcionProyecto: z.string().trim().min(1, CAMPO_OBLIGATORIO).max(1000, 'Máximo 1,000 caracteres'),
   })
   .superRefine((datos, ctx) => {
     // Regla condicional documentada en ProyectoRequest del OpenAPI: tipoEvento y

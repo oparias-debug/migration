@@ -15,7 +15,13 @@ import { MedidasCatalogoField } from './MedidasCatalogoField';
 import { CategoriasCatalogoModal } from './CategoriasCatalogoModal';
 import { useCatalogo } from './useCatalogo';
 import { RevisionPre } from './RevisionPre';
-import { proyectoFormSchema, PROYECTO_FORM_DEFAULTS, type ProyectoFormValues } from './proyectoFormSchema';
+import {
+  proyectoFormSchema,
+  PROYECTO_FORM_DEFAULTS,
+  conSeparadorDeMiles,
+  sinSeparadorDeMiles,
+  type ProyectoFormValues,
+} from './proyectoFormSchema';
 
 const INICIATIVA_OPCIONES = [
   { valor: IniciativaInversion.Programa, labelKey: 'preinversion.registro.opcionPrograma' },
@@ -27,7 +33,7 @@ function proyectoToFormValues(proyecto: Proyecto): ProyectoFormValues {
   return {
     iniciativaInversion: proyecto.iniciativaInversion,
     nombre: proyecto.nombre,
-    montoEstimadoInversion: String(proyecto.montoEstimadoInversion),
+    montoEstimadoInversion: conSeparadorDeMiles(String(proyecto.montoEstimadoInversion)),
     idSector: String(proyecto.sector.idSector),
     idEjeTematico: String(proyecto.ejeTematico.idEjeTematico),
     medidasGrd: (proyecto.medidasGrd ?? []).map((m) => m.codigo),
@@ -48,7 +54,7 @@ function formValuesToRequest(valores: ProyectoFormValues): ProyectoRequest {
   return {
     iniciativaInversion: valores.iniciativaInversion,
     nombre: valores.nombre,
-    montoEstimadoInversion: Number(valores.montoEstimadoInversion),
+    montoEstimadoInversion: Number(sinSeparadorDeMiles(valores.montoEstimadoInversion)),
     idSector: Number(valores.idSector),
     idEjeTematico: Number(valores.idEjeTematico),
     medidasGrd: valores.medidasGrd,
@@ -151,6 +157,10 @@ export function ProyectoFormPage() {
       .catch((fallo) => setErrorCarga(mensajeDeError(toErrorApi(fallo), t)))
       .finally(() => setCargando(false));
   }, [esNuevo, idProyecto, reset, t]);
+
+  // El monto se formatea mientras se escribe, así que se envuelve el onChange
+  // que devuelve register en vez de pasarlo tal cual.
+  const registroMonto = register('montoEstimadoInversion');
 
   const esProyectoEmergencia = watch('esProyectoEmergencia');
   const medidasGrd = watch('medidasGrd');
@@ -453,15 +463,22 @@ export function ProyectoFormPage() {
         </FormRow>
 
         <FormRow controlId="montoEstimadoInversion" label={t('preinversion.registro.campoMonto')} required error={errors.montoEstimadoInversion?.message}>
+          {/* type="text" y no "number": un campo numérico nativo rechaza las
+              comas, y el §B.2 pide separador de miles. inputMode deja el
+              teclado numérico en móvil. El valor se limpia al convertir a
+              ProyectoRequest. */}
           <input
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             className={errors.montoEstimadoInversion ? 'malo' : undefined}
             placeholder="0.00"
             disabled={!puedeEditar}
             id="montoEstimadoInversion"
-            {...register('montoEstimadoInversion')}
+            {...registroMonto}
+            onChange={(e) => {
+              e.target.value = conSeparadorDeMiles(e.target.value);
+              return registroMonto.onChange(e);
+            }}
           />
         </FormRow>
 
