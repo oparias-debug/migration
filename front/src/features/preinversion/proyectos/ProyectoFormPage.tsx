@@ -70,12 +70,23 @@ function formValuesToRequest(valores: ProyectoFormValues): ProyectoRequest {
  * ProyectoRequest. Se muestran como aviso para que se definan en el contrato
  * o se retiren del diseño; hasta entonces no se pueden guardar.
  */
+/**
+ * Campos del diseño que siguen sin definición.
+ *
+ * De los cinco que se listaban, tres quedaron resueltos el 02/09/2026:
+ * Responsable es el usuario de la sesión, Unidad formuladora es la Unidad
+ * Ejecutora y Fecha solicitada es la fecha de radicación — los tres los asigna
+ * el servidor y ahora se muestran de sólo lectura.
+ *
+ * Los dos que quedan sí hacen falta, pero para proyectos de emergencia y con
+ * más alcance del que dibuja el diseño: el cliente pidió Fuente de
+ * Financiamiento y Fuente de Recursos, ambas múltiples, más los documentos
+ * soporte. Nada de eso existe todavía en ProyectoRequest.
+ */
 const CAMPOS_SIN_RESPALDO = [
-  'Fuente de financiamiento',
-  'Unidad formuladora',
-  'Responsable',
-  'Fecha solicitada',
-  'Documentos adjuntos',
+  'Fuente de financiamiento (múltiple, en proyectos de emergencia)',
+  'Fuente de recursos (múltiple, en proyectos de emergencia)',
+  'Documentos adjuntos de soporte',
 ];
 
 export function ProyectoFormPage() {
@@ -91,6 +102,17 @@ export function ProyectoFormPage() {
   const [guardando, setGuardando] = useState(false);
   const [estadoActual, setEstadoActual] = useState<string | null>(null);
   const [revisionPre, setRevisionPre] = useState<ComentarioSolicitud[]>([]);
+  /**
+   * Campos que el CU-PRE-01 marca como "Seleccionable: No" (§B.1): los asigna
+   * el servidor y la pantalla los muestra, no los pide. Por eso no están en
+   * ProyectoRequest y se guardan aparte de los valores del formulario.
+   */
+  const [asignados, setAsignados] = useState<{
+    institucion?: string;
+    unidadEjecutora?: string;
+    macrosector?: string;
+    fechaIngreso?: string;
+  }>({});
   const [errorRespuesta, setErrorRespuesta] = useState<string | undefined>();
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
 
@@ -119,6 +141,12 @@ export function ProyectoFormPage() {
         reset(proyectoToFormValues(data));
         setEstadoActual(data.estado);
         setRevisionPre(data.revisionPre ?? []);
+        setAsignados({
+          institucion: data.institucion?.nombre,
+          unidadEjecutora: data.unidadEjecutora?.nombre,
+          macrosector: data.sector?.macrosector?.nombre,
+          fechaIngreso: data.fechaIngreso,
+        });
       })
       .catch((fallo) => setErrorCarga(mensajeDeError(toErrorApi(fallo), t)))
       .finally(() => setCargando(false));
@@ -380,6 +408,22 @@ export function ProyectoFormPage() {
           </div>
           <div className="formbody">
             <div className="fr">
+        {/* Los cuatro campos que el CU-PRE-01 marca "Seleccionable: No" (§B.1):
+            el servidor los asigna y la pantalla sólo los muestra. En un
+            registro nuevo todavía no existen, así que se indica que se
+            asignarán al guardar en vez de dejar el hueco en blanco. */}
+        <FormRow label={t('preinversion.registro.campoInstitucion')} ancho>
+          <p className="campo-asignado">
+            {asignados.institucion ?? t('preinversion.registro.seAsignaAlGuardar')}
+          </p>
+        </FormRow>
+
+        <FormRow label={t('preinversion.registro.campoUnidadEjecutora')} ancho>
+          <p className="campo-asignado">
+            {asignados.unidadEjecutora ?? t('preinversion.registro.seAsignaAlGuardar')}
+          </p>
+        </FormRow>
+
         <FormRow label={t('preinversion.registro.campoIniciativa')} required ancho error={errors.iniciativaInversion?.message}>
           <div className="radios">
             {INICIATIVA_OPCIONES.map((opcion) => (
@@ -435,6 +479,14 @@ export function ProyectoFormPage() {
               </option>
             ))}
           </select>
+        </FormRow>
+
+        {/* "Se asignará automáticamente por el Sistema de acuerdo con el Sector
+            seleccionado" (§B.2). No se pide: se muestra. */}
+        <FormRow label={t('preinversion.registro.campoMacrosector')}>
+          <p className="campo-asignado">
+            {asignados.macrosector ?? t('preinversion.registro.segunSector')}
+          </p>
         </FormRow>
 
         <FormRow controlId="idEjeTematico" label={t('preinversion.registro.campoEjeTematico')} required ancho error={errors.idEjeTematico?.message}>
@@ -558,6 +610,16 @@ export function ProyectoFormPage() {
             </FormRow>
           </>
         )}
+
+        {/* "La fecha de radicación no debe ser diligenciada manualmente por el
+            usuario; el sistema la asigna al radicar" (cliente, 02/09/2026). */}
+        <FormRow label={t('preinversion.registro.campoFechaRadicacion')}>
+          <p className="campo-asignado">
+            {asignados.fechaIngreso
+              ? new Date(asignados.fechaIngreso).toLocaleDateString()
+              : t('preinversion.registro.seAsignaAlGuardar')}
+          </p>
+        </FormRow>
 
         <FormRow controlId="descripcionProyecto" label={t('preinversion.registro.campoDescripcion')} required ancho error={errors.descripcionProyecto?.message}>
           <textarea

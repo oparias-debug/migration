@@ -135,8 +135,8 @@
       "cupSolicitado": "La solicitud de CUP ha sido enviada exitosamente.",
       "errorCargar": "No se pudo cargar el listado de proyectos.",
       "errorCargarProyecto": "No se pudo cargar el proyecto.",
-      "sinRespaldo": "Campos del diseño que todavía no existen en el API:",
-      "sinRespaldoNota": "Hay que definirlos en el contrato o retirarlos del diseño. Hasta entonces no se pueden guardar.",
+      "sinRespaldo": "Campos del diseño pendientes de definición:",
+      "sinRespaldoNota": "No aparecen en el CU-PRE-01. Fuente de financiamiento y documentos adjuntos se confirmaron el 02/09/2026 para proyectos de emergencia, pero todavía no existen en el contrato.",
       "ayudaMedidas": "(cada listado se habilita al activar su opción · selección múltiple)",
       "campoMedidas": "Medidas de GRD / GRC / ACC",
       "phNombre": "Máximo 250 caracteres",
@@ -148,7 +148,13 @@
       "sinRespaldoListadoNota": "listarProyectos sólo admite el filtro por estado, y ProyectoListItem no devuelve CUP ni responsable asignado. Hay que ampliarlo en el contrato o retirarlos del diseño.",
       "botonEmitirCup": "Emitir CUP",
       "confirmarEmitirCup": "¿Está seguro de emitir el CUP para este proyecto?",
-      "cupEmitido": "El CUP {{cup}} ha sido emitido exitosamente."
+      "cupEmitido": "El CUP {{cup}} ha sido emitido exitosamente.",
+      "campoInstitucion": "Institución",
+      "campoUnidadEjecutora": "Unidad Ejecutora",
+      "campoMacrosector": "Macrosector",
+      "campoFechaRadicacion": "Fecha de radicación",
+      "seAsignaAlGuardar": "Se asigna al guardar",
+      "segunSector": "Según el sector seleccionado"
     },
     "revisionPre": {
       "titulo": "Revisión PRE",
