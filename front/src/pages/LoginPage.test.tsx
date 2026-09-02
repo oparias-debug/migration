@@ -22,7 +22,7 @@ describe('LoginPage', () => {
   it('muestra los logotipos oficiales del Ministerio y del SIIP', () => {
     montar();
     expect(screen.getByAltText(/Ministerio de Hacienda/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/Sistema Integrado de Inversión Pública/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/Sistema de Información de Inversión Pública/i)).toBeInTheDocument();
   });
 
   it('entra con usuario y contraseña', async () => {

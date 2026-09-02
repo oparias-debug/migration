@@ -31,7 +31,7 @@
   },
   "login": {
     "title": "Iniciar Sesión",
-    "appName": "SIIP2",
+    "appName": "SIIP",
     "appDescription": "Sistema de Información de Inversión Pública",
     "notice": "Estimado usuario, está por ingresar a un Sistema de Información en la red del Ministerio de Hacienda, las actividades realizadas estarán siendo registradas, solamente los usuarios autorizados pueden acceder al sistema y el uso no autorizado o abuso del sistema será sujeto a lo establecido en las disposiciones legales correspondientes. Lo antes descrito es conforme a las Políticas de Seguridad del Ministerio de Hacienda.",
     "footer": "© 2025 Ministerio de Hacienda. Todos los derechos reservados.",
@@ -164,7 +164,7 @@
     }
   },
   "app": {
-    "nombre": "Sistema Integrado de Inversión Pública"
+    "nombre": "Sistema de Información de Inversión Pública"
   },
   "menu": {
     "inicio": "Inicio",

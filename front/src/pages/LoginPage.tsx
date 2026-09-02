@@ -57,7 +57,7 @@ export function LoginPage() {
 
       <main className="login-tarjeta">
         <img className="login-marca" src={minLogo} alt="Gobierno de El Salvador · Ministerio de Hacienda" />
-        <img className="login-siip" src={logoSiip} alt="SIIP · Sistema Integrado de Inversión Pública" />
+        <img className="login-siip" src={logoSiip} alt="SIIP · Sistema de Información de Inversión Pública" />
 
         <form onSubmit={handleSubmit} noValidate>
             {error && (
@@ -125,6 +125,8 @@ export function LoginPage() {
 
         {/* Recuperación de contraseña: necesita el flujo correspondiente en
             Keycloak. Sin endpoint todavía. */}
+        <p className="login-aviso">{t('login.notice')}</p>
+
         <button type="button" className="login-olvido" disabled title={t('login.olvidoPendiente')}>
           {t('login.olvidoPassword')}
         </button>
