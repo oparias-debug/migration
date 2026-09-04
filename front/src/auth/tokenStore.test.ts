@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { stateFromTokens } from './tokenStore';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { clearAuthState, setAuthState, stateFromTokens } from './tokenStore';
 
 function fakeJwt(payload: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
@@ -30,5 +30,29 @@ describe('stateFromTokens', () => {
 
     expect(state.roles).toEqual([]);
     expect(state.username).toBe('sinroles');
+  });
+});
+
+describe('persistencia de la sesión', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    clearAuthState();
+  });
+
+  // El fallo que se corrige: con el estado sólo en memoria, cualquier recarga
+  // devolvía al login aunque el token siguiera vigente.
+  it('guarda la sesión para que sobreviva a una recarga', () => {
+    const vigente = fakeJwt({ preferred_username: 'ana', realm_access: { roles: ['TECNICO_URP'] }, exp: 4102444800 });
+    setAuthState(stateFromTokens(vigente, 'refresh'));
+
+    expect(localStorage.getItem('siip.auth')).toContain(vigente);
+  });
+
+  it('al cerrar sesión no queda nada guardado', () => {
+    const vigente = fakeJwt({ preferred_username: 'ana', realm_access: { roles: [] }, exp: 4102444800 });
+    setAuthState(stateFromTokens(vigente, 'refresh'));
+    clearAuthState();
+
+    expect(localStorage.getItem('siip.auth')).toBeNull();
   });
 });
