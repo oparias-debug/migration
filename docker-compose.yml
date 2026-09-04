@@ -112,7 +112,7 @@ services:
   # Servidor SonarQube (análisis estático + cobertura). Ver REFERENCE.md#análisis-estático-sonarqube
   # para cómo correr el análisis de back/api-gateway (Maven) y front (npm) contra este servidor.
   sonarqube:
-    image: sonarqube:lts-community
+    image: sonarqube:community
     container_name: siip-sonarqube
     environment:
       SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/${SONARQUBE_DB_DATABASE}

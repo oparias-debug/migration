@@ -50,7 +50,6 @@ public class Pre01VerRegistro {
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
 
-    private String pantallaActual;
     private Proyecto proyectoExistente;
     private ProyectoDto proyectoConsultado;
 
@@ -108,7 +107,6 @@ public class Pre01VerRegistro {
         request.addHeader(HEADER_USUARIO, nombreUsuarioActor);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
-        pantallaActual = pantalla;
     }
 
     @Cuando("el actor hace clic en el nombre de un proyecto del listado")
@@ -118,7 +116,6 @@ public class Pre01VerRegistro {
 
     @Entonces("el sistema muestra la pantalla {string} sin autorización de editar información")
     public void el_sistema_muestra_la_pantalla_sin_autorizacion_de_editar_informacion(String pantalla) {
-        pantallaActual = pantalla;
         assertThat(proyectoConsultado).isNotNull();
         assertThat(proyectoConsultado.getIdProyecto()).isEqualTo(proyectoExistente.getId());
         assertThat(proyectoConsultado.getNombre()).isEqualTo(proyectoExistente.getNombre());

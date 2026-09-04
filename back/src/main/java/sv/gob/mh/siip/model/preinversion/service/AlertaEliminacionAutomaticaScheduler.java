@@ -2,6 +2,7 @@ package sv.gob.mh.siip.model.preinversion.service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.flowable.engine.RuntimeService;
@@ -12,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import sv.gob.mh.siip.model.common.domain.Usuario;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
-import sv.gob.mh.siip.model.preinversion.enums.EstadoSolicitud;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.domain.SolicitudPreinversion;
+import sv.gob.mh.siip.model.preinversion.enums.EstadoSolicitud;
 import sv.gob.mh.siip.model.preinversion.enums.TipoSolicitud;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.SolicitudPreinversionRepository;
@@ -31,6 +32,7 @@ public class AlertaEliminacionAutomaticaScheduler {
 
     private static final int MESES_PARA_ALERTA = 3;
     private static final int DIAS_HABILES_PARA_ARCHIVAR = 5;
+    private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
 
     private final SolicitudPreinversionRepository solicitudRepository;
     private final ProyectoRepository proyectoRepository;
@@ -61,7 +63,7 @@ public class AlertaEliminacionAutomaticaScheduler {
     }
 
     private void enviarAlertasDeTresMeses() {
-        LocalDateTime limite = LocalDateTime.now().minusMonths(MESES_PARA_ALERTA);
+        LocalDateTime limite = LocalDateTime.now(ZONA_EL_SALVADOR).minusMonths(MESES_PARA_ALERTA);
         List<SolicitudPreinversion> candidatas = solicitudRepository
                 .findByTipoSolicitudAndEstadoAndFechaAlertaEliminacionIsNullAndFechaSolicitudBefore(
                         TipoSolicitud.CUP, EstadoSolicitud.REGISTRADA, limite);
@@ -70,7 +72,7 @@ public class AlertaEliminacionAutomaticaScheduler {
             Proyecto proyecto = solicitud.getProyecto();
             Usuario tecnicoUrp = usuarioRepository.findByNombreUsuario(proyecto.getUsuarioCreacion()).orElse(null);
             notificacionService.notificarAlertaEliminacion(proyecto, tecnicoUrp);
-            solicitud.setFechaAlertaEliminacion(LocalDateTime.now());
+            solicitud.setFechaAlertaEliminacion(LocalDateTime.now(ZONA_EL_SALVADOR));
             solicitudRepository.save(solicitud);
         }
     }
@@ -80,7 +82,7 @@ public class AlertaEliminacionAutomaticaScheduler {
                 .findByTipoSolicitudAndEstadoAndFechaAlertaEliminacionIsNotNull(TipoSolicitud.CUP,
                         EstadoSolicitud.REGISTRADA);
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
         for (SolicitudPreinversion solicitud : alertadas) {
             if (diasHabilesEntre(solicitud.getFechaAlertaEliminacion(), ahora) < DIAS_HABILES_PARA_ARCHIVAR) {
                 continue;
@@ -117,7 +119,8 @@ public class AlertaEliminacionAutomaticaScheduler {
         LocalDateTime limite = hasta.toLocalDate().atStartOfDay();
         while (cursor.isBefore(limite)) {
             cursor = cursor.plusDays(1);
-            if (cursor.getDayOfWeek() != DayOfWeek.SATURDAY && cursor.getDayOfWeek() != DayOfWeek.SUNDAY) {
+                if (!DayOfWeek.SATURDAY.equals(cursor.getDayOfWeek())
+                    && !DayOfWeek.SUNDAY.equals(cursor.getDayOfWeek())) {
                 diasHabiles++;
             }
         }

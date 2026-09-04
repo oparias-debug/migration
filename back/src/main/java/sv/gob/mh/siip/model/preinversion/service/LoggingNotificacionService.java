@@ -17,8 +17,9 @@ public class LoggingNotificacionService implements NotificacionService {
 
     @Override
     public void notificarSolicitudCup(Proyecto proyecto, List<Usuario> destinatarios) {
+        String coordinadorPre= correos(destinatarios);
         logger.info("[Anexo A.3.1] Solicitud de CUP del proyecto '{}' (id={}) -> Coordinador PRE: {}",
-                proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+                proyecto.getNombre(), proyecto.getId(), coordinadorPre);
     }
 
     @Override
@@ -26,24 +27,30 @@ public class LoggingNotificacionService implements NotificacionService {
         logger.info("[Anexo A.3.3] Respuesta a observaciones del proyecto '{}' (id={}) -> Tecnico PRE: {}",
                 proyecto.getNombre(), proyecto.getId(), destinatario == null ? "(sin tecnico asignado)" : destinatario.getCorreo());
     }
+    private String obtenerCorreoDestinatario(Usuario destinatario){
+        return destinatario == null ? "(sin usuario resuelto)" : destinatario.getCorreo();
+    }
 
     @Override
     public void notificarAlertaEliminacion(Proyecto proyecto, Usuario destinatario) {
+        String correoDestinatario = obtenerCorreoDestinatario(destinatario);
         logger.info("[RN-4] Alerta de posible eliminacion del proyecto '{}' (id={}) -> Tecnico URP: {}",
-                proyecto.getNombre(), proyecto.getId(), destinatario == null ? "(sin usuario resuelto)" : destinatario.getCorreo());
+                proyecto.getNombre(), proyecto.getId(), correoDestinatario);
     }
 
     @Override
     public void notificarDevolucionSolicitud(Proyecto proyecto, Usuario destinatario) {
+        String correoDestinatario = obtenerCorreoDestinatario(destinatario);
         logger.info("[Anexo A.3.2] Devolucion con observaciones del proyecto '{}' (id={}) -> Tecnico URP: {}",
-                proyecto.getNombre(), proyecto.getId(), destinatario == null ? "(sin usuario resuelto)" : destinatario.getCorreo());
+                proyecto.getNombre(), proyecto.getId(), correoDestinatario);
     }
 
     @Override
     public void notificarEmisionCup(Proyecto proyecto, Usuario destinatario) {
+        String correoDestinatario = obtenerCorreoDestinatario(destinatario);
         logger.info("[Anexo A.3.4] CUP {} emitido para el proyecto '{}' (id={}) -> Tecnico URP: {}",
                 proyecto.getCup(), proyecto.getNombre(), proyecto.getId(),
-                destinatario == null ? "(sin usuario resuelto)" : destinatario.getCorreo());
+                correoDestinatario);
     }
 
     private String correos(List<Usuario> usuarios) {

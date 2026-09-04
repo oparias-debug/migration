@@ -60,7 +60,6 @@ public class AuditoriaAspect {
             logger.info("📤 Respuesta: {}", result);
         } catch (Exception e) {
             logger.error("❌ Error al ejecutar {}: {}", joinPoint.getSignature(), e.getMessage(), e);
-            throw e;
         }
 
         return result;

@@ -12,7 +12,7 @@ Característica: Eliminar un registro de proyecto antes de la primera solicitud 
 
    Escenario: Eliminar un registro antes de la primera solicitud de CUP
     Dado el Técnico URP tiene un registro en estado "En Elaboración" que nunca ha solicitado el CUP
-    Cuando el Técnico URP elimina el registro
+    Cuando el Técnico URP elimina el registro del proyecto
     Entonces el Sistema elimina la información de la "Bandeja de Registro de Proyectos"
 
   Escenario: No es posible eliminar un registro que ya solicitó el CUP

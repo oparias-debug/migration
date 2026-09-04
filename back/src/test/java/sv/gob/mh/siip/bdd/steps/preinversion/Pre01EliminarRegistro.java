@@ -23,10 +23,10 @@ import sv.gob.mh.siip.model.common.repository.InstitucionRepository;
 import sv.gob.mh.siip.model.common.repository.UnidadEjecutoraRepository;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
-import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
-import sv.gob.mh.siip.model.preinversion.enums.EstadoSolicitud;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.domain.SolicitudPreinversion;
+import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
+import sv.gob.mh.siip.model.preinversion.enums.EstadoSolicitud;
 import sv.gob.mh.siip.model.preinversion.enums.TipoSolicitud;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
@@ -109,12 +109,6 @@ public class Pre01EliminarRegistro {
         proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto " + estadoEtiqueta,
                 mapearEstado(estadoEtiqueta), unidadEjecutora, unidadEjecutora.getInstitucion(), crearSector("ELI2"),
                 crearEjeTematico("ELI2")));
-    }
-
-    @Cuando("el Técnico URP elimina el registro")
-    public void el_tecnico_urp_elimina_el_registro() {
-        proyectoService.eliminar(proyecto.getId());
-        RequestContextHolder.resetRequestAttributes();
     }
 
     @Entonces("el Sistema elimina la información de la {string}")

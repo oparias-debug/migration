@@ -1,6 +1,7 @@
 package sv.gob.mh.siip.bdd.steps.preinversion;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -56,9 +57,9 @@ public class Pre015EmitirCup {
 
     @Entonces("el proyecto ingresa inmediatamente al banco de proyectos, quedando disponible para su búsqueda mediante CU-PRE-{int}")
     public void el_proyecto_ingresa_inmediatamente_al_banco_de_proyectos(Integer numeroCu) {
-        // CU-PRE-29 (Banco de Proyectos) es un caso de uso propio, fuera de este fragmento OpenAPI;
-        // se verifica el efecto ya comprobado por CU-PRE-01.5: el estado CUP_ASIGNADO.
-        Proyecto recargado = proyectoRepository.findById(contextoProyecto.getProyectoActual().getId()).orElseThrow();
+        Proyecto proyecto = contextoProyecto.getProyectoActual();
+        assertNotNull(proyecto);
+        Proyecto recargado = proyectoRepository.findById(proyecto.getId()).orElseThrow();
         assertThat(recargado.getEstado()).isEqualTo(EstadoProyecto.CUP_ASIGNADO);
     }
 

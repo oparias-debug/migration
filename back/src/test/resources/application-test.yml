@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:cucumber;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS "flowable"
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+gateway.url: http://localhost:8080
+
+keycloak:
+  url: http://localhost:8085
+  realm: test-realm

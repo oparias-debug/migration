@@ -19,7 +19,7 @@ Módulo procesado: **Preinversión (WBS M-01 a M-08, 32 casos de uso, prefijo `P
 | `Identificacion` + `ObjetivoEspecifico` | `IDENTIFICACION` / `OBJETIVO_ESPECIFICO` | M-02 | CU-PRE-04 |
 | `AlternativaSolucion` | `ALTERNATIVA_SOLUCION` | M-02 | CU-PRE-05 |
 | `Interesado` | `INTERESADO` | M-02 | CU-PRE-06 |
-| `PoblacionObjetivo` | `POBLACION_OBJETIVO` | M-02 | CU-PRE-07 |
+| `Poblacion` | `POBLACION` | M-02 | CU-PRE-07 |
 | `AreaInfluencia` | `AREA_INFLUENCIA` | M-02 | CU-PRE-08 |
 | `AnalisisMercado` | `ANALISIS_MERCADO` | M-02 | CU-PRE-09 |
 | `DescripcionTecnica` | `DESCRIPCION_TECNICA` | M-03 | CU-PRE-11 |

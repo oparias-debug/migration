@@ -131,4 +131,20 @@ Antes de abrir el PR, confirmá:
 [ ] .openapi.yaml idéntico en back/src/main/resources/openapi/ y front/openapi/
 [ ] branch/PR nombrados con el código del CU
 [ ] TRAZABILIDAD-<DOMINIO>.md revisado/actualizado si el CU agregó entidades nuevas
+[ ] Escaneo de SonarQube corrido sobre tu cambio (back+api-gateway y/o front, según lo que hayas tocado) sin issues nuevos bloqueantes ni caída del Quality Gate
 ```
+
+### Actualizar los escaneos de SonarQube
+
+El servidor de SonarQube (servicio `sonarqube` en `docker-compose.yml`) debe estar arriba — ver [arranque y token](./REFERENCE.md#análisis-estático-sonarqube) en REFERENCE.md si todavía no lo tenés levantado. Antes de abrir el PR, corré el escaneo del/los módulo(s) que tocaste:
+
+```
+# back + api-gateway (un solo proyecto Sonar, siip-back), desde la raíz:
+mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar -Dsonar.token=%SONAR_TOKEN%
+
+# front (proyecto siip-front separado):
+cd front
+npm run sonar
+```
+
+Entrá a http://localhost:9000 y revisá el dashboard del proyecto correspondiente (`siip-back`/`siip-front`): si el Quality Gate queda en rojo o aparecen issues **New Code** (bugs, vulnerabilidades, code smells bloqueantes) en las líneas que agregaste, resolvelos antes de pedir revisión — no hace falta salir a cero en deuda técnica preexistente, solo en lo que tu PR introduce. Ver [REFERENCE.md](./REFERENCE.md#análisis-estático-sonarqube) para detalles de configuración (exclusiones, cobertura, troubleshooting).

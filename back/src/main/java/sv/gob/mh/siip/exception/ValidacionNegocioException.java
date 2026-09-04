@@ -11,7 +11,7 @@ import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 public class ValidacionNegocioException extends RuntimeException {
 
-    private final List<ErrorDetalleDto> detalles;
+    private final transient List<ErrorDetalleDto> detalles;
 
     public ValidacionNegocioException(String mensaje, List<ErrorDetalleDto> detalles) {
         super(mensaje);

@@ -5,7 +5,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,7 +43,7 @@ class CatalogosControllerTest {
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(respuesta.getBody()).isSameAs(medidas);
-        verify(medidaCatalogoService).listar(eq(TipoMedidaCatalogoDto.GRD));
+        verify(medidaCatalogoService).listar(TipoMedidaCatalogoDto.GRD);
     }
 
     @Test
