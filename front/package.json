@@ -13,13 +13,13 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:bdd": "cucumber-js",
-    "generate:api": "npm run generate:api:preinversion-cu-pre-01 && npm run generate:api:preinversion-cu-pre-01.5 && npm run generate:api:preinversion-cu-pre-3.5 && npm run generate:api:preinversion-cu-pre-04",
+    "generate:api": "npm run generate:api:preinversion-cu-pre-01 && npm run generate:api:preinversion-cu-pre-01.5 && npm run generate:api:preinversion-cu-pre-02 && npm run generate:api:preinversion-cu-pre-3.5 && npm run generate:api:preinversion-cu-pre-04",
     "generate:api:preinversion-cu-pre-01": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-01.openapi.yaml -g typescript-axios -o src/api/generated/preinversion --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "generate:api:preinversion-cu-pre-01.5": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-01.5.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-revision-cup --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
+    "generate:api:preinversion-cu-pre-02": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-02.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-bandeja --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "generate:api:preinversion-cu-pre-3.5": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-03.5.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-etapas --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "generate:api:preinversion-cu-pre-04": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-04.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-identificacion --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "sonar": "npm run test:coverage && npx --yes @sonar/scan"
-
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

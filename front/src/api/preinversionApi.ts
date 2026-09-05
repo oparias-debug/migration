@@ -1,6 +1,7 @@
 import { CatlogosPreinversinApi, PreinversinRegistroYSolicitudDeCUPApi } from './generated/preinversion';
 import { PreinversinRevisinYEmisinDeCUPApi } from './generated/preinversion-revision-cup';
 import { PreinversinIdentificacinApi } from './generated/preinversion-identificacion';
+import { PreinversinBandejaPreinversinApi, CatlogosPreinversinApi as CatlogosBandejaApi } from './generated/preinversion-bandeja';
 import { CatlogosSeleccinYRegistroDeEtapasApi, PreinversinSeleccinYRegistroDeEtapasApi } from './generated/preinversion-etapas';
 import { createHttpClient } from './httpClient';
 
@@ -31,6 +32,14 @@ export const identificacionApi = new PreinversinIdentificacinApi(undefined, unde
 // fragmento y módulo generado propios (generated/preinversion-etapas). Los 3 endpoints de
 // catálogo de este CU tienen su propio tag (ver nota en el YAML sobre el choque con
 // CatlogosPreinversinApi de CU-PRE-01) y por eso el generador los separó en su propia clase.
+// CU-PRE-02 (Bandeja Preinversión): mismo basePath /back, tag propio -> módulo
+// generado propio (generated/preinversion-bandeja). Su fragmento reutiliza por
+// $ref los schemas de CU-PRE-01 (UnidadEjecutoraResumen, EstadoProyecto, Error),
+// así que los dos YAML tienen que vivir en la misma carpeta para generar.
+export const bandejaApi = new PreinversinBandejaPreinversinApi(undefined, undefined, preinversionAxios);
+// El catálogo "Nombres Técnicos PRE" (Anexo C, RN04) va con tag de catálogos y
+// por eso el generador lo separó en su propia clase dentro del mismo módulo.
+export const catalogoBandejaApi = new CatlogosBandejaApi(undefined, undefined, preinversionAxios);
 export const etapasApi = new PreinversinSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
 export const catalogoEtapasApi = new CatlogosSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
 
@@ -84,3 +93,14 @@ export type {
   ProductoIndicador,
 } from './generated/preinversion-etapas';
 export { NombreEtapa, TipoCapital, TamanioProyecto, ComplejidadProyecto, FuenteFinanciamiento } from './generated/preinversion-etapas';
+
+// CU-PRE-02: tipos propios de este fragmento.
+export type {
+  SolicitudActivaItem,
+  SolicitudArchivadaItem,
+  SolicitudesActivasResponse,
+  SolicitudesArchivadasResponse,
+  ConteoTecnicoPre,
+  AsignacionTecnicoPreRequest,
+} from './generated/preinversion-bandeja';
+export { TipoSolicitud } from './generated/preinversion-bandeja';

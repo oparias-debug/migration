@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProyectosPage } from './features/preinversion/proyectos/ProyectosPage';
+import { BandejaPage } from './features/preinversion/bandeja/BandejaPage';
 import { ProyectoFormPage } from './features/preinversion/proyectos/ProyectoFormPage';
 import { RutaPreinversionPage } from './features/preinversion/etapas/RutaPreinversionPage';
 import { EtapasPage } from './features/preinversion/etapas/EtapasPage';
@@ -49,6 +50,7 @@ export function App() {
           >
             <Route path="/" element={<HomePage />} />
 
+            <Route path="/preinversion/bandeja" element={<BandejaPage />} />
             <Route path="/preinversion/proyectos" element={<ProyectosPage />} />
             <Route path="/preinversion/proyectos/nuevo" element={<ProyectoFormPage />} />
             <Route path="/preinversion/proyectos/:id" element={<ProyectoFormPage />} />

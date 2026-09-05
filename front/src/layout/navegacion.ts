@@ -46,6 +46,7 @@ export const MODULOS: readonly Modulo[] = [
     ruta: '/preinversion/proyectos',
     submenu: [
       // Único ítem con control de rol en el sidebar anterior; se conserva igual.
+      { clave: 'bandeja', texto: 'menu.bandeja', ruta: '/preinversion/bandeja' },
       {
         clave: 'registro-proyecto',
         texto: 'menu.registroProyecto',

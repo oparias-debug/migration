@@ -1,0 +1,396 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-02 Bandeja Preinversión
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-02 "Bandeja Preinversión"
+    (UC-PRE-02-Bandeja_de_Preinversion.md) y su historia BDD (CU-PRE-02.feature).
+    Actor principal: Coordinador PRE. Actor secundario: Técnico PRE (solo accede
+    de forma limitada a la misma bandeja para abrir su caso asignado). Introduce
+    el recurso `Solicitud`, respaldado por la tabla `SOLICITUD_PREINVERSION` del
+    modelo de dominio (compartida con CU-PRE-01/CU-PRE-01.5, que operan sobre el
+    recurso `Proyecto`; ver conflicto de vocabulario de estados documentado en
+    contrato-CU-PRE-02.md). No incluye la actuación propia del Técnico PRE dentro
+    de la solicitud (revisar, comentar, devolver, emitir CUP/Opinión Técnica),
+    documentada en CU-PRE-01.5 y CU-PRE-26 respectivamente — este fragmento solo
+    cubre la navegación hacia esos casos de uso mediante los datos ya expuestos en
+    el listado (`idProyecto`, `tipoSolicitud`).
+
+paths:
+
+  /solicitudes:
+    get:
+      operationId: listarSolicitudesActivas
+      summary: Consultar la tabla "Solicitudes Activas" (Anexo A.1)
+      description: >
+        Disponible para Coordinador PRE (todas las solicitudes activas) y
+        Técnico PRE (implícitamente acotado a las solicitudes que le fueron
+        asignadas — RN sobre Permisos: "Ingresar a la Bandeja Preinversión y dar
+        clic al caso asignado"; el CU no describe un parámetro de consulta para
+        este acotamiento, se asume que el servidor lo resuelve según el actor
+        autenticado). Incluye el conteo de solicitudes por Técnico PRE (RN05,
+        "pie de página de tabla"), que refleja siempre el total de solicitudes
+        activas sin importar el filtro `tipoSolicitud` aplicado a `contenido`.
+      tags: [Preinversión - Bandeja Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Coordinador PRE, Técnico PRE]
+      parameters:
+        - name: tipoSolicitud
+          in: query
+          description: Filtro por tipo de solicitud (RN06).
+          schema:
+            $ref: '#/components/schemas/TipoSolicitud'
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: Listado paginado de solicitudes activas, con conteo por Técnico PRE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudesActivasResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /solicitudes/archivadas:
+    get:
+      operationId: listarSolicitudesArchivadas
+      summary: Consultar el "Reporte de solicitudes Preinversión archivadas" (Anexo A.4)
+      description: >
+        No se documenta en el CU que Técnico PRE tenga acceso a esta pantalla
+        (a diferencia de "Solicitudes Activas"); se restringe a Coordinador PRE.
+      tags: [Preinversión - Bandeja Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Coordinador PRE]
+      parameters:
+        - name: tipoSolicitud
+          in: query
+          description: Filtro por tipo de solicitud (mismo criterio de RN06, no documentado explícitamente para este reporte pero consistente con la pantalla de origen).
+          schema:
+            $ref: '#/components/schemas/TipoSolicitud'
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: Listado paginado de solicitudes archivadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudesArchivadasResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Coordinador PRE.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /solicitudes/{idSolicitud}/asignacion:
+    parameters:
+      - name: idSolicitud
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: asignarTecnicoPre
+      summary: Asignar o reasignar un Técnico PRE a una solicitud (columna "Asignado a", botón "Guardar")
+      description: >
+        RN03: dispara el aviso de confirmación "¿Está seguro de asignar esta
+        solicitud?" — ese aviso es una confirmación de cliente antes de invocar
+        este endpoint, no un paso adicional de la API (mismo criterio que
+        "Regresar sin guardar" en CU-PRE-01). Al confirmarse, el Sistema notifica
+        al Técnico PRE con la alerta "Se ha asignado para revisión la solicitud
+        XXX" (efecto secundario del servidor, no expuesto como respuesta
+        separada). RN09: se permite reasignar el Técnico PRE de una solicitud
+        que ya tenía uno asignado, sin restricción de estado; por eso este
+        endpoint no define una respuesta 409 de estado inválido.
+      tags: [Preinversión - Bandeja Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Coordinador PRE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsignacionTecnicoPreRequest'
+      responses:
+        "200":
+          description: Técnico PRE asignado o reasignado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudActivaItem'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Coordinador PRE (la asignación es
+            exclusiva del Coordinador PRE).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: La solicitud o el Técnico PRE indicado no existen.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /solicitudes/{idSolicitud}/archivo:
+    parameters:
+      - name: idSolicitud
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: archivarSolicitud
+      summary: Archivar una solicitud (botón interactivo "Archivar", FA-03)
+      description: >
+        El mensaje de confirmación mostrado antes de invocar este endpoint no
+        tiene un texto definitivo confirmado por el negocio (el CU documenta dos
+        versiones distintas en conflicto: "¿Está seguro de archivar esta
+        solicitud?" del paso 3.4, y "¿Desea archivar esta solicitud?" del Anexo
+        A.3); en cualquier caso, esa confirmación es de cliente y no forma parte
+        de este endpoint (mismo criterio que en `asignarTecnicoPre`). El CU no
+        documenta ninguna restricción de estado para archivar (a diferencia de
+        CU-PRE-01, donde sí existen estados no editables); por eso no se define
+        una respuesta 409 de estado inválido.
+      tags: [Preinversión - Bandeja Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Coordinador PRE]
+      responses:
+        "200":
+          description: >
+            Solicitud archivada; desaparece de "Solicitudes Activas" (RN08) y
+            pasa al "Reporte de solicitudes Preinversión archivadas" (RN10).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudArchivadaItem'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Coordinador PRE (el archivo es exclusivo
+            del Coordinador PRE).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: La solicitud no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /catalogos/tecnicos-pre:
+    get:
+      operationId: listarTecnicosPre
+      summary: Consultar el catálogo "Nombres Técnicos PRE" (Anexo C, RN04)
+      description: >
+        Fuente del listado desplegable de la columna "Asignado a" en la tabla
+        "Solicitudes Activas". Reutiliza `UsuarioResumen` (usuarios con
+        ROL = TECNICO_PRE en el modelo de dominio) en vez de definir un schema
+        de catálogo nuevo, ya que el Anexo C solo enumera nombres de usuario ya
+        existentes como actores del sistema.
+      tags: [Catálogos Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Coordinador PRE]
+      responses:
+        "200":
+          description: Listado de Técnicos PRE disponibles para asignación.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UsuarioResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TipoSolicitud:
+      type: string
+      description: >
+        Corresponde al CHECK CK_SOLICITUD_TIPO de SOLICITUD_PREINVERSION en el
+        modelo de dominio (valores reutilizados literalmente).
+      enum: [CUP, OPINION_TECNICA]
+
+    EstadoArchivoSolicitud:
+      type: string
+      description: >
+        ⚠️ Corrección tras contrastar con CU-PRE-03 (ver contrato-CU-PRE-02.md):
+        el `CHECK CK_SOLICITUD_ESTADO` de SOLICITUD_PREINVERSION en el modelo de
+        dominio (REGISTRADA, ASIGNADA, EN_REVISION, OBSERVADA, APROBADA, ARCHIVADA)
+        no corresponde a los estados que RN07 confirma como visibles en la
+        columna "Estado" de "Solicitudes Activas". La propia resolución de
+        Ronda 2 (RQ-C-01) descarta explícitamente que existan estados
+        intermedios como "Asignado" o "En revisión". Este enum se acota, por lo
+        tanto, únicamente al concepto que sí es propio y exclusivo de la
+        Solicitud (no del Proyecto): que fue archivada por el Coordinador PRE
+        (RN08/RN10). El estado mostrado en "Solicitudes Activas" no usa este
+        enum — reutiliza `EstadoProyecto` (ver `SolicitudActivaItem.estado`).
+      enum:
+        - ARCHIVADA
+
+    SolicitudActivaItem:
+      type: object
+      description: Fila de la tabla "Solicitudes Activas" (Anexo A.1).
+      required: [idSolicitud, idProyecto, unidadEjecutora, tipoSolicitud, nombreProyecto, fechaSolicitud, estado]
+      properties:
+        idSolicitud: { type: integer, format: int64 }
+        idProyecto:
+          type: integer
+          format: int64
+          description: >
+            Necesario para que el cliente navegue a CU-PRE-01.5 (si tipoSolicitud
+            = CUP) o CU-PRE-26 (si tipoSolicitud = OPINION_TECNICA) al hacer clic
+            en el caso asignado (FA-01/FA-02). No se modela un endpoint de
+            navegación propio: el CU describe una redirección de pantalla, no
+            una acción de servidor adicional.
+        unidadEjecutora:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UnidadEjecutoraResumen'
+        tipoSolicitud:
+          $ref: '#/components/schemas/TipoSolicitud'
+        cup:
+          type: string
+          nullable: true
+          description: Vacío si el proyecto aún no cuenta con CUP asignado (CU-PRE-01.5).
+        nombreProyecto:
+          type: string
+        fechaSolicitud:
+          type: string
+          format: date-time
+        estado:
+          description: >
+            RN07 (confirmado por Ronda 2, RQ-C-01) define este estado en
+            términos idénticos a ENVIADO_DGICP_REGISTRO/OBSERVADO_DGICP_REGISTRO
+            de `Proyecto` — es el mismo campo, no uno propio de Solicitud. En
+            esta pantalla, por definición de "activas" (RN01/RN08), solo debería
+            observarse uno de esos dos valores; el resto del catálogo de
+            `EstadoProyecto` no es alcanzable aquí, pero se reutiliza el enum
+            completo para no duplicar su definición.
+          allOf:
+            - $ref: './CU-PRE-01.openapi.yaml#/components/schemas/EstadoProyecto'
+        asignadoA:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UsuarioResumen'
+
+    ConteoTecnicoPre:
+      type: object
+      description: Entrada del "pie de página" de conteo por Técnico PRE (RN05).
+      required: [tecnico, cantidadCup, cantidadOpinionTecnica]
+      properties:
+        tecnico:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UsuarioResumen'
+        cantidadCup:
+          type: integer
+          description: Cantidad de solicitudes de tipo CUP asignadas a este Técnico PRE.
+        cantidadOpinionTecnica:
+          type: integer
+          description: Cantidad de solicitudes de tipo Opinión Técnica asignadas a este Técnico PRE.
+
+    SolicitudesActivasResponse:
+      type: object
+      required: [contenido, paginacion, conteoPorTecnico]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolicitudActivaItem'
+        paginacion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PaginacionMetadata'
+        conteoPorTecnico:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConteoTecnicoPre'
+
+    SolicitudArchivadaItem:
+      type: object
+      description: Fila del "Reporte de solicitudes Preinversión archivadas" (Anexo A.4).
+      required: [idSolicitud, idProyecto, unidadEjecutora, tipoSolicitud, nombreProyecto, fechaSolicitud, estadoSolicitud, fechaArchivo]
+      properties:
+        idSolicitud: { type: integer, format: int64 }
+        idProyecto: { type: integer, format: int64 }
+        unidadEjecutora:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UnidadEjecutoraResumen'
+        tipoSolicitud:
+          $ref: '#/components/schemas/TipoSolicitud'
+        cup:
+          type: string
+          nullable: true
+        nombreProyecto:
+          type: string
+        fechaSolicitud:
+          type: string
+          format: date-time
+        estadoSolicitud:
+          description: RN10 — siempre ARCHIVADA en esta pantalla.
+          allOf:
+            - $ref: '#/components/schemas/EstadoArchivoSolicitud'
+        fechaArchivo:
+          type: string
+          format: date-time
+
+    SolicitudesArchivadasResponse:
+      type: object
+      required: [contenido, paginacion]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolicitudArchivadaItem'
+        paginacion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PaginacionMetadata'
+
+    AsignacionTecnicoPreRequest:
+      type: object
+      required: [idTecnicoAsignado]
+      properties:
+        idTecnicoAsignado:
+          type: integer
+          format: int64
+          description: >
+            Identificador del Técnico PRE elegido, tomado del catálogo expuesto
+            en GET /catalogos/tecnicos-pre (Anexo C, RN04).

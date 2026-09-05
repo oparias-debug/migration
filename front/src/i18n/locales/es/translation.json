@@ -239,6 +239,30 @@
       "botonDevolver": "Devolver",
       "confirmarDevolver": "¿Está seguro de devolver la solicitud con estas observaciones?",
       "devuelta": "La solicitud ha sido devuelta con las observaciones registradas."
+    },
+    "bandeja": {
+      "titulo": "Bandeja Preinversión",
+      "campoVista": "Vista",
+      "vistaActivas": "Solicitudes activas",
+      "vistaArchivadas": "Archivadas",
+      "columnaUnidadEjecutora": "Unidad Ejecutora",
+      "columnaTipo": "Tipo de Solicitud",
+      "columnaCup": "CUP",
+      "columnaProyecto": "Nombre del Proyecto",
+      "columnaFechaSolicitud": "Fecha de Solicitud",
+      "columnaEstado": "Estado",
+      "columnaAsignadoA": "Asignado a",
+      "columnaFechaArchivo": "Fecha de Archivo",
+      "columnaTecnico": "Técnico PRE",
+      "columnaTotal": "Total",
+      "sinAsignar": "Sin asignar",
+      "sinRegistros": "No hay solicitudes que mostrar.",
+      "botonAsignar": "Asignar",
+      "botonAbrir": "Abrir",
+      "botonArchivar": "Archivar",
+      "confirmarArchivar": "¿Desea archivar esta solicitud?",
+      "tituloConteo": "Casos asignados por Técnico PRE",
+      "notaConteo": "Se contabiliza por separado para solicitudes de CUP y de Opinión Técnica (RN04)."
     }
   },
   "app": {
@@ -263,7 +287,8 @@
     "financiero": "Financiero",
     "geografico": "Geográfico",
     "fisico": "Físico",
-    "procesos": "Procesos"
+    "procesos": "Procesos",
+    "bandeja": "Bandeja Preinversión"
   },
   "ruta": {
     "migas": "Ruta de navegación",
