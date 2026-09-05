@@ -1,0 +1,648 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-17 Presupuesto de Inversión
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-17 "Presupuesto de Inversión"
+    (UC-PRE-17-Presupuesto_de_Inversion.md, versión 1.1) y sus 5 historias
+    BDD. Actor principal: Técnico URP. Actor secundario de solo lectura:
+    Técnico PRE. Introduce el recurso `Presupuesto`, hijo de `Proyecto`.
+
+    Reutiliza `ProductoSeleccionado` y `TipoCostoResumen` de
+    CU-PRE-3.5.openapi.yaml (el "Componente" de este CU, usado en el
+    Resumen presupuesto por componente, tiene la misma nota "sujeto a
+    actualización por parte de la DGICP" que el catálogo ya vinculado en
+    CU-PRE-11 — refuerza esa decisión anterior).
+
+    RN08 asigna un consecutivo numérico a cada producto (1..n); se usa ese
+    mismo número como `idProducto` en los paths de este fragmento, ya que
+    CU-PRE-11 no define un identificador propio y estable por fila de
+    producto — ver contrato-CU-PRE-17.md.
+
+    "Fuente de Financiamiento" es un catálogo cerrado de 7 valores
+    (confirmado por RQ-T-02); se modela como `enum` sin endpoint propio.
+    "Fuente de Recursos" sigue sin catálogo resuelto (pendiente del Gestor
+    del Dominio entre 3 alternativas); se modela como `string` libre.
+
+    Este fragmento provoca una actualización retroactiva de
+    CU-PRE-3.5.openapi.yaml: sus campos `fuentesFinanciamiento`/
+    `fuenteRecursos` de `FichaEmergenciaRequest`/`FichaEmergencia` (que
+    apuntaban a "CU-PRE-17, no procesado todavía") ahora referencian
+    `FuenteFinanciamiento` de este archivo vía `$ref` externo — ver
+    contrato-CU-PRE-3.5.md (actualizado) y contrato-CU-PRE-17.md.
+
+paths:
+
+  /proyectos/{idProyecto}/presupuesto:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: obtenerPresupuesto
+      summary: Consultar la pantalla "Presupuesto del Proyecto" (Anexo A.1)
+      description: >
+        Incluye productos (desde CU-PRE-11, solo lectura, RN16), sus
+        macroactividades con costos por período, la inversión estimada a
+        precios de mercado y ajustados (RN12, redondeo), y el resumen por
+        componente (Anexo A.4, RN09). `inversionEstimadaPreciosAjustados` y
+        `totalPeriodoPreciosAjustados` (dentro de cada macroactividad) son
+        `nullable`: el servidor los puebla solo si el actor autenticado
+        califica como "Usuarios Internos" (RN10, cualquier usuario del
+        Ministerio de Hacienda — RQ-C-03) o, para el segundo campo, como
+        "actores internos" (RN11, definición en conflicto sin resolver —
+        ver contrato-CU-PRE-17.md). Esta es una regla de visibilidad de
+        campo ortogonal a `x-roles`, no un reemplazo de él: un Técnico URP
+        o Técnico PRE que además sea personal del Ministerio de Hacienda
+        vería estos campos poblados; el resto los vería `null`.
+      tags: [Preinversión - Presupuesto de Inversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        "200":
+          description: Presupuesto del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presupuesto'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP ni Técnico PRE, o
+            (Técnico URP/Técnico PRE) el proyecto no está dentro de su
+            alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/presupuesto/periodos:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: configurarPeriodosEjecucion
+      summary: Registrar "Períodos estimados para la ejecución" (botón "ACEPTAR", FB paso 3-4, RN06)
+      description: >
+        Genera las columnas PERÍODO 0..n reflejadas en el resto de este
+        recurso (Anexo A.1) y en `registrarMacroactividad` (Anexo A.2, RN06).
+        No se valida que ya existan macroactividades registradas con un
+        número de períodos distinto — no hay escenario BDD para ese caso.
+      tags: [Preinversión - Presupuesto de Inversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [periodosEstimados]
+              properties:
+                periodosEstimados:
+                  type: integer
+                  minimum: 0
+      responses:
+        "200":
+          description: Períodos configurados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presupuesto'
+        "400":
+          description: >
+            "Períodos estimados para la ejecución" es obligatorio (Anexo
+            B.1). Sin mensaje literal documentado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/presupuesto/productos/{idProducto}/macroactividades:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+      - name: idProducto
+        in: path
+        required: true
+        description: >
+          Consecutivo numérico del producto (RN08, "N° Producto"), no un id
+          propio de CU-PRE-11 (que no define uno estable por fila) — ver
+          contrato-CU-PRE-17.md.
+        schema: { type: integer }
+    post:
+      operationId: registrarMacroactividad
+      summary: Registrar una macroactividad (botón "Agregar Macroactividad" + "Guardar" en Anexo A.2, F1, FA-01.1)
+      description: >
+        A diferencia de la mayoría de este contrato, "Detalle de
+        Macroactividad" no reemplaza un array completo por cada guardado:
+        cada clic en "Agregar Macroactividad" crea una macroactividad nueva
+        e independiente, con su propio ciclo Guardar/Salir (Anexo A.2). No
+        se modeló edición ni eliminación de una macroactividad ya creada:
+        ni el CU ni la historia BDD describen esas acciones (solo "Agregar
+        Macroactividad" existe como botón). A diferencia de casi toda la
+        serie CU-PRE-06 a CU-PRE-16, aquí "Guardar" (del modal) sí rechaza
+        con 400 en dos casos, ambos confirmados por escenarios BDD
+        explícitos ("el sistema no permite guardar"): falta
+        `nombreMacroactividad`, o ninguna fila de `insumos` tiene al menos
+        un valor en `costosPorPeriodo` (RN "al menos un campo de una fila
+        diligenciado"). El botón "Salir" (FA-01.2) no tiene endpoint: no
+        persiste nada, es descarte puro de cliente.
+      tags: [Preinversión - Presupuesto de Inversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MacroactividadRequest'
+      responses:
+        "201":
+          description: >
+            Macroactividad registrada (mensaje "¡Guardado!", Anexo A.3);
+            sus totales ya se reflejan en `obtenerPresupuesto` (RN07).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Macroactividad'
+        "400":
+          description: >
+            Falta `nombreMacroactividad`, o ninguna fila de `insumos` tiene
+            al menos un costo de período registrado. Ambos casos con
+            escenario BDD explícito, sin mensaje literal documentado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto o el producto (por su número consecutivo) no existen.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/presupuesto/guardado:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: guardarPresupuesto
+      summary: Guardar el presupuesto del proyecto (botón "Guardar" en Anexo A.1, FA-02)
+      description: >
+        No recibe cuerpo: en esta pantalla no queda ningún campo editable
+        directamente que no se gestione ya por `configurarPeriodosEjecucion`
+        o `registrarMacroactividad` (los productos son de solo lectura,
+        RN16). Este endpoint es, en esencia, la acción de "confirmar" que
+        dispara dos efectos: (1) valida que cada producto tenga al menos
+        una macroactividad registrada (esta sí es una validación real,
+        con escenario BDD dedicado que usa la palabra "exige", a diferencia
+        del resto de validaciones de "campos pendientes" de esta serie, que
+        son solo visuales); (2) actualiza automáticamente el campo "Costo
+        etapa" de la fila EJECUCION en CU-PRE-3.5 (RN15) con el valor total
+        de inversión a precios de mercado — efecto secundario documentado,
+        sin endpoint propio expuesto aquí.
+      tags: [Preinversión - Presupuesto de Inversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "¡Guardado! Sus datos han sido
+            guardados exitosamente.", Anexo A.3); el modal y su "Aceptar"
+            son de cliente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presupuesto'
+        "400":
+          description: >
+            Al menos un producto no tiene ninguna macroactividad registrada.
+            Escenario BDD explícito ("el sistema exige que cada producto
+            cuente con al menos una macroactividad registrada"), sin
+            mensaje literal documentado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/presupuesto/fuentes-financiamiento:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: obtenerFuentesFinanciamiento
+      summary: Consultar la sección "Fuente de financiamiento y de recursos" (Anexo A.5)
+      tags: [Preinversión - Presupuesto de Inversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        "200":
+          description: Fuentes de financiamiento y de recursos del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuentesFinanciamientoRequest'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP ni Técnico PRE, o está
+            fuera de su alcance de Unidad Ejecutora. Inferido de `x-roles`.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarFuentesFinanciamiento
+      summary: Registrar la Fuente de Financiamiento y de Recursos (RN14)
+      description: >
+        RN14. Ambos campos son obligatorios (Validaciones); el escenario
+        BDD "Intentar continuar con un campo obligatorio incompleto" dice
+        explícitamente "el sistema no permite continuar" — a diferencia
+        del patrón visual-only del resto de la serie, aquí sí se modela
+        como 400. `fuentesFinanciamiento` es un array porque el botón "+"
+        permite seleccionar más de una.
+      tags: [Preinversión - Presupuesto de Inversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuentesFinanciamientoRequest'
+      responses:
+        "200":
+          description: Fuentes de financiamiento y de recursos guardadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuentesFinanciamientoRequest'
+        "400":
+          description: >
+            Falta `fuentesFinanciamiento` (al menos una) o `fuenteRecursos`
+            (RN14, Validaciones). Escenario BDD explícito, sin mensaje
+            literal documentado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /catalogos/insumos-tipo:
+    get:
+      operationId: listarInsumosTipo
+      summary: Consultar el catálogo "Insumo Tipo" (con Factor de Corrección)
+      description: >
+        El propio CU aclara: "Este catálogo estará sujeto a actualización
+        por parte de la DGICP" (mismo tipo de nota que "Tipo de Costos" en
+        CU-PRE-3.5) — administrado, requiere endpoint propio, a diferencia
+        de catálogos fijos modelados como `enum` en este mismo fragmento
+        (`FuenteFinanciamiento`).
+      tags: [Catálogos Preinversión]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Listado de tipos de insumo con su factor de corrección.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InsumoTipoResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    FuenteFinanciamiento:
+      type: string
+      description: >
+        Catálogo cerrado confirmado por RQ-T-02 (7 valores). Siglas SIIP:
+        SIN_FINANCIAMIENTO="S/F", FONDO_GENERAL="FGEN",
+        RECURSOS_PROPIOS="RPRO", PRESTAMOS_EXTERNOS="P.Ext",
+        PRESTAMOS_INTERNOS="P.Int", DONACIONES="Don.", OTROS="Otros".
+      enum:
+        - SIN_FINANCIAMIENTO
+        - FONDO_GENERAL
+        - RECURSOS_PROPIOS
+        - PRESTAMOS_EXTERNOS
+        - PRESTAMOS_INTERNOS
+        - DONACIONES
+        - OTROS
+
+    InsumoTipoResumen:
+      type: object
+      description: Entrada del catálogo "Insumo Tipo" (Anexo C, con Factor de Corrección).
+      required: [codigo, nombre, factorCorreccion]
+      properties:
+        codigo: { type: string }
+        nombre: { type: string }
+        factorCorreccion:
+          type: number
+          format: double
+          description: "FC — usado para calcular precios ajustados (F1 paso 1.2)."
+
+    MacroactividadInsumoRequest:
+      type: object
+      description: Fila de la tabla "Costos" (Anexo A.2) para un tipo de insumo.
+      required: [tipoInsumo]
+      properties:
+        tipoInsumo:
+          type: string
+          description: Código tomado de GET /catalogos/insumos-tipo.
+        costosPorPeriodo:
+          type: array
+          description: >
+            Costo a precio de mercado por período (índice 0 = PERÍODO 0,
+            índice 1 = PERÍODO 1, etc., según la cantidad configurada en
+            `configurarPeriodosEjecucion`). Posiciones sin valor pueden
+            omitirse o enviarse como `null`.
+          items:
+            type: number
+            format: double
+            nullable: true
+
+    MacroactividadInsumo:
+      type: object
+      description: >
+        Forma de lectura de una fila de insumo. A diferencia de
+        `MacroactividadInsumoRequest`, incluye `tipoInsumo` ya resuelto y
+        `costosAjustadosPorPeriodo`, calculado por el servidor aplicando el
+        Factor de Corrección a cada valor de `costosPorPeriodo` (F1, paso
+        1.2: "Periodo n precios ajustados = Periodo n precios de mercado × FC").
+      properties:
+        tipoInsumo:
+          $ref: '#/components/schemas/InsumoTipoResumen'
+        costosPorPeriodo:
+          type: array
+          items: { type: number, format: double, nullable: true }
+        costosAjustadosPorPeriodo:
+          type: array
+          nullable: true
+          description: >
+            Nulo si el actor autenticado no califica como "actores
+            internos" (RN11) — ver nota de visibilidad condicional en
+            `obtenerPresupuesto`.
+          items: { type: number, format: double, nullable: true }
+
+    MacroactividadRequest:
+      type: object
+      required: [nombreMacroactividad]
+      properties:
+        nombreMacroactividad:
+          type: string
+        insumos:
+          type: array
+          items:
+            $ref: '#/components/schemas/MacroactividadInsumoRequest'
+
+    Macroactividad:
+      type: object
+      description: >
+        Macroactividad registrada, con sus totales por período ya
+        calculados y trasladados (RN04, RN07).
+      required: [idMacroactividad, numero, nombreMacroactividad, insumos, totalPeriodoPrecioMercado]
+      properties:
+        idMacroactividad:
+          type: integer
+          format: int64
+        numero:
+          type: string
+          description: Consecutivo "n.n" correlacionado con el producto (RN08), p. ej. "1.1".
+        nombreMacroactividad:
+          type: string
+        insumos:
+          type: array
+          items:
+            $ref: '#/components/schemas/MacroactividadInsumo'
+        totalPeriodoPrecioMercado:
+          type: array
+          description: Suma de costosPorPeriodo de todos los insumos, por período (RN04).
+          items: { type: number, format: double }
+        totalPeriodoPreciosAjustados:
+          type: array
+          nullable: true
+          description: >
+            Suma de costosAjustadosPorPeriodo de todos los insumos, por
+            período. Nulo si el actor no califica como "actores internos"
+            (RN11) — ver nota de visibilidad condicional en `obtenerPresupuesto`.
+          items: { type: number, format: double }
+
+    ProductoPresupuesto:
+      type: object
+      description: >
+        Fila de producto en "Presupuesto del proyecto" (Anexo A.1),
+        proveniente de CU-PRE-11 (RN16, solo lectura — no se puede
+        adicionar ni eliminar aquí).
+      required: [numero, producto, macroactividades, costoProductoPorPeriodo]
+      properties:
+        numero:
+          type: integer
+          description: Consecutivo del producto (RN08); usado como `idProducto` en los paths de este fragmento.
+        producto:
+          $ref: './CU-PRE-3.5.openapi.yaml#/components/schemas/ProductoSeleccionado'
+        macroactividades:
+          type: array
+          items:
+            $ref: '#/components/schemas/Macroactividad'
+        costoProductoPorPeriodo:
+          type: array
+          description: Suma de los costos de macroactividad de este producto, por período.
+          items: { type: number, format: double }
+        costoProductoTotal:
+          type: number
+          format: double
+          nullable: true
+
+    MontoPorPeriodo:
+      type: object
+      description: >
+        Estructura reutilizable para un monto total con desglose por
+        período y su versión ya redondeada (RN12: redondeo hacia arriba a
+        múltiplos de 5 o 10).
+      required: [porPeriodo, total]
+      properties:
+        porPeriodo:
+          type: array
+          items: { type: number, format: double }
+        total:
+          type: number
+          format: double
+          description: Ya redondeado según RN12.
+
+    ComponentePresupuesto:
+      type: object
+      description: Fila del "Resumen presupuesto por componente" (Anexo A.4, RN09).
+      required: [componente, costo]
+      properties:
+        componente:
+          $ref: './CU-PRE-3.5.openapi.yaml#/components/schemas/TipoCostoResumen'
+        costo:
+          type: number
+          format: double
+
+    Presupuesto:
+      type: object
+      description: Presupuesto del proyecto (lectura).
+      required: [idProyecto, productos, inversionEstimadaPreciosMercado, resumenPorComponente, totalResumenPorComponente]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        periodosEstimados:
+          type: integer
+          nullable: true
+        productos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductoPresupuesto'
+        inversionEstimadaPreciosMercado:
+          $ref: '#/components/schemas/MontoPorPeriodo'
+        inversionEstimadaPreciosAjustados:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/MontoPorPeriodo'
+          description: >
+            Nulo si el actor autenticado no califica como "Usuarios
+            Internos" (RN10, cualquier usuario del Ministerio de Hacienda —
+            RQ-C-03, resuelto). Ver nota de visibilidad condicional en
+            `obtenerPresupuesto`.
+        resumenPorComponente:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponentePresupuesto'
+        totalResumenPorComponente:
+          type: number
+          format: double
+          description: Debe igualar inversionEstimadaPreciosMercado.total (regla de consistencia cruzada, RN09).
+
+    FuentesFinanciamientoRequest:
+      type: object
+      description: >
+        Se reutiliza también como forma de lectura (no hay campos
+        calculados por el servidor en esta sección).
+      properties:
+        fuentesFinanciamiento:
+          type: array
+          description: RN14; puede tener más de un valor (botón "+").
+          items:
+            $ref: '#/components/schemas/FuenteFinanciamiento'
+        fuenteRecursos:
+          type: string
+          description: >
+            Pendiente de decisión del Gestor del Dominio sobre a cuál
+            catálogo debe enlazar (191 valores "Fuentes de Recursos", 392
+            valores "Convenios", o ambos como jerarquía) — se modela como
+            `string` libre hasta que se resuelva, sin inventar el enlace.

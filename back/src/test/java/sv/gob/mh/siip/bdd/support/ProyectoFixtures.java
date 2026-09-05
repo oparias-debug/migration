@@ -1,6 +1,7 @@
 package sv.gob.mh.siip.bdd.support;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
@@ -19,7 +20,21 @@ import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
  */
 public final class ProyectoFixtures {
 
+    // CUP real es un consecutivo de 5 dígitos desde 10000 (RN 2.8.c, ver
+    // ProyectoServiceImpl.siguienteCup()); acá solo se necesita un valor único por
+    // proyecto de prueba dentro de la misma ejecución de la suite, no el consecutivo real.
+    // Arranca en 50000 (lejos del rango que siguienteCup() genera de verdad) para no
+    // colisionar con el CUP real que asigna el escenario de CU-PRE-01.5-emitir-cup.feature
+    // si ese insert no queda revertido al terminar su escenario. Un contador atómico evita,
+    // además, las colisiones que un hash truncado del sufijo aleatorio sí produce (ver
+    // incidente de "Unique index or primary key violation" en PROYECTO.CUP).
+    private static final AtomicInteger CUP_SEQ = new AtomicInteger(50000);
+
     private ProyectoFixtures() {
+    }
+
+    public static String nuevoCup() {
+        return String.valueOf(CUP_SEQ.getAndIncrement());
     }
 
     public static Institucion nuevaInstitucion(String codigo, String nombre) {

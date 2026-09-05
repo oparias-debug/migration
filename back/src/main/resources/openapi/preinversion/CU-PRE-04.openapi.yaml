@@ -1,0 +1,478 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-04 Identificación
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-04 "Identificación"
+    (UC-PRE-04-Identificacion.md) y sus 4 historias BDD. Actor principal:
+    Técnico URP (lectura/escritura). Actores secundarios de solo lectura:
+    Técnico PRE, "Usuarios Internos/Externos" (nombre no coincide
+    textualmente con el catálogo — se usa la entrada más cercana, mismo
+    criterio que el propio CU-PRE-04.md documenta para UC-PRE-03 y CU-EJE-03).
+    Introduce el recurso `Identificacion`, hijo de `Proyecto`
+    (CU-PRE-01.openapi.yaml, reutilizado vía `$ref` externo).
+
+paths:
+
+  /proyectos/{idProyecto}/identificacion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerIdentificacion
+      summary: Consultar la pestaña "Identificación del proyecto" (Anexo A.1)
+      description: >
+        RNA-2/RNA-3: Técnico PRE y "Usuarios Internos/Externos" solo pueden
+        acceder "desde que se guarden cambios por primera vez" — para ellos,
+        si `Identificacion` nunca fue guardada, este endpoint responde 404 en
+        vez de un objeto vacío. Para Técnico URP no aplica esa restricción
+        (puede consultar/editar desde el primer ingreso, incluso sin guardar
+        todavía). El alcance de Unidades Ejecutoras visibles (RNA-1 para
+        Técnico URP, RNA-2 sin restricción para Técnico PRE, RNA-3 según
+        credenciales para Usuarios Internos/Externos) lo resuelve el
+        servidor según el actor autenticado, igual que en fragmentos previos.
+      tags: [Preinversión - Identificación]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Información de identificación del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identificacion'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no corresponde a ninguno de los roles de
+            este CU, o (Técnico URP/Usuarios Internos-Externos) el proyecto
+            no está dentro de su alcance de Unidad Ejecutora. Inferido de
+            `x-roles`/RNA-1/RNA-3; sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: >
+            El proyecto no existe, o (solo para Técnico PRE/Usuarios
+            Internos-Externos, RNA-2/RNA-3) la información de identificación
+            todavía no se ha guardado ni una sola vez.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarIdentificacion
+      summary: Registrar y guardar la información de identificación (botón "Guardar", SF-1)
+      description: >
+        Ninguno de los 4 campos es obligatorio a nivel de servidor: la tabla
+        de Campos marca "Obligatorio: No especificado en el documento" para
+        los cuatro, y el propio Flujo (SF-1, pasos 2-4) muestra que el
+        guardado ocurre igual aunque haya "campos pendientes de completar"
+        (RNC-2 solo sombrea sus bordes en rojo — es retroalimentación
+        visual de cliente, no un rechazo del servidor). Por eso, a
+        diferencia de otros fragmentos de este contrato (p. ej.
+        `registrarFichaEmergencia` en CU-PRE-3.5), este endpoint no define
+        una respuesta 400 por campos incompletos. Los límites de caracteres
+        (`maxLength`) sí se documentan en el schema, pero el Esquema del
+        escenario de la BDD los describe como un tope de entrada de cliente
+        ("el sistema permite hasta X caracteres"), no como un error de
+        validación del servidor — tampoco se define un 400 para excederlos.
+      tags: [Preinversión - Identificación]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentificacionRequest'
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "¡Guardado! Sus datos han sido
+            guardados exitosamente.", Anexo A.2); el modal de confirmación y
+            su botón "Aceptar" son de cliente, no un paso adicional de la API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identificacion'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP, o el proyecto no está en
+            su alcance de Unidad Ejecutora (RNA-1). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/identificacion/arbol-problemas:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: cargarArbolProblemas
+      summary: Cargar o reemplazar el archivo del árbol de problemas (ícono "Agregar Árbol de problemas", RNB-1)
+      description: >
+        RNB-1: solo se admite un archivo; cargar uno nuevo reemplaza al
+        anterior (mismo verbo `PUT` cubre "cargar" y "reemplazar", ya que el
+        CU los trata como la misma acción con o sin archivo previo). RNB-1
+        también condiciona el reemplazo a que el proyecto "no haya pasado al
+        estado 'En proceso de viabilidad'" — no se modela como una respuesta
+        409 porque el propio CU no describe en qué caso de uso o momento
+        ocurre esa transición (Datos Pendientes de Definir); la historia BDD
+        tampoco genera un escenario que dependa de verificarlo.
+      tags: [Preinversión - Identificación]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [archivo]
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+                  description: Archivo en formato PDF/A (RNB-1).
+      responses:
+        "200":
+          description: Archivo cargado o reemplazado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivoAdjuntoResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`/RNB-1, "habilitado solo cuando esté permitida la edición").
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "415":
+          description: >
+            El archivo no está en formato PDF/A (RNB-1). Inferido de la
+            restricción de formato del CU; sin escenario BDD negativo
+            explícito (la BDD solo cubre la carga en el formato correcto).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    get:
+      operationId: descargarArbolProblemas
+      summary: Descargar el archivo del árbol de problemas
+      tags: [Preinversión - Identificación]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Archivo PDF/A del árbol de problemas.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no corresponde a ninguno de los roles de este CU, o está fuera de su alcance de Unidad Ejecutora.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe, o no hay ningún archivo cargado en el árbol de problemas.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    delete:
+      operationId: eliminarArbolProblemas
+      summary: Eliminar el archivo cargado del árbol de problemas (RNB-1)
+      tags: [Preinversión - Identificación]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "204":
+          description: Archivo eliminado.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe, o no hay ningún archivo cargado para eliminar.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/identificacion/arbol-objetivos:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: cargarArbolObjetivos
+      summary: Cargar o reemplazar el archivo del árbol de objetivos (ícono "Agregar Árbol de objetivos", RNB-2)
+      description: >
+        Mismo criterio que `cargarArbolProblemas`, aplicado a RNB-2.
+      tags: [Preinversión - Identificación]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [archivo]
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+                  description: Archivo en formato PDF/A (RNB-2).
+      responses:
+        "200":
+          description: Archivo cargado o reemplazado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivoAdjuntoResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`/RNB-2).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "415":
+          description: El archivo no está en formato PDF/A (RNB-2). Inferido, sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    get:
+      operationId: descargarArbolObjetivos
+      summary: Descargar el archivo del árbol de objetivos
+      tags: [Preinversión - Identificación]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Archivo PDF/A del árbol de objetivos.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no corresponde a ninguno de los roles de este CU, o está fuera de su alcance de Unidad Ejecutora.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe, o no hay ningún archivo cargado en el árbol de objetivos.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    delete:
+      operationId: eliminarArbolObjetivos
+      summary: Eliminar el archivo cargado del árbol de objetivos (RNB-2)
+      tags: [Preinversión - Identificación]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "204":
+          description: Archivo eliminado.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe, o no hay ningún archivo cargado para eliminar.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    ArchivoAdjuntoResumen:
+      type: object
+      description: Metadatos de un archivo adjunto (árbol de problemas u objetivos).
+      required: [nombreArchivo, fechaCarga]
+      properties:
+        nombreArchivo:
+          type: string
+        fechaCarga:
+          type: string
+          format: date-time
+
+    IdentificacionRequest:
+      type: object
+      description: >
+        Cuerpo de `guardarIdentificacion`. Ningún campo es obligatorio (ver
+        descripción del endpoint); los límites de caracteres se documentan
+        vía `maxLength` para trazabilidad con RNC (Antecedentes 3000,
+        Problema Central/Objetivo General/cada Objetivo Específico 500).
+      properties:
+        antecedentes:
+          type: string
+          maxLength: 3000
+        problemaCentral:
+          type: string
+          maxLength: 500
+        objetivoGeneral:
+          type: string
+          maxLength: 500
+        objetivosEspecificos:
+          type: array
+          description: >
+            Lista completa de objetivos específicos vigentes tras este
+            guardado (reemplaza la lista anterior por completo, igual que
+            `actualizarEtapas` en CU-PRE-3.5 — un solo botón "Guardar" para
+            toda la pantalla, no una operación incremental por fila). Agregar
+            o eliminar una fila en el cliente ocurre antes de este `PUT`, no
+            como llamadas separadas.
+          items:
+            type: string
+            maxLength: 500
+
+    Identificacion:
+      type: object
+      description: Información de identificación del proyecto (Anexo A.1), de lectura.
+      required: [idProyecto, unidadEjecutora, nombreProyecto, cup, objetivosEspecificos]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        unidadEjecutora:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UnidadEjecutoraResumen'
+        nombreProyecto:
+          type: string
+        cup:
+          type: string
+        antecedentes:
+          type: string
+          nullable: true
+          maxLength: 3000
+        problemaCentral:
+          type: string
+          nullable: true
+          maxLength: 500
+        objetivoGeneral:
+          type: string
+          nullable: true
+          maxLength: 500
+        objetivosEspecificos:
+          type: array
+          items:
+            type: string
+            maxLength: 500
+        archivoArbolProblemas:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ArchivoAdjuntoResumen'
+        archivoArbolObjetivos:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ArchivoAdjuntoResumen'
+        fechaUltimoGuardado:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            Nulo si nunca se ha guardado. Determina, para Técnico PRE y
+            Usuarios Internos/Externos (RNA-2/RNA-3), si el recurso es
+            visible en absoluto ("desde que se guarden cambios por primera
+            vez") — ver 404 de `obtenerIdentificacion`.

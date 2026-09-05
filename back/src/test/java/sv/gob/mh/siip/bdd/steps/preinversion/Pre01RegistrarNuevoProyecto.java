@@ -14,6 +14,7 @@ import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import sv.gob.mh.siip.bdd.support.ContextoValidacionBdd;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
@@ -51,6 +52,10 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  * clase que sigue a ese clic. El ultimo paso de "Regresar sin guardar y cancelar" queda sin
  * implementar: es un texto compartido con CU-PRE-01-solicitar-cup.feature (navegacion de UI
  * pura, sin equivalente verificable en el backend), definido alli.
+ * <p>
+ * "el sistema muestra el mensaje {string}" tambien es compartido con
+ * CU-PRE-3.5-registrar-ficha-emergencia.feature ("Existen campos sin diligenciar"); esa rama lee
+ * la excepcion que Pre35RegistrarFichaEmergencia guarda en {@link ContextoValidacionBdd}.
  */
 public class Pre01RegistrarNuevoProyecto {
 
@@ -75,6 +80,7 @@ public class Pre01RegistrarNuevoProyecto {
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
     private final Validator validator;
+    private final ContextoValidacionBdd contextoValidacion;
 
     private UnidadEjecutora unidadEjecutora;
     private Institucion institucion;
@@ -100,7 +106,8 @@ public class Pre01RegistrarNuevoProyecto {
             MacroSectorRepository macroSectorRepository,
             SectorActividadRepository sectorActividadRepository,
             EjeTematicoRepository ejeTematicoRepository,
-            Validator validator) {
+            Validator validator,
+            ContextoValidacionBdd contextoValidacion) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -112,6 +119,7 @@ public class Pre01RegistrarNuevoProyecto {
         this.sectorActividadRepository = sectorActividadRepository;
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.validator = validator;
+        this.contextoValidacion = contextoValidacion;
     }
 
     @Dado("que el Técnico URP ingresa a la pantalla {string} \\(Anexo A.{int})")
@@ -167,6 +175,13 @@ public class Pre01RegistrarNuevoProyecto {
             // invalido, con un mensaje no vacio.
             assertThat(violaciones).isNotEmpty();
             violaciones.forEach(v -> assertThat(v.getMessage()).isNotBlank());
+            return;
+        }
+        if ("Existen campos sin diligenciar".equals(mensaje)) {
+            // CU-PRE-3.5 (Ficha de proyectos de emergencia): la excepcion la captura y guarda
+            // Pre35RegistrarFichaEmergencia via ContextoValidacionBdd, ya que este texto es
+            // identico al de esa historia y Cucumber exige una unica definicion por texto.
+            assertThat(contextoValidacion.getUltimaExcepcion()).isNotNull().hasMessageContaining(mensaje);
             return;
         }
         // Camino feliz: el clic en "Guardar" se resuelve en Pre01ResponderObservaciones (paso

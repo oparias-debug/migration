@@ -2,3 +2,5 @@
 */target/*
 target/*
 api-gateway/*
+front/tsconfig.tsbuildinfo
+.env

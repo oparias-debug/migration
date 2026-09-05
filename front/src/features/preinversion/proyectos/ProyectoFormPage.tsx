@@ -11,9 +11,10 @@ import { useAuth } from '../../../auth/useAuth';
 import { confirmDialog } from '../../../components/ConfirmDialog';
 import { FormRow } from '../../../components/form/FormRow';
 import { ESTADOS_EDITABLES, formatEstado } from './proyectoLabels';
+import { ESTADOS_SIN_CUP } from '../etapas/etapasLabels';
 import { MedidasCatalogoField } from './MedidasCatalogoField';
 import { CategoriasCatalogoModal } from './CategoriasCatalogoModal';
-import { useCatalogo } from './useCatalogo';
+import { useCatalogo } from '../useCatalogo';
 import { RevisionPre } from './RevisionPre';
 import {
   proyectoFormSchema,
@@ -176,6 +177,14 @@ export function ProyectoFormPage() {
   // CU-PRE-01.5 (Antecedentes): el Técnico PRE revisa el mismo registro desde la Bandeja
   // Preinversión (CU-PRE-02) mientras está en ENVIADO_DGICP_REGISTRO; nunca edita los campos.
   const puedeRevisarPre = hasRole('TECNICO_PRE') && !esNuevo && estadoActual === 'ENVIADO_DGICP_REGISTRO';
+  // CU-PRE-3.5 (Selección y Registro de Etapas): aplica una vez asignado el CUP. El punto de
+  // entrada real que describe el propio CU es "Captura de Proyectos" (UC-PRE-03), que todavía no
+  // existe en este frontend; mientras tanto se entra desde aquí.
+  const puedeIrARegistroEtapas =
+    (hasRole('TECNICO_URP') || hasRole('COORDINADOR_SYMP')) &&
+    !esNuevo &&
+    estadoActual !== null &&
+    !ESTADOS_SIN_CUP.includes(estadoActual);
 
   const regresar = async () => {
     if (isDirty) {
@@ -705,6 +714,15 @@ export function ProyectoFormPage() {
           {puedeRevisarPre && (
             <button type="button" className="btn secundario" onClick={emitirCup} disabled={guardando}>
               {t('preinversion.registro.botonEmitirCup')}
+            </button>
+          )}
+          {puedeIrARegistroEtapas && (
+            <button
+              type="button"
+              className="btn secundario"
+              onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/etapas`)}
+            >
+              {t('preinversion.registro.botonIrARegistroEtapas')}
             </button>
           )}
         </div>

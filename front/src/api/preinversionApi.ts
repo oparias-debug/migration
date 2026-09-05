@@ -1,5 +1,7 @@
 import { CatlogosPreinversinApi, PreinversinRegistroYSolicitudDeCUPApi } from './generated/preinversion';
 import { PreinversinRevisinYEmisinDeCUPApi } from './generated/preinversion-revision-cup';
+import { PreinversinIdentificacinApi } from './generated/preinversion-identificacion';
+import { CatlogosSeleccinYRegistroDeEtapasApi, PreinversinSeleccinYRegistroDeEtapasApi } from './generated/preinversion-etapas';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -21,6 +23,16 @@ export const catalogoPreinversionApi = new CatlogosPreinversinApi(undefined, und
 // pero tag distinto en el OpenAPI -> fragmento y módulo generado propios
 // (generated/preinversion-revision-cup); comparte la instancia de axios de arriba.
 export const revisionCupApi = new PreinversinRevisinYEmisinDeCUPApi(undefined, undefined, preinversionAxios);
+// CU-PRE-04 (Identificación): mismo recurso Proyecto y mismo basePath /back, pero tag distinto
+// en el OpenAPI -> fragmento y módulo generado propios (generated/preinversion-identificacion);
+// comparte la instancia de axios de arriba.
+export const identificacionApi = new PreinversinIdentificacinApi(undefined, undefined, preinversionAxios);
+// CU-PRE-3.5 (Selección y Registro de Etapas): mismo recurso Proyecto y mismo basePath /back,
+// fragmento y módulo generado propios (generated/preinversion-etapas). Los 3 endpoints de
+// catálogo de este CU tienen su propio tag (ver nota en el YAML sobre el choque con
+// CatlogosPreinversinApi de CU-PRE-01) y por eso el generador los separó en su propia clase.
+export const etapasApi = new PreinversinSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
+export const catalogoEtapasApi = new CatlogosSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
 
 export type {
   Proyecto,
@@ -45,3 +57,30 @@ export { EstadoProyecto, IniciativaInversion, TipoMedidaCatalogo } from './gener
 // Único tipo propio de este fragmento (el resto son los mismos schemas de CU-PRE-01,
 // duplicados por el generador en su módulo — ver comentario de revisionCupApi arriba).
 export type { DevolucionSolicitudRequest } from './generated/preinversion-revision-cup';
+// CU-PRE-04: tipos propios de este fragmento. UnidadEjecutoraResumen no se reexporta de nuevo
+// (mismo schema que CU-PRE-01, ya exportado arriba desde generated/preinversion).
+export type { Identificacion, IdentificacionRequest, ArchivoAdjuntoResumen } from './generated/preinversion-identificacion';
+
+// CU-PRE-3.5: tipos propios de este fragmento. IniciativaInversion/InstitucionResumen/
+// UnidadEjecutoraResumen/SectorResumen/EjeTematicoResumen/etc. también quedaron duplicados en
+// este módulo (mismo criterio que revisionCupApi) pero no hace falta re-exportarlos aparte: las
+// páginas de este CU reciben esos objetos ya anidados dentro de FichaInformacionGeneral.
+export type {
+  RutaPreinversion,
+  RutaPreinversionSugerida,
+  CriteriosCalificacion,
+  ModificarRutaPreinversionRequest,
+  Etapa,
+  EtapaRegistroRequest,
+  ActualizarEtapasRequest,
+  FichaInformacionGeneral,
+  SeleccionCoEjecutorRequest,
+  FichaEmergencia,
+  FichaEmergenciaRequest,
+  ProductoSeleccionado,
+  ComponenteCosto,
+  TipoCostoResumen,
+  UbicacionGeografica,
+  ProductoIndicador,
+} from './generated/preinversion-etapas';
+export { NombreEtapa, TipoCapital, TamanioProyecto, ComplejidadProyecto, FuenteFinanciamiento } from './generated/preinversion-etapas';

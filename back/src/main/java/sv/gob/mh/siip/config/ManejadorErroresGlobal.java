@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import sv.gob.mh.siip.exception.AccesoDenegadoException;
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
+import sv.gob.mh.siip.exception.FormatoArchivoNoSoportadoException;
 import sv.gob.mh.siip.exception.NoAutenticadoException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
@@ -46,6 +47,11 @@ public class ManejadorErroresGlobal {
     @ExceptionHandler(ValidacionNegocioException.class)
     public ResponseEntity<ErrorDto> manejarValidacionNegocio(ValidacionNegocioException ex) {
         return respuesta(HttpStatus.BAD_REQUEST, "VALIDACION_NEGOCIO", ex.getMessage(), ex.getDetalles());
+    }
+
+    @ExceptionHandler(FormatoArchivoNoSoportadoException.class)
+    public ResponseEntity<ErrorDto> manejarFormatoArchivoNoSoportado(FormatoArchivoNoSoportadoException ex) {
+        return respuesta(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "FORMATO_ARCHIVO_NO_SOPORTADO", ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

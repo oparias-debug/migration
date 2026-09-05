@@ -1,0 +1,92 @@
+# Compose para el tester: usa imágenes ya publicadas en GHCR (ghcr.io/<owner>/siip-*)
+# en vez de "build:" a partir del código fuente, así esta persona NO necesita el repo,
+# Maven, Node ni nada más que Docker Desktop. No incluye sonarqube/sonarqube-db: son
+# herramientas de desarrollo, no hacen falta para probar la aplicación.
+services:
+  back:
+    image: ${IMAGE_REGISTRY}/siip-back:${IMAGE_TAG}
+    container_name: siip-back
+    expose:
+      - "8081"
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_URL: ${DB_URL}
+      DB_DRIVER_CLASS_NAME: ${DB_DRIVER_CLASS_NAME}
+      DB_SCHEMA: ${DB_SCHEMA}
+      GATEWAY_URL: ${GATEWAY_URL}
+      SPRING_PROFILES_ACTIVE: dev
+    networks:
+      - microred
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api-gateway:
+    image: ${IMAGE_REGISTRY}/siip-api-gateway:${IMAGE_TAG}
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_INTERNAL_URL: ${KEYCLOAK_INTERNAL_URL}
+      KEYCLOAK_EXTERNAL_URL: ${KEYCLOAK_EXTERNAL_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+    depends_on:
+      - back
+      - keycloak
+    networks:
+      - microred
+
+  front:
+    image: ${IMAGE_REGISTRY}/siip-front:${IMAGE_TAG}
+    container_name: siip-front
+    environment:
+      GATEWAY_URL: ${GATEWAY_INTERNAL_URL}
+    ports:
+      - "80:8080"
+    depends_on:
+      - api-gateway
+    networks:
+      - microred
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    container_name: siip-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - siip_pgdata:/var/lib/postgresql/data
+      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - microred
+
+  keycloak:
+    image: ${IMAGE_REGISTRY}/siip-keycloak:${IMAGE_TAG}
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=true
+    ports:
+      - "8085:8080"
+    depends_on:
+      - postgres
+    networks:
+      - microred
+
+networks:
+  microred:
+
+volumes:
+  siip_pgdata:

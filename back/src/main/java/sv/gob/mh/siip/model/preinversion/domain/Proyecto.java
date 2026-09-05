@@ -143,4 +143,12 @@ public class Proyecto extends Auditable {
     @NotBlank
     @Column(name = "DESCRIPCION_PROYECTO", nullable = false, length = 1000)
     private String descripcionProyecto;
+
+    /**
+     * Unidad Ejecutora Co-ejecutora, asignada por el Coordinador SYMP desde la Ficha de
+     * información general (CU-PRE-3.5, RN16). Único campo genuinamente editable de esa ficha.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_UNIDAD_EJECUTORA_COEJECUTOR")
+    private UnidadEjecutora unidadEjecutoraCoEjecutora;
 }

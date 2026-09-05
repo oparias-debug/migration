@@ -98,7 +98,7 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
-				<!-- https://mvnrepository.com/artifact/org.flowable/flowable-spring-boot-starter-process -->
+		<!-- https://mvnrepository.com/artifact/org.flowable/flowable-spring-boot-starter-process -->
 		<dependency>
 			<groupId>org.flowable</groupId>
 			<artifactId>flowable-spring-boot-starter-process</artifactId>
@@ -200,7 +200,8 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-01.openapi.yaml</inputSpec>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-01.openapi.yaml</inputSpec>
 							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
 							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
 						</configuration>
@@ -212,7 +213,34 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-01.5.openapi.yaml</inputSpec>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-01.5.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu04-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-04.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu03.5-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-03.5.openapi.yaml</inputSpec>
 							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
 							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
 						</configuration>

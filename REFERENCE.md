@@ -137,7 +137,8 @@ Una vez arriba, entrar a http://localhost:9000 (usuario/clave por defecto `admin
 **Backend (`back` + `api-gateway`) — un solo proyecto Sonar (`siip-back`) para todo el reactor Maven, corrido desde la raíz:**
 
 ```
-mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar -Dsonar.token=%SONAR_TOKEN%
+$env:SONAR_TOKEN = "$((Get-Content .env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
+mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar 
 ```
 
 (`$SONAR_TOKEN` en bash/mac/Linux). `sonar.projectKey`/`sonar.projectName`/`sonar.host.url` ya están en el `pom.xml` raíz — no hace falta repetirlos. El plugin no está declarado como dependencia fija del build (convención recomendada por Sonar: se invoca por coordenadas completas) así que `clean verify` corre antes para que JaCoCo genere `target/site/jacoco/jacoco.xml` por módulo, que el scanner detecta solo. El `argLine` de Surefire en el `pom.xml` raíz también lleva `-XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true`: sin eso, en JDK 21+ (JEP 451) el "inline mock maker" de Mockito falla al auto-adjuntarse y los tests con `@Mock`/`MockitoExtension` truenan.
@@ -146,7 +147,7 @@ mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:son
 
 ```
 cd front
-$env:SONAR_TOKEN = (Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1]  # o export SONAR_TOKEN=... en bash
+$env:SONAR_TOKEN = "$((Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"  # o export SONAR_TOKEN=... en bash
 npm run sonar
 ```
 

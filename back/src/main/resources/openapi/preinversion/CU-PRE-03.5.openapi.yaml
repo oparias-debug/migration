@@ -1,0 +1,1270 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-3.5 Selección y Registro de Etapas
+  version: "1.3.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-3.5 "Selección y Registro de Etapas"
+    (UC-PRE-3_5-Seleccion_y_Registro_de_Etapas.md, versión 1.3) y sus 6
+    historias BDD. Actor principal: Técnico URP. Actor secundario:
+    Coordinador SYMP (única acción: seleccionar Co-ejecutor, RN16).
+    Introduce los recursos `RutaPreinversion`, `Etapa`,
+    `FichaInformacionGeneral` y `FichaEmergencia`, todos hijos de
+    `Proyecto` (CU-PRE-01.openapi.yaml, reutilizado vía `$ref` externo).
+
+    ⚠️ Actualización v1.3 (04/09/2026, decisión funcional del usuario, no
+    proveniente de una nueva versión del PDF) — resuelve 4 pendientes que
+    fragmentos anteriores de este contrato ya habían señalado como
+    ambigüedades sin resolver:
+    (1) **Formato de fecha confirmado**: `fechaInicio`/`fechaFin` ahora
+    usan `pattern` dd/mm/aaaa (antes texto libre por 3 formatos en
+    conflicto); `actualizarEtapas` rechaza con 400 si no se cumple ese
+    formato (confirmado por escenario BDD explícito) — a diferencia de
+    RN19 (campos obligatorios), que sigue siendo puramente visual, sin
+    rechazo (corrección respecto a una versión previa de este mismo
+    fragmento, que trataba erróneamente RN19 como bloqueante).
+    (2) **Botón "Co-ejecutor" confirmado oculto** (no solo deshabilitado)
+    para cualquier actor distinto del Coordinador SYMP (RN16).
+    (3) **Anexo F confirmado como el anexo de RN20**: se agrega el
+    catálogo real `GET /catalogos/contenido-iniciativas-proyecto`
+    (`ContenidoIniciativaResumen`), con la distinción de 3 estados en
+    "Campos a habilitar para Actualización de O.T." (aplica / no aplica al
+    CU / sin dato) — desbloquea la referencia que CU-PRE-26 dejaba
+    genérica (`camposHabilitados: array of string`) por falta de esta
+    misma confirmación.
+    (4) Matriz B.2 (36 combinaciones) confirmada como definitiva, sin
+    cambios de contenido adicionales.
+
+    Quedan sin resolver, tal como antes: editabilidad de criterios de Ruta
+    de Preinversión, nomenclatura GRD/GRC/ACC, y si "Fuentes de
+    Financiamiento" debería tener su propia fila en el Anexo F distinta de
+    "Presupuesto de Inversión" — ver contrato-CU-PRE-3.5.md.
+
+    ⚠️ Actualización al implementar el backend: los 4 endpoints de catálogo
+    (`/catalogos/tipos-costo`, `/catalogos/ubicaciones-geograficas`,
+    `/catalogos/productos-indicadores`, `/catalogos/contenido-iniciativas-proyecto`)
+    usaban el tag `Catálogos Preinversión`, el mismo que ya usa
+    CU-PRE-01.openapi.yaml para sus propios catálogos (`/catalogos/medidas`,
+    `/catalogos/sectores`, etc.). Como ambos archivos generan al mismo
+    `apiPackage` (`sv.gob.mh.siip.model.preinversion.api`, ver back/pom.xml),
+    openapi-generator produce una interfaz Java con el mismo nombre para
+    ambos (`CatlogosPreinversinApi`) y la ejecución de Maven que corre
+    después sobrescribe en disco la de la que corrió antes — en la
+    práctica, `CatalogosController` (que implementa la versión de
+    CU-PRE-01, con 5 métodos) dejaba de compilar contra los sources
+    regenerados. Se renombró el tag de estos 4 endpoints a
+    `Catálogos Selección y Registro de Etapas` para que generen una
+    interfaz propia y separada, sin tocar CU-PRE-01.openapi.yaml ni su
+    controlador.
+
+    ⚠️ Actualización al procesar CU-PRE-17: `FichaEmergenciaRequest`/
+    `FichaEmergencia.fuentesFinanciamiento` ahora referencia
+    `FuenteFinanciamiento` de CU-PRE-17.openapi.yaml vía `$ref` externo (antes
+    era `string` libre, con nota "CU-PRE-17 no procesado todavía"). Esto
+    significa que este archivo ahora depende de CU-PRE-17.openapi.yaml — una
+    dependencia hacia adelante en la numeración, inversa al patrón habitual
+    del resto del contrato. `fuenteRecursos` se mantuvo como `string` libre:
+    ese catálogo sigue sin resolver incluso en CU-PRE-17. Ver
+    contrato-CU-PRE-3.5.md y contrato-CU-PRE-17.md.
+
+paths:
+
+  /proyectos/{idProyecto}/ruta-preinversion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerRutaPreinversion
+      summary: Consultar el estado actual de la Ruta de Preinversión (Anexo A.2)
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Estado actual de la Ruta de Preinversión del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RutaPreinversion'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: modificarRutaPreinversion
+      summary: Modificar la Ruta de Preinversión ya establecida (botón "Modificar", FA-02)
+      description: >
+        RN03: `justificacion` es obligatoria. RN13: si la nueva selección
+        requiere Opinión Técnica para una etapa anterior a una ya emitida, el
+        Sistema no rechaza la operación — la guarda igual, pero esa etapa
+        queda reflejada con `bloqueadaPorModificacion = true` en
+        `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya
+        registrada). Por eso este endpoint no define una respuesta 409 para
+        ese caso: no es un error, es un efecto secundario visible en `Etapa`.
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModificarRutaPreinversionRequest'
+      responses:
+        "200":
+          description: >
+            Ruta de Preinversión modificada; el proyecto queda en la pantalla
+            de Registro de Etapas (Anexo A.1) con las etapas según la nueva
+            selección (FA-02, paso 2.3).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RutaPreinversion'
+        "400":
+          description: >
+            El campo "Justifique Modificación" no fue completado (RN03); la
+            historia BDD lo describe como "no habilita la selección de la
+            nueva ruta", modelado aquí como el bloqueo estándar de un campo
+            obligatorio faltante.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP. Sin escenario BDD negativo
+            explícito; inferido de `x-roles` (mismo criterio ya aplicado en
+            CU-PRE-01.5/CU-PRE-02/CU-PRE-03).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/ruta-preinversion/generacion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: generarRutaPreinversion
+      summary: Generar la Ruta de Preinversión sugerida (botón "Generar Ruta de Preinversión")
+      description: >
+        Cálculo sin persistencia (Flujo Básico, pasos 3-4): a partir de los 3
+        criterios calificados, devuelve las etapas sugeridas según la tabla
+        del Anexo B.2 (RN10). No guarda nada — la persistencia ocurre recién
+        en `aceptarRutaPreinversion` (botón "Aceptar", FA-01) o, si el
+        Técnico URP prefiere una ruta distinta, en `modificarRutaPreinversion`
+        (botón "Modificar", FA-02). Solo aplica a proyectos con
+        `iniciativaInversion = PROYECTO` (RN07/RN08); para "Estudios
+        Generales" y "Programa" el botón "Ruta de Preinversión" está
+        desactivado y las etapas PERFIL/EJECUCIÓN ya vienen preseleccionadas
+        automáticamente (ver `GET /proyectos/{idProyecto}/etapas`).
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriteriosCalificacion'
+      responses:
+        "200":
+          description: Etapas sugeridas según el Anexo B.2, sin persistir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RutaPreinversionSugerida'
+        "400":
+          description: >
+            Falta calificar alguno de los 3 criterios (RN01); escenario BDD
+            explícito ("Intentar generar la Ruta de Preinversión sin
+            calificar un criterio").
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            El proyecto tiene `iniciativaInversion` distinta de PROYECTO
+            (RN07/RN08: botón "Ruta de Preinversión" desactivado para
+            Estudios Generales/Programa). Inferido de RN07/RN08, sin un
+            escenario BDD que llame al endpoint en ese caso — la BDD solo
+            describe la desactivación del botón en el cliente.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/ruta-preinversion/aceptacion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: aceptarRutaPreinversion
+      summary: Aceptar la Ruta de Preinversión sugerida (botón "Aceptar", FA-01)
+      description: >
+        Recibe los mismos 3 criterios que `generarRutaPreinversion` (el
+        cliente ya los tiene, del paso anterior) y persiste la ruta calculada
+        a partir de ellos, trasladando las etapas a Registro de Etapas
+        (Anexo A.1). Se optó por recomputar en vez de requerir que el
+        servidor recuerde una "sugerencia pendiente" entre llamadas — evita
+        estado de sesión intermedio para una operación de dos pasos.
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriteriosCalificacion'
+      responses:
+        "200":
+          description: Ruta de Preinversión aceptada y persistida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RutaPreinversion'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/etapas:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: listarEtapas
+      summary: Consultar la tabla "Registro de Etapas" (Anexo A.1)
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Etapas de la Ruta de Preinversión aceptada, con su estado actual.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Etapa'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: actualizarEtapas
+      summary: Registrar costo y fechas de las etapas (botón único "Guardar", FA-01.1/FA-03)
+      description: >
+        Un solo botón "Guardar" para toda la tabla (Anexo A.1 no tiene un
+        botón por fila); por eso este endpoint recibe y actualiza todas las
+        etapas visibles en un solo `PUT`, no una por una. RN19 (bordes
+        rojos por campos obligatorios incompletos — "Costo de la etapa",
+        fechas) es puramente visual, mismo criterio que la mayoría del
+        contrato: **no** genera 400 (corrección respecto a una versión
+        previa de este fragmento, que trataba esta regla como rechazo real;
+        el `.feature` actualizado confirma explícitamente "el sistema marca
+        en rojo el borde del campo", no un rechazo de guardado). RN04: el
+        formato de fecha dd/mm/aaaa **sí** se rechaza si no se cumple —
+        confirmado por escenario BDD dedicado ("el sistema no acepta el
+        valor"), distinto de RN19. RN05/RN11: el `costo` de la etapa
+        EJECUCIÓN es sobrescrito automáticamente por el servidor según el
+        Presupuesto de inversión u Opinión Técnica más reciente —
+        cualquier valor enviado para EJECUCIÓN en este `PUT` se ignora. RN22
+        sugería que lo mismo aplicaría a las etapas de Preinversión (costo
+        "procederá" de CU-PRE-22.1); esto quedó confirmado al procesar ese
+        CU (su RN06: "el valor... se debe actualizar en el campo Costo de
+        la etapa de CU-PRE-3.5"), pero sigue sin resolver la contradicción
+        con RN04/Anexo B.1 de este mismo CU-PRE-3.5 (que marcan `costo`
+        editable) y con el propio camino feliz de la historia BDD de este
+        CU (que sí registra un costo manualmente); se mantiene el
+        comportamiento funcional de la BDD para las etapas de Preinversión
+        — ver contrato-CU-PRE-3.5.md y contrato-CU-PRE-22.1.md.
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualizarEtapasRequest'
+      responses:
+        "200":
+          description: >
+            Información guardada; se habilitan los botones de navegación de
+            las etapas guardadas (FA-01.1.2/FA-03.2).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Etapa'
+        "400":
+          description: >
+            `fechaInicio` o `fechaFin` no cumplen el formato dd/mm/aaaa
+            (RN04). Escenario BDD explícito ("el sistema no acepta el
+            valor"), sin mensaje literal documentado. A diferencia de una
+            versión anterior de este fragmento, ya no se rechaza aquí por
+            "Costo de la etapa"/fechas faltantes (RN19, puramente visual).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/ficha-informacion-general:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: obtenerFichaInformacionGeneral
+      summary: Consultar la Ficha de información general (Anexo A.3, FA-04)
+      description: >
+        RN14: no editable, generada a partir de CU-PRE-01. RN15: 3 de sus
+        campos (`objetivoProyecto`, `montoEstimadoInversion`,
+        `descripcionProyecto`) se actualizan según la última Opinión Técnica
+        emitida (CU-PRE-04, CU-PRE-17, CU-PRE-11 respectivamente) — antes de
+        la primera Opinión Técnica, reflejan el valor original de CU-PRE-01
+        (`descripcionProyecto`/`montoEstimadoInversion`) o quedan vacíos
+        (`objetivoProyecto`, que no existe como campo en CU-PRE-01; ver
+        contrato-CU-PRE-3.5.md). RN17: `montoAjustadoEjecucion` solo se
+        devuelve (no nulo) cuando el proyecto está en etapa de Ejecución.
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Coordinador SYMP]
+      responses:
+        "200":
+          description: Ficha de información general del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FichaInformacionGeneral'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/ficha-informacion-general/co-ejecutor:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: seleccionarCoEjecutor
+      summary: Seleccionar la Unidad Ejecutora Co-ejecutora (botón radial "Co-ejecutor", RN16)
+      description: >
+        RN16 es el único campo genuinamente editable de la Ficha de
+        información general (a pesar de que esa pantalla también tiene un
+        botón "Guardar" sujeto a RN19 — se interpreta que ese "Guardar" solo
+        aplica a esta selección, ya que RN14 dice explícitamente que el
+        resto de la ficha "será no editable"; ver contrato-CU-PRE-3.5.md).
+        La activación del botón radial en sí (que solo habilita el listado
+        de Unidades Ejecutoras en el cliente) no es una llamada separada:
+        enviar este `PUT` ya representa la acción completa de
+        activar+seleccionar+guardar.
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Coordinador SYMP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeleccionCoEjecutorRequest'
+      responses:
+        "200":
+          description: Co-ejecutor asignado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FichaInformacionGeneral'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Coordinador SYMP (RN16). ✅
+            Confirmado (04/09/2026, decisión funcional v1.3): el botón de
+            selección radial "Co-ejecutor" está **oculto** (no solo
+            deshabilitado) para cualquier actor distinto del Coordinador
+            SYMP — resuelve la ambigüedad de interfaz que una versión
+            previa de este fragmento dejaba sin resolver. Este 403 sigue
+            siendo la restricción a nivel de API, ahora consistente con
+            que el propio control ni siquiera se renderiza para otros roles.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto o la Unidad Ejecutora indicada no existen.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/ficha-emergencia:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: obtenerFichaEmergencia
+      summary: Consultar la Ficha de proyectos de emergencia (Anexo A.4)
+      description: >
+        Solo aplica a proyectos categorizados como "Proyecto de emergencia"
+        (CU-PRE-01). Devuelve los campos no editables precargados desde
+        CU-PRE-01 junto con los campos editables ya guardados (nulos si aún
+        no se ha completado el formulario).
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Ficha de proyectos de emergencia.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FichaEmergencia'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe o no está categorizado como de emergencia.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: registrarFichaEmergencia
+      summary: Registrar la Ficha de proyectos de emergencia (botón "Guardar", FA-05)
+      description: >
+        FA-05, paso 5.5: si todos los campos obligatorios están diligenciados,
+        guarda la información y remite el proyecto a Viabilidad (CU-PRE-24) —
+        efecto secundario modelado como transición de `Proyecto.estado` a
+        `EN_VIABILIDAD` (ver CU-PRE-01.openapi.yaml). Si falta información,
+        el Sistema no guarda nada y responde 400 con el mensaje "Existen
+        campos sin diligenciar".
+      tags: [Preinversión - Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FichaEmergenciaRequest'
+      responses:
+        "200":
+          description: Ficha registrada; proyecto remitido a Viabilidad (CU-PRE-24).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FichaEmergencia'
+        "400":
+          description: >
+            "Existen campos sin diligenciar" (FA-05, paso 5.5): faltan uno o
+            más de los campos obligatorios (Planteamiento del problema,
+            Producto, Distrito, Población objetivo — Departamento se valida
+            de forma transitiva a través de Distrito, ver
+            contrato-CU-PRE-3.5.md). `Error.detalles` lista los campos
+            faltantes.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe o no está categorizado como de emergencia.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /catalogos/tipos-costo:
+    get:
+      operationId: listarTiposCosto
+      summary: Consultar el catálogo "Tipo de Costos" (Anexo C.2)
+      description: >
+        El propio CU aclara: "Este catálogo estará sujeto a actualización por
+        parte de la DGICP" — a diferencia de Tipo de capital/Tamaño/Complejidad
+        (Anexos C.1/C.3/C.4), que son listados fijos modelados como enum
+        (`TipoCapital`, `TamanioProyecto`, `ComplejidadProyecto`) sin
+        necesidad de endpoint propio, este catálogo sí es administrado y
+        requiere uno.
+      tags: [Catálogos Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Listado de tipos de costo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TipoCostoResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /catalogos/ubicaciones-geograficas:
+    get:
+      operationId: listarUbicacionesGeograficas
+      summary: Consultar el catálogo de ubicaciones geográficas (Anexo C.5)
+      description: >
+        RN sobre el campo "Distrito": "Solamente se mostrarán los distritos
+        del Departamento seleccionado" (parámetro `departamento`) y "la
+        celda permitirá digitar una palabra clave y el Sistema la
+        autocompletará" (parámetro `busqueda`). Incluye entradas especiales
+        de nivel departamental (p. ej. "Ahuachapán - Nivel departamental")
+        además de los distritos individuales, tal como aparecen en el
+        catálogo original; "Nivel nacional" (mencionado en el campo
+        "Coordenadas" de la Ficha de emergencia) también se modela como un
+        valor más de `distrito`, no como un concepto propio.
+      tags: [Catálogos Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      parameters:
+        - name: departamento
+          in: query
+          description: Filtra los distritos al departamento indicado.
+          schema: { type: string }
+        - name: busqueda
+          in: query
+          description: Autocompletado por palabra clave sobre el nombre del distrito.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Listado de ubicaciones geográficas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UbicacionGeografica'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /catalogos/productos-indicadores:
+    get:
+      operationId: listarProductosIndicadores
+      summary: Consultar el catálogo de Productos e Indicadores (Anexo C.6)
+      tags: [Catálogos Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Listado de productos e indicadores.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductoIndicador'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /catalogos/contenido-iniciativas-proyecto:
+    get:
+      operationId: listarContenidoIniciativasProyecto
+      summary: Consultar el "Anexo F — Contenido de Iniciativas de Proyecto" (RN20)
+      description: >
+        ✅ Confirmado (04/09/2026, decisión funcional v1.3): este catálogo
+        corresponde efectivamente al anexo referenciado por RN20 — antes
+        sin confirmar, lo que dejaba a `CU-PRE-26.openapi.yaml` con un
+        campo genérico (`camposHabilitados: array of string`) por falta de
+        esta misma confirmación; ese fragmento debería actualizarse para
+        referenciar este catálogo real (ver contrato-CU-PRE-3.5.md).
+        Determina, para cada "contenido" (Antecedentes, Análisis de
+        Alternativas de Solución, Descripción Técnica, etc.), en cuáles
+        etapas de la Ruta de Preinversión aplica, y si aplica al proceso
+        de Actualización de Opinión Técnica — con 3 estados posibles en
+        esta última columna, ahora distinguidos explícitamente: "X" (aplica,
+        `APLICA`), "-" guion (no aplica al caso de uso, `NO_APLICA_AL_CU`)
+        y celda vacía (ausencia de dato, `SIN_DATO`) — antes de esta
+        confirmación no era posible distinguir los dos últimos casos.
+      tags: [Catálogos Selección y Registro de Etapas]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Listado del contenido de iniciativas de proyecto (30 filas, Anexo F).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContenidoIniciativaResumen'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TipoCapital:
+      type: string
+      description: Catálogo de tipo de capital (Anexo C.1), listado fijo.
+      enum: [CAPITAL_FISICO, CAPITAL_HUMANO, CAPITAL_INSTITUCIONAL, OTROS_CAPITALES]
+
+    TamanioProyecto:
+      type: string
+      description: Catálogo de tamaño del proyecto según monto (Anexo C.3), listado fijo.
+      enum: [PEQUENIO, MEDIANO, GRANDE]
+
+    ComplejidadProyecto:
+      type: string
+      description: >
+        Catálogo de complejidad del proyecto (Anexo C.4), listado fijo.
+        Incluye "TODAS_LAS_COMPLEJIDADES" porque el propio catálogo original
+        lo lista como una cuarta opción seleccionable, no como una categoría
+        derivada de las otras tres.
+      enum: [BAJA, MEDIA, ALTA, TODAS_LAS_COMPLEJIDADES]
+
+    NombreEtapa:
+      type: string
+      description: >
+        Etapas de la Ruta de Preinversión. No incluye un valor distinto para
+        "Estudio General": RN07/RN08 tratan a Estudios Generales y Programa
+        como usuarios de las mismas PERFIL/EJECUCIÓN que Proyecto, no como
+        una etapa con nombre propio.
+      enum: [PERFIL, PREFACTIBILIDAD, FACTIBILIDAD, DISENO, EJECUCION]
+
+    CriteriosCalificacion:
+      type: object
+      description: Los 3 criterios calificables de la pantalla "Ruta de Preinversión" (RN01).
+      required: [tipoCapital, tamanioProyecto, complejidad]
+      properties:
+        tipoCapital:
+          $ref: '#/components/schemas/TipoCapital'
+        tamanioProyecto:
+          $ref: '#/components/schemas/TamanioProyecto'
+        complejidad:
+          $ref: '#/components/schemas/ComplejidadProyecto'
+
+    RutaPreinversionSugerida:
+      type: object
+      description: Respuesta de `generarRutaPreinversion` (no persistida).
+      required: [criterios, etapasSugeridas]
+      properties:
+        criterios:
+          $ref: '#/components/schemas/CriteriosCalificacion'
+        etapasSugeridas:
+          type: array
+          description: Según la combinación del Anexo B.2 (RN10).
+          items:
+            $ref: '#/components/schemas/NombreEtapa'
+
+    ModificarRutaPreinversionRequest:
+      type: object
+      required: [justificacion, etapas]
+      properties:
+        justificacion:
+          type: string
+          description: Campo "Justifique Modificación" (RN03), obligatorio.
+        etapas:
+          type: array
+          description: Nueva selección manual de etapas (FA-02, paso 2.2).
+          items:
+            $ref: '#/components/schemas/NombreEtapa'
+
+    RutaPreinversion:
+      type: object
+      description: Estado de la Ruta de Preinversión de un proyecto (Anexo A.2).
+      required: [idProyecto, etapasAceptadas, fueModificada]
+      properties:
+        idProyecto: { type: integer, format: int64 }
+        criterios:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/CriteriosCalificacion'
+          nullable: true
+          description: >
+            Nulo si el proyecto no es de iniciativa PROYECTO (RN07/RN08 no
+            usan calificación de criterios), o si aún no se ha generado
+            ninguna ruta.
+        etapasAceptadas:
+          type: array
+          description: Ruta actualmente vigente, reflejada en Registro de Etapas.
+          items:
+            $ref: '#/components/schemas/NombreEtapa'
+        fueModificada:
+          type: boolean
+          description: true si la ruta vigente proviene de `modificarRutaPreinversion`, no de la sugerencia original.
+        justificacionUltimaModificacion:
+          type: string
+          nullable: true
+
+    Etapa:
+      type: object
+      description: Fila de la tabla "Registro de Etapas" (Anexo A.1).
+      required: [nombreEtapa, habilitadoParaRegistro, tieneOpinionTecnica, bloqueadaPorModificacion]
+      properties:
+        nombreEtapa:
+          $ref: '#/components/schemas/NombreEtapa'
+        costo:
+          type: number
+          format: double
+          nullable: true
+          description: >
+            RN04: obligatorio para guardar. RN05/RN11: para EJECUCIÓN, el
+            servidor lo sobrescribe automáticamente (Presupuesto de inversión
+            u Opinión Técnica); ver advertencia de RN22 en `actualizarEtapas`.
+        fechaInicio:
+          type: string
+          pattern: '^\d{2}/\d{2}/\d{4}$'
+          nullable: true
+          description: >
+            "Fecha estimada de inicio", formato dd/mm/aaaa — ✅ confirmado
+            (04/09/2026, decisión funcional v1.3): el Anexo B.1 decía
+            "MM/AA" y el mockup mostraba "mm/aaaa"; RN04 (dd/mm/aaaa) queda
+            como el formato definitivo. Ya no se modela como texto
+            enteramente libre.
+        fechaFin:
+          type: string
+          pattern: '^\d{2}/\d{2}/\d{4}$'
+          nullable: true
+          description: "Fecha estimada de finalización, formato dd/mm/aaaa. Mismo criterio que fechaInicio."
+        habilitadoParaRegistro:
+          type: boolean
+          description: >
+            Si el botón de navegación de esta etapa hacia identificación/
+            formulación/evaluación/programación (CU-PRE-04 a CU-PRE-26) está
+            habilitado. Pasa a true la primera vez que se guardan sus fechas
+            (FA-01.1.2/FA-03.2); PERFIL y EJECUCIÓN lo tienen desde el inicio
+            por defecto (RN09).
+        tieneOpinionTecnica:
+          type: boolean
+          description: >
+            Si ya se emitió Opinión Técnica para esta etapa (CU-PRE-26).
+            Determina, junto con RN09, si la siguiente etapa de la ruta se
+            habilita, y es la condición que dispara el bloqueo de RN13 al
+            modificar la ruta.
+        bloqueadaPorModificacion:
+          type: boolean
+          description: >
+            RN13: true si esta etapa ya tenía Opinión Técnica y una
+            modificación de ruta posterior requiere pasar nuevamente por
+            ella. No se pierde su información, pero queda de solo lectura
+            hasta obtener Opinión Técnica nuevamente.
+
+    EtapaRegistroRequest:
+      type: object
+      description: >
+        `costo`/`fechaInicio`/`fechaFin` no son obligatorios a nivel de
+        schema: RN19 (bordes rojos) es puramente visual, no bloquea el
+        guardado — ver descripción de `actualizarEtapas`. `nombreEtapa`
+        sí es obligatorio, ya que identifica la fila dentro del array.
+      required: [nombreEtapa]
+      properties:
+        nombreEtapa:
+          $ref: '#/components/schemas/NombreEtapa'
+        costo:
+          type: number
+          format: double
+        fechaInicio:
+          type: string
+          pattern: '^\d{2}/\d{2}/\d{4}$'
+          description: Formato dd/mm/aaaa (RN04, confirmado v1.3).
+        fechaFin:
+          type: string
+          pattern: '^\d{2}/\d{2}/\d{4}$'
+          description: Formato dd/mm/aaaa (RN04, confirmado v1.3).
+
+    ActualizarEtapasRequest:
+      type: object
+      required: [etapas]
+      properties:
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaRegistroRequest'
+
+    TipoCostoResumen:
+      type: object
+      description: Entrada del catálogo "Tipo de Costos" (Anexo C.2).
+      required: [codigo, nombre]
+      properties:
+        codigo: { type: string }
+        nombre: { type: string }
+
+    UbicacionGeografica:
+      type: object
+      description: Entrada del catálogo de ubicaciones geográficas (Anexo C.5).
+      required: [distrito, departamento, region]
+      properties:
+        distrito: { type: string }
+        departamento: { type: string }
+        region: { type: string }
+
+    ProductoIndicador:
+      type: object
+      description: Entrada del catálogo de Productos e Indicadores (Anexo C.6).
+      required: [codigoProducto, producto, codigoIndicador, indicador, unidadMedida, esIndicadorPrincipal]
+      properties:
+        codigoProducto: { type: string }
+        producto: { type: string }
+        descripcionProducto: { type: string, nullable: true }
+        codigoIndicador: { type: string }
+        indicador: { type: string }
+        unidadMedida: { type: string }
+        esIndicadorPrincipal: { type: boolean }
+
+    AplicaActualizacionOt:
+      type: string
+      description: >
+        3 estados de la columna "Campos a habilitar para Actualización de
+        O.T." del Anexo F, distinguidos explícitamente desde la
+        confirmación v1.3 (04/09/2026).
+      enum: [APLICA, NO_APLICA_AL_CU, SIN_DATO]
+
+    ContenidoIniciativaResumen:
+      type: object
+      description: >
+        Fila del "Anexo F — Contenido de Iniciativas de Proyecto" (RN20,
+        confirmado v1.3). `ubicacionCasoUso` es el código del CU donde vive
+        ese contenido (p. ej. "CUPRE-04"); nulo para filas sin CU asignado
+        (sección "5. Documentos anexos", p. ej. "Nota de solicitud de OT").
+        Nota heredada sin resolver: "Presupuesto de Inversión" y "Fuentes
+        de Financiamiento" comparten la misma celda combinada de
+        `ubicacionCasoUso` ("CUPRE-17") en el documento original — no se
+        puede confirmar si "Fuentes de Financiamiento" debería tener una
+        referencia propia distinta.
+      required: [contenido, aplicaPerfil, aplicaPrefactibilidad, aplicaFactibilidad, aplicaDiseno, aplicaPrograma, aplicaEstudioGeneral, aplicaActualizacionOt]
+      properties:
+        contenido:
+          type: string
+          description: 'p. ej. "Antecedentes", "Análisis de Alternativas de Solución", "Descripción Técnica".'
+        ubicacionCasoUso:
+          type: string
+          nullable: true
+          description: Código del caso de uso (p. ej. "CUPRE-04"); nulo para contenidos sin CU asignado.
+        aplicaPerfil: { type: boolean }
+        aplicaPrefactibilidad: { type: boolean }
+        aplicaFactibilidad: { type: boolean }
+        aplicaDiseno: { type: boolean }
+        aplicaPrograma: { type: boolean }
+        aplicaEstudioGeneral: { type: boolean }
+        aplicaActualizacionOt:
+          $ref: '#/components/schemas/AplicaActualizacionOt'
+
+    ProductoSeleccionado:
+      type: object
+      description: Selección de un producto del catálogo C.6 para la Ficha de emergencia.
+      required: [codigoProducto]
+      properties:
+        codigoProducto:
+          type: string
+        producto:
+          type: string
+          description: Denormalizado desde el catálogo para lectura; no se envía en el request.
+          readOnly: true
+
+    ComponenteCosto:
+      type: object
+      description: Fila de "Resumen de costos" (Componente/Costo) de la Ficha de emergencia.
+      required: [tipoCosto, costo]
+      properties:
+        tipoCosto:
+          type: string
+          description: Código tomado de GET /catalogos/tipos-costo.
+        costo:
+          type: number
+          format: double
+
+    SeleccionCoEjecutorRequest:
+      type: object
+      required: [idUnidadEjecutoraCoEjecutora]
+      properties:
+        idUnidadEjecutoraCoEjecutora:
+          type: integer
+          format: int64
+
+    FichaInformacionGeneral:
+      type: object
+      description: >
+        Ficha no editable (RN14), salvo `coEjecutor` (RN16). No hereda de
+        `Proyecto` (CU-PRE-01) vía `allOf`: sus campos son una selección
+        curada y renombrada de RN14, no una copia estructural de `Proyecto`.
+      required:
+        - idProyecto
+        - institucion
+        - unidadEjecutora
+        - iniciativaInversion
+        - nombreProyecto
+        - montoEstimadoInversion
+        - sector
+        - ejeTematico
+        - esProyectoGrdGrcAcc
+        - esProyectoEmergencia
+        - descripcionProyecto
+      properties:
+        idProyecto: { type: integer, format: int64 }
+        institucion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/InstitucionResumen'
+        unidadEjecutora:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UnidadEjecutoraResumen'
+        coEjecutor:
+          type: object
+          allOf:
+            - $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UnidadEjecutoraResumen'
+          nullable: true
+          description: RN16 — asignado vía `seleccionarCoEjecutor` (Coordinador SYMP).
+        iniciativaInversion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/IniciativaInversion'
+        nombreProyecto:
+          type: string
+        montoEstimadoInversion:
+          type: number
+          format: double
+          description: >
+            RN15: se actualiza según la última Opinión Técnica (campo "Total
+            inversión" de CU-PRE-17); antes de la primera Opinión Técnica,
+            refleja el valor original de CU-PRE-01.
+        montoAjustadoEjecucion:
+          type: number
+          format: double
+          nullable: true
+          description: RN17 — solo no nulo cuando el proyecto está en etapa de Ejecución. RN18 — se alimenta automáticamente.
+        sector:
+          allOf:
+            - $ref: './CU-PRE-01.openapi.yaml#/components/schemas/SectorResumen'
+          description: RN14 lista "Macrosector" como campo propio; se expone anidado en `sector.macrosector` (mismo objeto ya definido en CU-PRE-01), no como campo separado.
+        ejeTematico:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/EjeTematicoResumen'
+        esProyectoGrdGrcAcc:
+          type: boolean
+          description: >
+            RN14 lo describe como un único campo booleano ("Es Proyecto
+            GRD/GRC/ACC"), pero CU-PRE-01 modela GRD/GRC/ACC como 3 arrays de
+            categorías independientes (medidasGrd/medidasGrc/medidasAcc). Se
+            modela aquí como un valor derivado (true si alguno de esos 3
+            arrays no está vacío en `Proyecto`), no como un campo propio
+            almacenado — ver contrato-CU-PRE-3.5.md. Nomenclatura: se usó el
+            nombre de RN14 ("GRD/GRC/ACC"), no el del mockup del Anexo A.3
+            ("GRD/ACC", sin "GRC") — discrepancia ya señalada por el propio CU.
+        esProyectoEmergencia:
+          type: boolean
+        tipoEvento:
+          type: string
+          nullable: true
+        numeroDecretoLegislativo:
+          type: string
+          nullable: true
+        ejePlanGobierno:
+          type: object
+          allOf:
+            - $ref: './CU-PRE-01.openapi.yaml#/components/schemas/EjePlanGobiernoResumen'
+          nullable: true
+        planSectorialRegional:
+          type: object
+          allOf:
+            - $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PlanSectorialRegionalResumen'
+          nullable: true
+        objetivoProyecto:
+          type: string
+          nullable: true
+          description: >
+            RN15: procede del campo "Objetivo General" de CU-PRE-04
+            "Identificación" (no de CU-PRE-01, que no tiene un campo
+            equivalente — confirmado al revisar Proyecto/ProyectoRequest en
+            CU-PRE-01.openapi.yaml). Nulo hasta que CU-PRE-04 lo registre.
+        descripcionProyecto:
+          type: string
+          description: >
+            RN15: se actualiza según la última Opinión Técnica (tabla
+            "Descripción Técnica" de CU-PRE-11); antes de eso, refleja el
+            valor original de CU-PRE-01.
+
+    FichaEmergenciaRequest:
+      type: object
+      description: Campos editables del formulario Anexo A.4 (FA-05, paso 5.4).
+      required: [planteamientoProblema, productos, distrito, poblacionObjetivo]
+      properties:
+        planteamientoProblema:
+          type: string
+        objetivoGeneral:
+          type: string
+          description: >
+            Obligatoriedad no especificada en el documento de forma
+            independiente (tabla de Validaciones); no se marca `required`.
+        descripcionProyecto:
+          type: string
+          description: Igual que objetivoGeneral — obligatoriedad no especificada de forma independiente.
+        productos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductoSeleccionado'
+        distrito:
+          type: string
+          description: >
+            Tomado de GET /catalogos/ubicaciones-geograficas. "Departamento"
+            no se envía: el servidor lo deriva automáticamente del distrito
+            elegido y se valida de forma transitiva (si falta distrito,
+            Departamento tampoco puede completarse).
+        latitud:
+          type: number
+          format: double
+          nullable: true
+          description: >
+            Coordenadas en formato DD (Grados Decimales). Se bloquea en el
+            cliente cuando distrito = "Nivel nacional"; no se modela como
+            restricción de servidor por no estar cubierto por la historia BDD.
+        longitud:
+          type: number
+          format: double
+          nullable: true
+        direccionEspecifica:
+          type: string
+          nullable: true
+        poblacionObjetivo:
+          type: string
+        inversionEstimada:
+          type: number
+          format: double
+          nullable: true
+          description: Obligatoriedad no especificada en el documento.
+        archivoPresupuestoUrl:
+          type: string
+          nullable: true
+          description: >
+            Referencia al archivo Excel de presupuesto cargado. El CU no
+            detalla el mecanismo de carga (formato, límites, endpoint de
+            subida); se deja como referencia de string a un archivo ya
+            subido por un mecanismo no descrito aquí — ver contrato-CU-PRE-3.5.md.
+        componentesCosto:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponenteCosto'
+        costosOperacion:
+          type: number
+          format: double
+          nullable: true
+        costosMantenimiento:
+          type: number
+          format: double
+          nullable: true
+        fuentesFinanciamiento:
+          type: array
+          items:
+            $ref: './CU-PRE-17.openapi.yaml#/components/schemas/FuenteFinanciamiento'
+          description: >
+            Catálogo cerrado "Fuentes de Financiamiento" (7 valores,
+            RQ-T-02), ya definido en CU-PRE-17.openapi.yaml — reutilizado
+            aquí vía `$ref` externo.
+        fuenteRecursos:
+          type: string
+          nullable: true
+          description: >
+            "Fuente de Recursos" — mismo campo que en CU-PRE-17, donde
+            sigue pendiente de decisión del Gestor del Dominio cuál
+            catálogo debe enlazar (Fuentes de Recursos, Convenios, o
+            ambos como jerarquía); se mantiene como `string` libre hasta
+            que se resuelva, en vez de inventar el enlace aquí.
+        archivoProgramacionUrl:
+          type: string
+          nullable: true
+          description: Mismo caso que archivoPresupuestoUrl.
+
+    FichaEmergencia:
+      type: object
+      description: Ficha de proyectos de emergencia completa (lectura).
+      required: [cup, nombreProyecto, etapaActual, etapaFutura]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        etapaActual:
+          allOf:
+            - $ref: '#/components/schemas/NombreEtapa'
+          description: Siempre PERFIL por defecto para proyectos de emergencia.
+        etapaFutura:
+          allOf:
+            - $ref: '#/components/schemas/NombreEtapa'
+          description: Siempre EJECUCION.
+        numeroDecretoLegislativo:
+          type: string
+          nullable: true
+        tipoEvento:
+          type: string
+          nullable: true
+        planteamientoProblema: { type: string, nullable: true }
+        objetivoGeneral: { type: string, nullable: true }
+        descripcionProyecto: { type: string, nullable: true }
+        productos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductoSeleccionado'
+        departamento:
+          type: string
+          nullable: true
+          description: Derivado automáticamente del distrito seleccionado.
+        distrito: { type: string, nullable: true }
+        latitud: { type: number, format: double, nullable: true }
+        longitud: { type: number, format: double, nullable: true }
+        direccionEspecifica: { type: string, nullable: true }
+        poblacionObjetivo: { type: string, nullable: true }
+        inversionEstimada: { type: number, format: double, nullable: true }
+        archivoPresupuestoUrl: { type: string, nullable: true }
+        componentesCosto:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponenteCosto'
+        totalComponentesCosto:
+          type: number
+          format: double
+          nullable: true
+          description: Suma calculada de componentesCosto; debe igualar inversionEstimada (Anexo B.1).
+        costosOperacion: { type: number, format: double, nullable: true }
+        costosMantenimiento: { type: number, format: double, nullable: true }
+        fuentesFinanciamiento:
+          type: array
+          items:
+            $ref: './CU-PRE-17.openapi.yaml#/components/schemas/FuenteFinanciamiento'
+        fuenteRecursos: { type: string, nullable: true }
+        archivoProgramacionUrl: { type: string, nullable: true }

@@ -15,6 +15,7 @@ Para entender **por qué** el proyecto está armado así (microservicios, Flowab
 ## Antes de empezar
 
 - Revisá si el CU ya está documentado en `back/src/main/java/sv/gob/mh/siip/model/<dominio>/TRAZABILIDAD-<DOMINIO>.md` — ahí están las entidades JPA que le corresponden y su origen.
+- Si tenés el `.md` original del CU (el que entrega negocio) o un `contrato-CU-XX.md` con las ambigüedades ya resueltas, dejalo en `docs/casos-de-uso/` — los comentarios del `.openapi.yaml` los citan por nombre para documentar de dónde sale cada decisión.
 - Mirá `preinversion`/CU-PRE-01 como referencia completa de punta a punta: `back/src/main/resources/openapi/preinversion/CU-PRE-01.openapi.yaml`, `back/src/main/java/sv/gob/mh/siip/controller/PreinversionController.java`, `back/src/test/java/sv/gob/mh/siip/bdd/steps/preinversion/`, `front/src/api/preinversionApi.ts`, `front/src/features/preinversion/proyectos/`.
 - El `.feature` y el `.openapi.yaml` que te entregan son el contrato ya acordado — no los reinterpretes ni les cambies el alcance por tu cuenta. Si algo del contrato no te cierra o te parece incompleto, avisá antes de implementar (escribile a david@magnaperitia.com); no lo resuelvas a tu criterio en el código, porque el `.feature`/`.openapi.yaml` también existe en el otro módulo (back o front) y quedarían desincronizados.
 - Si un término del `.feature` (un rol, una sigla, un estado) no te queda claro, revisá primero [GLOSSARY.md](./GLOSSARY.md) antes de preguntar — es el glosario acordado con negocio.
@@ -139,8 +140,11 @@ Antes de abrir el PR, confirmá:
 El servidor de SonarQube (servicio `sonarqube` en `docker-compose.yml`) debe estar arriba — ver [arranque y token](./REFERENCE.md#análisis-estático-sonarqube) en REFERENCE.md si todavía no lo tenés levantado. Antes de abrir el PR, corré el escaneo del/los módulo(s) que tocaste:
 
 ```
+
 # back + api-gateway (un solo proyecto Sonar, siip-back), desde la raíz:
-mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar -Dsonar.token=%SONAR_TOKEN%
+$env:SONAR_TOKEN = "sqa_6176305216ad061a233a3bd0941fb7e69a6d984f"
+
+mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
 
 # front (proyecto siip-front separado):
 cd front

@@ -1,7 +1,6 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -26,8 +25,8 @@ public class ObjetivoEspecifico {
     @JoinColumn(name = "ID_IDENTIFICACION", nullable = false)
     private Identificacion identificacion;
 
-    @NotBlank
-    @Column(name = "DESCRIPCION", nullable = false, length = 1000)
+    /** RNC: hasta 500 caracteres (CU-PRE-04); no es obligatorio a nivel de servidor. */
+    @Column(name = "DESCRIPCION", length = 500)
     private String descripcion;
 
     @Column(name = "ORDEN")

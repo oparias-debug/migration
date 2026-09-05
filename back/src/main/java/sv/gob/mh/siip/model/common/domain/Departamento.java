@@ -24,4 +24,11 @@ public class Departamento {
 
     @Column(name = "NOMBRE", nullable = false, length = 100)
     private String nombre;
+
+    /**
+     * Región territorial del departamento (catálogo de ubicaciones geográficas, Anexo C.5 de
+     * CU-PRE-3.5). Sin datos oficiales de regionalización en el repositorio; columna nullable.
+     */
+    @Column(name = "REGION", length = 100)
+    private String region;
 }

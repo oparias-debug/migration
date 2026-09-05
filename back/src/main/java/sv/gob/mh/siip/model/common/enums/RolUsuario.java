@@ -14,5 +14,7 @@ public enum RolUsuario {
     TECNICO_SIAF,
     INGENIERO_DINAFI,
     COORDINADOR_PROGRAMACION,
-    ADMINISTRADOR
+    ADMINISTRADOR,
+    /** Coordinador SYMP: unica accion, seleccionar Co-ejecutor (CU-PRE-3.5, RN16). */
+    COORDINADOR_SYMP
 }
