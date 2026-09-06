@@ -9,12 +9,17 @@ export const authApi = {
   login: (credentials: LoginRequest) =>
     authAxios.post<TokenResponse>('/auth/login', credentials).then((res) => res.data),
 
-  // AuthController.refreshToken espera el refresh token como string JSON crudo
-  // en el body (@RequestBody String), NO como { refreshToken: "..." }.
+  // AuthController.refreshToken lo recibe como @RequestBody String y lo pasa
+  // TAL CUAL a Keycloak como refresh_token. Con JSON.stringify el cuerpo llega
+  // entre comillas ("eyJ...") y Keycloak lo rechaza: el refresco devolvía 401
+  // siempre, así que la sesión moría a los 5 minutos —lo que vive el
+  // access_token— aunque el interceptor de 401 estuviera bien.
+  // Se envía en texto plano, y con Content-Type: text/plain para que axios no
+  // lo serialice a JSON por su cuenta.
   refresh: (refreshToken: string) =>
     authAxios
-      .post<TokenResponse>('/auth/refresh', JSON.stringify(refreshToken), {
-        headers: { 'Content-Type': 'application/json' },
+      .post<TokenResponse>('/auth/refresh', refreshToken, {
+        headers: { 'Content-Type': 'text/plain' },
       })
       .then((res) => res.data),
 };
