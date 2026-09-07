@@ -263,6 +263,19 @@
       "confirmarArchivar": "¿Desea archivar esta solicitud?",
       "tituloConteo": "Casos asignados por Técnico PRE",
       "notaConteo": "Se contabiliza por separado para solicitudes de CUP y de Opinión Técnica (RN04)."
+    },
+    "captura": {
+      "titulo": "Captura de Proyectos",
+      "buscador": "Buscador",
+      "buscadorPlaceholder": "CUP; NOMBRE; UNIDAD EJECUTORA",
+      "botonBuscar": "BUSCAR",
+      "botonLimpiar": "Limpiar",
+      "columnaCup": "CUP",
+      "columnaProyecto": "Nombre del proyecto",
+      "columnaIniciativa": "Iniciativa de inversión",
+      "columnaEstado": "Estado",
+      "columnaUnidadEjecutora": "Unidad Ejecutora",
+      "sinRegistros": "Ningún proyecto coincide con la búsqueda."
     }
   },
   "app": {
@@ -288,7 +301,8 @@
     "geografico": "Geográfico",
     "fisico": "Físico",
     "procesos": "Procesos",
-    "bandeja": "Bandeja Preinversión"
+    "bandeja": "Bandeja Preinversión",
+    "captura": "Captura de Proyectos"
   },
   "ruta": {
     "migas": "Ruta de navegación",

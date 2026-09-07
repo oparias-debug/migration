@@ -1,0 +1,154 @@
+# NOTA: el fragmento original de siipV2 referencia './CU-01.openapi.yaml', que
+# no existe —el fichero real se llama CU-PRE-01.openapi.yaml—, y por eso no
+# generaba cliente. Aquí las ocho referencias van corregidas. Reportado para
+# que se arregle también en el repositorio de especificaciones.
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-03 Captura de Proyectos
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-03 "Captura de Proyectos"
+    (UC-PRE-03-Captura_de_Proyectos.md) y su historia BDD (CU-PRE-03.feature).
+    CU sin actor principal único: Técnico URP, Viabilizador y "Usuarios
+    Internos/Externos" ven el listado acotado a sus credenciales de Unidad
+    Ejecutora (RN01); Técnico PRE y Coordinador PRE lo ven sin restricción
+    (RN02). Es enteramente de solo consulta: la única acción de escritura del
+    CU es la navegación al hacer clic en el CUP (FA-01), que no requiere un
+    endpoint propio (ver contrato-CU-PRE-03.md). Reutiliza `EstadoProyecto`,
+    `IniciativaInversion` y `UnidadEjecutoraResumen` de CU-01.openapi.yaml
+    vía referencia externa; este fragmento motivó una corrección del catálogo
+    `EstadoProyecto` en ese archivo (ver contrato-CU-PRE-01.md y
+    contrato-CU-PRE-03.md).
+
+paths:
+
+  /captura-proyectos:
+    get:
+      operationId: listarProyectosCaptura
+      summary: Consultar el listado de "Captura de Proyectos" (Anexo A.1)
+      description: >
+        Solo incluye proyectos que ya cuentan con CUP (Precondición 1 del CU:
+        "Contar con CUP"), es decir, cualquier `Proyecto` cuyo `estado` sea
+        CUP_ASIGNADO o posterior en el ciclo de vida — el CU no expone esta
+        condición como un parámetro de consulta; es un filtro automático de
+        este listado, no algo que el cliente controle. RN01/RN02 determinan el
+        alcance de Unidades Ejecutoras visibles según el actor autenticado, de
+        forma automática (no hay parámetro de consulta para esto tampoco): el
+        servidor debe resolverlo según el rol.
+      tags: [Preinversión - Captura de Proyectos]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      parameters:
+        - name: busqueda
+          in: query
+          description: >
+            RN03: búsqueda de texto libre aplicada, en el servidor, sobre CUP,
+            Nombre del proyecto y Unidad Ejecutora simultáneamente (un único
+            campo "Buscador" en la pantalla, placeholder "CUP; NOMBRE; UNIDAD
+            EJECUTORA"), no tres parámetros de búsqueda separados.
+          schema: { type: string }
+        - name: cup
+          in: query
+          description: RN05 — filtro por columna CUP.
+          schema: { type: string }
+        - name: nombreProyecto
+          in: query
+          description: RN05 — filtro por columna Nombre del proyecto.
+          schema: { type: string }
+        - name: iniciativaInversion
+          in: query
+          description: RN05 — filtro por columna Iniciativa de inversión.
+          schema:
+            $ref: './CU-PRE-01.openapi.yaml#/components/schemas/IniciativaInversion'
+        - name: estado
+          in: query
+          description: >
+            RN04/RN05 — filtro por columna Estado, usando el catálogo oficial
+            de 13 estados de RN04 (ver `EstadoProyecto` en CU-01.openapi.yaml,
+            corregido a partir del análisis de este mismo CU). No incluye los
+            valores "En análisis DGICP" ni "Viabilizado" que aparecen en el
+            mockup del Anexo A.1 pero no en RN04 — ver nota en
+            contrato-CU-PRE-03.md.
+          schema:
+            $ref: './CU-PRE-01.openapi.yaml#/components/schemas/EstadoProyecto'
+        - name: idUnidadEjecutora
+          in: query
+          description: RN05 — filtro por columna Unidad Ejecutora.
+          schema: { type: integer, format: int64 }
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: Listado paginado de proyectos con CUP, dentro del alcance del actor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProyectosCapturaResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no corresponde a ninguno de los roles
+            documentados en RN01/RN02. No hay un escenario BDD negativo
+            explícito para este caso (a diferencia de CU-PRE-01/CU-PRE-02, que
+            sí tienen escenarios "acción exclusiva de..."); se infiere de la
+            restricción declarada en `x-roles`, mismo criterio aplicado en
+            CU-PRE-01.5.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    ProyectoCapturaItem:
+      type: object
+      description: >
+        Fila del listado "Captura de Proyectos" (Anexo A.1). Deliberadamente
+        más liviano que `Proyecto` (CU-PRE-01): solo expone las 5 columnas
+        documentadas por el Anexo B.1 de este CU, más `idProyecto` (necesario
+        para la navegación de FA-01, aunque el clic ocurra sobre la columna CUP).
+      required: [idProyecto, cup, nombreProyecto, iniciativaInversion, estado, unidadEjecutora]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        cup:
+          type: string
+          description: >
+            Siempre presente en este listado (precondición del CU: solo se
+            muestran proyectos que ya cuentan con CUP).
+        nombreProyecto:
+          type: string
+        iniciativaInversion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/IniciativaInversion'
+        estado:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/EstadoProyecto'
+        unidadEjecutora:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UnidadEjecutoraResumen'
+
+    ProyectosCapturaResponse:
+      type: object
+      required: [contenido, paginacion]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProyectoCapturaItem'
+        paginacion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PaginacionMetadata'

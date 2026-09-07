@@ -2,6 +2,7 @@ import { CatlogosPreinversinApi, PreinversinRegistroYSolicitudDeCUPApi } from '.
 import { PreinversinRevisinYEmisinDeCUPApi } from './generated/preinversion-revision-cup';
 import { PreinversinIdentificacinApi } from './generated/preinversion-identificacion';
 import { PreinversinBandejaPreinversinApi, CatlogosPreinversinApi as CatlogosBandejaApi } from './generated/preinversion-bandeja';
+import { PreinversinCapturaDeProyectosApi } from './generated/preinversion-captura';
 import { CatlogosSeleccinYRegistroDeEtapasApi, PreinversinSeleccinYRegistroDeEtapasApi } from './generated/preinversion-etapas';
 import { createHttpClient } from './httpClient';
 
@@ -40,6 +41,9 @@ export const bandejaApi = new PreinversinBandejaPreinversinApi(undefined, undefi
 // El catálogo "Nombres Técnicos PRE" (Anexo C, RN04) va con tag de catálogos y
 // por eso el generador lo separó en su propia clase dentro del mismo módulo.
 export const catalogoBandejaApi = new CatlogosBandejaApi(undefined, undefined, preinversionAxios);
+// CU-PRE-03 (Captura de Proyectos): mismo basePath /back, tag propio -> módulo
+// generado propio (generated/preinversion-captura).
+export const capturaApi = new PreinversinCapturaDeProyectosApi(undefined, undefined, preinversionAxios);
 export const etapasApi = new PreinversinSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
 export const catalogoEtapasApi = new CatlogosSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
 
@@ -104,3 +108,6 @@ export type {
   AsignacionTecnicoPreRequest,
 } from './generated/preinversion-bandeja';
 export { TipoSolicitud } from './generated/preinversion-bandeja';
+
+// CU-PRE-03: tipos propios de este fragmento.
+export type { ProyectoCapturaItem, ProyectosCapturaResponse } from './generated/preinversion-captura';
