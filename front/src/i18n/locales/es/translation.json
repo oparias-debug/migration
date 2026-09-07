@@ -155,7 +155,11 @@
       "campoFechaRadicacion": "Fecha de radicación",
       "seAsignaAlGuardar": "Se asigna al guardar",
       "segunSector": "Según el sector seleccionado",
-      "botonIrARegistroEtapas": "Ir a Registro de Etapas"
+      "botonIrARegistroEtapas": "Ir a Registro de Etapas",
+      "accionEliminar": "Eliminar",
+      "confirmarEliminar": "¿Eliminar el registro «{{nombre}}»? Esta acción no se puede deshacer.",
+      "eliminado": "El registro se eliminó de la Bandeja de Registro de Proyectos.",
+      "eliminarNoPermitido": "El proyecto ya tiene una solicitud de CUP registrada; no puede eliminarse (RN 4)."
     },
     "rutaPreinversion": {
       "titulo": "Ruta de Preinversión",

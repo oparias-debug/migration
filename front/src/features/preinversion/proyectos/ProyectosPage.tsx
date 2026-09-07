@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import Swal from 'sweetalert2';
 import { preinversionApi, EstadoProyecto } from '../../../api/preinversionApi';
 import type { ProyectoListItem } from '../../../api/preinversionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
@@ -40,6 +41,18 @@ const SIN_RESPALDO_LISTADO = [
   'Filtro por tipo de proyecto',
   'Filtro por fecha desde',
 ];
+
+/**
+ * RN 4: un registro sólo puede eliminarse mientras nunca haya solicitado el CUP.
+ * Solicitar el CUP lo saca de "En Registro" (CU-PRE-01-solicitar-cup.feature:
+ * "el proyecto pasa al estado Enviado a DGICP (Registro)"), así que ese estado
+ * es exactamente la condición de "nunca ha solicitado CUP".
+ *
+ * Es sólo para decidir si se pinta el botón: quien manda sobre la regla es el
+ * servidor, que responde 409 y así se trata más abajo.
+ */
+const puedeEliminarse = (proyecto: ProyectoListItem): boolean =>
+  proyecto.estado === EstadoProyecto.EnRegistro;
 
 // Bandeja "Registro de Proyecto" (Antecedentes de CU-PRE-01-registrar-nuevo-proyecto.feature).
 export function ProyectosPage() {
@@ -87,6 +100,38 @@ export function ProyectosPage() {
   useEffect(() => {
     cargar(0);
   }, [cargar]);
+
+  // Eliminar un registro antes de la primera solicitud de CUP
+  // (CU-PRE-01-eliminar-registro.feature).
+  const eliminar = async (proyecto: ProyectoListItem) => {
+    const { isConfirmed } = await Swal.fire({
+      text: t('preinversion.registro.confirmarEliminar', { nombre: proyecto.nombre }),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: t('common.aceptar'),
+      cancelButtonText: t('common.cancelar'),
+    });
+    if (!isConfirmed) return;
+
+    try {
+      await preinversionApi.eliminarProyecto({ idProyecto: proyecto.idProyecto });
+      Swal.fire({ icon: 'success', text: t('preinversion.registro.eliminado') });
+      // Se recarga la página actual: el registro "deja de aparecer" en la
+      // bandeja, que es justo lo que pide el escenario.
+      cargar(pagina);
+    } catch (fallo) {
+      const apiError = toErrorApi(fallo);
+      // 'conflicto' es el 409 del contrato: RN 4, ya solicitó el CUP. El motivo
+      // concreto importa más que el texto genérico de error.
+      Swal.fire({
+        icon: 'error',
+        text:
+          apiError.clase === 'conflicto'
+            ? t('preinversion.registro.eliminarNoPermitido')
+            : mensajeDeError(apiError, t),
+      });
+    }
+  };
 
   const columns: Column<ProyectoListItem>[] = [
     {
@@ -155,7 +200,20 @@ export function ProyectosPage() {
         {cargando ? (
           <p className="cargando">{t('common.cargando')}</p>
         ) : error ? null : (
-          <DataTable columns={columns} rows={proyectos} emptyMessage={t('preinversion.registro.sinRegistros')} renderActions={() => null} />
+          <DataTable
+            columns={columns}
+            rows={proyectos}
+            emptyMessage={t('preinversion.registro.sinRegistros')}
+            /* Sólo el Técnico URP elimina, y sólo lo que nunca solicitó CUP:
+               "el botón de eliminar no está disponible para otros actores". */
+            renderActions={(proyecto) =>
+              hasRole('TECNICO_URP') && puedeEliminarse(proyecto) ? (
+                <button type="button" className="btn secundario" onClick={() => eliminar(proyecto)}>
+                  {t('preinversion.registro.accionEliminar')}
+                </button>
+              ) : null
+            }
+          />
         )}
 
         {!error && !cargando && proyectos.length > 0 && (
