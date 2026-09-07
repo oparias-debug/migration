@@ -151,4 +151,12 @@ public class Proyecto extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_UNIDAD_EJECUTORA_COEJECUTOR")
     private UnidadEjecutora unidadEjecutoraCoEjecutora;
+
+    /** Justificación de la alternativa seleccionada en "Registro de Alternativas". CU-PRE-05. */
+    @Column(name = "JUSTIFICACION_ALTERNATIVAS", length = 1000)
+    private String justificacionAlternativasSolucion;
+
+    /** Nulo si "Registro de Alternativas" nunca se ha guardado. Ver RN1-2/RN1-3 en CU-PRE-05.openapi.yaml. */
+    @Column(name = "FECHA_ULT_GUARDADO_ALTERNATIVAS")
+    private LocalDateTime fechaUltimoGuardadoAlternativasSolucion;
 }

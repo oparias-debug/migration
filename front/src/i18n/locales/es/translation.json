@@ -228,6 +228,19 @@
       "campoFuenteRecursos": "Fuente de Recursos",
       "mensajeGuardado": "¡Guardado! La Ficha de proyectos de emergencia ha sido guardada exitosamente."
     },
+    "alternativasSolucion": {
+      "titulo": "Registro de Alternativas de Solución",
+      "columnaNombre": "Nombre de la alternativa",
+      "columnaMonto": "Monto de la alternativa (US$)",
+      "columnaDescripcion": "Descripción de la alternativa",
+      "columnaSeleccionada": "Más conveniente",
+      "botonAgregarFila": "+ Agregar alternativa",
+      "botonEliminarFila": "x",
+      "campoJustificacion": "Justificación",
+      "botonSiguiente": "Siguiente",
+      "mensajeAvanzado": "El proyecto avanza a \"Análisis de interesados\" (CU-PRE-06); esa pantalla todavía no existe en este frontend.",
+      "notaSinNavegacionIdentificacion": "La pestaña \"Identificación del proyecto\" (CU-PRE-04) todavía no existe en este frontend: esta sección se accede directamente por URL."
+    },
     "revisionPre": {
       "titulo": "Revisión PRE",
       "sinComentarios": "Aún no hay observaciones registradas.",

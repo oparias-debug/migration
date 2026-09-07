@@ -46,7 +46,8 @@ public class ManejadorErroresGlobal {
 
     @ExceptionHandler(ValidacionNegocioException.class)
     public ResponseEntity<ErrorDto> manejarValidacionNegocio(ValidacionNegocioException ex) {
-        return respuesta(HttpStatus.BAD_REQUEST, "VALIDACION_NEGOCIO", ex.getMessage(), ex.getDetalles());
+        String codigo = ex.getCodigo() != null ? ex.getCodigo() : "VALIDACION_NEGOCIO";
+        return respuesta(HttpStatus.BAD_REQUEST, codigo, ex.getMessage(), ex.getDetalles());
     }
 
     @ExceptionHandler(FormatoArchivoNoSoportadoException.class)

@@ -1,0 +1,279 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-05 Alternativas de Solución
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-05 "Alternativas de Solución"
+    (UC-PRE-05-Alternativas_de_Solucion.md) y sus 3 historias BDD. Actor
+    principal: Técnico URP. Actores secundarios de solo lectura: Técnico PRE
+    ("Técnico preinversión" en el CU original, nombre no coincidente —
+    se usa el canónico) y "Usuarios Internos/Externos" ("Usuario Interno /
+    Externo" en el CU original, mismo criterio). Introduce el recurso
+    `RegistroAlternativas`, hijo de `Proyecto` (CU-PRE-01.openapi.yaml,
+    reutilizado vía `$ref` externo). A diferencia de CU-PRE-04, la acción
+    "Siguiente" (SF-2) sí tiene validaciones de servidor documentadas con
+    mensaje literal (RN2-3, RN2-4), por lo que se modela como endpoint propio
+    en vez de navegación pura de cliente.
+
+paths:
+
+  /proyectos/{idProyecto}/alternativas-solucion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerAlternativasSolucion
+      summary: Consultar la sección "Registro de Alternativas" (Anexo A.1)
+      description: >
+        RN1-2/RN1-3: Técnico PRE y Usuarios Internos/Externos solo pueden
+        acceder "desde que se guarden cambios por primera vez" — para ellos,
+        si `RegistroAlternativas` nunca fue guardado, este endpoint responde
+        404 (mismo criterio ya aplicado en CU-PRE-04 para `obtenerIdentificacion`).
+        Técnico URP puede acceder siempre, incluso antes del primer guardado.
+      tags: [Preinversión - Alternativas de Solución]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      responses:
+        "200":
+          description: Registro de alternativas de solución del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroAlternativas'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no corresponde a ninguno de los roles de
+            este CU, o (Técnico URP/Usuarios Internos-Externos) el proyecto
+            no está dentro de su alcance de Unidad Ejecutora. Inferido de
+            `x-roles`/RN1-1/RN1-3; sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: >
+            El proyecto no existe, o (solo para Técnico PRE/Usuarios
+            Internos-Externos, RN1-2/RN1-3) el registro de alternativas
+            todavía no se ha guardado ni una sola vez.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarAlternativasSolucion
+      summary: Registrar y guardar las alternativas de solución (botón "Guardar", SF-1)
+      description: >
+        Igual que `guardarIdentificacion` en CU-PRE-04: ningún campo es
+        obligatorio a nivel de servidor en este `PUT`. RN3-2 (sombrear
+        bordes en rojo) es retroalimentación visual de cliente, no un
+        rechazo — el propio SF-1 (paso 4) guarda la información igual. Las
+        validaciones reales de este CU (RN2-3 "Debe completarse el campo
+        Justificación", RN2-4 "Debe ingresar al menos una alternativa") no
+        están atadas a "Guardar": el propio texto de RN2-3 y RN2-4 dice
+        explícitamente que la alerta ocurre "al momento de dar clic al botón
+        'Siguiente'" — por eso viven en `avanzarAAnalisisInteresados`, no aquí.
+      tags: [Preinversión - Alternativas de Solución]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroAlternativasRequest'
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "¡Guardado! Sus datos han sido
+            guardados exitosamente.", Anexo A.2); el modal y su "Aceptar"
+            son de cliente, no un paso adicional de la API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroAlternativas'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP, o el proyecto no está en
+            su alcance de Unidad Ejecutora (RN1-1). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/alternativas-solucion/avance:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: avanzarAAnalisisInteresados
+      summary: Avanzar a "Análisis de interesados" (botón "Siguiente", SF-2)
+      description: >
+        Valida el estado ya persistido (el guardado más reciente de
+        `guardarAlternativasSolucion`) contra RN2-4 y RN2-3, en ese orden.
+        No recibe cuerpo: a diferencia de otros CU donde "Siguiente"/"Guardar"
+        comparten una sola llamada, aquí SF-1 y SF-2 son subflujos
+        explícitamente distintos con sus propias reglas (ver RN2-3/RN2-4).
+        RN2-7 ("será obligatorio registrar información en el campo
+        Justificación", sin condición) **no** se aplicó aquí: contradice a
+        RN2-3 (obligatoria solo si hay una única alternativa), y tanto el CU
+        como la historia BDD dejan explícitamente sin resolver cuál de las
+        dos prevalece — se modeló únicamente la regla con mensaje literal
+        documentado (RN2-3). Ver contrato-CU-PRE-05.md.
+      tags: [Preinversión - Alternativas de Solución]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: >
+            Validaciones superadas; el proyecto avanza a "Análisis de
+            interesados" (CU-PRE-06). No se modeló ninguna transición de
+            `Proyecto.estado`: el CU no describe ninguna, ya que "Siguiente"
+            aquí es navegación entre secciones de un mismo formulario, no un
+            cambio de etapa del ciclo de vida del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroAlternativas'
+        "400":
+          description: >
+            RN2-4 ("Debe ingresar al menos una alternativa", si no hay
+            ninguna registrada) o RN2-3 ("Debe completarse el campo
+            Justificación", si hay exactamente una alternativa y la
+            justificación está vacía). `Error.mensaje` usa el texto literal
+            documentado para cada caso; `Error.codigo` distingue cuál de
+            las dos reglas se incumplió.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    AlternativaSolucionRequest:
+      type: object
+      description: >
+        Fila de la tabla "Registro de Alternativas de Solución". Se reutiliza
+        tal cual también como forma de lectura (`RegistroAlternativas.alternativas`):
+        a diferencia de otros recursos de este contrato, aquí la forma de
+        escritura y de lectura de una alternativa son genuinamente idénticas
+        (no hay campos adicionales calculados por el servidor a nivel de fila),
+        así que definir un segundo schema habría sido duplicación sin
+        beneficio. Ningún campo es obligatorio a nivel de schema (ver
+        descripción de `guardarAlternativasSolucion`); RN2-4 ("al menos una
+        alternativa") se valida en `avanzarAAnalisisInteresados`, no aquí.
+      properties:
+        nombreAlternativa:
+          type: string
+        montoAlternativa:
+          type: number
+          format: double
+          description: >
+            RN2-5/Anexo B.1: la alternativa marcada `seleccionada = true`
+            debería tener el mismo valor que `Proyecto.montoEstimadoInversion`
+            (CU-PRE-01). No se encontró ningún escenario BDD que verifique
+            esta consistencia, así que no se modela como error 400 — queda
+            documentado como expectativa, no como regla forzada por el servidor.
+        descripcionAlternativa:
+          type: string
+          description: >
+            El Anexo B.1 no documenta Tipo/Formato/límite de caracteres para
+            este campo, a pesar de aparecer en el mockup (discrepancia ya
+            señalada por el propio CU). Se modela como `string` sin
+            `maxLength`, sin inventar un límite.
+        seleccionada:
+          type: boolean
+          description: RN2-6 — como máximo una fila puede tener `true`.
+
+    RegistroAlternativasRequest:
+      type: object
+      properties:
+        alternativas:
+          type: array
+          description: >
+            Lista completa de alternativas vigentes tras este guardado
+            (reemplaza la lista anterior por completo — un solo botón
+            "Guardar" para toda la sección, mismo criterio que
+            `objetivosEspecificos` en CU-PRE-04 y `actualizarEtapas` en
+            CU-PRE-3.5). Agregar/eliminar una fila o cambiar la selección
+            radial ocurre en el cliente antes de este `PUT`.
+          items:
+            $ref: '#/components/schemas/AlternativaSolucionRequest'
+        justificacion:
+          type: string
+          maxLength: 1000
+          description: Obligatoriedad real evaluada en `avanzarAAnalisisInteresados` (RN2-3), no aquí.
+
+    RegistroAlternativas:
+      type: object
+      description: Registro de alternativas de solución del proyecto (lectura).
+      required: [idProyecto, alternativas]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        alternativas:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlternativaSolucionRequest'
+        justificacion:
+          type: string
+          nullable: true
+          maxLength: 1000
+        fechaUltimoGuardado:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            Nulo si nunca se ha guardado. Determina, para Técnico PRE y
+            Usuarios Internos/Externos (RN1-2/RN1-3), si el recurso es
+            visible en absoluto — ver 404 de `obtenerAlternativasSolucion`.

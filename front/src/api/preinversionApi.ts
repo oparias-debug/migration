@@ -4,6 +4,7 @@ import { PreinversinIdentificacinApi } from './generated/preinversion-identifica
 import { PreinversinBandejaPreinversinApi, CatlogosPreinversinApi as CatlogosBandejaApi } from './generated/preinversion-bandeja';
 import { PreinversinCapturaDeProyectosApi } from './generated/preinversion-captura';
 import { CatlogosSeleccinYRegistroDeEtapasApi, PreinversinSeleccinYRegistroDeEtapasApi } from './generated/preinversion-etapas';
+import { PreinversinAlternativasDeSolucinApi } from './generated/preinversion-alternativas';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -46,6 +47,10 @@ export const catalogoBandejaApi = new CatlogosBandejaApi(undefined, undefined, p
 export const capturaApi = new PreinversinCapturaDeProyectosApi(undefined, undefined, preinversionAxios);
 export const etapasApi = new PreinversinSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
 export const catalogoEtapasApi = new CatlogosSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
+// CU-PRE-05 (Alternativas de Solución): mismo recurso Proyecto y mismo basePath /back, pero tag
+// distinto en el OpenAPI -> fragmento y módulo generado propios (generated/preinversion-alternativas);
+// comparte la instancia de axios de arriba.
+export const alternativasSolucionApi = new PreinversinAlternativasDeSolucinApi(undefined, undefined, preinversionAxios);
 
 export type {
   Proyecto,
@@ -108,6 +113,9 @@ export type {
   AsignacionTecnicoPreRequest,
 } from './generated/preinversion-bandeja';
 export { TipoSolicitud } from './generated/preinversion-bandeja';
+
+// CU-PRE-05: tipos propios de este fragmento.
+export type { RegistroAlternativas, RegistroAlternativasRequest, AlternativaSolucionRequest } from './generated/preinversion-alternativas';
 
 // CU-PRE-03: tipos propios de este fragmento.
 export type { ProyectoCapturaItem, ProyectosCapturaResponse } from './generated/preinversion-captura';
