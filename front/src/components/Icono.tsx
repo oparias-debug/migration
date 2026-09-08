@@ -12,10 +12,10 @@ import type { CSSProperties } from 'react'
  * Los iconos a color (módulos, indicadores, pasos) se muestran como imagen.
  */
 interface IconoMascaraProps {
-  nombre: string
-  tam?: number
-  className?: string
-  style?: CSSProperties
+  readonly nombre: string
+  readonly tam?: number
+  readonly className?: string
+  readonly style?: CSSProperties
 }
 
 export function IconoMascara({ nombre, tam = 22, className = '', style }: IconoMascaraProps) {
@@ -36,10 +36,10 @@ export function IconoMascara({ nombre, tam = 22, className = '', style }: IconoM
 }
 
 interface IconoColorProps {
-  nombre: string
-  alt?: string
-  className?: string
-  style?: CSSProperties
+  readonly nombre: string
+  readonly alt?: string
+  readonly className?: string
+  readonly style?: CSSProperties
 }
 
 export function IconoColor({ nombre, alt = '', className = '', style }: IconoColorProps) {

@@ -58,7 +58,7 @@ export function FichaEmergenciaPage() {
   const productos: ProductoIndicador[] = useCatalogo(() => catalogoEtapasApi.listarProductosIndicadores());
   const tiposCosto: TipoCostoResumen[] = useCatalogo(() => catalogoEtapasApi.listarTiposCosto());
   const ubicaciones: UbicacionGeografica[] = useCatalogo(() => catalogoEtapasApi.listarUbicacionesGeograficas());
-  const departamentos = Array.from(new Set(ubicaciones.map((u) => u.departamento))).sort();
+  const departamentos = Array.from(new Set(ubicaciones.map((u) => u.departamento))).sort((a, b) => a.localeCompare(b));
   const distritosVisibles = departamentoFiltro ? ubicaciones.filter((u) => u.departamento === departamentoFiltro) : ubicaciones;
 
   const {
@@ -94,7 +94,7 @@ export function FichaEmergenciaPage() {
         });
         reset(fichaToFormValues(data));
       })
-      .catch((fallo) => setErrorCarga(mensajeDeError(toErrorApi(fallo), t)))
+      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
   }, [idProyecto, reset, t]);
 
@@ -145,8 +145,8 @@ export function FichaEmergenciaPage() {
       reset(fichaToFormValues(data));
       await Swal.fire({ icon: 'success', text: t('preinversion.fichaEmergencia.mensajeGuardado') });
       navigate(`/preinversion/proyectos/${idProyecto}/etapas`);
-    } catch (fallo) {
-      const error = toErrorApi(fallo);
+    } catch (error_) {
+      const error = toErrorApi(error_);
       const porCampo = erroresPorCampo(error);
       Object.entries(porCampo).forEach(([campo, mensaje]) => {
         setError(campo as keyof FichaEmergenciaFormValues, { type: 'server', message: mensaje });

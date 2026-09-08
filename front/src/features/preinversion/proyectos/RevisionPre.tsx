@@ -3,20 +3,20 @@ import { useTranslation } from 'react-i18next';
 import type { ComentarioSolicitud } from '../../../api/preinversionApi';
 
 interface RevisionPreProps {
-  comentarios: ComentarioSolicitud[];
+  readonly comentarios: ComentarioSolicitud[];
   /** Sólo con el proyecto en OBSERVADO_DGICP_REGISTRO (RN 2.9). Técnico URP responde. */
-  puedeResponder: boolean;
+  readonly puedeResponder: boolean;
   /**
    * Sólo con el proyecto en ENVIADO_DGICP_REGISTRO (CU-PRE-01.5-devolver.feature).
    * Técnico PRE devuelve la solicitud con una observación.
    */
-  puedeDevolver?: boolean;
-  enviando: boolean;
+  readonly puedeDevolver?: boolean;
+  readonly enviando: boolean;
   /** Error de `campo: "respuesta"` devuelto por el back en un 400 (sólo aplica a Responder). */
-  errorRespuesta?: string;
-  onEnviar: (respuesta: string) => void;
+  readonly errorRespuesta?: string;
+  readonly onEnviar: (respuesta: string) => void;
   /** El comentario no es obligatorio (ver CU-PRE-01.5, sección Validaciones): puede llegar vacío. */
-  onDevolver?: (comentario: string) => void;
+  readonly onDevolver?: (comentario: string) => void;
 }
 
 /**

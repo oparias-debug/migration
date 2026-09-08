@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BORRADOR PARA REVISIÓN — NO ES UN PROCESO DEPLOYABLE, NO VIVE EN
+  back/src/main/resources/processes/ a propósito (esa carpeta se auto-despliega
+  en Flowable al arrancar el back; este archivo NO debe copiarse ahí todavía).
+
+  Qué es: una propuesta de reemplazo del único userTask "UT_FormulacionEvaluacion"
+  (CU-PRE-04 a CU-PRE-23) de back/src/main/resources/processes/Proceso_SIIF.bpmn20.xml
+  por un tramo con un userTask por etapa (Perfil, Prefactibilidad, Factibilidad,
+  Diseño), reflejando que:
+    - Según el tipo de Iniciativa de Inversión (y los criterios de
+      SeleccionYRegistroDeEtapasServiceImpl.calcularEtapasSugeridas /
+      RUTA_PROGRAMA_ESTUDIO), un proyecto puede no requerir Prefactibilidad,
+      Factibilidad o Diseño — ver gateways gw_reqPrefactibilidad/gw_reqFactibilidad/
+      gw_reqDiseno.
+    - Cada etapa se habilita para la siguiente recién cuando esa etapa concreta
+      tiene Opinión Técnica favorable (ver CU-PRE-3.5-registrar-etapas.feature,
+      escenario "Habilitación de etapas posteriores... tras emitir Opinión
+      Técnica"), no cuando se aprueba UNA sola OT para todo el proyecto.
+
+  Cómo empalma con el proceso real (para cuando se decida integrar):
+    - sf5_iniciar_identificacion pasaría a apuntar a UT_Perfil en vez de a
+      UT_FormulacionEvaluacion.
+    - La salida final de este tramo (ver nodo end_draft) reemplaza a
+      sf6_finalizar_indicadores → UT_ProyectoFormulado.
+
+  Cada etapa repite el mismo patrón "tarea → revisión de OT → gateway
+  favorable/observado" que YA usan UT_RevisionCUP/gw1, UT_RevisionViabilidad/gw2
+  y UT_RevisionOT/gw3 en el proceso real — no es un patrón BPMN nuevo, es el
+  mismo aplicado 4 veces (uno por etapa) en vez de una vez para todo el proyecto.
+
+  PREGUNTA ABIERTA (no la resolví acá, es decisión de negocio/producto, no de
+  código): si la Opinión Técnica pasa a emitirse por etapa (como en este
+  borrador), ¿qué sentido conserva el UT_RevisionOT / UT_PostOT / gw4 río abajo
+  del proceso real (hoy pensados como UNA sola OT para todo el proyecto,
+  posterior a Viabilidad/Elegibilidad)? Y en consecuencia, ¿sigue haciendo falta
+  el reingreso de gw4 ("Solicitar OT para otra etapa / Actualización",
+  sf17_actualizar_ot) si el rework de cada etapa ya ocurre acá adentro, en
+  cuanto se emite esa OT puntual? Sin resolver esto, este borrador NO cubre el
+  caso de reabrir una etapa que ya quedó atrás después de haber avanzado más
+  allá de Diseño (ej. modificar Prefactibilidad estando ya en Diseño) — eso
+  sigue dependiendo de EtapaPreinversion.bloqueadaPorModificacion a nivel de
+  datos, sin equivalente todavía en este tramo del BPMN.
+-->
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://siip.com/bpmn/proceso-proyecto/draft">
+
+  <process id="draft_formulacion_por_etapas" name="[DRAFT] Formulación por Etapas (reemplazo de UT_FormulacionEvaluacion)" isExecutable="false">
+
+    <!-- Placeholder de entrada: en el proceso real, esto es sf5_iniciar_identificacion
+         llegando desde UT_CUPAsignado. -->
+    <startEvent id="start_draft" name="[placeholder] llega de sf5_iniciar_identificacion"/>
+    <sequenceFlow id="sf_start_a_perfil" sourceRef="start_draft" targetRef="UT_Perfil"/>
+
+    <!-- ===================== ETAPA: PERFIL (siempre requerida) ===================== -->
+
+    <userTask id="UT_Perfil" name="Formulación — Etapa Perfil (contenido del Anexo F con aplicaPerfil=true)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_perfil_a_ot" name="Solicitar Opinión Técnica de Perfil" sourceRef="UT_Perfil" targetRef="UT_RevisionOTPerfil">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionOTPerfil" name="Revisión de Opinión Técnica — Perfil" flowable:candidateGroups="Técnico PRE"/>
+
+    <sequenceFlow id="sf_perfil_ot_a_gw" sourceRef="UT_RevisionOTPerfil" targetRef="gw_ot_perfil"/>
+
+    <exclusiveGateway id="gw_ot_perfil" name="¿Resultado de la OT de Perfil?"/>
+
+    <sequenceFlow id="sf_perfil_ot_observado" name="Observado" sourceRef="gw_ot_perfil" targetRef="UT_Perfil">
+      <conditionExpression xsi:type="tFormalExpression">${decisionOTPerfil == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_perfil_ot_favorable" name="Favorable" sourceRef="gw_ot_perfil" targetRef="gw_reqPrefactibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionOTPerfil == 'favorable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== ¿REQUIERE PREFACTIBILIDAD? =====================
+         reqPrefactibilidad lo setea SeleccionYRegistroDeEtapasServiceImpl.aceptarRutaPreinversion()
+         (calcularEtapasSugeridas para IniciativaInversion.PROYECTO; false para
+         PROGRAMA/ESTUDIO_GENERAL vía RUTA_PROGRAMA_ESTUDIO, y para proyectos de
+         emergencia) al aceptar la Ruta de Preinversión, vía runtimeService.setVariable. -->
+
+    <exclusiveGateway id="gw_reqPrefactibilidad" name="¿Requiere Prefactibilidad?"/>
+
+    <sequenceFlow id="sf_a_prefactibilidad" sourceRef="gw_reqPrefactibilidad" targetRef="UT_Prefactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${reqPrefactibilidad == true}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_skip_prefactibilidad" name="No requiere Prefactibilidad" sourceRef="gw_reqPrefactibilidad" targetRef="gw_reqFactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${reqPrefactibilidad == false}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== ETAPA: PREFACTIBILIDAD (condicional) ===================== -->
+
+    <userTask id="UT_Prefactibilidad" name="Formulación — Etapa Prefactibilidad (contenido del Anexo F con aplicaPrefactibilidad=true)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_prefactibilidad_a_ot" name="Solicitar Opinión Técnica de Prefactibilidad" sourceRef="UT_Prefactibilidad" targetRef="UT_RevisionOTPrefactibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionOTPrefactibilidad" name="Revisión de Opinión Técnica — Prefactibilidad" flowable:candidateGroups="Técnico PRE"/>
+
+    <sequenceFlow id="sf_prefactibilidad_ot_a_gw" sourceRef="UT_RevisionOTPrefactibilidad" targetRef="gw_ot_prefactibilidad"/>
+
+    <exclusiveGateway id="gw_ot_prefactibilidad" name="¿Resultado de la OT de Prefactibilidad?"/>
+
+    <sequenceFlow id="sf_prefactibilidad_ot_observado" name="Observado" sourceRef="gw_ot_prefactibilidad" targetRef="UT_Prefactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${decisionOTPrefactibilidad == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_prefactibilidad_ot_favorable" name="Favorable" sourceRef="gw_ot_prefactibilidad" targetRef="gw_reqFactibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionOTPrefactibilidad == 'favorable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== ¿REQUIERE FACTIBILIDAD? ===================== -->
+
+    <exclusiveGateway id="gw_reqFactibilidad" name="¿Requiere Factibilidad?"/>
+
+    <sequenceFlow id="sf_a_factibilidad" sourceRef="gw_reqFactibilidad" targetRef="UT_Factibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${reqFactibilidad == true}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_skip_factibilidad" name="No requiere Factibilidad" sourceRef="gw_reqFactibilidad" targetRef="gw_reqDiseno">
+      <conditionExpression xsi:type="tFormalExpression">${reqFactibilidad == false}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== ETAPA: FACTIBILIDAD (condicional) ===================== -->
+
+    <userTask id="UT_Factibilidad" name="Formulación — Etapa Factibilidad (contenido del Anexo F con aplicaFactibilidad=true)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_factibilidad_a_ot" name="Solicitar Opinión Técnica de Factibilidad" sourceRef="UT_Factibilidad" targetRef="UT_RevisionOTFactibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionOTFactibilidad" name="Revisión de Opinión Técnica — Factibilidad" flowable:candidateGroups="Técnico PRE"/>
+
+    <sequenceFlow id="sf_factibilidad_ot_a_gw" sourceRef="UT_RevisionOTFactibilidad" targetRef="gw_ot_factibilidad"/>
+
+    <exclusiveGateway id="gw_ot_factibilidad" name="¿Resultado de la OT de Factibilidad?"/>
+
+    <sequenceFlow id="sf_factibilidad_ot_observado" name="Observado" sourceRef="gw_ot_factibilidad" targetRef="UT_Factibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${decisionOTFactibilidad == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_factibilidad_ot_favorable" name="Favorable" sourceRef="gw_ot_factibilidad" targetRef="gw_reqDiseno">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionOTFactibilidad == 'favorable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== ¿REQUIERE DISEÑO? ===================== -->
+
+    <exclusiveGateway id="gw_reqDiseno" name="¿Requiere Diseño?"/>
+
+    <sequenceFlow id="sf_a_diseno" sourceRef="gw_reqDiseno" targetRef="UT_Diseno">
+      <conditionExpression xsi:type="tFormalExpression">${reqDiseno == true}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_skip_diseno" name="No requiere Diseño" sourceRef="gw_reqDiseno" targetRef="end_draft">
+      <conditionExpression xsi:type="tFormalExpression">${reqDiseno == false}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== ETAPA: DISEÑO (condicional) ===================== -->
+
+    <userTask id="UT_Diseno" name="Formulación — Etapa Diseño (contenido del Anexo F con aplicaDiseno=true)" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_diseno_a_ot" name="Solicitar Opinión Técnica de Diseño" sourceRef="UT_Diseno" targetRef="UT_RevisionOTDiseno">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionOTDiseno" name="Revisión de Opinión Técnica — Diseño" flowable:candidateGroups="Técnico PRE"/>
+
+    <sequenceFlow id="sf_diseno_ot_a_gw" sourceRef="UT_RevisionOTDiseno" targetRef="gw_ot_diseno"/>
+
+    <exclusiveGateway id="gw_ot_diseno" name="¿Resultado de la OT de Diseño?"/>
+
+    <sequenceFlow id="sf_diseno_ot_observado" name="Observado" sourceRef="gw_ot_diseno" targetRef="UT_Diseno">
+      <conditionExpression xsi:type="tFormalExpression">${decisionOTDiseno == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_diseno_ot_favorable" name="Favorable" sourceRef="gw_ot_diseno" targetRef="end_draft">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionOTDiseno == 'favorable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Placeholder de salida: en el proceso real, este nodo se reemplaza por
+         sf6_finalizar_indicadores → UT_ProyectoFormulado. -->
+    <endEvent id="end_draft" name="[placeholder] continúa a UT_ProyectoFormulado"/>
+
+  </process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_draft_formulacion_por_etapas">
+    <bpmndi:BPMNPlane bpmnElement="draft_formulacion_por_etapas" id="BPMNPlane_draft_formulacion_por_etapas">
+
+      <bpmndi:BPMNShape bpmnElement="start_draft" id="Shape_start_draft">
+        <omgdc:Bounds x="40" y="112" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_Perfil" id="Shape_UT_Perfil">
+        <omgdc:Bounds x="120" y="100" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTPerfil" id="Shape_UT_RevisionOTPerfil">
+        <omgdc:Bounds x="300" y="100" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_ot_perfil" id="Shape_gw_ot_perfil">
+        <omgdc:Bounds x="480" y="110" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_reqPrefactibilidad" id="Shape_gw_reqPrefactibilidad">
+        <omgdc:Bounds x="560" y="110" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_Prefactibilidad" id="Shape_UT_Prefactibilidad">
+        <omgdc:Bounds x="120" y="220" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTPrefactibilidad" id="Shape_UT_RevisionOTPrefactibilidad">
+        <omgdc:Bounds x="300" y="220" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_ot_prefactibilidad" id="Shape_gw_ot_prefactibilidad">
+        <omgdc:Bounds x="480" y="230" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_reqFactibilidad" id="Shape_gw_reqFactibilidad">
+        <omgdc:Bounds x="560" y="230" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_Factibilidad" id="Shape_UT_Factibilidad">
+        <omgdc:Bounds x="120" y="340" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTFactibilidad" id="Shape_UT_RevisionOTFactibilidad">
+        <omgdc:Bounds x="300" y="340" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_ot_factibilidad" id="Shape_gw_ot_factibilidad">
+        <omgdc:Bounds x="480" y="350" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_reqDiseno" id="Shape_gw_reqDiseno">
+        <omgdc:Bounds x="560" y="350" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="UT_Diseno" id="Shape_UT_Diseno">
+        <omgdc:Bounds x="120" y="460" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTDiseno" id="Shape_UT_RevisionOTDiseno">
+        <omgdc:Bounds x="300" y="460" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_ot_diseno" id="Shape_gw_ot_diseno">
+        <omgdc:Bounds x="480" y="470" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape bpmnElement="end_draft" id="Shape_end_draft">
+        <omgdc:Bounds x="660" y="470" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges (grilla simple, para reordenar en Flowable Modeler) -->
+      <bpmndi:BPMNEdge bpmnElement="sf_start_a_perfil" id="Edge_sf_start_a_perfil">
+        <omgdi:waypoint x="76" y="130"/>
+        <omgdi:waypoint x="120" y="130"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_a_ot" id="Edge_sf_perfil_a_ot">
+        <omgdi:waypoint x="260" y="130"/>
+        <omgdi:waypoint x="300" y="130"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_a_gw" id="Edge_sf_perfil_ot_a_gw">
+        <omgdi:waypoint x="440" y="130"/>
+        <omgdi:waypoint x="480" y="130"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_observado" id="Edge_sf_perfil_ot_observado">
+        <omgdi:waypoint x="500" y="110"/>
+        <omgdi:waypoint x="500" y="60"/>
+        <omgdi:waypoint x="190" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_favorable" id="Edge_sf_perfil_ot_favorable">
+        <omgdi:waypoint x="520" y="130"/>
+        <omgdi:waypoint x="560" y="130"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_a_prefactibilidad" id="Edge_sf_a_prefactibilidad">
+        <omgdi:waypoint x="580" y="150"/>
+        <omgdi:waypoint x="580" y="250"/>
+        <omgdi:waypoint x="260" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_skip_prefactibilidad" id="Edge_sf_skip_prefactibilidad">
+        <omgdi:waypoint x="580" y="150"/>
+        <omgdi:waypoint x="580" y="230"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_a_ot" id="Edge_sf_prefactibilidad_a_ot">
+        <omgdi:waypoint x="260" y="250"/>
+        <omgdi:waypoint x="300" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_a_gw" id="Edge_sf_prefactibilidad_ot_a_gw">
+        <omgdi:waypoint x="440" y="250"/>
+        <omgdi:waypoint x="480" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_observado" id="Edge_sf_prefactibilidad_ot_observado">
+        <omgdi:waypoint x="500" y="230"/>
+        <omgdi:waypoint x="500" y="190"/>
+        <omgdi:waypoint x="190" y="220"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_favorable" id="Edge_sf_prefactibilidad_ot_favorable">
+        <omgdi:waypoint x="520" y="250"/>
+        <omgdi:waypoint x="560" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_a_factibilidad" id="Edge_sf_a_factibilidad">
+        <omgdi:waypoint x="580" y="270"/>
+        <omgdi:waypoint x="580" y="370"/>
+        <omgdi:waypoint x="260" y="370"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_skip_factibilidad" id="Edge_sf_skip_factibilidad">
+        <omgdi:waypoint x="580" y="270"/>
+        <omgdi:waypoint x="580" y="350"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_a_ot" id="Edge_sf_factibilidad_a_ot">
+        <omgdi:waypoint x="260" y="370"/>
+        <omgdi:waypoint x="300" y="370"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_a_gw" id="Edge_sf_factibilidad_ot_a_gw">
+        <omgdi:waypoint x="440" y="370"/>
+        <omgdi:waypoint x="480" y="370"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_observado" id="Edge_sf_factibilidad_ot_observado">
+        <omgdi:waypoint x="500" y="350"/>
+        <omgdi:waypoint x="500" y="310"/>
+        <omgdi:waypoint x="190" y="340"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_favorable" id="Edge_sf_factibilidad_ot_favorable">
+        <omgdi:waypoint x="520" y="370"/>
+        <omgdi:waypoint x="560" y="370"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_a_diseno" id="Edge_sf_a_diseno">
+        <omgdi:waypoint x="580" y="390"/>
+        <omgdi:waypoint x="580" y="490"/>
+        <omgdi:waypoint x="260" y="490"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_skip_diseno" id="Edge_sf_skip_diseno">
+        <omgdi:waypoint x="600" y="370"/>
+        <omgdi:waypoint x="678" y="370"/>
+        <omgdi:waypoint x="678" y="470"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_a_ot" id="Edge_sf_diseno_a_ot">
+        <omgdi:waypoint x="260" y="490"/>
+        <omgdi:waypoint x="300" y="490"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_ot_a_gw" id="Edge_sf_diseno_ot_a_gw">
+        <omgdi:waypoint x="440" y="490"/>
+        <omgdi:waypoint x="480" y="490"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_ot_observado" id="Edge_sf_diseno_ot_observado">
+        <omgdi:waypoint x="500" y="470"/>
+        <omgdi:waypoint x="500" y="430"/>
+        <omgdi:waypoint x="190" y="460"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_ot_favorable" id="Edge_sf_diseno_ot_favorable">
+        <omgdi:waypoint x="520" y="490"/>
+        <omgdi:waypoint x="660" y="488"/>
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

@@ -24,6 +24,8 @@ import sv.gob.mh.siip.security.ActorContexto;
 @Transactional(readOnly = true)
 public class CatalogosSeleccionEtapasServiceImpl implements CatalogosSeleccionEtapasService {
 
+    private static final String CUPRE_04 = "CUPRE-04";
+
     /** RN: "Nivel nacional" (campo Coordenadas de la Ficha de emergencia) es un valor mas de distrito. */
     private static final String NIVEL_NACIONAL = "Nivel nacional";
 
@@ -106,19 +108,17 @@ public class CatalogosSeleccionEtapasServiceImpl implements CatalogosSeleccionEt
      * contenido habilitable.
      */
     private static final List<ContenidoIniciativaResumenDto> CONTENIDO_INICIATIVAS_PROYECTO = List.of(
-            fila("Antecedentes", "CUPRE-04", true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
-            fila("Problema Central", "CUPRE-04", true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
-            fila("Objetivo General", "CUPRE-04", true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
-            fila("Objetivos Específicos", "CUPRE-04", true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
+            fila("Antecedentes", CUPRE_04, true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
+            fila("Problema Central", CUPRE_04, true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
+            fila("Objetivo General", CUPRE_04, true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
+            fila("Objetivos Específicos", CUPRE_04, true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
             fila("Análisis de Alternativas de Solución", "CUPRE-05", true, true, false, false, false, false, AplicaActualizacionOtDto.SIN_DATO),
             fila("Análisis de Interesados", "CUPRE-06", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
             fila("Análisis de la Población", "CUPRE-07", true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
             fila("Área de Influencia", "CUPRE-08", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
             fila("Análisis de Mercado", "CUPRE-09", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
-            fila("Situación Base Optimizada", "CUPRE-10", true, false, false, false, false, false, AplicaActualizacionOtDto.NO_APLICA_AL_CU),
             fila("Descripción Técnica", "CUPRE-11", true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
             fila("Localización", "CUPRE-12", true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Tamaño", "CUPRE-13", true, true, true, true, true, true, AplicaActualizacionOtDto.NO_APLICA_AL_CU),
             fila("Análisis Ambiental", "CUPRE-14", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
             fila("Análisis de Riesgos", "CUPRE-15", true, true, true, true, true, false, AplicaActualizacionOtDto.APLICA),
             fila("Análisis Legal", "CUPRE-16", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
@@ -130,8 +130,6 @@ public class CatalogosSeleccionEtapasServiceImpl implements CatalogosSeleccionEt
             fila("Flujo de Caja e Indicadores", "CUPRE-21", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
             fila("Programación Financiera Preinversión", "CUPRE-22.1", true, true, true, false, false, true, AplicaActualizacionOtDto.NO_APLICA_AL_CU),
             fila("Programación Física Preinversión", "CUPRE-22.3", true, true, true, false, false, true, AplicaActualizacionOtDto.NO_APLICA_AL_CU),
-            fila("Programación Financiera Inversión", "CUPRE-22.2", true, true, true, true, true, false, AplicaActualizacionOtDto.APLICA),
-            fila("Programación Física Inversión", "CUPRE-22.4", true, true, true, true, true, false, AplicaActualizacionOtDto.NO_APLICA_AL_CU),
             fila("Nota de solicitud de OT", null, true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
             fila("Documento de Preinversión", null, true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
             fila("Otros documentos", null, true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),

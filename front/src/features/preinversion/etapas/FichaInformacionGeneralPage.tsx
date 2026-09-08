@@ -39,7 +39,7 @@ export function FichaInformacionGeneralPage() {
     etapasApi
       .obtenerFichaInformacionGeneral({ idProyecto })
       .then(({ data }) => setFicha(data))
-      .catch((fallo) => setErrorCarga(mensajeDeError(toErrorApi(fallo), t)))
+      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
   }, [idProyecto, t]);
 
@@ -58,8 +58,8 @@ export function FichaInformacionGeneralPage() {
       setFicha(data);
       setIdCoEjecutor('');
       await Swal.fire({ icon: 'success', text: t('preinversion.fichaGeneral.coEjecutorAsignado') });
-    } catch (fallo) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(fallo), t) });
+    } catch (error_) {
+      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
     } finally {
       setGuardandoCoEjecutor(false);
     }

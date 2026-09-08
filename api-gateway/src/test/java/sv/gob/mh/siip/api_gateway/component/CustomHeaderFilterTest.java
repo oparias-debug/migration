@@ -1,16 +1,18 @@
 package sv.gob.mh.siip.api_gateway.component;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.ServerWebExchange;
+
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class CustomHeaderFilterTest {
 
@@ -27,8 +29,8 @@ class CustomHeaderFilterTest {
         MockServerHttpRequest request = MockServerHttpRequest.get("/test").build();
         MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        GatewayFilterChain chain = Mockito.mock(GatewayFilterChain.class);
-        Mockito.when(chain.filter(Mockito.any(ServerWebExchange.class))).thenReturn(Mono.empty());
+        GatewayFilterChain chain = mock(GatewayFilterChain.class);
+        when(chain.filter(Mockito.any(ServerWebExchange.class))).thenReturn(Mono.empty());
 
         // Act
         Mono<Void> result = filter.filter(exchange, chain);

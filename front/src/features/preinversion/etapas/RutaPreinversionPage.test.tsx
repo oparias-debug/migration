@@ -109,7 +109,7 @@ describe('RutaPreinversionPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Modificar' }));
     fireEvent.click(screen.getByRole('button', { name: 'Guardar modificación' }));
 
-    await waitFor(() => expect(screen.getByText('*Campo obligatorio')).toBeInTheDocument());
+    expect(await screen.findByText('*Campo obligatorio')).toBeInTheDocument();
     expect(modificarRutaPreinversion).not.toHaveBeenCalled();
   });
 });

@@ -78,7 +78,7 @@ export function AlternativasSolucionPage() {
         }
         reset(valores);
       })
-      .catch((fallo) => setErrorCarga(mensajeDeError(toErrorApi(fallo), t)))
+      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idProyecto, reset, t]);
@@ -109,8 +109,8 @@ export function AlternativasSolucionPage() {
       });
       reset(registroToFormValues(data));
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
-    } catch (fallo) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(fallo), t) });
+    } catch (error_) {
+      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
     } finally {
       setGuardando(false);
     }
@@ -121,8 +121,8 @@ export function AlternativasSolucionPage() {
     try {
       await alternativasSolucionApi.avanzarAAnalisisInteresados({ idProyecto });
       await Swal.fire({ icon: 'success', text: t('preinversion.alternativasSolucion.mensajeAvanzado') });
-    } catch (fallo) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(fallo), t) });
+    } catch (error_) {
+      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
     } finally {
       setAvanzando(false);
     }

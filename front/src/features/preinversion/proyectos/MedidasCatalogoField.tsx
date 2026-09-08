@@ -3,12 +3,12 @@ import { catalogoPreinversionApi } from '../../../api/preinversionApi';
 import type { MedidaCatalogo, TipoMedidaCatalogo } from '../../../api/preinversionApi';
 
 interface MedidasCatalogoFieldProps {
-  tipo: TipoMedidaCatalogo;
+  readonly tipo: TipoMedidaCatalogo;
   /** Título de la categoría; rotula la casilla que marca todas sus opciones. */
-  label: string;
-  value: string[];
-  onChange: (value: string[]) => void;
-  disabled?: boolean;
+  readonly label: string;
+  readonly value: string[];
+  readonly onChange: (value: string[]) => void;
+  readonly disabled?: boolean;
 }
 
 /**

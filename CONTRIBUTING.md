@@ -148,6 +148,7 @@ mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:son
 
 # front (proyecto siip-front separado):
 cd front
+npm run generate:api
 npm run sonar
 ```
 

@@ -28,8 +28,8 @@ public class ReactiveJwtAuthConverter implements Converter<Jwt, Mono<AbstractAut
         List<String> rolesListStr = List.of();
         if (roles instanceof List<?> rolesList) {
             rolesListStr = rolesList.stream()
-                    .filter(role -> role instanceof String)
-                    .map(role -> (String) role)
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
                     .toList();
         }
 

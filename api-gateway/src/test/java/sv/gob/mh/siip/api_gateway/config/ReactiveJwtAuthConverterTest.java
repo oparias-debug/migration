@@ -1,19 +1,20 @@
 package sv.gob.mh.siip.api_gateway.config;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.oauth2.jwt.Jwt;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 class ReactiveJwtAuthConverterTest {
 
@@ -41,7 +42,7 @@ class ReactiveJwtAuthConverterTest {
         StepVerifier.create(result)
                 .assertNext(token -> {
                     List<String> authorities = token.getAuthorities().stream()
-                            .map(authority -> authority.getAuthority())
+                            .map(GrantedAuthority::getAuthority)
                             .toList();
                     assertThat(authorities).containsExactlyInAnyOrder("ROLE_admin", "ROLE_user");
                 })
@@ -74,7 +75,7 @@ class ReactiveJwtAuthConverterTest {
         StepVerifier.create(result)
                 .assertNext(token -> {
                     List<String> authorities = token.getAuthorities().stream()
-                            .map(authority -> authority.getAuthority())
+                            .map(GrantedAuthority::getAuthority)
                             .toList();
                     assertThat(authorities).containsExactly("ROLE_admin");
                 })

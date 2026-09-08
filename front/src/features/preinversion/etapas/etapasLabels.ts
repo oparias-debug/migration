@@ -105,6 +105,6 @@ export const FUENTE_FINANCIAMIENTO_OPCIONES = [
 ] as const;
 
 // Estados de CU-PRE-01 desde los cuales el CUP ya fue asignado y, por lo tanto, el proyecto
-// puede continuar hacia CU-PRE-3.5 (Selección y Registro de Etapas). Todo lo anterior
+// puede continuar hacia CU-PRE-3.5 (Selección y Registro de Etapas). Los estados anteriores
 // (EN_REGISTRO, ENVIADO_DGICP_REGISTRO, OBSERVADO_DGICP_REGISTRO) todavía no tiene CUP.
 export const ESTADOS_SIN_CUP = ['EN_REGISTRO', 'ENVIADO_DGICP_REGISTRO', 'OBSERVADO_DGICP_REGISTRO'];

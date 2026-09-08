@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 interface FormRowProps {
-  label: string;
+  readonly label: string;
   /**
    * `id` del control que describe esta etiqueta. Sin él, el <label> no queda
    * asociado a ningún campo: el lector de pantalla no anuncia el nombre y
@@ -10,14 +10,14 @@ interface FormRowProps {
    * Es opcional para no romper las filas que agrupan varios controles (un
    * grupo de radios, por ejemplo), donde no hay un único destino válido.
    */
-  controlId?: string;
-  required?: boolean;
-  error?: string;
+  readonly controlId?: string;
+  readonly required?: boolean;
+  readonly error?: string;
   /** Ocupa las dos columnas de la rejilla, como en el diseño aprobado. */
-  ancho?: boolean;
+  readonly ancho?: boolean;
   /** Texto gris junto a la etiqueta (p. ej. la ayuda de las medidas). */
-  ayuda?: string;
-  children: ReactNode;
+  readonly ayuda?: string;
+  readonly children: ReactNode;
 }
 
 /**

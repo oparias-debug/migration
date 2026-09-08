@@ -3,10 +3,10 @@ import flatpickr from 'flatpickr';
 import type { Instance } from 'flatpickr/dist/types/instance';
 
 interface DatePickerInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  hasError?: boolean;
-  name?: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly hasError?: boolean;
+  readonly name?: string;
 }
 
 // Equivalente a la clase js-datepicker + initDatepicker() de app.js (front Java

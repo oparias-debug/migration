@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { catalogoPreinversionApi, TipoMedidaCatalogo } from '../../../api/preinversionApi';
 import type { MedidaCatalogo } from '../../../api/preinversionApi';
 
 interface CategoriasCatalogoModalProps {
-  onClose: () => void;
+  readonly onClose: () => void;
 }
 
 const TIPOS = [
@@ -17,8 +17,13 @@ const TIPOS = [
 // las tablas de los Anexos C.1 (GRD), C.1.5 (GRC) y C.2 (ACC).
 export function CategoriasCatalogoModal({ onClose }: CategoriasCatalogoModalProps) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [catalogos, setCatalogos] = useState<Record<string, MedidaCatalogo[]>>({});
   const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    dialogRef.current?.showModal();
+  }, []);
 
   useEffect(() => {
     let activo = true;
@@ -35,8 +40,24 @@ export function CategoriasCatalogoModal({ onClose }: CategoriasCatalogoModalProp
   }, []);
 
   return (
-    <div className="modal d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <dialog
+      ref={dialogRef}
+      className="modal d-block"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        maxWidth: 'none',
+        maxHeight: 'none',
+        margin: 0,
+        padding: 0,
+        border: 'none',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+      }}
+      onClose={onClose}
+    >
+      <div className="modal-dialog modal-lg modal-dialog-scrollable">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">{t('preinversion.registro.categoriasTitulo')}</h5>
@@ -76,6 +97,6 @@ export function CategoriasCatalogoModal({ onClose }: CategoriasCatalogoModalProp
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

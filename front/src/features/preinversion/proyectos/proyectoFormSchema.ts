@@ -8,7 +8,7 @@ const INICIATIVAS = [IniciativaInversion.Programa, IniciativaInversion.Proyecto,
 export const CAMPO_OBLIGATORIO = '*Campo obligatorio';
 
 /** El CU-PRE-01 §B.2 pide separador de miles en el monto; se quita para validar. */
-export const sinSeparadorDeMiles = (valor: string): string => valor.replace(/,/g, '');
+export const sinSeparadorDeMiles = (valor: string): string => valor.replaceAll(',', '');
 
 /**
  * Agrega el separador de miles que exige el §B.2 ("El sistema deberá agregar el
@@ -19,7 +19,10 @@ export const conSeparadorDeMiles = (valor: string): string => {
   const limpio = sinSeparadorDeMiles(valor).replace(/[^\d.]/g, '');
   if (limpio === '') return '';
   const [entera, ...resto] = limpio.split('.');
-  const agrupada = entera.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const agrupada = entera
+    .split('')
+    .reverse()
+    .reduce((acc, digito, i) => (i > 0 && i % 3 === 0 ? `${digito},${acc}` : `${digito}${acc}`), '');
   return resto.length > 0 ? `${agrupada}.${resto.join('')}` : agrupada;
 };
 

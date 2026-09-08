@@ -56,6 +56,7 @@ public class Pre04CargarArchivosArboles {
     private String nombreUsuarioActual;
     private boolean esArbolProblemas;
     private byte[] contenidoCargado;
+    private byte[] contenidoOriginalCargado;
     private ArchivoAdjuntoResumenDto resumenCargado;
 
     public Pre04CargarArchivosArboles(InstitucionRepository institucionRepository,
@@ -142,6 +143,7 @@ public class Pre04CargarArchivosArboles {
     public void que_ya_existe_un_archivo_cargado_en_el_icono(String icono) {
         esArbolProblemas = ICONO_PROBLEMAS.equals(icono);
         resumenCargado = cargarArchivo("%PDF-1.4 contenido original BDD".getBytes(StandardCharsets.UTF_8));
+        contenidoOriginalCargado = contenidoCargado;
     }
 
     @Cuando("el Técnico URP carga un nuevo archivo en el mismo ícono")
@@ -152,7 +154,9 @@ public class Pre04CargarArchivosArboles {
     @Entonces("el sistema reemplaza el archivo anterior con el nuevo archivo cargado")
     public void el_sistema_reemplaza_el_archivo_anterior_con_el_nuevo_archivo_cargado() {
         ArchivoDescargado descargado = descargarArchivo();
-        assertThat(leer(descargado)).isEqualTo(contenidoCargado);
+        byte[] contenidoActual = leer(descargado);
+        assertThat(contenidoActual).isEqualTo(contenidoCargado);
+        assertThat(contenidoActual).isNotEqualTo(contenidoOriginalCargado);
         RequestContextHolder.resetRequestAttributes();
     }
 

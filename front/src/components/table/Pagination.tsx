@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
 
 interface PaginationProps {
-  currentPage: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
-  onPageChange: (page: number) => void;
+  readonly currentPage: number;
+  readonly totalPages: number;
+  readonly first: boolean;
+  readonly last: boolean;
+  readonly onPageChange: (page: number) => void;
 }
 
 /**

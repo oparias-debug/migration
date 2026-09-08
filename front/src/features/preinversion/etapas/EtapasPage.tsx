@@ -59,7 +59,7 @@ export function EtapasPage() {
         setEsProyectoEmergencia(proyectoRes.data.esProyectoEmergencia ?? false);
         reset(etapasToFormValues(etapasRes.data));
       })
-      .catch((fallo) => setErrorCarga(mensajeDeError(toErrorApi(fallo), t)))
+      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
   }, [idProyecto, reset, t]);
 
@@ -80,8 +80,8 @@ export function EtapasPage() {
       setEtapasOriginales(data);
       reset(etapasToFormValues(data));
       await Swal.fire({ icon: 'success', text: t('preinversion.registroEtapas.mensajeGuardado') });
-    } catch (fallo) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(fallo), t) });
+    } catch (error_) {
+      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
     } finally {
       setGuardando(false);
     }

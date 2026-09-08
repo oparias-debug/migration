@@ -186,7 +186,7 @@ public class Pre35RegistrarEtapas {
         // costo/fechaInicio/fechaFin es obligatorio a nivel de schema, así que la ausencia de
         // cualquiera de ellos no debe producir ninguna violación de Bean Validation (no bloquea el
         // guardado, solo el borde rojo en el cliente).
-        assertThat(PROPIEDAD_POR_CAMPO).containsKey(campo);
+        assertThat(campo).isIn(PROPIEDAD_POR_CAMPO.keySet());
         assertThat(violaciones).isEmpty();
         RequestContextHolder.resetRequestAttributes();
     }
@@ -302,8 +302,8 @@ public class Pre35RegistrarEtapas {
                 .withFailMessage("Combinación etapa/iniciativa no cubierta por la muestra representativa del Anexo F: %s/%s",
                         etapaAnexoF, iniciativaAnexoF)
                 .isNotNull();
-        assertThat(esperado[0]).isEqualTo(contenido);
-        assertThat(esperado[1]).isEqualTo(ubicacionCu);
+        assertThat(contenido).isEqualTo(esperado[0]);
+        assertThat(ubicacionCu).isEqualTo(esperado[1]);
     }
 
     @Dado("una fila del Anexo F con el símbolo \"-\" en la columna \"Campos a habilitar para Actualización de O.T.\"")

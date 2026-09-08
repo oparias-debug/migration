@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ComplejidadProyecto, NombreEtapa, TamanioProyecto, TipoCapital } from '../../../api/preinversionApi';
-import { CAMPO_OBLIGATORIO, conSeparadorDeMiles, sinSeparadorDeMiles } from '../proyectos/proyectoFormSchema';
+import { CAMPO_OBLIGATORIO } from '../proyectos/proyectoFormSchema';
 
 const TIPOS_CAPITAL = [
   TipoCapital.CapitalFisico,
@@ -66,7 +66,8 @@ export const actualizarEtapasSchema = z.object({
 
 export type ActualizarEtapasFormValues = z.infer<typeof actualizarEtapasSchema>;
 
-export { conSeparadorDeMiles, sinSeparadorDeMiles };
+export { conSeparadorDeMiles, sinSeparadorDeMiles } from '../proyectos/proyectoFormSchema';
+
 
 // FA-05: planteamientoProblema, productos, distrito y poblacionObjetivo son obligatorios.
 // "Departamento" no es un campo propio del request: se valida de forma transitiva a través de

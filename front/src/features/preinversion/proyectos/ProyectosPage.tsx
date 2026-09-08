@@ -86,10 +86,10 @@ export function ProyectosPage() {
         setTotalPaginas(data.paginacion.totalPaginas);
         setTotalElementos(data.paginacion.totalElementos);
         setPagina(data.paginacion.pagina);
-      } catch (fallo) {
+      } catch (error_) {
         setProyectos([]);
         setTotalPaginas(0);
-        setError(mensajeDeError(toErrorApi(fallo), t));
+        setError(mensajeDeError(toErrorApi(error_), t));
       } finally {
         setCargando(false);
       }

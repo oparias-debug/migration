@@ -6,10 +6,10 @@ export interface Column<T> {
 }
 
 interface DataTableProps<T> {
-  columns: Column<T>[];
-  rows: T[];
-  emptyMessage: string;
-  renderActions: (row: T) => ReactNode;
+  readonly columns: Column<T>[];
+  readonly rows: T[];
+  readonly emptyMessage: string;
+  readonly renderActions: (row: T) => ReactNode;
 }
 
 // Tabla genérica con columnas configurables + columna de acciones. El estilo

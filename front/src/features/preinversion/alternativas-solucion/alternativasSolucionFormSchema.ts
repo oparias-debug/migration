@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { conSeparadorDeMiles, sinSeparadorDeMiles } from '../proyectos/proyectoFormSchema';
 
 // Ningún campo (de fila ni la Justificación) es obligatorio a nivel de servidor en el PUT de
 // "Guardar" (CU-PRE-05.openapi.yaml, guardarAlternativasSolucion): RN2-3/RN2-4 solo se evalúan en
@@ -38,4 +37,4 @@ export const REGISTRO_ALTERNATIVAS_FORM_DEFAULTS: RegistroAlternativasFormValues
 /** RegistroAlternativasRequest.justificacion: maxLength 1000 (CU-PRE-05.openapi.yaml). */
 export const JUSTIFICACION_MAXLENGTH = 1000;
 
-export { conSeparadorDeMiles, sinSeparadorDeMiles };
+export { conSeparadorDeMiles, sinSeparadorDeMiles } from '../proyectos/proyectoFormSchema';

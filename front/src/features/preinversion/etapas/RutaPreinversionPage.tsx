@@ -66,7 +66,7 @@ export function RutaPreinversionPage() {
         setFueModificada(rutaRes.data.fueModificada);
         setEtapasSeleccionadas(rutaRes.data.etapasAceptadas);
       })
-      .catch((fallo) => setErrorCarga(mensajeDeError(toErrorApi(fallo), t)))
+      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
   }, [idProyecto, t]);
 
@@ -79,8 +79,8 @@ export function RutaPreinversionPage() {
       });
       setSugerencia(data);
       setEtapasSeleccionadas(data.etapasSugeridas);
-    } catch (fallo) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(fallo), t) });
+    } catch (error_) {
+      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
     } finally {
       setGuardando(false);
     }
@@ -96,8 +96,8 @@ export function RutaPreinversionPage() {
       setSugerencia(null);
       await Swal.fire({ icon: 'success', text: t('preinversion.rutaPreinversion.rutaAceptada') });
       navigate(`/preinversion/proyectos/${idProyecto}/etapas`);
-    } catch (fallo) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(fallo), t) });
+    } catch (error_) {
+      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
     } finally {
       setGuardando(false);
     }
@@ -130,8 +130,8 @@ export function RutaPreinversionPage() {
       setSugerencia(null);
       await Swal.fire({ icon: 'success', text: t('preinversion.rutaPreinversion.rutaModificada') });
       navigate(`/preinversion/proyectos/${idProyecto}/etapas`);
-    } catch (fallo) {
-      const error = toErrorApi(fallo);
+    } catch (error_) {
+      const error = toErrorApi(error_);
       if (error.clase === 'validacion') setErrorJustificacion(mensajeDeError(error, t));
       else await Swal.fire({ icon: 'error', text: mensajeDeError(error, t) });
     } finally {

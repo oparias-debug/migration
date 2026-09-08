@@ -155,7 +155,7 @@ export function ProyectoFormPage() {
           fechaIngreso: data.fechaIngreso,
         });
       })
-      .catch((fallo) => setErrorCarga(mensajeDeError(toErrorApi(fallo), t)))
+      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
   }, [esNuevo, idProyecto, reset, t]);
 
@@ -258,8 +258,8 @@ export function ProyectoFormPage() {
       setEstadoActual(data.estado);
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.cupSolicitado') });
       navigate('/preinversion/proyectos');
-    } catch (fallo) {
-      await manejarErrorDelBack(fallo);
+    } catch (error_) {
+      await manejarErrorDelBack(error_);
     } finally {
       setGuardando(false);
     }
@@ -305,10 +305,10 @@ export function ProyectoFormPage() {
       // "se pasa a la pantalla Nuevo registro": se sigue aquí, con el hilo ya
       // actualizado; no se navega a otro sitio.
       await Swal.fire({ icon: 'success', text: t('preinversion.revisionPre.enviada') });
-    } catch (fallo) {
-      const detalleRespuesta = erroresPorCampo(toErrorApi(fallo)).respuesta;
+    } catch (error_) {
+      const detalleRespuesta = erroresPorCampo(toErrorApi(error_)).respuesta;
       if (detalleRespuesta) setErrorRespuesta(detalleRespuesta);
-      else await manejarErrorDelBack(fallo);
+      else await manejarErrorDelBack(error_);
     } finally {
       setGuardando(false);
     }
@@ -339,8 +339,8 @@ export function ProyectoFormPage() {
       setEstadoActual(data.estado);
       // "el sistema pasa a la pantalla Nuevo registro": se sigue aquí, igual que al responder.
       await Swal.fire({ icon: 'success', text: t('preinversion.revisionPre.devuelta') });
-    } catch (fallo) {
-      await manejarErrorDelBack(fallo);
+    } catch (error_) {
+      await manejarErrorDelBack(error_);
     } finally {
       setGuardando(false);
     }
@@ -364,8 +364,8 @@ export function ProyectoFormPage() {
       // "el sistema envía el proyecto a la pantalla Captura de Proyectos (UC-PRE-03)": fuera
       // del alcance de este fragmento; se regresa al listado, como en "Solicitar CUP".
       navigate('/preinversion/proyectos');
-    } catch (fallo) {
-      await manejarErrorDelBack(fallo);
+    } catch (error_) {
+      await manejarErrorDelBack(error_);
     } finally {
       setGuardando(false);
     }
@@ -382,8 +382,8 @@ export function ProyectoFormPage() {
       }
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
       navigate('/preinversion/proyectos');
-    } catch (fallo) {
-      await manejarErrorDelBack(fallo);
+    } catch (error_) {
+      await manejarErrorDelBack(error_);
     } finally {
       setGuardando(false);
     }
