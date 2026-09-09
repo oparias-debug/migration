@@ -62,8 +62,14 @@ class UsuarioDevSeederTest {
                 .build();
         UnidadEjecutora unidadEjecutora = UnidadEjecutora.builder().id(2L).institucion(institucion).codigo("URP-01")
                 .nombre("Existente").activo(true).build();
+        Institucion institucion2 = Institucion.builder().id(3L).codigo("MINED").nombre("Existente").activo(true)
+                .build();
+        UnidadEjecutora unidadEjecutora2 = UnidadEjecutora.builder().id(4L).institucion(institucion2)
+                .codigo("URP-02").nombre("Existente").activo(true).build();
         when(institucionRepository.findByCodigo("MH-DGICP")).thenReturn(Optional.of(institucion));
         when(unidadEjecutoraRepository.findByCodigo("URP-01")).thenReturn(Optional.of(unidadEjecutora));
+        when(institucionRepository.findByCodigo("MINED")).thenReturn(Optional.of(institucion2));
+        when(unidadEjecutoraRepository.findByCodigo("URP-02")).thenReturn(Optional.of(unidadEjecutora2));
         when(usuarioRepository.findByNombreUsuario(anyString())).thenReturn(Optional.of(mock(Usuario.class)));
 
         seeder.seed();

@@ -183,8 +183,12 @@ public class Pre01ResponderObservaciones {
     // (CU-PRE-01-registrar-nuevo-proyecto.feature) y solo hace no-op.
     @Cuando("hace clic en el botón {string}")
     public void hace_clic_en_el_boton(String boton) {
-        // No-op intencional: ver comentario de la clase.
+        if (bandeja.esEscenarioBandeja()) bandeja.guardar(boton);
     }
+
+    // El paso genérico también aparece en CU-PRE-02; Cucumber no admite duplicarlo.
+    @org.springframework.beans.factory.annotation.Autowired
+    private Pre02Bandeja bandeja;
 
     @Entonces("el sistema notifica al Técnico PRE por correo electrónico según el modelo del Anexo A.{double}")
     public void el_sistema_notifica_al_tecnico_pre_por_correo_electronico_segun_el_modelo_del_anexo_a(

@@ -4,6 +4,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import sv.gob.mh.siip.SiipApplication;
 
 import io.cucumber.spring.CucumberContextConfiguration;
 
@@ -27,7 +28,7 @@ import io.cucumber.spring.CucumberContextConfiguration;
  * ignoraría el INIT del schema.
  */
 @CucumberContextConfiguration
-@SpringBootTest
+@SpringBootTest(classes = SiipApplication.class)
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Transactional

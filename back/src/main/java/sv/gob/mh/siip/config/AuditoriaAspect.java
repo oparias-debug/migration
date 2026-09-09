@@ -46,7 +46,7 @@ public class AuditoriaAspect {
         // Body (solo si hay un argumento que no es HttpServletRequest o
         // HttpServletResponse)
         Object requestBody = Arrays.stream(joinPoint.getArgs())
-                .filter(arg -> !(arg instanceof HttpServletRequest) && !(arg instanceof HttpServletResponse))
+                .filter(arg -> arg != null && !(arg instanceof HttpServletRequest) && !(arg instanceof HttpServletResponse))
                 .findFirst()
                 .orElse(null);
 
@@ -54,12 +54,18 @@ public class AuditoriaAspect {
 
         logger.info("📥 [{}] {}?{} \nHeaders: {} \nBody: {}", method, uri, queryParams, headers, bodyJson);
 
-        Object result = null;
+        Object result;
         try {
             result = joinPoint.proceed();
             logger.info("📤 Respuesta: {}", result);
-        } catch (Exception e) {
-            logger.error("❌ Error al ejecutar {}: {}", joinPoint.getSignature(), e.getMessage(), e);
+        } catch (Exception e) { // NOSONAR java:S2139 -- ver justificacion abajo
+            // Este aspecto es el unico punto que deja rastro de auditoria de la peticion
+            // que fallo (metodo, URI, headers y body ya logueados arriba); ManejadorErroresGlobal
+            // solo traduce la excepcion a respuesta HTTP y no vuelve a loguearla, asi que no hay
+            // log duplicado. El relanzamiento es obligatorio para que el status HTTP
+            // (401/403/404/...) se resuelva correctamente en vez de responder 200 vacio.
+            logger.error("❌ Error al ejecutar [{}] {}: {}", method, uri, e.getMessage(), e);
+            throw e;
         }
 
         return result;

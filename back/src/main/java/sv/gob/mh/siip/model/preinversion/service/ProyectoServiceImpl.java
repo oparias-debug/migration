@@ -291,6 +291,16 @@ public class ProyectoServiceImpl implements ProyectoService {
         solicitud.setEstado(EstadoSolicitud.APROBADA);
         solicitudRepository.save(solicitud);
 
+        // La unica transicion de Flowable que el codigo realmente empuja es
+        // UT_EnElaboracion -> UT_RevisionCUP (completarTareaEnElaboracion, en solicitarCup); nada
+        // completa UT_RevisionCUP ni ningun nodo posterior, y nada en el back/front consulta tareas
+        // Flowable por rol. Sin esto, la tarea UT_RevisionCUP quedaria abierta en Flowable para
+        // siempre por cada CUP emitido. El resto del ciclo de vida ya se rastrea de forma completa
+        // en Proyecto.estado/SolicitudPreinversion.estado, asi que se cancela la instancia en vez
+        // de intentar seguir empujandola por un proceso que nadie lee.
+        cancelarProceso(entidad.getId(), "CUP emitido (CU-PRE-01.5); el resto del ciclo de vida se rastrea por "
+                + "Proyecto.estado, no por Flowable.");
+
         notificacionService.notificarEmisionCup(entidad, tecnicoUrpRegistrante(entidad));
 
         return toDto(entidad);
@@ -375,6 +385,9 @@ public class ProyectoServiceImpl implements ProyectoService {
                 .orElseThrow(() -> new ConflictoEstadoException(
                         "El proyecto no tiene una solicitud de CUP vigente."));
         Usuario tecnicoAsignado = solicitud.getTecnicoAsignado();
+        if (solicitud.getEstado() == EstadoSolicitud.ARCHIVADA) {
+            throw new ConflictoEstadoException("La solicitud de CUP está archivada.");
+        }
         if (tecnicoAsignado == null || !tecnicoAsignado.getId().equals(actor.getId())) {
             throw new AccesoDenegadoException(
                     "La solicitud de CUP no fue asignada al Técnico PRE autenticado (CU-PRE-02).");

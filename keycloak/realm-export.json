@@ -251,6 +251,20 @@
       ]
     },
     {
+      "username": "tecnico.pre2",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.pre2@example.com",
+      "firstName": "Tecnico",
+      "lastName": "PRE 2",
+      "credentials": [
+        { "type": "password", "value": "tecnicoPre2123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_PRE"
+      ]
+    },
+    {
       "username": "tecnico.pro",
       "enabled": true,
       "emailVerified": true,
@@ -301,6 +315,20 @@
       "lastName": "URP",
       "credentials": [
         { "type": "password", "value": "tecnicoUrp123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_URP"
+      ]
+    },
+    {
+      "username": "tecnico.urp2",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.urp2@example.com",
+      "firstName": "Tecnico",
+      "lastName": "URP 2",
+      "credentials": [
+        { "type": "password", "value": "tecnicoUrp2123", "temporary": false }
       ],
       "realmRoles": [
         "TECNICO_URP"

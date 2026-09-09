@@ -649,6 +649,27 @@ class ProyectoServiceImplTest {
         }
 
         @Test
+        void emitirCup_cancelaProcesoFlowable_cuandoExisteInstanciaDeProceso() {
+                when(actorContexto.exigirRol(RolUsuario.TECNICO_PRE)).thenReturn(tecnicoPre);
+                Proyecto entidad = proyectoEnviadoDgicp();
+                when(proyectoRepository.findById(1L)).thenReturn(Optional.of(entidad));
+                when(proyectoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+                when(solicitudRepository.findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(1L,
+                                TipoSolicitud.CUP))
+                                .thenReturn(Optional.of(SolicitudPreinversion.builder().id(1L)
+                                                .tecnicoAsignado(tecnicoPre).build()));
+                when(proyectoRepository.findFirstByCupIsNotNullOrderByCupDesc()).thenReturn(Optional.empty());
+                ProcessInstance instancia = mock(ProcessInstance.class);
+                when(instancia.getId()).thenReturn("instancia-1");
+                when(processInstanceQuery.singleResult()).thenReturn(instancia);
+
+                service.emitirCup(1L);
+
+                verify(processInstanceQuery).processInstanceBusinessKey("1");
+                verify(runtimeService).deleteProcessInstance(eq("instancia-1"), any());
+        }
+
+        @Test
         void obtener_lanzaAccesoDenegado_cuandoUnidadEjecutoraDistinta() {
                 UnidadEjecutora otraUnidadEjecutora = UnidadEjecutora.builder().id(99L)
                                 .institucion(unidadEjecutora.getInstitucion()).codigo("UE2").nombre("Otra UE")
