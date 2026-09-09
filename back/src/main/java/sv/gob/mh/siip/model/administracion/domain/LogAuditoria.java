@@ -11,7 +11,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
@@ -67,7 +66,7 @@ public class LogAuditoria {
     @Column(name = "FECHA", nullable = false)
     private LocalDateTime fecha;
 
-    @Lob
+    
     @Column(name = "DETALLE")
     private String detalle;
 }

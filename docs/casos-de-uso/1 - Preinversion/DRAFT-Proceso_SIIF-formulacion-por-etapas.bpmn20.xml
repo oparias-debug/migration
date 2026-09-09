@@ -4,9 +4,12 @@
   back/src/main/resources/processes/ a propósito (esa carpeta se auto-despliega
   en Flowable al arrancar el back; este archivo NO debe copiarse ahí todavía).
 
-  Qué es: una propuesta de reemplazo del único userTask "UT_FormulacionEvaluacion"
-  (CU-PRE-04 a CU-PRE-23) de back/src/main/resources/processes/Proceso_SIIF.bpmn20.xml
-  por un tramo con un userTask por etapa (Perfil, Prefactibilidad, Factibilidad,
+  Qué es: una propuesta de reemplazo del tramo UT_FormulacionEvaluacion →
+  UT_ProyectoFormulado → UT_RevisionViabilidad/gw2 → gw2b/UT_Elegibilidad →
+  UT_RevisionOT/gw3 de back/src/main/resources/processes/Proceso_SIIF.bpmn20.xml
+  (hoy CU-PRE-04..23 + CU-PRE-24 + CU-PRE-25 + CU-PRE-26 pensados como UN solo
+  paso de cada tipo para todo el proyecto) por un tramo con ese mismo ciclo
+  completo REPETIDO una vez por etapa (Perfil, Prefactibilidad, Factibilidad,
   Diseño), reflejando que:
     - Según el tipo de Iniciativa de Inversión (y los criterios de
       SeleccionYRegistroDeEtapasServiceImpl.calcularEtapasSugeridas /
@@ -14,33 +17,128 @@
       Factibilidad o Diseño — ver gateways gw_reqPrefactibilidad/gw_reqFactibilidad/
       gw_reqDiseno.
     - Cada etapa se habilita para la siguiente recién cuando esa etapa concreta
-      tiene Opinión Técnica favorable (ver CU-PRE-3.5-registrar-etapas.feature,
-      escenario "Habilitación de etapas posteriores... tras emitir Opinión
-      Técnica"), no cuando se aprueba UNA sola OT para todo el proyecto.
+      completa su propio ciclo Viabilidad→[Elegibilidad]→Opinión Técnica
+      favorable (ver más abajo), no cuando se aprueba UN solo CU-PRE-24/26 para
+      todo el proyecto.
 
   Cómo empalma con el proceso real (para cuando se decida integrar):
     - sf5_iniciar_identificacion pasaría a apuntar a UT_Perfil en vez de a
       UT_FormulacionEvaluacion.
-    - La salida final de este tramo (ver nodo end_draft) reemplaza a
-      sf6_finalizar_indicadores → UT_ProyectoFormulado.
+    - Este tramo completo reemplaza: sf6_finalizar_indicadores, UT_ProyectoFormulado,
+      sf7_solicitar_viabilidad, UT_RevisionViabilidad/gw2/UT_ObservadoViabilidad,
+      gw2b, UT_Elegibilidad, UT_RevisionOT/gw3, Y TAMBIÉN UT_PostOT/gw4 (que
+      pasan a repetirse una vez por etapa — ver más abajo). La salida final
+      (nodo end_draft) empalma con sf18_avanzar_ejecucion → UT_CierreFinanciero,
+      es decir, un nivel más abajo en el proceso real de lo que empalmaba la
+      primera versión de este borrador.
 
-  Cada etapa repite el mismo patrón "tarea → revisión de OT → gateway
-  favorable/observado" que YA usan UT_RevisionCUP/gw1, UT_RevisionViabilidad/gw2
-  y UT_RevisionOT/gw3 en el proceso real — no es un patrón BPMN nuevo, es el
-  mismo aplicado 4 veces (uno por etapa) en vez de una vez para todo el proyecto.
+  Cada etapa repite el mismo patrón que ya usa el proceso real, aplicado 4
+  veces (uno por etapa) en vez de una vez para todo el proyecto:
+  Formulación (Técnico URP, edita el Anexo F) → Formulada, Pendiente de
+  Solicitar Viabilidad (UT_<Etapa>Formulado — el Técnico URP puede terminar de
+  diligenciar y NO enviar de inmediato, mismo idiom que UT_ProyectoFormulado
+  en el proceso real) → Solicitar Viabilidad → Revisión de Viabilidad
+  (Viabilizador, CU-PRE-24) → si observado, vuelve a Formulación (se
+  habilitan todos los formatos de la etapa); si viable, ¿ya cuenta el
+  proyecto con Elegibilidad? → si no, Gestión de Elegibilidad (CU-PRE-25, una
+  sola vez en todo el proyecto) → Revisión de Opinión Técnica (Técnico PRE,
+  CU-PRE-26) → si observado, vuelve TAMBIÉN a Formulación (no a la propia OT
+  ni a Viabilidad — mismo destino que el "Observado" de Viabilidad); si
+  favorable, avanza a la siguiente etapa (o sale del tramo, si es Diseño).
 
-  PREGUNTA ABIERTA (no la resolví acá, es decisión de negocio/producto, no de
-  código): si la Opinión Técnica pasa a emitirse por etapa (como en este
-  borrador), ¿qué sentido conserva el UT_RevisionOT / UT_PostOT / gw4 río abajo
-  del proceso real (hoy pensados como UNA sola OT para todo el proyecto,
-  posterior a Viabilidad/Elegibilidad)? Y en consecuencia, ¿sigue haciendo falta
-  el reingreso de gw4 ("Solicitar OT para otra etapa / Actualización",
-  sf17_actualizar_ot) si el rework de cada etapa ya ocurre acá adentro, en
-  cuanto se emite esa OT puntual? Sin resolver esto, este borrador NO cubre el
-  caso de reabrir una etapa que ya quedó atrás después de haber avanzado más
-  allá de Diseño (ej. modificar Prefactibilidad estando ya en Diseño) — eso
-  sigue dependiendo de EtapaPreinversion.bloqueadaPorModificacion a nivel de
-  datos, sin equivalente todavía en este tramo del BPMN.
+  RESUELTO (2026-09-08, respuesta de negocio, corrige la versión anterior de
+  este borrador): un OT observada NO reintenta la propia OT ni pasa de nuevo
+  por Viabilidad — vuelve directo a Formulación, donde se habilitan todos los
+  formatos de la etapa (ver sf_*_ot_observado, ahora apuntando a UT_<Etapa> en
+  vez de a UT_RevisionOT<Etapa>). Esto también resuelve, para este borrador,
+  la pregunta que antes estaba abierta sobre RN11 de CU-PRE-24 (si el rework
+  de una OT observada debía re-pasar por Viabilidad): la respuesta de negocio
+  fue "vuelve a Formulación", que de hecho SÍ re-pasa por Viabilidad (porque
+  al re-solicitarla desde Formulación, el ciclo completo se repite) — solo
+  que no salta directo a la revisión de Viabilidad, sino que primero regresa a
+  editar el Anexo F. Sigue sin resolverse si esto implica que el proceso REAL
+  ya desplegado (sf15_reenviar_ot, que hoy reenvía directo a UT_RevisionOT sin
+  pasar por Formulación ni por Viabilidad) también necesita este mismo ajuste
+  — no se tocó, es un caso de uso de alcance de proyecto completo, no por
+  etapa, y no fue parte de esta conversación con negocio.
+
+  CONFIRMADO (2026-09-08, respuesta de negocio): "el tramo" es efectivamente
+  el conjunto de etapas que decidió la Ruta de Preinversión (gw_reqPrefactibilidad/
+  gw_reqFactibilidad/gw_reqDiseno, ya modelados) — el proyecto tendrá como
+  mínimo tantas Opiniones Técnicas como etapas requeridas, cada una
+  independiente de las demás. Cada OT favorable representa una versión
+  distinta del proyecto (ya sea por actualizarse dentro de la misma etapa, vía
+  el loop de Observado, o por pasar a la siguiente etapa) — esto confirma por
+  qué cada transición "favorable"/de decisión en este borrador ya lleva
+  VersionSnapshotListener (mismo criterio que el proceso real en sf6/sf7/sf10/
+  sf13/sf16, etc.): no es una elección arbitraria, es justamente el punto
+  donde debe registrarse una nueva versión.
+
+  RESUELTO (2026-09-08, respuesta de negocio): ¿se puede reabrir una etapa ya
+  superada después de avanzar (ej. modificar Prefactibilidad estando ya en
+  Diseño)? NO. El caso de uso que aprueba el paso de una etapa a la siguiente
+  (1.1 Perfil → 1.2 Prefactibilidad → 1.3 Factibilidad → 1.4 Diseño) es
+  CU-PRE-24 (Viabilidad); una vez aprobado ese paso, las etapas anteriores
+  quedan cerradas — no se pueden devolver ni reabrir. Este tramo se modela
+  estrictamente hacia adelante (sin flujo de retorno entre etapas ya
+  superadas): el único "retroceso" posible es el loop de Observado dentro de
+  la etapa en curso (Viabilidad u OT), nunca hacia una etapa anterior.
+
+  RESUELTO (2026-09-08, a partir de docs/casos-de-uso/1 - Preinversion/
+  UC-PRE-24-Viabilidad.md, agregado por el usuario): cómo encaja CU-PRE-24 con
+  la Opinión Técnica por etapa.
+    - RN09 de CU-PRE-24 ("Este formato de viabilidad aplica para todas las
+      etapas del proyecto") confirma que Viabilidad SÍ se evalúa por etapa,
+      no una sola vez.
+    - RN03 de CU-PRE-24 confirma el orden por gestión (y por lo tanto, por
+      etapa): Viabilidad → Elegibilidad (solo la primera vez en todo el
+      proyecto, RN02) → Opinión Técnica ("se salta de viabilidad a OT" una vez
+      que ya se tiene Elegibilidad). Es decir: es el MISMO orden que ya usa el
+      proceso real (UT_RevisionViabilidad/gw2 → gw2b/UT_Elegibilidad →
+      UT_RevisionOT/gw3), solo que repetido una vez por etapa en vez de una
+      vez para todo el proyecto.
+    - FA02 (pasos 2.3–2.7) confirma que "Emitir Viabilidad" es lo que
+      desbloquea el siguiente paso (Elegibilidad la primera vez, OT las
+      siguientes) — de ahí que gw_ot_<etapa> "Favorable" (que ya exige haber
+      pasado por Viabilidad y, si correspondía, Elegibilidad, para llegar
+      hasta ahí) sea el punto real donde se decide avanzar a la etapa
+      siguiente, no un simple "OT favorable" aislado como asumía la versión
+      anterior de este borrador.
+    - Dato adicional que esto explica: el rótulo actual de
+      back/src/main/resources/processes/Proceso_SIIF.bpmn20.xml en
+      sf17_actualizar_ot ("Solicitar OT para otra etapa / Actualización",
+      saliendo de gw4/UT_PostOT) ya anticipaba — en el proceso HOY desplegado,
+      aunque hoy solo hay un UT_FormulacionEvaluacion lumped — que la Opinión
+      Técnica se pediría "para otra etapa". Este borrador es la extensión
+      natural de esa idea ya presente en el proceso real.
+
+  ABIERTO — NUEVO (mecánico, no de negocio): Elegibilidad es única para TODO
+  el proyecto (RN02/RN03 CU-PRE-24), pero cualquiera de las 4 etapas puede ser
+  la primera en llegar a "Emitir Viabilidad" y disparar
+  UT_Elegibilidad — y tras "Emitir Elegibilidad" hay que volver a la OT de
+  ESA MISMA etapa, no a una fija. Se modeló con una variable de proceso
+  etapaEnCurso, seteada al tomar cada flujo "No cuenta con Elegibilidad — Ir a
+  Elegibilidad" (ver comentarios inline junto a esos 4 sequenceFlow) y leída
+  por gw_retorno_elegibilidad para decidir a qué UT_RevisionOT<Etapa> volver.
+  Falta implementar el listener que setea esa variable (no existe todavía en
+  sv.gob.mh.siip.bpm.listeners — a diferencia de VersionSnapshotListener, que
+  sí existe y se reutiliza tal cual en los demás flujos "favorable"/toma de
+  decisión).
+
+  RESUELTO (2026-09-08, respuesta de negocio): UT_PostOT/gw4 (CU-PRE-26.5,
+  Priorización y Gestión Post-OT, Coordinador PRE) SÍ pasa a ejecutarse una
+  vez por etapa — se agregó UT_PostOT<Etapa>/gw4_<etapa> justo donde antes
+  gw_ot_<etapa> "Favorable" conectaba directo con el avance de etapa. Se
+  dividió el rótulo combinado que tenía gw4 en el proceso real ("Solicitar OT
+  para otra etapa / Actualización") en sus dos sentidos por separado:
+  "Actualización" (rama "actualizarOT" de cada gw4_<etapa>: el Coordinador PRE
+  decide rehacer/actualizar ESTA MISMA etapa aunque la OT haya sido favorable
+  — vuelve a Formulación de esa etapa) y "otra etapa" (rama "avanzar": sigue
+  el tramo hacia la siguiente etapa que exija la Ruta de Preinversión, o hacia
+  fuera del tramo si es Diseño — ver end_draft). Mismo criterio que el
+  proceso real para el executionListener: la rama "actualizarOT" lo lleva
+  (como sf17_actualizar_ot); la rama "avanzar" NO (como sf18_avanzar_ejecucion,
+  Conflicto C7 — el snapshot de versión ya se tomó en el "Favorable" de la OT).
 -->
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -52,7 +150,7 @@
              expressionLanguage="http://www.w3.org/1999/XPath"
              targetNamespace="http://siip.com/bpmn/proceso-proyecto/draft">
 
-  <process id="draft_formulacion_por_etapas" name="[DRAFT] Formulación por Etapas (reemplazo de UT_FormulacionEvaluacion)" isExecutable="false">
+  <process id="draft_formulacion_por_etapas" name="[DRAFT] Formulación por Etapas (reemplazo de UT_FormulacionEvaluacion + Viabilidad/Elegibilidad/OT global)" isExecutable="false">
 
     <!-- Placeholder de entrada: en el proceso real, esto es sf5_iniciar_identificacion
          llegando desde UT_CUPAsignado. -->
@@ -63,27 +161,109 @@
 
     <userTask id="UT_Perfil" name="Formulación — Etapa Perfil (contenido del Anexo F con aplicaPerfil=true)" flowable:candidateGroups="Técnico URP"/>
 
-    <sequenceFlow id="sf_perfil_a_ot" name="Solicitar Opinión Técnica de Perfil" sourceRef="UT_Perfil" targetRef="UT_RevisionOTPerfil">
+    <!-- El Técnico URP puede terminar de diligenciar el Anexo F y no solicitar
+         Viabilidad de inmediato — mismo idiom que UT_ProyectoFormulado en el
+         proceso real (espera indefinida hasta que decida enviar). -->
+    <sequenceFlow id="sf_perfil_a_formulado" name="Finalizar Formulación de Perfil" sourceRef="UT_Perfil" targetRef="UT_PerfilFormulado">
       <extensionElements>
         <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
       </extensionElements>
     </sequenceFlow>
 
-    <userTask id="UT_RevisionOTPerfil" name="Revisión de Opinión Técnica — Perfil" flowable:candidateGroups="Técnico PRE"/>
+    <userTask id="UT_PerfilFormulado" name="Perfil Formulado — Pendiente de Solicitar Viabilidad" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_perfilformulado_a_viabilidad" name="Solicitar Viabilidad (CU-PRE-24, FB1)" sourceRef="UT_PerfilFormulado" targetRef="UT_RevisionViabilidadPerfil">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionViabilidadPerfil" name="Revisión de Viabilidad — Perfil (CU-PRE-24)" flowable:candidateGroups="Viabilizador"/>
+
+    <sequenceFlow id="sf_perfil_viabilidad_a_gw" sourceRef="UT_RevisionViabilidadPerfil" targetRef="gw_viabilidad_perfil"/>
+
+    <exclusiveGateway id="gw_viabilidad_perfil" name="¿Resultado de la Viabilidad de Perfil?"/>
+
+    <sequenceFlow id="sf_perfil_viabilidad_observado" name="Observado (CU-PRE-24, FA01)" sourceRef="gw_viabilidad_perfil" targetRef="UT_Perfil">
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidadPerfil == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_perfil_viabilidad_favorable" name="Emitir Viabilidad" sourceRef="gw_viabilidad_perfil" targetRef="gw_yaElegibilidad_perfil">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidadPerfil == 'viable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- RN02/RN03 (CU-PRE-24): Elegibilidad se gestiona una sola vez en TODO el
+         proyecto, sin importar en qué etapa ocurra; teniaElegibilidad es una
+         variable de proceso global (no por etapa), igual que en el proceso
+         real (gw2b/sf11/sf12). -->
+    <exclusiveGateway id="gw_yaElegibilidad_perfil" name="¿Ya cuenta con Elegibilidad? (CU-PRE-24, FA02)"/>
+
+    <!-- TODO: falta un executionListener (no implementado todavía) que setee
+         etapaEnCurso='PERFIL' al tomar este flujo, para que
+         gw_retorno_elegibilidad sepa a qué OT volver — ver "ABIERTO — NUEVO
+         (mecánico)" en el header. -->
+    <sequenceFlow id="sf_perfil_a_elegibilidad" name="No cuenta con Elegibilidad — Ir a Elegibilidad" sourceRef="gw_yaElegibilidad_perfil" targetRef="UT_Elegibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == false}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_perfil_directo_a_ot" name="Ya cuenta con Elegibilidad — Ir a OT" sourceRef="gw_yaElegibilidad_perfil" targetRef="UT_RevisionOTPerfil">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == true}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionOTPerfil" name="Revisión de Opinión Técnica — Perfil (CU-PRE-26)" flowable:candidateGroups="Técnico PRE"/>
 
     <sequenceFlow id="sf_perfil_ot_a_gw" sourceRef="UT_RevisionOTPerfil" targetRef="gw_ot_perfil"/>
 
     <exclusiveGateway id="gw_ot_perfil" name="¿Resultado de la OT de Perfil?"/>
 
-    <sequenceFlow id="sf_perfil_ot_observado" name="Observado" sourceRef="gw_ot_perfil" targetRef="UT_Perfil">
+    <!-- RESUELTO 2026-09-08 (negocio): un OT observada vuelve a Formulación
+         (no directo a la propia OT, ni a través de Viabilidad de nuevo) — ahí
+         se habilitan todos los formatos de la etapa, mismo destino que el
+         "Observado" de Viabilidad más abajo. Cuando el Técnico URP vuelva a
+         estar listo, re-entra por UT_PerfilFormulado → Solicitar Viabilidad
+         → (Viabilidad ya no hace falta si teniaElegibilidad, salta a OT). -->
+    <sequenceFlow id="sf_perfil_ot_observado" name="Observado — vuelve a Formulación" sourceRef="gw_ot_perfil" targetRef="UT_Perfil">
       <conditionExpression xsi:type="tFormalExpression">${decisionOTPerfil == 'observado'}</conditionExpression>
     </sequenceFlow>
 
-    <sequenceFlow id="sf_perfil_ot_favorable" name="Favorable" sourceRef="gw_ot_perfil" targetRef="gw_reqPrefactibilidad">
+    <sequenceFlow id="sf_perfil_ot_favorable" name="Favorable" sourceRef="gw_ot_perfil" targetRef="UT_PostOTPerfil">
       <extensionElements>
         <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
       </extensionElements>
       <conditionExpression xsi:type="tFormalExpression">${decisionOTPerfil == 'favorable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- RESUELTO 2026-09-08 (negocio): UT_PostOT/gw4 (CU-PRE-26.5,
+         Priorización y Gestión Post-OT) SÍ se ejecuta una vez por etapa, justo
+         acá, no una sola vez al final. Se dividen las dos ramas que ya tiene
+         gw4 en el proceso real: "actualizarOT" (Actualización — vuelve a
+         Formulación de ESTA etapa, decisión del Coordinador PRE aunque la OT
+         haya sido favorable) y "avanzar" (sigue el tramo — a la siguiente
+         etapa según la Ruta de Preinversión, o fuera del tramo si es Diseño).
+         La otra mitad del rótulo real ("...para otra etapa") ya no aplica
+         acá tal cual: avanzar a otra etapa es justamente la rama "avanzar". -->
+    <userTask id="UT_PostOTPerfil" name="Priorización y Gestión Post-OT — Perfil (CU-PRE-26.5)" flowable:candidateGroups="Coordinador PRE"/>
+
+    <sequenceFlow id="sf_postot_perfil_a_gw4" sourceRef="UT_PostOTPerfil" targetRef="gw4_perfil"/>
+
+    <exclusiveGateway id="gw4_perfil" name="¿Siguiente paso de Perfil con O.T.?"/>
+
+    <sequenceFlow id="sf_perfil_actualizar_ot" name="Actualización — vuelve a Formulación de Perfil" sourceRef="gw4_perfil" targetRef="UT_Perfil">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOTPerfil == 'actualizarOT'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Sin executionListener a propósito, mismo criterio que sf18_avanzar_ejecucion
+         en el proceso real (Conflicto C7): no hay CU que respalde esta
+         transición puntual como un nuevo "snapshot" — el snapshot ya se tomó
+         en sf_perfil_ot_favorable. -->
+    <sequenceFlow id="sf_perfil_avanzar" name="Avanzar" sourceRef="gw4_perfil" targetRef="gw_reqPrefactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOTPerfil == 'avanzar'}</conditionExpression>
     </sequenceFlow>
 
     <!-- ===================== ¿REQUIERE PREFACTIBILIDAD? =====================
@@ -106,27 +286,84 @@
 
     <userTask id="UT_Prefactibilidad" name="Formulación — Etapa Prefactibilidad (contenido del Anexo F con aplicaPrefactibilidad=true)" flowable:candidateGroups="Técnico URP"/>
 
-    <sequenceFlow id="sf_prefactibilidad_a_ot" name="Solicitar Opinión Técnica de Prefactibilidad" sourceRef="UT_Prefactibilidad" targetRef="UT_RevisionOTPrefactibilidad">
+    <sequenceFlow id="sf_prefactibilidad_a_formulado" name="Finalizar Formulación de Prefactibilidad" sourceRef="UT_Prefactibilidad" targetRef="UT_PrefactibilidadFormulado">
       <extensionElements>
         <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
       </extensionElements>
     </sequenceFlow>
 
-    <userTask id="UT_RevisionOTPrefactibilidad" name="Revisión de Opinión Técnica — Prefactibilidad" flowable:candidateGroups="Técnico PRE"/>
+    <userTask id="UT_PrefactibilidadFormulado" name="Prefactibilidad Formulada — Pendiente de Solicitar Viabilidad" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_prefactibilidadformulado_a_viabilidad" name="Solicitar Viabilidad (CU-PRE-24, FB1)" sourceRef="UT_PrefactibilidadFormulado" targetRef="UT_RevisionViabilidadPrefactibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionViabilidadPrefactibilidad" name="Revisión de Viabilidad — Prefactibilidad (CU-PRE-24)" flowable:candidateGroups="Viabilizador"/>
+
+    <sequenceFlow id="sf_prefactibilidad_viabilidad_a_gw" sourceRef="UT_RevisionViabilidadPrefactibilidad" targetRef="gw_viabilidad_prefactibilidad"/>
+
+    <exclusiveGateway id="gw_viabilidad_prefactibilidad" name="¿Resultado de la Viabilidad de Prefactibilidad?"/>
+
+    <sequenceFlow id="sf_prefactibilidad_viabilidad_observado" name="Observado (CU-PRE-24, FA01)" sourceRef="gw_viabilidad_prefactibilidad" targetRef="UT_Prefactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidadPrefactibilidad == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_prefactibilidad_viabilidad_favorable" name="Emitir Viabilidad" sourceRef="gw_viabilidad_prefactibilidad" targetRef="gw_yaElegibilidad_prefactibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidadPrefactibilidad == 'viable'}</conditionExpression>
+    </sequenceFlow>
+
+    <exclusiveGateway id="gw_yaElegibilidad_prefactibilidad" name="¿Ya cuenta con Elegibilidad? (CU-PRE-24, FA02)"/>
+
+    <!-- TODO: mismo listener pendiente que en Perfil, seteando etapaEnCurso='PREFACTIBILIDAD'. -->
+    <sequenceFlow id="sf_prefactibilidad_a_elegibilidad" name="No cuenta con Elegibilidad — Ir a Elegibilidad" sourceRef="gw_yaElegibilidad_prefactibilidad" targetRef="UT_Elegibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == false}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_prefactibilidad_directo_a_ot" name="Ya cuenta con Elegibilidad — Ir a OT" sourceRef="gw_yaElegibilidad_prefactibilidad" targetRef="UT_RevisionOTPrefactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == true}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionOTPrefactibilidad" name="Revisión de Opinión Técnica — Prefactibilidad (CU-PRE-26)" flowable:candidateGroups="Técnico PRE"/>
 
     <sequenceFlow id="sf_prefactibilidad_ot_a_gw" sourceRef="UT_RevisionOTPrefactibilidad" targetRef="gw_ot_prefactibilidad"/>
 
     <exclusiveGateway id="gw_ot_prefactibilidad" name="¿Resultado de la OT de Prefactibilidad?"/>
 
-    <sequenceFlow id="sf_prefactibilidad_ot_observado" name="Observado" sourceRef="gw_ot_prefactibilidad" targetRef="UT_Prefactibilidad">
+    <!-- RESUELTO 2026-09-08 (negocio): ver comentario análogo junto a
+         sf_perfil_ot_observado — vuelve a Formulación, no a la propia OT. -->
+    <sequenceFlow id="sf_prefactibilidad_ot_observado" name="Observado — vuelve a Formulación" sourceRef="gw_ot_prefactibilidad" targetRef="UT_Prefactibilidad">
       <conditionExpression xsi:type="tFormalExpression">${decisionOTPrefactibilidad == 'observado'}</conditionExpression>
     </sequenceFlow>
 
-    <sequenceFlow id="sf_prefactibilidad_ot_favorable" name="Favorable" sourceRef="gw_ot_prefactibilidad" targetRef="gw_reqFactibilidad">
+    <sequenceFlow id="sf_prefactibilidad_ot_favorable" name="Favorable" sourceRef="gw_ot_prefactibilidad" targetRef="UT_PostOTPrefactibilidad">
       <extensionElements>
         <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
       </extensionElements>
       <conditionExpression xsi:type="tFormalExpression">${decisionOTPrefactibilidad == 'favorable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- RESUELTO 2026-09-08 (negocio): ver comentario análogo junto a
+         UT_PostOTPerfil/gw4_perfil. -->
+    <userTask id="UT_PostOTPrefactibilidad" name="Priorización y Gestión Post-OT — Prefactibilidad (CU-PRE-26.5)" flowable:candidateGroups="Coordinador PRE"/>
+
+    <sequenceFlow id="sf_postot_prefactibilidad_a_gw4" sourceRef="UT_PostOTPrefactibilidad" targetRef="gw4_prefactibilidad"/>
+
+    <exclusiveGateway id="gw4_prefactibilidad" name="¿Siguiente paso de Prefactibilidad con O.T.?"/>
+
+    <sequenceFlow id="sf_prefactibilidad_actualizar_ot" name="Actualización — vuelve a Formulación de Prefactibilidad" sourceRef="gw4_prefactibilidad" targetRef="UT_Prefactibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOTPrefactibilidad == 'actualizarOT'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_prefactibilidad_avanzar" name="Avanzar" sourceRef="gw4_prefactibilidad" targetRef="gw_reqFactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOTPrefactibilidad == 'avanzar'}</conditionExpression>
     </sequenceFlow>
 
     <!-- ===================== ¿REQUIERE FACTIBILIDAD? ===================== -->
@@ -145,27 +382,84 @@
 
     <userTask id="UT_Factibilidad" name="Formulación — Etapa Factibilidad (contenido del Anexo F con aplicaFactibilidad=true)" flowable:candidateGroups="Técnico URP"/>
 
-    <sequenceFlow id="sf_factibilidad_a_ot" name="Solicitar Opinión Técnica de Factibilidad" sourceRef="UT_Factibilidad" targetRef="UT_RevisionOTFactibilidad">
+    <sequenceFlow id="sf_factibilidad_a_formulado" name="Finalizar Formulación de Factibilidad" sourceRef="UT_Factibilidad" targetRef="UT_FactibilidadFormulado">
       <extensionElements>
         <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
       </extensionElements>
     </sequenceFlow>
 
-    <userTask id="UT_RevisionOTFactibilidad" name="Revisión de Opinión Técnica — Factibilidad" flowable:candidateGroups="Técnico PRE"/>
+    <userTask id="UT_FactibilidadFormulado" name="Factibilidad Formulada — Pendiente de Solicitar Viabilidad" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_factibilidadformulado_a_viabilidad" name="Solicitar Viabilidad (CU-PRE-24, FB1)" sourceRef="UT_FactibilidadFormulado" targetRef="UT_RevisionViabilidadFactibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionViabilidadFactibilidad" name="Revisión de Viabilidad — Factibilidad (CU-PRE-24)" flowable:candidateGroups="Viabilizador"/>
+
+    <sequenceFlow id="sf_factibilidad_viabilidad_a_gw" sourceRef="UT_RevisionViabilidadFactibilidad" targetRef="gw_viabilidad_factibilidad"/>
+
+    <exclusiveGateway id="gw_viabilidad_factibilidad" name="¿Resultado de la Viabilidad de Factibilidad?"/>
+
+    <sequenceFlow id="sf_factibilidad_viabilidad_observado" name="Observado (CU-PRE-24, FA01)" sourceRef="gw_viabilidad_factibilidad" targetRef="UT_Factibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidadFactibilidad == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_factibilidad_viabilidad_favorable" name="Emitir Viabilidad" sourceRef="gw_viabilidad_factibilidad" targetRef="gw_yaElegibilidad_factibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidadFactibilidad == 'viable'}</conditionExpression>
+    </sequenceFlow>
+
+    <exclusiveGateway id="gw_yaElegibilidad_factibilidad" name="¿Ya cuenta con Elegibilidad? (CU-PRE-24, FA02)"/>
+
+    <!-- TODO: mismo listener pendiente que en Perfil, seteando etapaEnCurso='FACTIBILIDAD'. -->
+    <sequenceFlow id="sf_factibilidad_a_elegibilidad" name="No cuenta con Elegibilidad — Ir a Elegibilidad" sourceRef="gw_yaElegibilidad_factibilidad" targetRef="UT_Elegibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == false}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_factibilidad_directo_a_ot" name="Ya cuenta con Elegibilidad — Ir a OT" sourceRef="gw_yaElegibilidad_factibilidad" targetRef="UT_RevisionOTFactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == true}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionOTFactibilidad" name="Revisión de Opinión Técnica — Factibilidad (CU-PRE-26)" flowable:candidateGroups="Técnico PRE"/>
 
     <sequenceFlow id="sf_factibilidad_ot_a_gw" sourceRef="UT_RevisionOTFactibilidad" targetRef="gw_ot_factibilidad"/>
 
     <exclusiveGateway id="gw_ot_factibilidad" name="¿Resultado de la OT de Factibilidad?"/>
 
-    <sequenceFlow id="sf_factibilidad_ot_observado" name="Observado" sourceRef="gw_ot_factibilidad" targetRef="UT_Factibilidad">
+    <!-- RESUELTO 2026-09-08 (negocio): ver comentario análogo junto a
+         sf_perfil_ot_observado — vuelve a Formulación, no a la propia OT. -->
+    <sequenceFlow id="sf_factibilidad_ot_observado" name="Observado — vuelve a Formulación" sourceRef="gw_ot_factibilidad" targetRef="UT_Factibilidad">
       <conditionExpression xsi:type="tFormalExpression">${decisionOTFactibilidad == 'observado'}</conditionExpression>
     </sequenceFlow>
 
-    <sequenceFlow id="sf_factibilidad_ot_favorable" name="Favorable" sourceRef="gw_ot_factibilidad" targetRef="gw_reqDiseno">
+    <sequenceFlow id="sf_factibilidad_ot_favorable" name="Favorable" sourceRef="gw_ot_factibilidad" targetRef="UT_PostOTFactibilidad">
       <extensionElements>
         <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
       </extensionElements>
       <conditionExpression xsi:type="tFormalExpression">${decisionOTFactibilidad == 'favorable'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- RESUELTO 2026-09-08 (negocio): ver comentario análogo junto a
+         UT_PostOTPerfil/gw4_perfil. -->
+    <userTask id="UT_PostOTFactibilidad" name="Priorización y Gestión Post-OT — Factibilidad (CU-PRE-26.5)" flowable:candidateGroups="Coordinador PRE"/>
+
+    <sequenceFlow id="sf_postot_factibilidad_a_gw4" sourceRef="UT_PostOTFactibilidad" targetRef="gw4_factibilidad"/>
+
+    <exclusiveGateway id="gw4_factibilidad" name="¿Siguiente paso de Factibilidad con O.T.?"/>
+
+    <sequenceFlow id="sf_factibilidad_actualizar_ot" name="Actualización — vuelve a Formulación de Factibilidad" sourceRef="gw4_factibilidad" targetRef="UT_Factibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOTFactibilidad == 'actualizarOT'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_factibilidad_avanzar" name="Avanzar" sourceRef="gw4_factibilidad" targetRef="gw_reqDiseno">
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOTFactibilidad == 'avanzar'}</conditionExpression>
     </sequenceFlow>
 
     <!-- ===================== ¿REQUIERE DISEÑO? ===================== -->
@@ -184,32 +478,128 @@
 
     <userTask id="UT_Diseno" name="Formulación — Etapa Diseño (contenido del Anexo F con aplicaDiseno=true)" flowable:candidateGroups="Técnico URP"/>
 
-    <sequenceFlow id="sf_diseno_a_ot" name="Solicitar Opinión Técnica de Diseño" sourceRef="UT_Diseno" targetRef="UT_RevisionOTDiseno">
+    <sequenceFlow id="sf_diseno_a_formulado" name="Finalizar Formulación de Diseño" sourceRef="UT_Diseno" targetRef="UT_DisenoFormulado">
       <extensionElements>
         <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
       </extensionElements>
     </sequenceFlow>
 
-    <userTask id="UT_RevisionOTDiseno" name="Revisión de Opinión Técnica — Diseño" flowable:candidateGroups="Técnico PRE"/>
+    <userTask id="UT_DisenoFormulado" name="Diseño Formulado — Pendiente de Solicitar Viabilidad" flowable:candidateGroups="Técnico URP"/>
+
+    <sequenceFlow id="sf_disenoformulado_a_viabilidad" name="Solicitar Viabilidad (CU-PRE-24, FB1)" sourceRef="UT_DisenoFormulado" targetRef="UT_RevisionViabilidadDiseno">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionViabilidadDiseno" name="Revisión de Viabilidad — Diseño (CU-PRE-24)" flowable:candidateGroups="Viabilizador"/>
+
+    <sequenceFlow id="sf_diseno_viabilidad_a_gw" sourceRef="UT_RevisionViabilidadDiseno" targetRef="gw_viabilidad_diseno"/>
+
+    <exclusiveGateway id="gw_viabilidad_diseno" name="¿Resultado de la Viabilidad de Diseño?"/>
+
+    <sequenceFlow id="sf_diseno_viabilidad_observado" name="Observado (CU-PRE-24, FA01)" sourceRef="gw_viabilidad_diseno" targetRef="UT_Diseno">
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidadDiseno == 'observado'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_diseno_viabilidad_favorable" name="Emitir Viabilidad" sourceRef="gw_viabilidad_diseno" targetRef="gw_yaElegibilidad_diseno">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionViabilidadDiseno == 'viable'}</conditionExpression>
+    </sequenceFlow>
+
+    <exclusiveGateway id="gw_yaElegibilidad_diseno" name="¿Ya cuenta con Elegibilidad? (CU-PRE-24, FA02)"/>
+
+    <!-- TODO: mismo listener pendiente que en Perfil, seteando etapaEnCurso='DISENO'. -->
+    <sequenceFlow id="sf_diseno_a_elegibilidad" name="No cuenta con Elegibilidad — Ir a Elegibilidad" sourceRef="gw_yaElegibilidad_diseno" targetRef="UT_Elegibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == false}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_diseno_directo_a_ot" name="Ya cuenta con Elegibilidad — Ir a OT" sourceRef="gw_yaElegibilidad_diseno" targetRef="UT_RevisionOTDiseno">
+      <conditionExpression xsi:type="tFormalExpression">${teniaElegibilidad == true}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="UT_RevisionOTDiseno" name="Revisión de Opinión Técnica — Diseño (CU-PRE-26)" flowable:candidateGroups="Técnico PRE"/>
 
     <sequenceFlow id="sf_diseno_ot_a_gw" sourceRef="UT_RevisionOTDiseno" targetRef="gw_ot_diseno"/>
 
     <exclusiveGateway id="gw_ot_diseno" name="¿Resultado de la OT de Diseño?"/>
 
-    <sequenceFlow id="sf_diseno_ot_observado" name="Observado" sourceRef="gw_ot_diseno" targetRef="UT_Diseno">
+    <!-- RESUELTO 2026-09-08 (negocio): ver comentario análogo junto a
+         sf_perfil_ot_observado — vuelve a Formulación, no a la propia OT. -->
+    <sequenceFlow id="sf_diseno_ot_observado" name="Observado — vuelve a Formulación" sourceRef="gw_ot_diseno" targetRef="UT_Diseno">
       <conditionExpression xsi:type="tFormalExpression">${decisionOTDiseno == 'observado'}</conditionExpression>
     </sequenceFlow>
 
-    <sequenceFlow id="sf_diseno_ot_favorable" name="Favorable" sourceRef="gw_ot_diseno" targetRef="end_draft">
+    <sequenceFlow id="sf_diseno_ot_favorable" name="Favorable" sourceRef="gw_ot_diseno" targetRef="UT_PostOTDiseno">
       <extensionElements>
         <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
       </extensionElements>
       <conditionExpression xsi:type="tFormalExpression">${decisionOTDiseno == 'favorable'}</conditionExpression>
     </sequenceFlow>
 
+    <!-- RESUELTO 2026-09-08 (negocio): ver comentario análogo junto a
+         UT_PostOTPerfil/gw4_perfil. Diseño es la última etapa posible del
+         tramo, así que "Avanzar" acá sí equivale a lo que sf18_avanzar_ejecucion
+         hace en el proceso real (sale del tramo hacia UT_PostOT/Ejecución). -->
+    <userTask id="UT_PostOTDiseno" name="Priorización y Gestión Post-OT — Diseño (CU-PRE-26.5)" flowable:candidateGroups="Coordinador PRE"/>
+
+    <sequenceFlow id="sf_postot_diseno_a_gw4" sourceRef="UT_PostOTDiseno" targetRef="gw4_diseno"/>
+
+    <exclusiveGateway id="gw4_diseno" name="¿Siguiente paso de Diseño con O.T.?"/>
+
+    <sequenceFlow id="sf_diseno_actualizar_ot" name="Actualización — vuelve a Formulación de Diseño" sourceRef="gw4_diseno" targetRef="UT_Diseno">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOTDiseno == 'actualizarOT'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_diseno_avanzar" name="Avanzar" sourceRef="gw4_diseno" targetRef="end_draft">
+      <conditionExpression xsi:type="tFormalExpression">${decisionPostOTDiseno == 'avanzar'}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================== ELEGIBILIDAD (única para todo el proyecto, RN02/RN03 CU-PRE-24) =====================
+         Compartida por las 4 etapas: cualquiera puede ser la primera en llegar
+         aquí (según cuál complete Viabilidad primero); etapaEnCurso (ver TODOs
+         arriba, junto a cada flujo "...a_elegibilidad") decide a qué
+         UT_RevisionOT<Etapa> se retorna tras "Emitir Elegibilidad". -->
+
+    <userTask id="UT_Elegibilidad" name="Gestión de Elegibilidad del Proyecto (CU-PRE-25)" flowable:candidateGroups="Viabilizador"/>
+
+    <sequenceFlow id="sf_emitir_elegibilidad" name="Emitir Elegibilidad" sourceRef="UT_Elegibilidad" targetRef="gw_retorno_elegibilidad">
+      <extensionElements>
+        <flowable:executionListener event="take" class="sv.gob.mh.siip.bpm.listeners.VersionSnapshotListener"/>
+      </extensionElements>
+    </sequenceFlow>
+
+    <exclusiveGateway id="gw_retorno_elegibilidad" name="¿A qué etapa retorna tras Elegibilidad? (según etapaEnCurso)"/>
+
+    <sequenceFlow id="sf_elegibilidad_retorna_perfil" name="etapaEnCurso == PERFIL" sourceRef="gw_retorno_elegibilidad" targetRef="UT_RevisionOTPerfil">
+      <conditionExpression xsi:type="tFormalExpression">${etapaEnCurso == 'PERFIL'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_elegibilidad_retorna_prefactibilidad" name="etapaEnCurso == PREFACTIBILIDAD" sourceRef="gw_retorno_elegibilidad" targetRef="UT_RevisionOTPrefactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${etapaEnCurso == 'PREFACTIBILIDAD'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_elegibilidad_retorna_factibilidad" name="etapaEnCurso == FACTIBILIDAD" sourceRef="gw_retorno_elegibilidad" targetRef="UT_RevisionOTFactibilidad">
+      <conditionExpression xsi:type="tFormalExpression">${etapaEnCurso == 'FACTIBILIDAD'}</conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="sf_elegibilidad_retorna_diseno" name="etapaEnCurso == DISENO" sourceRef="gw_retorno_elegibilidad" targetRef="UT_RevisionOTDiseno">
+      <conditionExpression xsi:type="tFormalExpression">${etapaEnCurso == 'DISENO'}</conditionExpression>
+    </sequenceFlow>
+
     <!-- Placeholder de salida: en el proceso real, este nodo se reemplaza por
-         sf6_finalizar_indicadores → UT_ProyectoFormulado. -->
-    <endEvent id="end_draft" name="[placeholder] continúa a UT_ProyectoFormulado"/>
+         sf16_ot_favorable → UT_PostOT (ver pregunta abierta sobre UT_PostOT/
+         gw4 en el header). -->
+    <!-- Placeholder de salida: en el proceso real, este nodo se reemplaza por
+         sf18_avanzar_ejecucion → UT_CierreFinanciero (UT_PostOT/gw4 ya
+         quedaron dentro del tramo, uno por etapa — ver UT_PostOTDiseno/
+         gw4_diseno arriba, rama "Avanzar"). -->
+    <endEvent id="end_draft" name="[placeholder] continúa a UT_CierreFinanciero"/>
 
   </process>
 
@@ -220,57 +610,141 @@
         <omgdc:Bounds x="40" y="112" width="36" height="36"/>
       </bpmndi:BPMNShape>
 
+      <!-- ===== Fila Perfil (y=100/110) ===== -->
       <bpmndi:BPMNShape bpmnElement="UT_Perfil" id="Shape_UT_Perfil">
         <omgdc:Bounds x="120" y="100" width="140" height="60"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTPerfil" id="Shape_UT_RevisionOTPerfil">
+      <bpmndi:BPMNShape bpmnElement="UT_PerfilFormulado" id="Shape_UT_PerfilFormulado">
+        <omgdc:Bounds x="300" y="30" width="140" height="45"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionViabilidadPerfil" id="Shape_UT_RevisionViabilidadPerfil">
         <omgdc:Bounds x="300" y="100" width="140" height="60"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="gw_ot_perfil" id="Shape_gw_ot_perfil">
+      <bpmndi:BPMNShape bpmnElement="gw_viabilidad_perfil" id="Shape_gw_viabilidad_perfil">
         <omgdc:Bounds x="480" y="110" width="40" height="40"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="gw_reqPrefactibilidad" id="Shape_gw_reqPrefactibilidad">
+      <bpmndi:BPMNShape bpmnElement="gw_yaElegibilidad_perfil" id="Shape_gw_yaElegibilidad_perfil">
         <omgdc:Bounds x="560" y="110" width="40" height="40"/>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTPerfil" id="Shape_UT_RevisionOTPerfil">
+        <omgdc:Bounds x="640" y="100" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_ot_perfil" id="Shape_gw_ot_perfil">
+        <omgdc:Bounds x="820" y="110" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_reqPrefactibilidad" id="Shape_gw_reqPrefactibilidad">
+        <omgdc:Bounds x="900" y="110" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_PostOTPerfil" id="Shape_UT_PostOTPerfil">
+        <omgdc:Bounds x="800" y="170" width="170" height="45"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw4_perfil" id="Shape_gw4_perfil">
+        <omgdc:Bounds x="1010" y="177" width="40" height="30"/>
+      </bpmndi:BPMNShape>
 
+      <!-- ===== Fila Prefactibilidad (y=220/230) ===== -->
       <bpmndi:BPMNShape bpmnElement="UT_Prefactibilidad" id="Shape_UT_Prefactibilidad">
         <omgdc:Bounds x="120" y="220" width="140" height="60"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTPrefactibilidad" id="Shape_UT_RevisionOTPrefactibilidad">
+      <bpmndi:BPMNShape bpmnElement="UT_PrefactibilidadFormulado" id="Shape_UT_PrefactibilidadFormulado">
+        <omgdc:Bounds x="300" y="150" width="140" height="45"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionViabilidadPrefactibilidad" id="Shape_UT_RevisionViabilidadPrefactibilidad">
         <omgdc:Bounds x="300" y="220" width="140" height="60"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="gw_ot_prefactibilidad" id="Shape_gw_ot_prefactibilidad">
+      <bpmndi:BPMNShape bpmnElement="gw_viabilidad_prefactibilidad" id="Shape_gw_viabilidad_prefactibilidad">
         <omgdc:Bounds x="480" y="230" width="40" height="40"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="gw_reqFactibilidad" id="Shape_gw_reqFactibilidad">
+      <bpmndi:BPMNShape bpmnElement="gw_yaElegibilidad_prefactibilidad" id="Shape_gw_yaElegibilidad_prefactibilidad">
         <omgdc:Bounds x="560" y="230" width="40" height="40"/>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTPrefactibilidad" id="Shape_UT_RevisionOTPrefactibilidad">
+        <omgdc:Bounds x="640" y="220" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_ot_prefactibilidad" id="Shape_gw_ot_prefactibilidad">
+        <omgdc:Bounds x="820" y="230" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_reqFactibilidad" id="Shape_gw_reqFactibilidad">
+        <omgdc:Bounds x="900" y="230" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_PostOTPrefactibilidad" id="Shape_UT_PostOTPrefactibilidad">
+        <omgdc:Bounds x="800" y="290" width="170" height="45"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw4_prefactibilidad" id="Shape_gw4_prefactibilidad">
+        <omgdc:Bounds x="1010" y="297" width="40" height="30"/>
+      </bpmndi:BPMNShape>
 
+      <!-- ===== Fila Factibilidad (y=340/350) ===== -->
       <bpmndi:BPMNShape bpmnElement="UT_Factibilidad" id="Shape_UT_Factibilidad">
         <omgdc:Bounds x="120" y="340" width="140" height="60"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTFactibilidad" id="Shape_UT_RevisionOTFactibilidad">
+      <bpmndi:BPMNShape bpmnElement="UT_FactibilidadFormulado" id="Shape_UT_FactibilidadFormulado">
+        <omgdc:Bounds x="300" y="270" width="140" height="45"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionViabilidadFactibilidad" id="Shape_UT_RevisionViabilidadFactibilidad">
         <omgdc:Bounds x="300" y="340" width="140" height="60"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="gw_ot_factibilidad" id="Shape_gw_ot_factibilidad">
+      <bpmndi:BPMNShape bpmnElement="gw_viabilidad_factibilidad" id="Shape_gw_viabilidad_factibilidad">
         <omgdc:Bounds x="480" y="350" width="40" height="40"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="gw_reqDiseno" id="Shape_gw_reqDiseno">
+      <bpmndi:BPMNShape bpmnElement="gw_yaElegibilidad_factibilidad" id="Shape_gw_yaElegibilidad_factibilidad">
         <omgdc:Bounds x="560" y="350" width="40" height="40"/>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTFactibilidad" id="Shape_UT_RevisionOTFactibilidad">
+        <omgdc:Bounds x="640" y="340" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_ot_factibilidad" id="Shape_gw_ot_factibilidad">
+        <omgdc:Bounds x="820" y="350" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_reqDiseno" id="Shape_gw_reqDiseno">
+        <omgdc:Bounds x="900" y="350" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_PostOTFactibilidad" id="Shape_UT_PostOTFactibilidad">
+        <omgdc:Bounds x="800" y="410" width="170" height="45"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw4_factibilidad" id="Shape_gw4_factibilidad">
+        <omgdc:Bounds x="1010" y="417" width="40" height="30"/>
+      </bpmndi:BPMNShape>
 
+      <!-- ===== Fila Diseño (y=460/470) ===== -->
       <bpmndi:BPMNShape bpmnElement="UT_Diseno" id="Shape_UT_Diseno">
         <omgdc:Bounds x="120" y="460" width="140" height="60"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTDiseno" id="Shape_UT_RevisionOTDiseno">
+      <bpmndi:BPMNShape bpmnElement="UT_DisenoFormulado" id="Shape_UT_DisenoFormulado">
+        <omgdc:Bounds x="300" y="390" width="140" height="45"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionViabilidadDiseno" id="Shape_UT_RevisionViabilidadDiseno">
         <omgdc:Bounds x="300" y="460" width="140" height="60"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="gw_ot_diseno" id="Shape_gw_ot_diseno">
+      <bpmndi:BPMNShape bpmnElement="gw_viabilidad_diseno" id="Shape_gw_viabilidad_diseno">
         <omgdc:Bounds x="480" y="470" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_yaElegibilidad_diseno" id="Shape_gw_yaElegibilidad_diseno">
+        <omgdc:Bounds x="560" y="470" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_RevisionOTDiseno" id="Shape_UT_RevisionOTDiseno">
+        <omgdc:Bounds x="640" y="460" width="140" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_ot_diseno" id="Shape_gw_ot_diseno">
+        <omgdc:Bounds x="820" y="470" width="40" height="40"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="UT_PostOTDiseno" id="Shape_UT_PostOTDiseno">
+        <omgdc:Bounds x="800" y="530" width="170" height="45"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw4_diseno" id="Shape_gw4_diseno">
+        <omgdc:Bounds x="1010" y="537" width="40" height="30"/>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape bpmnElement="end_draft" id="Shape_end_draft">
-        <omgdc:Bounds x="660" y="470" width="36" height="36"/>
+        <omgdc:Bounds x="1090" y="533" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- ===== Elegibilidad compartida (fila propia, y=600) ===== -->
+      <bpmndi:BPMNShape bpmnElement="UT_Elegibilidad" id="Shape_UT_Elegibilidad">
+        <omgdc:Bounds x="480" y="600" width="180" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="gw_retorno_elegibilidad" id="Shape_gw_retorno_elegibilidad">
+        <omgdc:Bounds x="720" y="610" width="40" height="40"/>
       </bpmndi:BPMNShape>
 
       <!-- Edges (grilla simple, para reordenar en Flowable Modeler) -->
@@ -278,101 +752,299 @@
         <omgdi:waypoint x="76" y="130"/>
         <omgdi:waypoint x="120" y="130"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_perfil_a_ot" id="Edge_sf_perfil_a_ot">
-        <omgdi:waypoint x="260" y="130"/>
-        <omgdi:waypoint x="300" y="130"/>
+
+      <!-- Perfil -->
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_a_formulado" id="Edge_sf_perfil_a_formulado">
+        <omgdi:waypoint x="190" y="100"/>
+        <omgdi:waypoint x="190" y="52"/>
+        <omgdi:waypoint x="300" y="52"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_a_gw" id="Edge_sf_perfil_ot_a_gw">
+      <bpmndi:BPMNEdge bpmnElement="sf_perfilformulado_a_viabilidad" id="Edge_sf_perfilformulado_a_viabilidad">
+        <omgdi:waypoint x="370" y="75"/>
+        <omgdi:waypoint x="370" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_viabilidad_a_gw" id="Edge_sf_perfil_viabilidad_a_gw">
         <omgdi:waypoint x="440" y="130"/>
         <omgdi:waypoint x="480" y="130"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_observado" id="Edge_sf_perfil_ot_observado">
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_viabilidad_observado" id="Edge_sf_perfil_viabilidad_observado">
         <omgdi:waypoint x="500" y="110"/>
-        <omgdi:waypoint x="500" y="60"/>
-        <omgdi:waypoint x="190" y="100"/>
+        <omgdi:waypoint x="500" y="15"/>
+        <omgdi:waypoint x="150" y="100"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_favorable" id="Edge_sf_perfil_ot_favorable">
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_viabilidad_favorable" id="Edge_sf_perfil_viabilidad_favorable">
         <omgdi:waypoint x="520" y="130"/>
         <omgdi:waypoint x="560" y="130"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_a_prefactibilidad" id="Edge_sf_a_prefactibilidad">
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_a_elegibilidad" id="Edge_sf_perfil_a_elegibilidad">
         <omgdi:waypoint x="580" y="150"/>
-        <omgdi:waypoint x="580" y="250"/>
+        <omgdi:waypoint x="580" y="630"/>
+        <omgdi:waypoint x="480" y="630"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_directo_a_ot" id="Edge_sf_perfil_directo_a_ot">
+        <omgdi:waypoint x="600" y="130"/>
+        <omgdi:waypoint x="640" y="130"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_a_gw" id="Edge_sf_perfil_ot_a_gw">
+        <omgdi:waypoint x="780" y="130"/>
+        <omgdi:waypoint x="820" y="130"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_observado" id="Edge_sf_perfil_ot_observado">
+        <omgdi:waypoint x="840" y="150"/>
+        <omgdi:waypoint x="840" y="195"/>
+        <omgdi:waypoint x="190" y="160"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_ot_favorable" id="Edge_sf_perfil_ot_favorable">
+        <omgdi:waypoint x="850" y="150"/>
+        <omgdi:waypoint x="850" y="170"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_postot_perfil_a_gw4" id="Edge_sf_postot_perfil_a_gw4">
+        <omgdi:waypoint x="970" y="192"/>
+        <omgdi:waypoint x="1010" y="192"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_actualizar_ot" id="Edge_sf_perfil_actualizar_ot">
+        <omgdi:waypoint x="1030" y="177"/>
+        <omgdi:waypoint x="1030" y="80"/>
+        <omgdi:waypoint x="260" y="110"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_perfil_avanzar" id="Edge_sf_perfil_avanzar">
+        <omgdi:waypoint x="1030" y="207"/>
+        <omgdi:waypoint x="1030" y="260"/>
+        <omgdi:waypoint x="920" y="150"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_a_prefactibilidad" id="Edge_sf_a_prefactibilidad">
+        <omgdi:waypoint x="920" y="150"/>
+        <omgdi:waypoint x="920" y="250"/>
         <omgdi:waypoint x="260" y="250"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="sf_skip_prefactibilidad" id="Edge_sf_skip_prefactibilidad">
-        <omgdi:waypoint x="580" y="150"/>
-        <omgdi:waypoint x="580" y="230"/>
+        <omgdi:waypoint x="920" y="150"/>
+        <omgdi:waypoint x="920" y="230"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_a_ot" id="Edge_sf_prefactibilidad_a_ot">
-        <omgdi:waypoint x="260" y="250"/>
-        <omgdi:waypoint x="300" y="250"/>
+
+      <!-- Prefactibilidad -->
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_a_formulado" id="Edge_sf_prefactibilidad_a_formulado">
+        <omgdi:waypoint x="190" y="220"/>
+        <omgdi:waypoint x="190" y="172"/>
+        <omgdi:waypoint x="300" y="172"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_a_gw" id="Edge_sf_prefactibilidad_ot_a_gw">
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidadformulado_a_viabilidad" id="Edge_sf_prefactibilidadformulado_a_viabilidad">
+        <omgdi:waypoint x="370" y="195"/>
+        <omgdi:waypoint x="370" y="220"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_viabilidad_a_gw" id="Edge_sf_prefactibilidad_viabilidad_a_gw">
         <omgdi:waypoint x="440" y="250"/>
         <omgdi:waypoint x="480" y="250"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_observado" id="Edge_sf_prefactibilidad_ot_observado">
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_viabilidad_observado" id="Edge_sf_prefactibilidad_viabilidad_observado">
         <omgdi:waypoint x="500" y="230"/>
-        <omgdi:waypoint x="500" y="190"/>
-        <omgdi:waypoint x="190" y="220"/>
+        <omgdi:waypoint x="500" y="135"/>
+        <omgdi:waypoint x="150" y="220"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_favorable" id="Edge_sf_prefactibilidad_ot_favorable">
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_viabilidad_favorable" id="Edge_sf_prefactibilidad_viabilidad_favorable">
         <omgdi:waypoint x="520" y="250"/>
         <omgdi:waypoint x="560" y="250"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_a_factibilidad" id="Edge_sf_a_factibilidad">
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_a_elegibilidad" id="Edge_sf_prefactibilidad_a_elegibilidad">
         <omgdi:waypoint x="580" y="270"/>
-        <omgdi:waypoint x="580" y="370"/>
+        <omgdi:waypoint x="580" y="640"/>
+        <omgdi:waypoint x="480" y="640"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_directo_a_ot" id="Edge_sf_prefactibilidad_directo_a_ot">
+        <omgdi:waypoint x="600" y="250"/>
+        <omgdi:waypoint x="640" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_a_gw" id="Edge_sf_prefactibilidad_ot_a_gw">
+        <omgdi:waypoint x="780" y="250"/>
+        <omgdi:waypoint x="820" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_observado" id="Edge_sf_prefactibilidad_ot_observado">
+        <omgdi:waypoint x="840" y="270"/>
+        <omgdi:waypoint x="840" y="315"/>
+        <omgdi:waypoint x="190" y="280"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_ot_favorable" id="Edge_sf_prefactibilidad_ot_favorable">
+        <omgdi:waypoint x="850" y="270"/>
+        <omgdi:waypoint x="850" y="290"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_postot_prefactibilidad_a_gw4" id="Edge_sf_postot_prefactibilidad_a_gw4">
+        <omgdi:waypoint x="970" y="312"/>
+        <omgdi:waypoint x="1010" y="312"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_actualizar_ot" id="Edge_sf_prefactibilidad_actualizar_ot">
+        <omgdi:waypoint x="1030" y="297"/>
+        <omgdi:waypoint x="1030" y="200"/>
+        <omgdi:waypoint x="260" y="230"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_prefactibilidad_avanzar" id="Edge_sf_prefactibilidad_avanzar">
+        <omgdi:waypoint x="1030" y="327"/>
+        <omgdi:waypoint x="1030" y="380"/>
+        <omgdi:waypoint x="920" y="270"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_a_factibilidad" id="Edge_sf_a_factibilidad">
+        <omgdi:waypoint x="920" y="270"/>
+        <omgdi:waypoint x="920" y="370"/>
         <omgdi:waypoint x="260" y="370"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="sf_skip_factibilidad" id="Edge_sf_skip_factibilidad">
-        <omgdi:waypoint x="580" y="270"/>
-        <omgdi:waypoint x="580" y="350"/>
+        <omgdi:waypoint x="920" y="270"/>
+        <omgdi:waypoint x="920" y="350"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_a_ot" id="Edge_sf_factibilidad_a_ot">
-        <omgdi:waypoint x="260" y="370"/>
-        <omgdi:waypoint x="300" y="370"/>
+
+      <!-- Factibilidad -->
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_a_formulado" id="Edge_sf_factibilidad_a_formulado">
+        <omgdi:waypoint x="190" y="340"/>
+        <omgdi:waypoint x="190" y="292"/>
+        <omgdi:waypoint x="300" y="292"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_a_gw" id="Edge_sf_factibilidad_ot_a_gw">
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidadformulado_a_viabilidad" id="Edge_sf_factibilidadformulado_a_viabilidad">
+        <omgdi:waypoint x="370" y="315"/>
+        <omgdi:waypoint x="370" y="340"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_viabilidad_a_gw" id="Edge_sf_factibilidad_viabilidad_a_gw">
         <omgdi:waypoint x="440" y="370"/>
         <omgdi:waypoint x="480" y="370"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_observado" id="Edge_sf_factibilidad_ot_observado">
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_viabilidad_observado" id="Edge_sf_factibilidad_viabilidad_observado">
         <omgdi:waypoint x="500" y="350"/>
-        <omgdi:waypoint x="500" y="310"/>
-        <omgdi:waypoint x="190" y="340"/>
+        <omgdi:waypoint x="500" y="255"/>
+        <omgdi:waypoint x="150" y="340"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_favorable" id="Edge_sf_factibilidad_ot_favorable">
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_viabilidad_favorable" id="Edge_sf_factibilidad_viabilidad_favorable">
         <omgdi:waypoint x="520" y="370"/>
         <omgdi:waypoint x="560" y="370"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_a_diseno" id="Edge_sf_a_diseno">
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_a_elegibilidad" id="Edge_sf_factibilidad_a_elegibilidad">
         <omgdi:waypoint x="580" y="390"/>
-        <omgdi:waypoint x="580" y="490"/>
+        <omgdi:waypoint x="580" y="650"/>
+        <omgdi:waypoint x="480" y="650"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_directo_a_ot" id="Edge_sf_factibilidad_directo_a_ot">
+        <omgdi:waypoint x="600" y="370"/>
+        <omgdi:waypoint x="640" y="370"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_a_gw" id="Edge_sf_factibilidad_ot_a_gw">
+        <omgdi:waypoint x="780" y="370"/>
+        <omgdi:waypoint x="820" y="370"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_observado" id="Edge_sf_factibilidad_ot_observado">
+        <omgdi:waypoint x="840" y="390"/>
+        <omgdi:waypoint x="840" y="435"/>
+        <omgdi:waypoint x="190" y="400"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_ot_favorable" id="Edge_sf_factibilidad_ot_favorable">
+        <omgdi:waypoint x="850" y="390"/>
+        <omgdi:waypoint x="850" y="410"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_postot_factibilidad_a_gw4" id="Edge_sf_postot_factibilidad_a_gw4">
+        <omgdi:waypoint x="970" y="432"/>
+        <omgdi:waypoint x="1010" y="432"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_actualizar_ot" id="Edge_sf_factibilidad_actualizar_ot">
+        <omgdi:waypoint x="1030" y="417"/>
+        <omgdi:waypoint x="1030" y="320"/>
+        <omgdi:waypoint x="260" y="350"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_factibilidad_avanzar" id="Edge_sf_factibilidad_avanzar">
+        <omgdi:waypoint x="1030" y="447"/>
+        <omgdi:waypoint x="1030" y="500"/>
+        <omgdi:waypoint x="920" y="390"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_a_diseno" id="Edge_sf_a_diseno">
+        <omgdi:waypoint x="920" y="390"/>
+        <omgdi:waypoint x="920" y="490"/>
         <omgdi:waypoint x="260" y="490"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="sf_skip_diseno" id="Edge_sf_skip_diseno">
-        <omgdi:waypoint x="600" y="370"/>
-        <omgdi:waypoint x="678" y="370"/>
-        <omgdi:waypoint x="678" y="470"/>
+        <omgdi:waypoint x="940" y="370"/>
+        <omgdi:waypoint x="998" y="370"/>
+        <omgdi:waypoint x="998" y="470"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_diseno_a_ot" id="Edge_sf_diseno_a_ot">
-        <omgdi:waypoint x="260" y="490"/>
-        <omgdi:waypoint x="300" y="490"/>
+
+      <!-- Diseño -->
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_a_formulado" id="Edge_sf_diseno_a_formulado">
+        <omgdi:waypoint x="190" y="460"/>
+        <omgdi:waypoint x="190" y="412"/>
+        <omgdi:waypoint x="300" y="412"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_diseno_ot_a_gw" id="Edge_sf_diseno_ot_a_gw">
+      <bpmndi:BPMNEdge bpmnElement="sf_disenoformulado_a_viabilidad" id="Edge_sf_disenoformulado_a_viabilidad">
+        <omgdi:waypoint x="370" y="435"/>
+        <omgdi:waypoint x="370" y="460"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_viabilidad_a_gw" id="Edge_sf_diseno_viabilidad_a_gw">
         <omgdi:waypoint x="440" y="490"/>
         <omgdi:waypoint x="480" y="490"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="sf_diseno_ot_observado" id="Edge_sf_diseno_ot_observado">
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_viabilidad_observado" id="Edge_sf_diseno_viabilidad_observado">
         <omgdi:waypoint x="500" y="470"/>
-        <omgdi:waypoint x="500" y="430"/>
-        <omgdi:waypoint x="190" y="460"/>
+        <omgdi:waypoint x="500" y="375"/>
+        <omgdi:waypoint x="150" y="460"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_viabilidad_favorable" id="Edge_sf_diseno_viabilidad_favorable">
+        <omgdi:waypoint x="520" y="490"/>
+        <omgdi:waypoint x="560" y="490"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_a_elegibilidad" id="Edge_sf_diseno_a_elegibilidad">
+        <omgdi:waypoint x="580" y="510"/>
+        <omgdi:waypoint x="580" y="660"/>
+        <omgdi:waypoint x="480" y="660"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_directo_a_ot" id="Edge_sf_diseno_directo_a_ot">
+        <omgdi:waypoint x="600" y="490"/>
+        <omgdi:waypoint x="640" y="490"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_ot_a_gw" id="Edge_sf_diseno_ot_a_gw">
+        <omgdi:waypoint x="780" y="490"/>
+        <omgdi:waypoint x="820" y="490"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_ot_observado" id="Edge_sf_diseno_ot_observado">
+        <omgdi:waypoint x="840" y="510"/>
+        <omgdi:waypoint x="840" y="555"/>
+        <omgdi:waypoint x="190" y="520"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="sf_diseno_ot_favorable" id="Edge_sf_diseno_ot_favorable">
-        <omgdi:waypoint x="520" y="490"/>
-        <omgdi:waypoint x="660" y="488"/>
+        <omgdi:waypoint x="850" y="510"/>
+        <omgdi:waypoint x="850" y="530"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_postot_diseno_a_gw4" id="Edge_sf_postot_diseno_a_gw4">
+        <omgdi:waypoint x="970" y="552"/>
+        <omgdi:waypoint x="1010" y="552"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_actualizar_ot" id="Edge_sf_diseno_actualizar_ot">
+        <omgdi:waypoint x="1030" y="537"/>
+        <omgdi:waypoint x="1030" y="440"/>
+        <omgdi:waypoint x="260" y="470"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_diseno_avanzar" id="Edge_sf_diseno_avanzar">
+        <omgdi:waypoint x="1050" y="552"/>
+        <omgdi:waypoint x="1090" y="551"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Elegibilidad compartida: retorno a cada etapa -->
+      <bpmndi:BPMNEdge bpmnElement="sf_emitir_elegibilidad" id="Edge_sf_emitir_elegibilidad">
+        <omgdi:waypoint x="660" y="630"/>
+        <omgdi:waypoint x="720" y="630"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_elegibilidad_retorna_perfil" id="Edge_sf_elegibilidad_retorna_perfil">
+        <omgdi:waypoint x="740" y="610"/>
+        <omgdi:waypoint x="740" y="160"/>
+        <omgdi:waypoint x="710" y="130"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_elegibilidad_retorna_prefactibilidad" id="Edge_sf_elegibilidad_retorna_prefactibilidad">
+        <omgdi:waypoint x="750" y="610"/>
+        <omgdi:waypoint x="750" y="280"/>
+        <omgdi:waypoint x="710" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_elegibilidad_retorna_factibilidad" id="Edge_sf_elegibilidad_retorna_factibilidad">
+        <omgdi:waypoint x="760" y="620"/>
+        <omgdi:waypoint x="1040" y="620"/>
+        <omgdi:waypoint x="1040" y="370"/>
+        <omgdi:waypoint x="780" y="370"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sf_elegibilidad_retorna_diseno" id="Edge_sf_elegibilidad_retorna_diseno">
+        <omgdi:waypoint x="740" y="650"/>
+        <omgdi:waypoint x="740" y="520"/>
+        <omgdi:waypoint x="710" y="490"/>
       </bpmndi:BPMNEdge>
 
     </bpmndi:BPMNPlane>

@@ -12,6 +12,9 @@ import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
  */
 public interface NotificacionService {
 
+    /** CU-PRE-02: asignacion confirmada por el Coordinador PRE. */
+    void notificarAsignacionSolicitud(Long idSolicitud, Usuario destinatario);
+
     /** Anexo A.3.1: alerta al Coordinador PRE cuando se solicita el CUP. */
     void notificarSolicitudCup(Proyecto proyecto, List<Usuario> destinatarios);
 

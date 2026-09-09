@@ -46,10 +46,40 @@ public class UsuarioDevSeeder implements DevSeeder {
                         .activo(true)
                         .build()));
 
+        // Segunda Institución/Unidad Ejecutora, distinta de la de arriba: para probar RN1 de
+        // CU-PRE-01 (el Técnico URP solo ve/registra proyectos de SU Unidad Ejecutora,
+        // ProyectoServiceImpl.listar filtra por unidadEjecutoraId del actor) hace falta un
+        // segundo Técnico URP adscrito a una UE diferente, no solo un segundo usuario.
+        Institucion institucion2 = institucionRepository.findByCodigo("MINED")
+                .orElseGet(() -> institucionRepository.save(Institucion.builder()
+                        .codigo("MINED")
+                        .nombre("Ministerio de Educación (prueba)")
+                        .activo(true)
+                        .build()));
+
+        UnidadEjecutora unidadEjecutora2 = unidadEjecutoraRepository.findByCodigo("URP-02")
+                .orElseGet(() -> unidadEjecutoraRepository.save(UnidadEjecutora.builder()
+                        .institucion(institucion2)
+                        .codigo("URP-02")
+                        .nombre("Unidad Responsable de Proyecto 2 (prueba)")
+                        .activo(true)
+                        .build()));
+
         crearUsuarioSiNoExiste("tecnico.urp", "Técnico URP (prueba)", "tecnico.urp@example.com",
                 RolUsuario.TECNICO_URP, unidadEjecutora, institucion);
+        crearUsuarioSiNoExiste("tecnico.urp2", "Técnico URP 2 (prueba, otra Unidad Ejecutora)",
+                "tecnico.urp2@example.com", RolUsuario.TECNICO_URP, unidadEjecutora2, institucion2);
+        // Sin Unidad Ejecutora/Institución a propósito (RN de CU-PRE-02: el Técnico PRE no está
+        // adscrito a una UE; solo puede actuar sobre las solicitudes que le fueron asignadas,
+        // BandejaPreinversionService.activas() acota por tecnicoAsignado.id, no por UE).
         crearUsuarioSiNoExiste("tecnico.pre", "Técnico PRE (prueba)", "tecnico.pre@example.com",
                 RolUsuario.TECNICO_PRE, null, null);
+        crearUsuarioSiNoExiste("tecnico.pre2", "Técnico PRE 2 (prueba)", "tecnico.pre2@example.com",
+                RolUsuario.TECNICO_PRE, null, null);
+        // Sin UE/Institución, igual que Técnico PRE: Coordinador PRE actúa sobre toda la Bandeja
+        // Preinversión (asignar/archivar/consultar), no está acotado a una Unidad Ejecutora.
+        crearUsuarioSiNoExiste("coordinador.pre", "Coordinador PRE (prueba)", "coordinador.pre@example.com",
+                RolUsuario.COORDINADOR_PRE, null, null);
         crearUsuarioSiNoExiste("admin", "Administrador del Sistema (prueba)", "admin@example.com",
                 RolUsuario.ADMINISTRADOR, null, null);
     }

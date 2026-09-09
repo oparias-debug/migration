@@ -1,0 +1,5 @@
+@media (hover: hover) and (pointer: fine) {
+  .bandeja-pre .archivar { opacity: 0; }
+  .bandeja-pre .nombre-solicitud:hover .archivar,
+  .bandeja-pre .nombre-solicitud:focus-within .archivar { opacity: 1; }
+}

@@ -13,7 +13,14 @@ import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 @Service
 public class LoggingNotificacionService implements NotificacionService {
 
+    private static final String SIN_USUARIO_RESUELTO = "(sin usuario resuelto)";
     private static final Logger logger = LoggerFactory.getLogger(LoggingNotificacionService.class);
+
+    @Override
+    public void notificarAsignacionSolicitud(Long idSolicitud, Usuario destinatario) {
+        logger.info("Se ha asignado para revisión la solicitud {} -> Técnico PRE: {}",
+                idSolicitud, destinatario.getNombreUsuario());
+    }
 
     @Override
     public void notificarSolicitudCup(Proyecto proyecto, List<Usuario> destinatarios) {
@@ -28,21 +35,21 @@ public class LoggingNotificacionService implements NotificacionService {
                 proyecto.getNombre(), proyecto.getId(), destinatario == null ? "(sin tecnico asignado)" : destinatario.getCorreo());
     }
     private String obtenerCorreoDestinatario(Usuario destinatario){
-        return destinatario == null ? "(sin usuario resuelto)" : destinatario.getCorreo();
+        return destinatario == null ? SIN_USUARIO_RESUELTO : destinatario.getCorreo();
     }
 
     @Override
     public void notificarAlertaEliminacion(Proyecto proyecto, Usuario destinatario) {
         String correoDestinatario = obtenerCorreoDestinatario(destinatario);
         logger.info("[RN-4] Alerta de posible eliminacion del proyecto '{}' (id={}) -> Tecnico URP: {}",
-                proyecto.getNombre(), proyecto.getId(), correoDestinatario);
+                proyecto.getNombre(), proyecto.getId(), destinatario == null ? SIN_USUARIO_RESUELTO : correoDestinatario);
     }
 
     @Override
     public void notificarDevolucionSolicitud(Proyecto proyecto, Usuario destinatario) {
         String correoDestinatario = obtenerCorreoDestinatario(destinatario);
         logger.info("[Anexo A.3.2] Devolucion con observaciones del proyecto '{}' (id={}) -> Tecnico URP: {}",
-                proyecto.getNombre(), proyecto.getId(), correoDestinatario);
+                proyecto.getNombre(), proyecto.getId(), destinatario == null ? SIN_USUARIO_RESUELTO : correoDestinatario);
     }
 
     @Override
@@ -50,7 +57,7 @@ public class LoggingNotificacionService implements NotificacionService {
         String correoDestinatario = obtenerCorreoDestinatario(destinatario);
         logger.info("[Anexo A.3.4] CUP {} emitido para el proyecto '{}' (id={}) -> Tecnico URP: {}",
                 proyecto.getCup(), proyecto.getNombre(), proyecto.getId(),
-                correoDestinatario);
+                destinatario == null ? SIN_USUARIO_RESUELTO : correoDestinatario);
     }
 
     private String correos(List<Usuario> usuarios) {

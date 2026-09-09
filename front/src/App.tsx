@@ -10,6 +10,8 @@ import { ProyectosPage } from './features/preinversion/proyectos/ProyectosPage';
 import { BandejaPage } from './features/preinversion/bandeja/BandejaPage';
 import { CapturaPage } from './features/preinversion/captura/CapturaPage';
 import { ProyectoFormPage } from './features/preinversion/proyectos/ProyectoFormPage';
+import { BandejaPreinversionPage } from './features/preinversion/bandeja/BandejaPreinversionPage';
+import { OpinionTecnicaEntradaPage } from './features/preinversion/bandeja/OpinionTecnicaEntradaPage';
 import { RutaPreinversionPage } from './features/preinversion/etapas/RutaPreinversionPage';
 import { EtapasPage } from './features/preinversion/etapas/EtapasPage';
 import { FichaInformacionGeneralPage } from './features/preinversion/etapas/FichaInformacionGeneralPage';
@@ -55,6 +57,9 @@ export function App() {
             <Route path="/preinversion/bandeja" element={<BandejaPage />} />
             <Route path="/preinversion/captura" element={<CapturaPage />} />
             <Route path="/preinversion/proyectos" element={<ProyectosPage />} />
+            <Route path="/preinversion/bandeja" element={<BandejaPreinversionPage key="activas" />} />
+            <Route path="/preinversion/bandeja/archivadas" element={<BandejaPreinversionPage key="archivadas" archivadas />} />
+            <Route path="/preinversion/opinion-tecnica/:id" element={<OpinionTecnicaEntradaPage />} />
             <Route path="/preinversion/proyectos/nuevo" element={<ProyectoFormPage />} />
             <Route path="/preinversion/proyectos/:id" element={<ProyectoFormPage />} />
 
