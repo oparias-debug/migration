@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { Key, ReactNode } from 'react';
 
 export interface Column<T> {
   header: string;
@@ -10,12 +10,17 @@ interface DataTableProps<T> {
   readonly rows: T[];
   readonly emptyMessage: string;
   readonly renderActions: (row: T) => ReactNode;
+  /**
+   * Clave estable de cada fila. No se usa el índice: al paginar o filtrar, la
+   * fila 0 pasa a ser otro registro y React reutiliza el DOM de la anterior.
+   */
+  readonly rowKey: (row: T) => Key;
 }
 
 // Tabla genérica con columnas configurables + columna de acciones. El estilo
 // sale de base.css (thead th / tbody td), como en el diseño aprobado: la fila
 // vacía va DENTRO de la tabla para no perder las cabeceras cuando no hay datos.
-export function DataTable<T>({ columns, rows, emptyMessage, renderActions }: DataTableProps<T>) {
+export function DataTable<T>({ columns, rows, emptyMessage, renderActions, rowKey }: DataTableProps<T>) {
   return (
     <div className="tabla-cont">
       <table>
@@ -37,8 +42,8 @@ export function DataTable<T>({ columns, rows, emptyMessage, renderActions }: Dat
               </td>
             </tr>
           )}
-          {rows.map((row, index) => (
-            <tr key={index}>
+            {rows.map((row) => (
+              <tr key={rowKey(row)}>
               {columns.map((col) => (
                 <td key={col.header}>{col.render(row)}</td>
               ))}

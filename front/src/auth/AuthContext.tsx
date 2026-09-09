@@ -1,4 +1,4 @@
-import { createContext, useCallback, useSyncExternalStore, type ReactNode } from 'react';
+import { createContext, useCallback, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import { authApi } from '../api/authApi';
 import { clearAuthState, getAuthState, setAuthState, stateFromTokens, subscribeAuthState } from './tokenStore';
 import type { AuthState } from './tokenStore';
@@ -27,13 +27,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = useCallback((role: string) => state.roles.includes(role), [state.roles]);
 
-  const value: AuthContextValue = {
-    ...state,
-    isAuthenticated: state.accessToken !== null,
-    hasRole,
-    login,
-    logout,
-  };
+  // Sin useMemo este objeto es nuevo en cada render y obliga a re-renderizar a
+  // todos los consumidores del contexto, aunque la sesión no haya cambiado.
+  const value: AuthContextValue = useMemo(
+    () => ({
+      ...state,
+      isAuthenticated: state.accessToken !== null,
+      hasRole,
+      login,
+      logout,
+    }),
+    [state, hasRole, login, logout],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

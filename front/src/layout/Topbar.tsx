@@ -60,14 +60,14 @@ export function Topbar({ titulo, alAbrirMenu }: { titulo: string; alAbrirMenu: (
       </div>
 
       <div className="topbar-acciones">
-        <div className="idioma" role="group" aria-label="Idioma / Language">
+        <fieldset className="idioma" aria-label="Idioma / Language">
           <button type="button" className="activo" aria-pressed="true">
             ES
           </button>
           <button type="button" disabled title={t('topbar.pendiente')}>
             EN
           </button>
-        </div>
+        </fieldset>
 
         <button type="button" className="icono-btn" disabled title={t('topbar.pendiente')} aria-label={t('topbar.favoritos')}>
           <IconoColor nombre="ui-favorito" style={{ width: 19, height: 19, objectFit: 'contain', display: 'block' }} />

@@ -42,11 +42,11 @@ export function createHttpClient(baseURL: string): AxiosInstance {
         } catch (refreshError) {
           clearAuthState();
           window.location.href = '/login';
-          return Promise.reject(refreshError);
+          throw refreshError;
         }
       }
 
-      return Promise.reject(error);
+      throw error;
     },
   );
 

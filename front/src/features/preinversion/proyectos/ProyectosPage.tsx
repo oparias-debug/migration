@@ -197,12 +197,13 @@ export function ProyectosPage() {
           )}
         </div>
 
-        {cargando ? (
-          <p className="cargando">{t('common.cargando')}</p>
-        ) : error ? null : (
+        {cargando && <p className="cargando">{t('common.cargando')}</p>}
+
+        {!cargando && !error && (
           <DataTable
             columns={columns}
             rows={proyectos}
+            rowKey={(proyecto) => proyecto.idProyecto}
             emptyMessage={t('preinversion.registro.sinRegistros')}
             /* Sólo el Técnico URP elimina, y sólo lo que nunca solicitó CUP:
                "el botón de eliminar no está disponible para otros actores". */

@@ -410,9 +410,9 @@ export function ProyectoFormPage() {
           los campos ya van deshabilitados, pero sin decir por qué el usuario
           solo ve una pantalla muerta. */}
       {!esNuevo && !puedeEditar && estadoActual && (
-        <div className="aviso-consulta" role="status">
+        <output className="aviso-consulta">
           {t('preinversion.registro.soloConsulta', { estado: formatEstado(estadoActual) })}
-        </div>
+        </output>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
