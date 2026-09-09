@@ -76,7 +76,8 @@
     "configuracion": "Configuración",
     "pendiente": "Pendiente: aún no tiene soporte en el API",
     "abrirMenu": "Abrir menú",
-    "cerrarMenu": "Cerrar menú"
+    "cerrarMenu": "Cerrar menú",
+    "miCuenta": "Mi Cuenta"
   },
   "placeholder": {
     "title": "🚧 Página en Construcción",
@@ -319,7 +320,11 @@
     "fisico": "Físico",
     "procesos": "Procesos",
     "bandeja": "Bandeja Preinversión",
-    "captura": "Captura de Proyectos"
+    "captura": "Captura de Proyectos",
+    "convenios": "Convenios",
+    "contraer": "Contraer menú",
+    "expandir": "Expandir menú",
+    "abrirMenu": "Abrir menú"
   },
   "ruta": {
     "migas": "Ruta de navegación",
@@ -327,40 +332,38 @@
     "detalle": "Detalle"
   },
   "inicio": {
-    "bienvenido": "BIENVENIDO A",
-    "lema": "Plataforma integrada para la gestión eficiente del ciclo de vida de proyectos de inversión pública.",
     "modulos": "Módulos principales",
     "resumen": "Resumen de proyectos",
-    "resumenNota": "Cada indicador abre el listado ya filtrado por ese estado.",
     "pendientes": "Mis pendientes",
-    "pendientesNota": "Lo que tienes que atender hoy. Cada tarjeta abre el listado ya filtrado."
+    "sinEstadoContrato": "El contrato no define un estado \"En seguimiento\"; pendiente de confirmar qué se cuenta aquí."
   },
   "mod": {
     "preinversion": {
-      "desc": "Gestione estudios y evaluaciones previas."
+      "desc": "Formule, evalúe y gestione proyectos de inversión pública."
     },
     "programacion": {
-      "desc": "Programe y planifique los proyectos de inversión."
+      "desc": "Programe el PRIPME, el PAP y el PAIP."
     },
     "ejecucion": {
-      "desc": "Monitoree la ejecución de los proyectos."
+      "desc": "Actualice el PRIPME, el PAP, el PAIP y el proyecto."
     },
     "seguimiento": {
-      "desc": "Dé seguimiento y evalúe el avance de los proyectos."
+      "desc": "Registre los avances de los proyectos y el presupuesto de inversión."
     }
   },
   "ind": {
     "formulacion": "En formulación",
     "viabilidad": "En viabilidad",
     "ejecucion": "En ejecución",
-    "finalizados": "Finalizados"
+    "finalizados": "Completados",
+    "seguimiento": "En seguimiento"
   },
   "pend": {
     "observadas": "Solicitudes observadas",
     "observadasDet": "Requieren tu corrección y reenvío",
     "elaboracion": "En elaboración",
     "elaboracionDet": "Borradores sin enviar a la DGICP",
-    "conCup": "Con CUP asignado",
-    "conCupDet": "Listas para continuar a la ruta de preinversión"
+    "conCup": "Con CUP asignados",
+    "conCupDet": "Listos para continuar la ruta de preinversión"
   }
 }

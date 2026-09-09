@@ -79,5 +79,9 @@ export const MODULOS: readonly Modulo[] = [
       { clave: 'procesos', texto: 'menu.procesos', ruta: '/procesos' },
     ],
   },
+  // Convenios aparece en el diseño del 09/09/2026, entre Seguimiento y Reportes.
+  // Todavía no tiene pantalla propia, así que cae en PlaceholderPage como el
+  // resto de los módulos sin destino.
+  { clave: 'convenios', icono: 'menu-convenios', texto: 'menu.convenios' },
   { clave: 'reportes', icono: 'menu-reportes', texto: 'menu.reportes' },
 ];

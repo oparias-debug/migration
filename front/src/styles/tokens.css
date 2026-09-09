@@ -38,18 +38,21 @@
   /* --- Marca institucional -------------------------------------------------
      #313945 es PANTONE 432 C, el "fondo de color habitual" del manual de marca.
      Es el gris que pidió Rocío para el menú (el SIIP de Colombia es azul). */
-  /* El diseño del 30/08/2026 (siip-INICIO-NUEVA-GRIS) usa #222222.
-     Es más oscuro que el #313945 (PANTONE 432 C) del manual de marca: se sigue
-     al diseñador porque es la entrega más reciente y aprobada, pero conviene
-     que quede constancia de que se aparta del manual. */
-  --menu:        #222222;
-  --menu-2:      #181818;
+  /* Historial de este color, porque cambió dos veces:
+       1) #313945 (PANTONE 432 C), el gris del manual de marca.
+       2) #222222, del diseño del 30/08/2026 (siip-INICIO-NUEVA-GRIS). Rocío
+          pidió gris expresamente para no parecerse al SIIP de Colombia.
+       3) #003078, medido sobre el diseño que mandó el cliente el 09/09/2026,
+          que vuelve al azul. Es lo más reciente, así que es lo que se aplica.
+     Si alguien se pregunta por qué no es gris: se revirtió, no se perdió. */
+  --menu:        #003078;
+  --menu-2:      #002a6b;
   --arena:       #c9a892;   /* acento del manual */
 
   /* --- Azules del diseño (medidos) ---------------------------------------- */
   --navy:        #002469;   /* menú del mockup, encabezado de formulario, hero */
   --navy-2:      #00266D;   /* extremo claro del hero */
-  --azul-vivo:   #0073E3;   /* HOVER del menú — no es el estado seleccionado */
+  --azul-vivo:   #0172FE;   /* HOVER y píldora activa del menú (diseño 09/09/2026) */
   --azul:        #003DB9;   /* botón primario, enlaces, foco */
   --azul-suave:  #DFEDFE;   /* tinte azul (tarjeta "En formulación") */
 

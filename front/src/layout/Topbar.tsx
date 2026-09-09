@@ -77,34 +77,47 @@ export function Topbar({ titulo, alAbrirMenu }: { titulo: string; alAbrirMenu: (
           <IconoColor nombre="ui-notif" style={{ width: 24, height: 'auto', marginTop: -1, display: 'block' }} />
         </button>
 
-        <button type="button" className="icono-btn" disabled title={t('topbar.pendiente')} aria-label={t('topbar.configuracion')}>
-          <IconoColor nombre="ui-config" style={{ width: 19, height: 19, objectFit: 'contain', display: 'block' }} />
-        </button>
-
-        {/* En el diseño este sitio lo ocupa un selector de rol de demostración.
-            Aquí el rol viene del token y no se elige, así que la misma píldora
-            muestra al usuario real y despliega el cierre de sesión. */}
+        {/* "Mi Cuenta" del diseño del 09/09/2026: el avatar lleva las iniciales
+            del usuario real del token. En el diseño esta píldora es un selector
+            de rol de demostración; aquí el rol lo fija el token y no se elige,
+            así que el nombre y el rol se muestran dentro del desplegable. */}
         <div className="usuario-menu" ref={caja}>
           <button
             type="button"
-            className="selector-rol"
+            className="mi-cuenta"
             aria-haspopup="menu"
             aria-expanded={abierto}
             onClick={() => setAbierto((v) => !v)}
           >
-            {username ?? ''}
-            {roles[0] ? ` · ${roles[0]}` : ''}
+            <span className="avatar" aria-hidden="true">{iniciales(username)}</span>
+            {t('topbar.miCuenta')}
             <span className="flecha" aria-hidden="true">▾</span>
           </button>
           {abierto && (
             <div className="usuario-desplegable" role="menu">
+              <div className="quien">
+                <b>{username ?? ''}</b>
+                {roles[0] ? <span>{roles[0]}</span> : null}
+              </div>
               <button type="button" role="menuitem" onClick={cerrarSesion}>
                 {t('common.logout')}
               </button>
             </div>
           )}
         </div>
+
+        <button type="button" className="icono-btn" disabled title={t('topbar.pendiente')} aria-label={t('topbar.configuracion')}>
+          <IconoColor nombre="ui-config" style={{ width: 19, height: 19, objectFit: 'contain', display: 'block' }} />
+        </button>
     </div>
     </header>
   );
+}
+
+/** Iniciales para el avatar de la barra superior; dos letras, como en el menú. */
+function iniciales(username: string | null): string {
+  if (!username) return '··';
+  const partes = username.split(/[.\s_-]+/).filter(Boolean);
+  const letras = partes.length > 1 ? partes[0][0] + partes[1][0] : username.slice(0, 2);
+  return letras.toUpperCase();
 }

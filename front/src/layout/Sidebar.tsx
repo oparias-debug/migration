@@ -18,7 +18,17 @@ import { MODULOS, type Modulo, type SubModulo } from './navegacion';
  * El azul vivo del mockup de Inicio es el HOVER, no el seleccionado; el estado
  * seleccionado con submenú desplegado es el panel claro de la pantalla de CUP.
  */
-export function Sidebar({ abierto = false, alNavegar }: { abierto?: boolean; alNavegar?: () => void }) {
+export function Sidebar({
+  abierto = false,
+  alNavegar,
+  contraido = false,
+  alContraer,
+}: {
+  readonly abierto?: boolean;
+  readonly alNavegar?: () => void;
+  readonly contraido?: boolean;
+  readonly alContraer?: () => void;
+}) {
   const { t } = useTranslation();
   const { hasRole, username, roles } = useAuth();
   const navigate = useNavigate();
@@ -58,7 +68,7 @@ export function Sidebar({ abierto = false, alNavegar }: { abierto?: boolean; alN
   }
 
   return (
-    <aside className={`menu${abierto ? ' abierto' : ''}`} id="menu-lateral">
+    <aside className={`menu${abierto ? ' abierto' : ''}${contraido ? ' plegado' : ''}`} id="menu-lateral">
       <div className="menu-marca">
         <img src={`${import.meta.env.BASE_URL}escudo-solo-blanco.png`} alt="Gobierno de El Salvador" />
         <div className="ministerio">
@@ -73,10 +83,11 @@ export function Sidebar({ abierto = false, alNavegar }: { abierto?: boolean; alN
       {/* Bloque de usuario del diseño, con los datos reales del token. */}
       <div className="menu-usuario">
         <div className="avatar" aria-hidden="true">{iniciales(username)}</div>
-        <div>
+        <div className="quien">
           <div className="nom">{(username ?? '').toUpperCase()}</div>
           <div className="rol">{roles[0] ?? ''}</div>
         </div>
+        <IconoMascara nombre="ui-chevron" tam={8} className="chevron-usuario" />
       </div>
 
       <nav className="menu-nav" aria-label={t('app.nombre')}>
@@ -100,7 +111,7 @@ export function Sidebar({ abierto = false, alNavegar }: { abierto?: boolean; alN
               >
                 <IconoMascara nombre={modulo.icono} />
                 {t(modulo.texto)}
-                {modulo.clave !== 'inicio' && (
+                {modulo.clave !== 'inicio' && !contraido && (
                   <IconoMascara
                     nombre="ui-chevron"
                     tam={7}
@@ -138,6 +149,22 @@ export function Sidebar({ abierto = false, alNavegar }: { abierto?: boolean; alN
           );
         })}
       </nav>
+
+      {/* Pie del diseño del 09/09/2026: colapsa el menú a sólo iconos. El ancho
+          y la visibilidad de los textos los gobierna la clase `plegado` en CSS,
+          así que no hace falta desmontar nada ni duplicar marcado. */}
+      <button
+        type="button"
+        className="menu-contraer"
+        onClick={() => alContraer?.()}
+        aria-expanded={!contraido}
+        aria-controls="menu-lateral"
+      >
+        <span className="circulo" aria-hidden="true">
+          <IconoMascara nombre="ui-chevron" tam={9} />
+        </span>
+        <span className="txt">{t(contraido ? 'menu.expandir' : 'menu.contraer')}</span>
+      </button>
     </aside>
   );
 }

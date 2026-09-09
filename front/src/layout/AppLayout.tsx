@@ -15,6 +15,9 @@ export function AppLayout() {
   // Por debajo de 1000 px el menú es un cajón: se abre con la hamburguesa y se
   // cierra al navegar o al pulsar el velo.
   const [menuAbierto, setMenuAbierto] = useState(false);
+  // "Contraer menú" del diseño: se recuerda entre pantallas, pero no entre
+  // sesiones, porque es una preferencia de la vista y no un dato del usuario.
+  const [menuContraido, setMenuContraido] = useState(false);
   useEffect(() => {
     setMenuAbierto(false);
     window.scrollTo(0, 0);
@@ -22,14 +25,20 @@ export function AppLayout() {
 
   return (
     <div className="app">
-      <Sidebar abierto={menuAbierto} alNavegar={() => setMenuAbierto(false)} />
+      <Sidebar
+        abierto={menuAbierto}
+        alNavegar={() => setMenuAbierto(false)}
+        contraido={menuContraido}
+        alContraer={() => setMenuContraido((v) => !v)}
+      />
       {menuAbierto && (
         <button className="velo" aria-label={t('topbar.cerrarMenu')} onClick={() => setMenuAbierto(false)} />
       )}
 
       <div className="principal">
         <Topbar titulo={titulo} alAbrirMenu={() => setMenuAbierto(true)} />
-        <BandaRuta tramos={tramos} />
+        {/* El diseño no pinta banda de ruta en Inicio: sería "Inicio > Inicio". */}
+        {pathname !== '/' && <BandaRuta tramos={tramos} />}
         <main className="contenido">
           <Outlet />
         </main>
