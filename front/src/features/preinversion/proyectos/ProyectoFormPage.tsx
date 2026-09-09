@@ -96,30 +96,95 @@ const CAMPOS_SIN_RESPALDO = [
   'Documentos adjuntos de soporte',
 ];
 
+/** `undefined` en alta; el id numérico al editar. */
+const idDeLaRuta = (id: string | undefined): number | undefined => (id ? Number(id) : undefined);
+
+/**
+ * Qué puede hacer el actor sobre este registro, según su rol y el estado del
+ * proyecto. Vive fuera del componente para que las tres reglas se lean juntas
+ * —y no sumen su complejidad a la del render, que ya es la parte pesada—.
+ */
+function permisosDelRegistro(
+  hasRole: (rol: string) => boolean,
+  esNuevo: boolean,
+  estadoActual: string | null,
+) {
+  const editable = estadoActual !== null && ESTADOS_EDITABLES.includes(estadoActual);
+  const conCup = estadoActual !== null && !ESTADOS_SIN_CUP.includes(estadoActual);
+  return {
+    puedeEditar: hasRole('TECNICO_URP') && (esNuevo || editable),
+    // CU-PRE-01.5 (Antecedentes): el Técnico PRE revisa el mismo registro desde la
+    // Bandeja Preinversión (CU-PRE-02) mientras está en ENVIADO_DGICP_REGISTRO;
+    // nunca edita los campos.
+    puedeRevisarPre: hasRole('TECNICO_PRE') && !esNuevo && estadoActual === 'ENVIADO_DGICP_REGISTRO',
+    // CU-PRE-3.5 (Selección y Registro de Etapas): aplica una vez asignado el CUP.
+    // El punto de entrada que describe el propio CU es "Captura de Proyectos"
+    // (UC-PRE-03); mientras tanto se entra desde aquí.
+    puedeIrARegistroEtapas: (hasRole('TECNICO_URP') || hasRole('COORDINADOR_SYMP')) && !esNuevo && conCup,
+  };
+}
+
+/** Campos que asigna el servidor y la pantalla sólo muestra (CU-PRE-01 §B.1). */
+interface CamposAsignados {
+  institucion?: string;
+  unidadEjecutora?: string;
+  macrosector?: string;
+  fechaIngreso?: string;
+}
+
+/**
+ * Carga el proyecto al entrar en modo edición y guarda todo lo que viene del
+ * servidor y no forma parte del formulario: estado, revisión PRE y los campos
+ * que el CU marca como "Seleccionable: No" (§B.1).
+ *
+ * Vive aparte del componente para no sumar su rama de carga a la complejidad
+ * de ProyectoFormPage, que ya es la pantalla más grande del módulo.
+ */
+function useProyectoCargado(
+  idProyecto: number | undefined,
+  reset: (valores: ProyectoFormValues) => void,
+) {
+  const { t } = useTranslation();
+  const esNuevo = idProyecto === undefined;
+
+  const [cargando, setCargando] = useState(!esNuevo);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const [estadoActual, setEstadoActual] = useState<string | null>(null);
+  const [revisionPre, setRevisionPre] = useState<ComentarioSolicitud[]>([]);
+  const [asignados, setAsignados] = useState<CamposAsignados>({});
+
+  useEffect(() => {
+    if (idProyecto === undefined) return;
+    // Sin catch, un 404 dejaba `cargando` en true y la pantalla colgada en
+    // "Cargando..." indefinidamente.
+    preinversionApi
+      .obtenerProyecto({ idProyecto })
+      .then(({ data }) => {
+        reset(proyectoToFormValues(data));
+        setEstadoActual(data.estado);
+        setRevisionPre(data.revisionPre ?? []);
+        setAsignados({
+          institucion: data.institucion?.nombre,
+          unidadEjecutora: data.unidadEjecutora?.nombre,
+          macrosector: data.sector?.macrosector?.nombre,
+          fechaIngreso: data.fechaIngreso,
+        });
+      })
+      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
+      .finally(() => setCargando(false));
+  }, [idProyecto, reset, t]);
+
+  return { cargando, errorCarga, estadoActual, setEstadoActual, revisionPre, setRevisionPre, asignados };
+}
 export function ProyectoFormPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const idProyecto = id ? Number(id) : undefined;
+  const idProyecto = idDeLaRuta(id);
   const esNuevo = idProyecto === undefined;
 
-  const [cargando, setCargando] = useState(!esNuevo);
-  const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
-  const [estadoActual, setEstadoActual] = useState<string | null>(null);
-  const [revisionPre, setRevisionPre] = useState<ComentarioSolicitud[]>([]);
-  /**
-   * Campos que el CU-PRE-01 marca como "Seleccionable: No" (§B.1): los asigna
-   * el servidor y la pantalla los muestra, no los pide. Por eso no están en
-   * ProyectoRequest y se guardan aparte de los valores del formulario.
-   */
-  const [asignados, setAsignados] = useState<{
-    institucion?: string;
-    unidadEjecutora?: string;
-    macrosector?: string;
-    fechaIngreso?: string;
-  }>({});
   const [errorRespuesta, setErrorRespuesta] = useState<string | undefined>();
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
 
@@ -138,26 +203,8 @@ export function ProyectoFormPage() {
     defaultValues: PROYECTO_FORM_DEFAULTS as ProyectoFormValues,
   });
 
-  useEffect(() => {
-    if (esNuevo || idProyecto === undefined) return;
-    // Sin catch, un 404 dejaba `cargando` en true y la pantalla colgada en
-    // "Cargando..." indefinidamente.
-    preinversionApi
-      .obtenerProyecto({ idProyecto })
-      .then(({ data }) => {
-        reset(proyectoToFormValues(data));
-        setEstadoActual(data.estado);
-        setRevisionPre(data.revisionPre ?? []);
-        setAsignados({
-          institucion: data.institucion?.nombre,
-          unidadEjecutora: data.unidadEjecutora?.nombre,
-          macrosector: data.sector?.macrosector?.nombre,
-          fechaIngreso: data.fechaIngreso,
-        });
-      })
-      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
-      .finally(() => setCargando(false));
-  }, [esNuevo, idProyecto, reset, t]);
+  const { cargando, errorCarga, estadoActual, setEstadoActual, revisionPre, setRevisionPre, asignados } =
+    useProyectoCargado(idProyecto, reset);
 
   // El monto se formatea mientras se escribe, así que se envuelve el onChange
   // que devuelve register en vez de pasarlo tal cual.
@@ -173,18 +220,11 @@ export function ProyectoFormPage() {
   const ejesPlanGobierno = useCatalogo(() => catalogoPreinversionApi.listarEjesPlanGobierno());
   const planesSectoriales = useCatalogo(() => catalogoPreinversionApi.listarPlanesSectoriales());
 
-  const puedeEditar = hasRole('TECNICO_URP') && (esNuevo || (estadoActual !== null && ESTADOS_EDITABLES.includes(estadoActual)));
-  // CU-PRE-01.5 (Antecedentes): el Técnico PRE revisa el mismo registro desde la Bandeja
-  // Preinversión (CU-PRE-02) mientras está en ENVIADO_DGICP_REGISTRO; nunca edita los campos.
-  const puedeRevisarPre = hasRole('TECNICO_PRE') && !esNuevo && estadoActual === 'ENVIADO_DGICP_REGISTRO';
-  // CU-PRE-3.5 (Selección y Registro de Etapas): aplica una vez asignado el CUP. El punto de
-  // entrada real que describe el propio CU es "Captura de Proyectos" (UC-PRE-03), que todavía no
-  // existe en este frontend; mientras tanto se entra desde aquí.
-  const puedeIrARegistroEtapas =
-    (hasRole('TECNICO_URP') || hasRole('COORDINADOR_SYMP')) &&
-    !esNuevo &&
-    estadoActual !== null &&
-    !ESTADOS_SIN_CUP.includes(estadoActual);
+  const { puedeEditar, puedeRevisarPre, puedeIrARegistroEtapas } = permisosDelRegistro(
+    hasRole,
+    esNuevo,
+    estadoActual,
+  );
 
   const regresar = async () => {
     if (isDirty) {
