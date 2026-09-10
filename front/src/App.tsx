@@ -17,6 +17,7 @@ import { EtapasPage } from './features/preinversion/etapas/EtapasPage';
 import { FichaInformacionGeneralPage } from './features/preinversion/etapas/FichaInformacionGeneralPage';
 import { FichaEmergenciaPage } from './features/preinversion/etapas/FichaEmergenciaPage';
 import { IdentificacionPage } from './features/preinversion/identificacion/IdentificacionPage';
+import { CrearCatalogoPage } from './features/administracion/catalogos/CrearCatalogoPage';
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
 
 // Módulos del sidebar aún no implementados en back — se muestran como
@@ -26,7 +27,6 @@ import { AlternativasSolucionPage } from './features/preinversion/alternativas-s
 // (administracion/convenios/ejecucion/oym/preinversion/programacion), que
 // todavía no expone endpoints REST.
 const PLACEHOLDER_PATHS = [
-  'catalogos-generales',
   'tablas-rangos',
   'usuarios',
   'programacion',
@@ -55,6 +55,7 @@ export function App() {
           >
             <Route path="/" element={<HomePage />} />
 
+            <Route path="/catalogos-generales" element={<CrearCatalogoPage />} />
             <Route path="/preinversion/bandeja" element={<BandejaPage />} />
             <Route path="/preinversion/captura" element={<CapturaPage />} />
             <Route path="/preinversion/proyectos" element={<ProyectosPage />} />

@@ -391,5 +391,34 @@
     "elaboracionDet": "Borradores sin enviar a la DGICP",
     "conCup": "Con CUP asignados",
     "conCupDet": "Listos para continuar la ruta de preinversión"
+  },
+  "administracion": {
+    "catalogos": {
+      "tituloCrear": "Crear catálogo",
+      "codigo": "Código",
+      "nombre": "Nombre",
+      "nombreEnUso": "Ya existe un catálogo con ese nombre",
+      "catalogoPadre": "Catálogo padre (código)",
+      "vigenciaDesde": "Vigente desde",
+      "vigenciaHasta": "Vigente hasta",
+      "campos": "Campos del catálogo",
+      "campoNombre": "Nombre",
+      "campoTipo": "Tipo",
+      "campoClave": "Clave",
+      "campoValores": "Valores permitidos",
+      "campoNombreNumero": "Nombre del campo {{numero}}",
+      "campoTipoNumero": "Tipo del campo {{numero}}",
+      "campoClaveNumero": "Marcar el campo {{numero}} como clave",
+      "campoValoresNumero": "Valores permitidos del campo {{numero}}",
+      "campoValoresAyuda": "Un valor por línea",
+      "agregarCampo": "Agregar campo",
+      "eliminarCampo": "Eliminar el campo {{numero}}",
+      "crear": "Crear catálogo",
+      "creado": "El catálogo se creó correctamente.",
+      "sinRespaldoTitulo": "Lo que todavía no permite el API:",
+      "sinRespaldoListar": "Ver la lista de catálogos existentes",
+      "sinRespaldoAbrir": "Abrir un catálogo para editarlo o gestionar sus registros",
+      "sinRespaldoNota": "El contrato del CU-ADM-01 no expone GET /catalogos ni GET /catalogos/{codigo}. Sin la definición de un catálogo no se pueden dibujar su ficha ni el formulario de sus registros, porque los campos los define el propio catálogo."
+    }
   }
 }
