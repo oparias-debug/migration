@@ -11,8 +11,36 @@ import './styles/base.css';
 import './i18n/i18n';
 import { App } from './App';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+/**
+ * Se canjea el refresh token ANTES de montar React.
+ *
+ * Si se hiciera dentro de un componente habría una primera pasada sin sesión, y
+ * el guardia de rutas mandaría al login antes de que llegara el token nuevo: el
+ * usuario vería el login por un instante, o se quedaría en él. Al hacerlo aquí,
+ * la aplicación arranca ya con la sesión renovada.
+ *
+ * Si el refresco falla —refresh vencido o revocado— se limpia el estado y la
+ * aplicación arranca sin sesión, que es lo correcto.
+ */
+async function arrancar() {
+  const { getAuthState, setAuthState, clearAuthState, stateFromTokens } = await import('./auth/tokenStore');
+  const { accessToken, refreshToken } = getAuthState();
+
+  if (!accessToken && refreshToken) {
+    try {
+      const { authApi } = await import('./api/authApi');
+      const tokens = await authApi.refresh(refreshToken);
+      setAuthState(stateFromTokens(tokens.access_token, tokens.refresh_token));
+    } catch {
+      clearAuthState();
+    }
+  }
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void arrancar();

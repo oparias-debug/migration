@@ -30,9 +30,21 @@ function leerDelAlmacen(): AuthState {
     const guardado = localStorage.getItem(CLAVE);
     if (!guardado) return initialState;
     const datos = JSON.parse(guardado) as AuthState;
-    // Un token vencido no sirve: se descarta para no arrancar con una sesión
-    // muerta que fallaría en la primera petición.
-    if (!datos.accessToken || tokenVencido(datos.accessToken)) return initialState;
+    if (!datos.accessToken) return initialState;
+
+    /**
+     * El access token dura 5 minutos, pero el refresh vale mucho más. Antes se
+     * descartaba TODO el estado en cuanto vencía el primero, y con él se tiraba
+     * un refresh token perfectamente válido: cualquier recarga pasados esos 5
+     * minutos echaba al usuario al login aunque su sesión siguiera viva. Ese es
+     * el "se cierra demasiado rápido" que reportó el cliente.
+     *
+     * Ahora se conserva el refresh token y se limpia sólo el access vencido;
+     * `arrancar()` en main.tsx lo canjea antes de montar la aplicación.
+     */
+    if (tokenVencido(datos.accessToken)) {
+      return datos.refreshToken ? { ...datos, accessToken: null } : initialState;
+    }
     return datos;
   } catch {
     return initialState;

@@ -50,8 +50,14 @@
   --arena:       #c9a892;   /* acento del manual */
 
   /* --- Azules del diseño (medidos) ---------------------------------------- */
-  --navy:        #002469;   /* menú del mockup, encabezado de formulario, hero */
-  --navy-2:      #00266D;   /* extremo claro del hero */
+  --navy:        #002469;   /* menú del mockup, encabezado de formulario */
+  --navy-2:      #00266D;   /* extremo claro de los degradados de marca */
+  /* Encabezado del Home. Los usuarios pidieron mantener el azul institucional
+     pero en un tono más tenue; el cliente propuso este valor como referencia
+     (mensaje del 10/09/2026). Antes era el degradado de --navy-2 a --navy. */
+  --hero:        #2F5F9E;
+  --hero-2:      #2A568F;   /* extremo oscuro, para que la banda no quede plana */
+  --hero-linea:  #3ADDFF;   /* subrayado bajo SIIP, medido sobre el diseño */
   --azul-vivo:   #0172FE;   /* HOVER y píldora activa del menú (diseño 09/09/2026) */
   --azul:        #003DB9;   /* botón primario, enlaces, foco */
   --azul-suave:  #DFEDFE;   /* tinte azul (tarjeta "En formulación") */

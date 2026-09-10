@@ -229,9 +229,14 @@ a { color: var(--azul); }
 .ruta .actual { color: var(--menu); }
 
 /* -------------------------------------------------------------------- HERO -- */
+/* Medidas tomadas del diseño del 09/09/2026 sobre un viewport de 1600: la
+   banda mide 1305 x 123, el logotipo 267 x 97 con 10 px de aire arriba, y el
+   nombre del sistema ocupa 207 de ancho, que es lo que fuerza el corte en dos
+   líneas después de "Información". Antes la banda medía 198 de alto porque el
+   logotipo iba a 369 de ancho y arrastraba el resto. */
 .hero {
-  background: linear-gradient(100deg, var(--navy-2) 0%, var(--navy) 60%, #002369 100%);
-  border-radius: var(--r2); padding: 26px 34px; min-height: 132px;
+  background: linear-gradient(100deg, var(--hero) 0%, var(--hero-2) 100%);
+  border-radius: var(--r2); padding: 13px 45px; min-height: 123px;
   display: flex; justify-content: space-between; align-items: center; gap: 24px;
   color: #fff; position: relative; overflow: hidden;
 }
@@ -247,13 +252,28 @@ a { color: var(--azul); }
 /* Diseño 09/09/2026: SIIP y el nombre completo en una línea, con divisor
    vertical entre ambos. Ya no hay "BIENVENIDO A" ni párrafo descriptivo. */
 .hero-marca { display: flex; align-items: center; gap: 26px; position: relative; z-index: 1; }
-.hero h1 { font-family: var(--tipo-titulo); font-size: 46px; line-height: 1; margin: 0; }
+.hero h1 {
+  font-family: var(--tipo-titulo); font-size: 46px; line-height: 1; margin: 0;
+  position: relative; padding-bottom: 14px;
+}
+/* Subrayado cian bajo SIIP, presente en el diseño y que faltaba. */
+.hero h1::after {
+  content: ""; position: absolute; left: 0; bottom: 0;
+  width: 60%; height: 3px; background: var(--hero-linea); border-radius: 2px;
+}
 .hero .lema {
-  color: #fff; font-size: 19px; line-height: 1.35; max-width: 290px;
+  /* 250 es el mínimo con el que corta en dos líneas —"Sistema de Información" /
+     "de Inversión Pública"— como el diseño. El diseño mide 207, pero su tipo es
+     algo más estrecho que el nuestro; se ajusta al corte, no al número. */
+  color: #fff; font-size: 19px; line-height: 1.35; max-width: 250px;
   border-left: 1px solid rgba(255,255,255,.45); padding-left: 26px;
 }
 .hero .marca { display: flex; align-items: center; gap: 33px; margin-right: 126px; position: relative; z-index: 1; }
-.hero .marca img { width: 369px; max-width: 100%; }
+/* Se fija el ALTO, no el ancho: así la banda mide siempre lo que dice el
+   diseño (97 de logotipo + 13 y 13 de aire = 123) aunque cambie la proporción
+   del archivo. El logotipo actual es algo más cuadrado que el del diseño, y
+   están pendientes de enviar los definitivos. */
+.hero .marca img { height: 97px; width: auto; max-width: 100%; }
   /* 321 px es la medida del diseño (964 ÷ 3); el cliente pidió 1.15× = 369. */
 .hero .marca .txt {
   font-family: var(--tipo-titulo); font-size: 16.5px; letter-spacing: 1.2px;
