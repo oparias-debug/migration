@@ -16,6 +16,7 @@ import { RutaPreinversionPage } from './features/preinversion/etapas/RutaPreinve
 import { EtapasPage } from './features/preinversion/etapas/EtapasPage';
 import { FichaInformacionGeneralPage } from './features/preinversion/etapas/FichaInformacionGeneralPage';
 import { FichaEmergenciaPage } from './features/preinversion/etapas/FichaEmergenciaPage';
+import { IdentificacionPage } from './features/preinversion/identificacion/IdentificacionPage';
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
 
 // Módulos del sidebar aún no implementados en back — se muestran como
@@ -73,6 +74,7 @@ export function App() {
             {/* CU-PRE-05 "Alternativas de Solución": sin entrada propia en el sidebar, mismo
                 criterio que CU-PRE-3.5 — la pestaña "Identificación del proyecto" (CU-PRE-04) que
                 enlazaría aquí todavía no existe en este frontend (ver AlternativasSolucionPage). */}
+            <Route path="/preinversion/proyectos/:id/identificacion" element={<IdentificacionPage />} />
             <Route path="/preinversion/proyectos/:id/alternativas-solucion" element={<AlternativasSolucionPage />} />
 
             {PLACEHOLDER_PATHS.map((path) => (

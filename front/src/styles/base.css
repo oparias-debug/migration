@@ -616,3 +616,24 @@ tbody tr:hover td { background: var(--azul-suave); }
   margin: 0 0 12px; padding: 9px 12px; border-radius: 4px;
   background: #FDECEC; color: #9B1C1C; font-size: 12.5px; text-align: left;
 }
+
+/* ================================================ CU-PRE-04 · IDENTIFICACIÓN ==
+   Dos bloques que no existían: la lista de objetivos específicos, que crece y
+   mengua con filas, y los dos árboles en PDF. El resto de la pantalla reutiliza
+   .formcard / .fr / .acciones-form como las demás. */
+.objetivos-especificos { border: 0; margin: 14px 0 0; padding: 0; }
+.objetivos-especificos legend {
+  font-size: 11px; font-weight: 700; color: var(--n500); letter-spacing: .3px;
+  padding: 0; margin-bottom: 6px;
+}
+.objetivo-fila { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.objetivo-fila input { flex: 1; }
+
+.arboles { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 18px; }
+.arbol-adjunto {
+  flex: 1; min-width: 260px;
+  border: 1px solid var(--n200); border-radius: var(--r2); padding: 12px 14px;
+}
+.arbol-titulo { display: block; font-size: 12px; font-weight: 700; color: var(--n700); margin-bottom: 8px; }
+.arbol-fichero { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.arbol-fichero .sin-archivo { font-size: 12px; color: var(--n500); }

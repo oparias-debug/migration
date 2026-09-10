@@ -12,7 +12,12 @@
     "no": "No",
     "noAplica": "No aplica",
     "pagina": "Página",
-    "de": "de"
+    "de": "de",
+    "guardar": "Guardar",
+    "guardando": "Guardando...",
+    "siguiente": "Siguiente",
+    "regresar": "Regresar",
+    "eliminar": "Eliminar"
   },
   "errores": {
     "validacion": "Hay campos con datos inválidos. Revise los mensajes indicados en cada campo.",
@@ -294,6 +299,27 @@
       "columnaEstado": "Estado",
       "columnaUnidadEjecutora": "Unidad Ejecutora",
       "sinRegistros": "Ningún proyecto coincide con la búsqueda."
+    },
+    "identificacion": {
+      "titulo": "Identificación del proyecto",
+      "unidadEjecutora": "Unidad Ejecutora",
+      "nombreProyecto": "Nombre del proyecto",
+      "cup": "CUP",
+      "antecedentes": "Antecedentes",
+      "problemaCentral": "Problema central",
+      "objetivoGeneral": "Objetivo general",
+      "objetivosEspecificos": "Objetivos específicos",
+      "objetivoNumero": "Objetivo específico {{numero}}",
+      "agregarObjetivo": "Agregar objetivo específico",
+      "eliminarObjetivo": "Eliminar el objetivo específico {{numero}}",
+      "arbol": {
+        "problemas": "Árbol de problemas",
+        "objetivos": "Árbol de objetivos"
+      },
+      "agregar": "Agregar",
+      "reemplazar": "Reemplazar",
+      "sinArchivo": "Sin archivo cargado",
+      "confirmarEliminarArchivo": "¿Eliminar el archivo cargado?"
     }
   },
   "app": {
