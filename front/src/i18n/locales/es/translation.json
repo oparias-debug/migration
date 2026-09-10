@@ -17,7 +17,8 @@
     "guardando": "Guardando...",
     "siguiente": "Siguiente",
     "regresar": "Regresar",
-    "eliminar": "Eliminar"
+    "eliminar": "Eliminar",
+    "editar": "Editar"
   },
   "errores": {
     "validacion": "Hay campos con datos inválidos. Revise los mensajes indicados en cada campo.",
@@ -320,6 +321,46 @@
       "reemplazar": "Reemplazar",
       "sinArchivo": "Sin archivo cargado",
       "confirmarEliminarArchivo": "¿Eliminar el archivo cargado?"
+    },
+    "presupuesto": {
+      "titulo": "Presupuesto del proyecto",
+      "periodosEstimados": "Períodos estimados para la ejecución",
+      "sinPeriodos": "Indique la cantidad de períodos y pulse Aceptar para generar las columnas.",
+      "periodo": "PERÍODO {{numero}}",
+      "colNumero": "N°",
+      "colProducto": "Producto",
+      "colTotal": "Costo total",
+      "agregarMacroactividad": "Agregar macroactividad",
+      "inversionMercado": "Inversión estimada (precios de mercado)",
+      "inversionAjustada": "Inversión estimada (precios ajustados)",
+      "resumenComponente": "Resumen presupuesto por componente",
+      "colComponente": "Componente",
+      "colCosto": "Costo",
+      "total": "Total",
+      "fuentes": "Fuente de financiamiento y de recursos",
+      "fuenteNumero": "Fuente de financiamiento {{numero}}",
+      "quitarFuente": "Quitar la fuente de financiamiento {{numero}}",
+      "agregarFuente": "Agregar fuente de financiamiento",
+      "fuenteRecursos": "Fuente de recursos",
+      "notaFuenteRecursos": "El contrato modela la fuente de recursos como texto libre: está pendiente de decidir a qué catálogo enlaza.",
+      "faltaMacroactividad": "Cada producto debe tener al menos una macroactividad. Faltan en: {{productos}}.",
+      "detalleTitulo": "Detalle de macroactividad",
+      "nombreMacroactividad": "Nombre de la macroactividad",
+      "insumoTipo": "Insumo tipo",
+      "costoInsumoPeriodo": "Costo de {{insumo}} en el período {{numero}}",
+      "totalMercado": "Total período (precio de mercado)",
+      "totalAjustado": "Total período (precio ajustado)",
+      "salir": "Salir",
+      "salirSinGuardar": "Los datos no serán guardados.",
+      "fuente": {
+        "SIN_FINANCIAMIENTO": "Sin financiamiento (S/F)",
+        "FONDO_GENERAL": "Fondo general (FGEN)",
+        "RECURSOS_PROPIOS": "Recursos propios (RPRO)",
+        "PRESTAMOS_EXTERNOS": "Préstamos externos (P.Ext)",
+        "PRESTAMOS_INTERNOS": "Préstamos internos (P.Int)",
+        "DONACIONES": "Donaciones (Don.)",
+        "OTROS": "Otros"
+      }
     }
   },
   "app": {

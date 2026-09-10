@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:bdd": "cucumber-js",
-    "generate:api": "npm run generate:api:preinversion-cu-pre-01 && npm run generate:api:preinversion-cu-pre-01.5 && npm run generate:api:preinversion-cu-pre-02 && npm run generate:api:preinversion-cu-pre-03 && npm run generate:api:preinversion-cu-pre-3.5 && npm run generate:api:preinversion-cu-pre-04 && npm run generate:api:preinversion-cu-pre-05 && npm run generate:api:administracion-cu-adm-01",
+    "generate:api": "npm run generate:api:preinversion-cu-pre-01 && npm run generate:api:preinversion-cu-pre-01.5 && npm run generate:api:preinversion-cu-pre-02 && npm run generate:api:preinversion-cu-pre-03 && npm run generate:api:preinversion-cu-pre-3.5 && npm run generate:api:preinversion-cu-pre-04 && npm run generate:api:preinversion-cu-pre-05 && npm run generate:api:preinversion-cu-pre-17 && npm run generate:api:administracion-cu-adm-01",
     "generate:api:preinversion-cu-pre-01": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-01.openapi.yaml -g typescript-axios -o src/api/generated/preinversion --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "generate:api:preinversion-cu-pre-01.5": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-01.5.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-revision-cup --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "generate:api:preinversion-cu-pre-02": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-02.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-bandeja --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
@@ -22,7 +22,8 @@
     "generate:api:preinversion-cu-pre-04": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-04.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-identificacion --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "generate:api:preinversion-cu-pre-05": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-05.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-alternativas --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "sonar": "npm run test:coverage && npx --yes @sonar/scan",
-    "generate:api:administracion-cu-adm-01": "openapi-generator-cli generate -i openapi/administracion/CU-ADM-01.openapi.yaml -g typescript-axios -o src/api/generated/administracion-catalogos --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true"
+    "generate:api:administracion-cu-adm-01": "openapi-generator-cli generate -i openapi/administracion/CU-ADM-01.openapi.yaml -g typescript-axios -o src/api/generated/administracion-catalogos --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
+    "generate:api:preinversion-cu-pre-17": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-17.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-presupuesto --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

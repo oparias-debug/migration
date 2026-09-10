@@ -5,6 +5,10 @@ import { PreinversinBandejaPreinversinApi, CatlogosPreinversinApi as CatlogosBan
 import { PreinversinCapturaDeProyectosApi } from './generated/preinversion-captura';
 import { CatlogosSeleccinYRegistroDeEtapasApi, PreinversinSeleccinYRegistroDeEtapasApi } from './generated/preinversion-etapas';
 import { PreinversinAlternativasDeSolucinApi } from './generated/preinversion-alternativas';
+import {
+  PreinversinPresupuestoDeInversinApi,
+  CatlogosPreinversinApi as CatlogosPresupuestoApi,
+} from './generated/preinversion-presupuesto';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -119,3 +123,24 @@ export type { RegistroAlternativas, RegistroAlternativasRequest, AlternativaSolu
 
 // CU-PRE-03: tipos propios de este fragmento.
 export type { ProyectoCapturaItem, ProyectosCapturaResponse } from './generated/preinversion-captura';
+
+// CU-PRE-17 (Presupuesto de Inversión): mismo recurso Proyecto y mismo basePath
+// /back, pero fragmento y módulo generado propios. El catálogo de tipos de
+// insumo va aparte porque el contrato le da su propio tag.
+export const presupuestoApi = new PreinversinPresupuestoDeInversinApi(undefined, undefined, preinversionAxios);
+export const catalogoInsumosApi = new CatlogosPresupuestoApi(undefined, undefined, preinversionAxios);
+// FuenteFinanciamiento no se reexporta desde aquí: CU-PRE-3.5 y CU-PRE-17
+// declaran el mismo enum con los mismos siete valores (comprobado), así que se
+// reutiliza el que ya salía de preinversion-etapas y se evita un alias que
+// haría pensar que son cosas distintas.
+export type {
+  Presupuesto,
+  ProductoPresupuesto,
+  Macroactividad,
+  MacroactividadInsumo,
+  MacroactividadRequest,
+  MontoPorPeriodo,
+  ComponentePresupuesto,
+  InsumoTipoResumen,
+  FuentesFinanciamientoRequest,
+} from './generated/preinversion-presupuesto';

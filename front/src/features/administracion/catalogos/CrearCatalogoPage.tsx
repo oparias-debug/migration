@@ -15,7 +15,13 @@ import {
   type CatalogoFormValues,
 } from './catalogoFormSchema';
 
-const ROL_ADMIN = 'ADMINISTRADOR_CATALOGOS';
+/**
+ * El CU llama al actor "Administrador de Catálogos", pero ese rol no existe en
+ * el realm: los definidos son ADMINISTRADOR_DEL_SISTEMA, los coordinadores y
+ * los técnicos. Se usa el que sí existe y más se le parece. Si el cliente
+ * quiere un rol propio para catálogos, hay que crearlo en Keycloak primero.
+ */
+const ROL_ADMIN = 'ADMINISTRADOR_DEL_SISTEMA';
 
 /**
  * Crear catálogo — Flujo Principal del CU-ADM-01 (§6).

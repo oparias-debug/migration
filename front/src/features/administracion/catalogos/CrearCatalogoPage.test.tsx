@@ -19,7 +19,7 @@ vi.mock('../../../api/administracionApi', async (importOriginal) => {
   };
 });
 
-let rolesActivos: string[] = ['ADMINISTRADOR_CATALOGOS'];
+let rolesActivos: string[] = ['ADMINISTRADOR_DEL_SISTEMA'];
 vi.mock('../../../auth/useAuth', () => ({
   useAuth: () => ({ hasRole: (rol: string) => rolesActivos.includes(rol) }),
 }));
@@ -42,7 +42,7 @@ function rellenarMinimo() {
 describe('CrearCatalogoPage · CU-ADM-01 flujo principal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    rolesActivos = ['ADMINISTRADOR_CATALOGOS'];
+    rolesActivos = ['ADMINISTRADOR_DEL_SISTEMA'];
     swalFire.mockResolvedValue({ isConfirmed: true });
     buscarCatalogoPorNombre.mockResolvedValue({ data: { nombre: '', existe: false } });
   });
