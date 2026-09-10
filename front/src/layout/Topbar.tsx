@@ -13,7 +13,7 @@ import { IconoColor } from '../components/Icono';
  * implementados: buscador global, favoritos, notificaciones, configuración y el
  * idioma inglés (sólo existe el diccionario en español).
  */
-export function Topbar({ titulo, alAbrirMenu }: { titulo: string; alAbrirMenu: () => void }) {
+export function Topbar({ titulo, alAbrirMenu }: Readonly<{ titulo: string; alAbrirMenu: () => void }>) {
   const { t } = useTranslation();
   const { logout, username, roles } = useAuth();
   const navigate = useNavigate();

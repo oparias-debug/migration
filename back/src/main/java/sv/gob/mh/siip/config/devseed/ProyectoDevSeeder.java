@@ -149,7 +149,7 @@ public class ProyectoDevSeeder implements DevSeeder {
      * sin tener que pasar a mano por "Solicitar CUP" → asignación → "Emitir CUP". Replica en la
      * base los mismos cambios que {@code ProyectoServiceImpl.emitirCup()} hace en Proyecto/
      * SolicitudPreinversion. Igual que ese método (y que el resto de la app hoy: es el único lugar
-     * de todo el código que llama a {@code taskService.complete}, y solo para UT_EnElaboracion),
+     * para el código que llama a {@code taskService.complete}, y solo para UT_EnElaboracion),
      * NO completa la tarea Flowable "UT_RevisionCUP" — queda pendiente en Flowable aunque el
      * proyecto ya esté en CUP_ASIGNADO en la base de datos; no es una inconsistencia introducida
      * acá, es el mismo estado en el que emitirCup() deja las cosas en producción.

@@ -32,7 +32,7 @@ export function AppLayout() {
         alContraer={() => setMenuContraido((v) => !v)}
       />
       {menuAbierto && (
-        <button className="velo" aria-label={t('topbar.cerrarMenu')} onClick={() => setMenuAbierto(false)} />
+        <button type="button" className="velo" aria-label={t('topbar.cerrarMenu')} onClick={() => setMenuAbierto(false)} />
       )}
 
       <div className="principal">

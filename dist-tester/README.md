@@ -97,6 +97,9 @@ Postgres (a menos que haya un cambio de esquema — en ese caso te lo van a avis
   Handoff).
 - **"zsh: command not found: docker":** abrí Docker Desktop primero (tiene que quedar el
   ícono de la ballena 🐳 arriba en la barra de menú) y volvé a intentar.
-- **Mac con Apple Silicon (M1/M2/M3/M4) y algo arranca muy lento o se cuelga:** es la
-  emulación de `amd64` con Rosetta 2. Si es un problema recurrente, avisá para armar también
-  una versión `arm64` de las imágenes.
+- **Mac con Apple Silicon (M1/M2/M3/M4) y algo arranca muy lento:** es la emulación de
+  `amd64` con Rosetta 2 — normal, no es un error.
+- **`docker compose pull` falla con `no matching manifest for linux/arm64/v8`:** el
+  `docker-compose.yml` que tenés es una versión vieja, de antes de fijar `platform:
+  linux/amd64` en los servicios `back`/`api-gateway`/`front`/`keycloak` (las imágenes solo
+  existen para `amd64`). Pedí que te reenvíen la carpeta `dist-tester/` actualizada.

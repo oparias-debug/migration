@@ -64,7 +64,7 @@ export function ProyectosPage() {
   const [pagina, setPagina] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [cargando, setCargando] = useState(true);
-  // Un fallo del listado no puede verse igual que un listado vacío: sin esto,
+  // Un error_ del listado no puede verse igual que un listado vacío: sin esto,
   // un 500 se renderiza como "no hay registros".
   const [error, setError] = useState<string | null>(null);
   // `estado` es el ÚNICO filtro del contrato. Los demás del diseño (texto,
@@ -119,8 +119,8 @@ export function ProyectosPage() {
       // Se recarga la página actual: el registro "deja de aparecer" en la
       // bandeja, que es justo lo que pide el escenario.
       cargar(pagina);
-    } catch (fallo) {
-      const apiError = toErrorApi(fallo);
+    } catch (error_) {
+      const apiError = toErrorApi(error_);
       // 'conflicto' es el 409 del contrato: RN 4, ya solicitó el CUP. El motivo
       // concreto importa más que el texto genérico de error.
       Swal.fire({

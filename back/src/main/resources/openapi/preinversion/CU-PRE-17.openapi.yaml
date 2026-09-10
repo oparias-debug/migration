@@ -9,7 +9,7 @@ info:
     Técnico PRE. Introduce el recurso `Presupuesto`, hijo de `Proyecto`.
 
     Reutiliza `ProductoSeleccionado` y `TipoCostoResumen` de
-    CU-PRE-3.5.openapi.yaml (el "Componente" de este CU, usado en el
+    CU-PRE-03.5.openapi.yaml (el "Componente" de este CU, usado en el
     Resumen presupuesto por componente, tiene la misma nota "sujeto a
     actualización por parte de la DGICP" que el catálogo ya vinculado en
     CU-PRE-11 — refuerza esa decisión anterior).
@@ -25,11 +25,11 @@ info:
     del Dominio entre 3 alternativas); se modela como `string` libre.
 
     Este fragmento provoca una actualización retroactiva de
-    CU-PRE-3.5.openapi.yaml: sus campos `fuentesFinanciamiento`/
+    CU-PRE-03.5.openapi.yaml: sus campos `fuentesFinanciamiento`/
     `fuenteRecursos` de `FichaEmergenciaRequest`/`FichaEmergencia` (que
     apuntaban a "CU-PRE-17, no procesado todavía") ahora referencian
     `FuenteFinanciamiento` de este archivo vía `$ref` externo — ver
-    contrato-CU-PRE-3.5.md (actualizado) y contrato-CU-PRE-17.md.
+    contrato-CU-PRE-03.5.md (actualizado) y contrato-CU-PRE-17.md.
 
 paths:
 
@@ -248,7 +248,7 @@ paths:
         con escenario BDD dedicado que usa la palabra "exige", a diferencia
         del resto de validaciones de "campos pendientes" de esta serie, que
         son solo visuales); (2) actualiza automáticamente el campo "Costo
-        etapa" de la fila EJECUCION en CU-PRE-3.5 (RN15) con el valor total
+        etapa" de la fila EJECUCION en CU-PRE-03.5 (RN15) con el valor total
         de inversión a precios de mercado — efecto secundario documentado,
         sin endpoint propio expuesto aquí.
       tags: [Preinversión - Presupuesto de Inversión]
@@ -394,7 +394,7 @@ paths:
       description: >
         El propio CU aclara: "Este catálogo estará sujeto a actualización
         por parte de la DGICP" (mismo tipo de nota que "Tipo de Costos" en
-        CU-PRE-3.5) — administrado, requiere endpoint propio, a diferencia
+        CU-PRE-03.5) — administrado, requiere endpoint propio, a diferencia
         de catálogos fijos modelados como `enum` en este mismo fragmento
         (`FuenteFinanciamiento`).
       tags: [Catálogos Preinversión]
@@ -551,7 +551,7 @@ components:
           type: integer
           description: Consecutivo del producto (RN08); usado como `idProducto` en los paths de este fragmento.
         producto:
-          $ref: './CU-PRE-3.5.openapi.yaml#/components/schemas/ProductoSeleccionado'
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/ProductoSeleccionado'
         macroactividades:
           type: array
           items:
@@ -587,7 +587,7 @@ components:
       required: [componente, costo]
       properties:
         componente:
-          $ref: './CU-PRE-3.5.openapi.yaml#/components/schemas/TipoCostoResumen'
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/TipoCostoResumen'
         costo:
           type: number
           format: double

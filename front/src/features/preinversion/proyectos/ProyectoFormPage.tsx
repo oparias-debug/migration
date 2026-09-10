@@ -133,7 +133,7 @@ interface CamposAsignados {
 }
 
 /**
- * Carga el proyecto al entrar en modo edición y guarda todo lo que viene del
+ * Carga el proyecto al entrar en modo edición y guarda lo que viene del
  * servidor y no forma parte del formulario: estado, revisión PRE y los campos
  * que el CU marca como "Seleccionable: No" (§B.1).
  *
@@ -254,11 +254,11 @@ export function ProyectoFormPage() {
     // realmente en pantalla. tipoEvento y numeroDecretoLegislativo únicamente
     // se renderizan con "Proyecto de emergencia" marcado: si el back envía un
     // error sobre ellos estando oculto, marcar el campo no lo haría visible.
-    const camposVisibles = Object.keys(PROYECTO_FORM_DEFAULTS).filter(
+    const camposVisibles = new Set(Object.keys(PROYECTO_FORM_DEFAULTS).filter(
       (campo) =>
         getValues('esProyectoEmergencia') || !['tipoEvento', 'numeroDecretoLegislativo'].includes(campo),
-    );
-    const marcados = Object.entries(porCampo).filter(([campo]) => camposVisibles.includes(campo));
+    ));
+    const marcados = Object.entries(porCampo).filter(([campo]) => camposVisibles.has(campo));
 
     marcados.forEach(([campo, mensaje]) => {
       setError(campo as keyof ProyectoFormValues, { type: 'server', message: mensaje });
@@ -269,7 +269,7 @@ export function ProyectoFormPage() {
 
     // Lo que no pudo pintarse sobre un campo se muestra arriba, con su texto:
     // así un detalle sobre un campo oculto no se pierde en silencio.
-    const sobrantes = Object.entries(porCampo).filter(([campo]) => !camposVisibles.includes(campo));
+    const sobrantes = Object.entries(porCampo).filter(([campo]) => !camposVisibles.has(campo));
     if (marcados.length === 0 || sobrantes.length > 0) {
       const detalleSobrante = sobrantes.map(([, mensaje]) => mensaje).join(' ');
       const texto = [mensajeDeError(error, t), detalleSobrante].filter(Boolean).join(' ');

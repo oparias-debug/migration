@@ -4,6 +4,8 @@ Esta guía es para quien recibe un `.feature` (Gherkin) y un `.openapi.yaml` y t
 
 Para entender **por qué** el proyecto está armado así (microservicios, Flowable), ver **[README.md](./README.md)**. Para levantar el stack en tu máquina, ver **[SETUP.md](./SETUP.md)**. Para la mecánica de generación de código (OpenAPI → Java/TypeScript) y cómo están organizadas las pruebas, ver **[REFERENCE.md](./REFERENCE.md)**. Esta guía asume que ya tenés el stack levantado y se enfoca solo en **cómo agregar tu CU**.
 
+Esta guía cubre las convenciones compartidas y la parte de `back`. Para la parte de `front`, ver **[CONTRIBUTING-front.md](./CONTRIBUTING-front.md)**.
+
 ## TL;DR
 
 1. Recibiste `back/src/test/resources/features/CU-XX-....feature` + `back/src/main/resources/openapi/<dominio>/CU-XX.openapi.yaml` (o los creaste vos siguiendo el patrón).
@@ -19,6 +21,8 @@ Para entender **por qué** el proyecto está armado así (microservicios, Flowab
 - Mirá `preinversion`/CU-PRE-01 como referencia completa de punta a punta: `back/src/main/resources/openapi/preinversion/CU-PRE-01.openapi.yaml`, `back/src/main/java/sv/gob/mh/siip/controller/PreinversionController.java`, `back/src/test/java/sv/gob/mh/siip/bdd/steps/preinversion/`, `front/src/api/preinversionApi.ts`, `front/src/features/preinversion/proyectos/`.
 - El `.feature` y el `.openapi.yaml` que te entregan son el contrato ya acordado — no los reinterpretes ni les cambies el alcance por tu cuenta. Si algo del contrato no te cierra o te parece incompleto, avisá antes de implementar (escribile a david@magnaperitia.com); no lo resuelvas a tu criterio en el código, porque el `.feature`/`.openapi.yaml` también existe en el otro módulo (back o front) y quedarían desincronizados.
 - Si un término del `.feature` (un rol, una sigla, un estado) no te queda claro, revisá primero [GLOSSARY.md](./GLOSSARY.md) antes de preguntar — es el glosario acordado con negocio.
+- Evita usar la palabra todo en los comentarios del codigo para que Sonarqube no lo confunda con TODO que es un por hacer.
+- Recuerda siempre documentar todo tu codigo respetando el javadoc, para que se pueda entender.
 
 ## Qué podés tocar y qué no
 
@@ -26,14 +30,14 @@ Para entender **por qué** el proyecto está armado así (microservicios, Flowab
 - Tu `.feature` (si te toca escribirlo) y su copia idéntica en el otro módulo.
 - Tu `.openapi.yaml` y su copia idéntica en el otro módulo.
 - El `@RestController`/`Service`/`Repository` de tu dominio en `back`.
-- Tu wrapper `<dominio>Api.ts` y tu pantalla en `front/src/features/<dominio>/`.
 - Los steps de Cucumber de tu dominio en `back/src/test/java/.../bdd/steps/<dominio>/`.
 
 🚫 No toques:
-- Código generado: `back/target/generated-sources/`, `front/src/api/generated/`. Se regenera solo; si lo editás a mano, se pierde en el próximo build.
+- Código generado: `back/target/generated-sources/`. Se regenera solo; si lo editás a mano, se pierde en el próximo build.
 - `.feature`/`.openapi.yaml` de otros dominios/CUs.
 - `RunCucumberTest.java` y `CucumberSpringConfiguration.java` — recogen los steps automáticamente, no necesitan cambios.
-- El `httpClient.ts` genérico del front — cada wrapper de dominio instancia el cliente generado con `createHttpClient('/back')` propio (ver nota en `preinversionApi.ts`); no reutilices el `httpClient` genérico, porque el cliente generado ignora su `basePath` si el axios que recibe ya trae `baseURL` distinto.
+
+Para lo que podés/no podés tocar en `front`, ver **[CONTRIBUTING-front.md](./CONTRIBUTING-front.md)**.
 
 ## Convención de branches y commits
 
@@ -78,23 +82,7 @@ Los `.feature` son la **especificación funcional** (qué debe hacer el sistema,
 
 ## Parte 2 — Frontend (`front`)
 
-1. **Copiá el mismo `.feature`** (sin modificarlo) a `front/features/`. Es la misma especificación que ya cumplió el back — le sirve al front como guía de qué pantallas/mensajes/validaciones implementar.
-2. **Copiá el `.openapi.yaml`** actualizado del back a `front/openapi/<dominio>/CU-XX.openapi.yaml` (idéntico al de `back/src/main/resources/openapi/`).
-3. Generá el cliente TypeScript:
-   ```
-   npm run generate:api
-   ```
-   (para un dominio nuevo, agregá antes un script `generate:api:<dominio>` en `front/package.json`, análogo al existente, apuntando a `openapi/<dominio>/CU-XX.openapi.yaml` y `-o src/api/generated/<dominio>`).
-4. Creá (o extendé) el wrapper `front/src/api/<dominio>Api.ts`: instanciá las clases generadas (una por `tag` del yaml) pasándoles `createHttpClient('/back')`. Reexportá ahí los tipos (`Dto`s) que la UI necesite.
-5. Implementá la pantalla/componente en `front/src/features/<dominio>/<caso-de-uso>/`, siguiendo el patrón de `features/preinversion/proyectos/`: `react-hook-form` + un schema `zod` en `<algo>FormSchema.ts`, reutilizando los componentes genéricos de `src/components/form/` (`FormRow`, `DatePickerInput`) y `src/components/table/` (`DataTable`, `Pagination`) donde aplique.
-6. Conectá la ruta/menú si hace falta (reemplazando el placeholder "🚧 Página en Construcción" del módulo correspondiente en el sidebar/routing).
-7. Escribí los tests junto al componente (`*.test.tsx`, Vitest + React Testing Library), cubriendo al menos el camino feliz y las validaciones descritas en el `.feature`. Si el equipo decide automatizar el `.feature` con `cucumber-js`, los steps van en `front/features/step_definitions/<dominio>/`.
-8. Validá todo:
-   ```
-   npm run lint
-   npm run test
-   npm run build
-   ```
+Ver **[CONTRIBUTING-front.md](./CONTRIBUTING-front.md)**.
 
 ## Reglas de Gherkin a respetar
 
@@ -142,13 +130,14 @@ El servidor de SonarQube (servicio `sonarqube` en `docker-compose.yml`) debe est
 ```
 
 # back + api-gateway (un solo proyecto Sonar, siip-back), desde la raíz:
-$env:SONAR_TOKEN = "sqa_6176305216ad061a233a3bd0941fb7e69a6d984f"
+$env:SONAR_TOKEN = "$((Get-Content .env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
 
 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
 
 # front (proyecto siip-front separado):
 cd front
 npm run generate:api
+$env:SONAR_TOKEN = "$((Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
 npm run sonar
 ```
 

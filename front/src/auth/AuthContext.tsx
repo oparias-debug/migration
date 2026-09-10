@@ -12,7 +12,7 @@ interface AuthContextValue extends AuthState {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const state = useSyncExternalStore(subscribeAuthState, getAuthState);
 
   const login = useCallback(async (username: string, password: string) => {

@@ -1,0 +1,59 @@
+
+
+catalogMaster   :   catalog
+                :   catalogMaster ';'  catalog
+catalog         :   'CATALOG' code name  parent  active valid '(' fields ')'
+code            :    STRING
+name            :    STRING
+parent          :
+                :   'PARENT'  code
+active          :   'ACTIVE'
+                :   'INACTIVE'
+valid           :
+                :   DATE
+                :   ':'   DATE
+                :   DATE  ':' DATE
+fields          :   field
+                :   fields ';' field
+field           :   head  name  type valid
+head            :   'FIELD'
+                :   'KEY'
+type            :   'NUMBER' '{' NUMBER ':'  NUMBER '}'
+                :   'STRING' '{'  NUMBER  '}'
+                :   'DATE'   '{'  DATE  ':'  DATE '}'
+                :   'ENUM'   '{'  enumList '}'
+enumList        :    STRING
+                :    enumList ','  STRING
+
+
+Where    STRING,  NUMBER and DATE    are terminals
+and  the following rules
+1. A catalog stores a set of records, each record containing a value for each of the fields defined for the catalog. Each record holds the rules of the catalog
+2. A catalog has to have at least one KEY field
+3. The fields of a catalog have to have a different name
+3. A catalog can be searched for a specific record, by providing its key value,  and a set of fields of the record, each field identified by its name.
+   The search returns a set with the values of the requested fields of the searched record.
+   If no list of fields is provided the search returns the value of the first non  KEY field of the record
+   If no record exists with the specified KEY an error must be reported
+   If no field exists with the provided name an error must be reported
+4. A catalog can be searched for a list of its records, by not providing any KEY field and a list of field names.  It returns the list of the values of each field, for the searched records
+   If no list of fields is provided the search return the value of the first non KEY field of all the records in the list
+5. The catalogMaster can be searched to find if a catalog with a specific name is defined
+6. A new catalog can be created by providing all the required fields of the catalog
+7. A new record can be created by providing all the values for each of the fields of the catalog
+8. The inactivation flag can be set in two ways:
+   a) By setting the ACTIVE flag to INACTIVE.
+      This  automatically sets the TO DATE to the current date (the TO DATE is the DATE that follows the ':' terminal in the valid grammar production
+   b) By setting the TO DATE to the current date, or a date in the past
+9.  A catalog can not be deleted, it can only be inactivated
+10. A catalog record can not be deleted, only can be inactivated
+11. If the valid flag of a catalog is set to INACTIVE, the catalog will return INACTIVE for all of the records of a search on the catalog
+12. If no dates are provided for the valid dates of the catalog or a record, the valid flag of the corresponding catalog/record is set to ACTIVE
+13. If the TO DATE of a catalog/record is set to a date in the past, the valid flag of the catalog/record is set to INACTIVE
+14. A catalog parent can be searched for its children catalogs. It returns a list of {catalog code, catalog name} for all the children catalogs
+15. Any non KEY field of a catalog record can be updated. Its KEY field can not be updated
+16. The name, parent, active, valid descriptors of a catalog can be updated but its code can not be updated
+17. A catalog must have at least a field defined
+18. The field descriptors of a catalog can only be updated if the catalog does not contain records
+
+

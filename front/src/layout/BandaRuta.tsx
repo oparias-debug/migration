@@ -10,7 +10,7 @@ export interface Tramo {
   literal?: boolean;
 }
 
-export function BandaRuta({ tramos }: { tramos: Tramo[] }) {
+export function BandaRuta({ tramos }: Readonly<{ tramos: Tramo[] }>) {
   const { t } = useTranslation();
   return (
     <nav className="ruta" aria-label={t('ruta.migas')}>

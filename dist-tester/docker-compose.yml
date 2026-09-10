@@ -5,6 +5,7 @@
 services:
   back:
     image: ${IMAGE_REGISTRY}/siip-back:${IMAGE_TAG}
+    platform: linux/amd64
     container_name: siip-back
     expose:
       - "8081"
@@ -24,6 +25,7 @@ services:
 
   api-gateway:
     image: ${IMAGE_REGISTRY}/siip-api-gateway:${IMAGE_TAG}
+    platform: linux/amd64
     ports:
       - "8080:8080"
     environment:
@@ -40,6 +42,7 @@ services:
 
   front:
     image: ${IMAGE_REGISTRY}/siip-front:${IMAGE_TAG}
+    platform: linux/amd64
     container_name: siip-front
     environment:
       GATEWAY_URL: ${GATEWAY_INTERNAL_URL}
@@ -73,6 +76,7 @@ services:
 
   keycloak:
     image: ${IMAGE_REGISTRY}/siip-keycloak:${IMAGE_TAG}
+    platform: linux/amd64
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin

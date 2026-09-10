@@ -64,9 +64,9 @@ export function BandejaPage() {
           setTotalElementos(data.paginacion.totalElementos);
           setPagina(data.paginacion.pagina);
         }
-      } catch (fallo) {
+      } catch (error_) {
         setActivas([]); setArchivadas([]); setConteo([]); setTotalPaginas(0);
-        setError(mensajeDeError(toErrorApi(fallo), t));
+        setError(mensajeDeError(toErrorApi(error_), t));
       } finally {
         setCargando(false);
       }
@@ -90,8 +90,8 @@ export function BandejaPage() {
       await bandejaApi.asignarTecnicoPre({ idSolicitud, asignacionTecnicoPreRequest: { idTecnicoAsignado: Number(seleccion) } });
       setEditando(null); setSeleccion('');
       await cargar(pagina);
-    } catch (fallo) {
-      Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(fallo), t) });
+    } catch (error_) {
+      Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
     }
   };
 
@@ -107,8 +107,8 @@ export function BandejaPage() {
     try {
       await bandejaApi.archivarSolicitud({ idSolicitud: s.idSolicitud });
       await cargar(pagina);
-    } catch (fallo) {
-      Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(fallo), t) });
+    } catch (error_) {
+      Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
     }
   };
 

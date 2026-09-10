@@ -45,9 +45,9 @@ export function CapturaPage() {
   const [busqueda, setBusqueda] = useState('');
   const [cup, setCup] = useState('');
   const [nombreProyecto, setNombreProyecto] = useState('');
-  const [iniciativaInversion, setIniciativa] = useState<IniciativaInversion | ''>('');
+  const [iniciativaInversion, setIniciativaInversion] = useState<IniciativaInversion | ''>('');
   const [estado, setEstado] = useState<EstadoProyecto | ''>('');
-  const [idUnidadEjecutora, setUnidad] = useState<number | ''>('');
+  const [idUnidadEjecutora, setIdUnidadEjecutora] = useState<number | ''>('');
 
   const cargar = useCallback(
     async (paginaSolicitada: number) => {
@@ -68,9 +68,9 @@ export function CapturaPage() {
         setTotalPaginas(data.paginacion.totalPaginas);
         setTotalElementos(data.paginacion.totalElementos);
         setPagina(data.paginacion.pagina);
-      } catch (fallo) {
+      } catch (error_) {
         setProyectos([]); setTotalPaginas(0);
-        setError(mensajeDeError(toErrorApi(fallo), t));
+        setError(mensajeDeError(toErrorApi(error_), t));
       } finally {
         setCargando(false);
       }
@@ -89,7 +89,7 @@ export function CapturaPage() {
 
   const limpiar = () => {
     setTexto(''); setBusqueda(''); setCup(''); setNombreProyecto('');
-    setIniciativa(''); setEstado(''); setUnidad('');
+    setIniciativaInversion(''); setEstado(''); setIdUnidadEjecutora('');
   };
 
   const unidadesVisibles = unidades.length > 0
@@ -133,7 +133,7 @@ export function CapturaPage() {
           </div>
           <div className="campo">
             <label htmlFor="f-ini">{t('preinversion.captura.columnaIniciativa')}</label>
-            <select id="f-ini" value={iniciativaInversion} onChange={(e) => setIniciativa(e.target.value as IniciativaInversion | '')}>
+            <select id="f-ini" value={iniciativaInversion} onChange={(e) => setIniciativaInversion(e.target.value as IniciativaInversion | '')}>
               <option value="">{t('preinversion.registro.filtroTodos')}</option>
               {INICIATIVAS.map((i) => <option key={i} value={i}>{formatIniciativa(i)}</option>)}
             </select>
@@ -147,7 +147,7 @@ export function CapturaPage() {
           </div>
           <div className="campo">
             <label htmlFor="f-ue">{t('preinversion.captura.columnaUnidadEjecutora')}</label>
-            <select id="f-ue" value={idUnidadEjecutora} onChange={(e) => setUnidad(e.target.value ? Number(e.target.value) : '')}>
+            <select id="f-ue" value={idUnidadEjecutora} onChange={(e) => setIdUnidadEjecutora(e.target.value ? Number(e.target.value) : '')}>
               <option value="">{t('preinversion.registro.filtroTodos')}</option>
               {unidadesVisibles.map((u) => <option key={u.idUnidadEjecutora} value={u.idUnidadEjecutora}>{u.nombre}</option>)}
             </select>

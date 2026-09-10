@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
 // Equivalente a SesionInterceptor.java: sin token, redirige a /login.
-export function RequireAuth({ children }: { children: ReactNode }) {
+export function RequireAuth({ children }: { readonly children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 

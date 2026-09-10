@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../auth/useAuth';
 import { bandejaApi, tecnicosPreApi } from '../../../api/bandejaPreinversionApi';
@@ -13,7 +13,7 @@ export const rutaCaso = (solicitud: Pick<Fila, 'tipoSolicitud' | 'idProyecto'>) 
   : `/preinversion/opinion-tecnica/${solicitud.idProyecto}`;
 const fecha = (value: string) => new Date(value).toLocaleDateString('es-SV', { timeZone: 'America/El_Salvador' });
 
-export function BandejaPreinversionPage({ archivadas = false }: { archivadas?: boolean }) {
+export function BandejaPreinversionPage({ archivadas = false }: { readonly archivadas?: boolean }) {
   const { hasRole } = useAuth();
   const coordinador = hasRole('COORDINADOR_PRE');
   const permitido = coordinador || (!archivadas && hasRole('TECNICO_PRE'));
@@ -103,37 +103,43 @@ export function BandejaPreinversionPage({ archivadas = false }: { archivadas?: b
       onChange={e => { setTipo(e.target.value as TipoSolicitud | ''); setPagina(0); }}>
       <option value="">Todas</option><option value="CUP">CUP</option><option value="OPINION_TECNICA">Opinión Técnica</option>
     </select>
-    {error && <div role="alert" className="alert alert-danger">{error} <button onClick={() => void cargar()}>Reintentar</button></div>}
-    {aviso && <div role="status" className="alert alert-success">{aviso}</div>}
-    {cargando ? <p role="status">Cargando solicitudes…</p> : <div className="table-responsive">
+    {error && <div role="alert" className="alert alert-danger">{error} <button type="button" onClick={() => void cargar()}>Reintentar</button></div>}
+    {aviso && <output className="alert alert-success d-block">{aviso}</output>}
+    {cargando ? <output>Cargando solicitudes…</output> : <div className="table-responsive">
       <table className="table table-striped align-middle bandeja-pre">
         <thead><tr>{['Unidad Ejecutora', 'Tipo de Solicitud', 'CUP', 'Nombre del Proyecto', 'Fecha de Solicitud',
           archivadas ? 'Estado de la solicitud' : 'Estado', archivadas ? 'Fecha de Archivo' : 'Asignado a']
           .map(c => <th key={c} scope="col">{c}</th>)}</tr></thead>
         <tbody>{filas.map(s => {
           const activa = 'estado' in s ? s : undefined;
+          let estadoTexto: string;
+          if (!activa) estadoTexto = 'Archivado';
+          else estadoTexto = activa.estado === 'OBSERVADO_DGICP_REGISTRO' ? 'Observado DGICP' : 'Enviado a DGICP';
+          let asignadoContenido: ReactNode;
+          if (!activa) asignadoContenido = 'fechaArchivo' in s ? fecha(s.fechaArchivo) : '';
+          else if (!coordinador) asignadoContenido = activa.asignadoA?.nombreCompleto ?? 'Sin asignar';
+          else asignadoContenido = <div className="d-flex gap-2">
+            <select aria-label={`Asignado a ${s.nombreProyecto}`} className="form-select" disabled={ocupado}
+              value={seleccion[s.idSolicitud] ?? String(activa.asignadoA?.idUsuario ?? '')}
+              onChange={e => setSeleccion(prev => ({ ...prev, [s.idSolicitud]: e.target.value }))}>
+              <option value="">Sin asignar</option>
+              {activa.asignadoA && !tecnicos.some(t => t.idUsuario === activa.asignadoA?.idUsuario) &&
+                <option value={activa.asignadoA.idUsuario}>{activa.asignadoA.nombreCompleto}</option>}
+              {tecnicos.map(t => <option key={t.idUsuario} value={t.idUsuario}>{t.nombreCompleto}</option>)}
+            </select>
+            <button type="button" className="btn btn-primary" disabled={ocupado || !seleccion[s.idSolicitud] ||
+              seleccion[s.idSolicitud] === String(activa.asignadoA?.idUsuario ?? '')}
+              onClick={() => void actuar(activa, false)}>Guardar</button>
+          </div>;
           return <tr key={s.idSolicitud}>
             <td>{s.unidadEjecutora.nombre}</td><td>{s.tipoSolicitud === 'CUP' ? 'CUP' : 'Opinión Técnica'}</td>
             <td>{s.cup ?? ''}</td><td className="nombre-solicitud">
-              {coordinador && activa && <button className="btn btn-outline-secondary btn-sm archivar me-2" disabled={ocupado}
+              {coordinador && activa && <button type="button" className="btn btn-outline-secondary btn-sm archivar me-2" disabled={ocupado}
                 aria-label={`Archivar ${s.nombreProyecto}`} onClick={() => void actuar(activa, true)}>Archivar</button>}
               {!coordinador && activa ? <Link to={rutaCaso(s)}>{s.nombreProyecto}</Link> : s.nombreProyecto}
             </td><td>{fecha(s.fechaSolicitud)}</td>
-            <td>{activa ? (activa.estado === 'OBSERVADO_DGICP_REGISTRO' ? 'Observado DGICP' : 'Enviado a DGICP') : 'Archivado'}</td>
-            <td>{activa ? coordinador ? <div className="d-flex gap-2">
-              <select aria-label={`Asignado a ${s.nombreProyecto}`} className="form-select" disabled={ocupado}
-                value={seleccion[s.idSolicitud] ?? String(activa.asignadoA?.idUsuario ?? '')}
-                onChange={e => setSeleccion(prev => ({ ...prev, [s.idSolicitud]: e.target.value }))}>
-                <option value="">Sin asignar</option>
-                {activa.asignadoA && !tecnicos.some(t => t.idUsuario === activa.asignadoA?.idUsuario) &&
-                  <option value={activa.asignadoA.idUsuario}>{activa.asignadoA.nombreCompleto}</option>}
-                {tecnicos.map(t => <option key={t.idUsuario} value={t.idUsuario}>{t.nombreCompleto}</option>)}
-              </select>
-              <button className="btn btn-primary" disabled={ocupado || !seleccion[s.idSolicitud] ||
-                seleccion[s.idSolicitud] === String(activa.asignadoA?.idUsuario ?? '')}
-                onClick={() => void actuar(activa, false)}>Guardar</button>
-            </div> : activa.asignadoA?.nombreCompleto ?? 'Sin asignar'
-              : 'fechaArchivo' in s ? fecha(s.fechaArchivo) : ''}</td>
+            <td>{estadoTexto}</td>
+            <td>{asignadoContenido}</td>
           </tr>;
         })}</tbody>
       </table>{!filas.length && !error && <p>No hay solicitudes para mostrar.</p>}
