@@ -76,11 +76,19 @@
   display: block;
   margin: 0 auto 22px;
 }
+/* "SIIP | Sistema de Información de Inversión Pública" en texto, en el mismo
+   hueco que ocupaba el PNG (246 de ancho) para no mover el resto del login. */
 .login-siip {
-  width: 246px;
-  max-width: 100%;
-  display: block;
-  margin: 0 auto 30px;
+  width: 246px; max-width: 100%; margin: 0 auto 30px;
+  display: flex; align-items: center; gap: 12px; color: #111;
+}
+.login-siip .sigla {
+  font-family: var(--tipo-titulo); font-size: 44px; font-weight: 700;
+  line-height: 1; letter-spacing: -.5px;
+}
+.login-siip .nombre {
+  font-size: 12.5px; line-height: 1.3; text-align: left;  /* la tarjeta centra; el logotipo no */
+  border-left: 1px solid currentColor; padding-left: 12px;
 }
 
 /* ------------------------------------------------------------------ CAMPOS -- */

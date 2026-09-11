@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import minLogo from '../assets/img/min-logo-gob-el-salvador-negro.png';
-import logoSiip from '../assets/img/logo-siip-negro.png';
 import '../styles/login.css';
 
 /**
@@ -57,7 +56,15 @@ export function LoginPage() {
 
       <main className="login-tarjeta">
         <img className="login-marca" src={minLogo} alt="Gobierno de El Salvador · Ministerio de Hacienda" />
-        <img className="login-siip" src={logoSiip} alt="SIIP · Sistema de Información de Inversión Pública" />
+        {/* El PNG oficial del logotipo dice "Sistema Integrado de Inversión Pública",
+            que no es el nombre del sistema (pasa en la variante negra y en la blanca).
+            Hasta que el cliente envíe los logotipos corregidos se pinta el mismo
+            bloque con texto, como el encabezado de Inicio, en vez de retocar la
+            imagen oficial. */}
+        <div className="login-siip">
+          <span className="sigla">SIIP</span>
+          <span className="nombre">{t('app.nombre')}</span>
+        </div>
 
         <form onSubmit={handleSubmit} noValidate>
             {error && (

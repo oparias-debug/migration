@@ -19,10 +19,18 @@ const montar = () => render(<MemoryRouter><LoginPage /></MemoryRouter>);
 describe('LoginPage', () => {
   beforeEach(() => { login.mockReset(); navigate.mockReset(); });
 
-  it('muestra los logotipos oficiales del Ministerio y del SIIP', () => {
+  it('muestra el logotipo del Ministerio y el nombre correcto del sistema', () => {
     montar();
     expect(screen.getByAltText(/Ministerio de Hacienda/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/Sistema de Información de Inversión Pública/i)).toBeInTheDocument();
+    expect(screen.getByText('SIIP')).toBeInTheDocument();
+    expect(screen.getByText('Sistema de Información de Inversión Pública')).toBeInTheDocument();
+  });
+
+  // El PNG oficial del logotipo decía "Sistema Integrado de Inversión Pública".
+  // Se sustituyó por texto; esto evita que el nombre equivocado vuelva a colarse.
+  it('no muestra el nombre equivocado "Sistema Integrado"', () => {
+    const { container } = montar();
+    expect(container.textContent).not.toMatch(/Integrado/i);
   });
 
   it('entra con usuario y contraseña', async () => {
