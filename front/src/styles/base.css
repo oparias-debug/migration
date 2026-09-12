@@ -38,6 +38,10 @@ a { color: var(--azul); }
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  /* El menú acompaña al encabezado: queda a la vista y es su propio ítem
+     marcado el que dice dónde estás. `.menu-nav` ya tiene overflow propio, así
+     que si la lista no cabe se desplaza sola sin arrastrar la página. */
+  position: sticky; top: 0; height: 100vh;
 }
 .menu-marca {
   padding: 21px 14px 16px;
@@ -166,10 +170,15 @@ a { color: var(--azul); }
 .menu-plegar:hover { color: #fff; }
 
 /* ---------------------------------------------------------- BARRA SUPERIOR -- */
+/* La usuaria pidió (reunión del 11/09/2026) que el encabezado quede a la vista
+   al desplazarse, para saber siempre en qué parte del sistema está. Se hace con
+   `sticky` y no con `fixed` para no sacar la barra del flujo: así conserva su
+   alto y no hay que compensar el contenido con un margen. */
 .topbar {
   background: #fff; border-bottom: 1px solid var(--n200);
   padding: 0 24px; height: var(--topbar-alto);
   display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+  position: sticky; top: 0; z-index: 30;
 }
 .hamburguesa { background: none; border: 0; font-size: 20px; cursor: pointer; color: var(--menu); padding: 4px 6px; }
 .hamburguesa:hover { color: var(--azul); }
@@ -219,6 +228,9 @@ a { color: var(--azul); }
 .ruta {
   background: #fff; border-bottom: 1px solid var(--n200); padding: 9px 24px;
   display: flex; align-items: center; gap: 7px; overflow-x: auto; white-space: nowrap;
+  /* Va pegada bajo la barra superior: juntas forman el encabezado que queda
+     fijo, con la miga indicando la pantalla. */
+  position: sticky; top: var(--topbar-alto); z-index: 29;
 }
 .ruta a, .ruta span {
   font-size: 11px; font-weight: 700; letter-spacing: .7px;
