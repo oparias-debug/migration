@@ -6,6 +6,7 @@ import type { ProyectoCapturaItem, UnidadEjecutoraResumen } from '../../../api/p
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { Pagination } from '../../../components/table/Pagination';
 import { formatEstado, formatIniciativa } from '../proyectos/proyectoLabels';
+import { formatNombreEtapa } from '../etapas/etapasLabels';
 
 const TAMANIO_PAGINA = 20;
 
@@ -165,12 +166,13 @@ export function CapturaPage() {
                 <th>{t('preinversion.captura.columnaProyecto')}</th>
                 <th>{t('preinversion.captura.columnaIniciativa')}</th>
                 <th>{t('preinversion.captura.columnaEstado')}</th>
+                <th>{t('preinversion.captura.columnaEtapaActual')}</th>
                 <th>{t('preinversion.captura.columnaUnidadEjecutora')}</th>
               </tr>
             </thead>
             <tbody>
               {!cargando && proyectos.length === 0 && (
-                <tr><td className="vacio" colSpan={5}>{t('preinversion.captura.sinRegistros')}</td></tr>
+                <tr><td className="vacio" colSpan={6}>{t('preinversion.captura.sinRegistros')}</td></tr>
               )}
               {proyectos.map((p) => (
                 <tr key={p.idProyecto}>
@@ -184,6 +186,10 @@ export function CapturaPage() {
                   <td><b>{p.nombreProyecto}</b></td>
                   <td>{formatIniciativa(p.iniciativaInversion)}</td>
                   <td><span className="marca-estado e-info">{formatEstado(p.estado)}</span></td>
+                  {/* etapaActual llega nula mientras el proyecto no tenga una Ruta de
+                      Preinversión aceptada (CU-PRE-03 v1.1.0); se muestra un guion en vez
+                      de dejar la celda vacía. */}
+                  <td>{p.etapaActual ? formatNombreEtapa(p.etapaActual) : '—'}</td>
                   <td>{p.unidadEjecutora.nombre}</td>
                 </tr>
               ))}

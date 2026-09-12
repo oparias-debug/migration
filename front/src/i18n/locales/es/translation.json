@@ -298,6 +298,7 @@
       "columnaProyecto": "Nombre del proyecto",
       "columnaIniciativa": "Iniciativa de inversión",
       "columnaEstado": "Estado",
+      "columnaEtapaActual": "Etapa actual",
       "columnaUnidadEjecutora": "Unidad Ejecutora",
       "sinRegistros": "Ningún proyecto coincide con la búsqueda."
     },

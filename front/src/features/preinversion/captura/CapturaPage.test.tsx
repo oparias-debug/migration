@@ -22,6 +22,7 @@ const RESPUESTA = {
       nombreProyecto: 'Ampliación de red de agua potable, Santa Ana',
       iniciativaInversion: 'PROYECTO', estado: 'EN_FORMULACION',
       unidadEjecutora: { idUnidadEjecutora: 4501, nombre: 'MINSAL' },
+      etapaActual: 'PREFACTIBILIDAD',
     }],
     paginacion: { pagina: 0, tamanio: 20, totalElementos: 1, totalPaginas: 1 },
   },
@@ -34,14 +35,35 @@ describe('CapturaPage', () => {
     listarProyectosCaptura.mockReset().mockResolvedValue(RESPUESTA);
   });
 
-  // Las cinco columnas del Anexo A.1.
+  // Las cinco columnas del Anexo A.1, más "Etapa actual", que el cliente pidió
+  // el 11/09/2026 y entró en el contrato como CU-PRE-03 v1.1.0.
   it('muestra las columnas del caso de uso', async () => {
     montar();
     await screen.findByText('Ampliación de red de agua potable, Santa Ana');
     const cabeceras = [...document.querySelectorAll('table thead th')].map((c) => c.textContent);
     expect(cabeceras).toEqual([
-      'CUP', 'Nombre del proyecto', 'Iniciativa de inversión', 'Estado', 'Unidad Ejecutora',
+      'CUP', 'Nombre del proyecto', 'Iniciativa de inversión', 'Estado', 'Etapa actual', 'Unidad Ejecutora',
     ]);
+  });
+
+  it('muestra la etapa actual del proyecto', async () => {
+    montar();
+    expect(await screen.findByText('Prefactibilidad')).toBeInTheDocument();
+  });
+
+  // etapaActual es nulo mientras el proyecto no tenga una Ruta de Preinversión
+  // aceptada; la celda no puede quedar vacía sin más.
+  it('muestra un guion cuando el proyecto todavía no tiene etapa', async () => {
+    listarProyectosCaptura.mockResolvedValue({
+      data: {
+        ...RESPUESTA.data,
+        contenido: [{ ...RESPUESTA.data.contenido[0], etapaActual: null }],
+      },
+    });
+    montar();
+    await screen.findByText('Ampliación de red de agua potable, Santa Ana');
+    const celdas = [...document.querySelectorAll('table tbody td')].map((c) => c.textContent);
+    expect(celdas).toContain('—');
   });
 
   // RN03: la búsqueda libre la resuelve el servidor, no el navegador.
