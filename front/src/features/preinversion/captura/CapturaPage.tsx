@@ -16,8 +16,10 @@ const INICIATIVAS = [IniciativaInversion.Programa, IniciativaInversion.Proyecto,
  * CU-PRE-03 · Captura de Proyectos.
  *
  * Listado de los proyectos que ya tienen CUP. El alcance lo decide el servidor
- * según las credenciales (RN01/RN02): quien está adscrito a una Unidad
- * Ejecutora ve la suya, la DGICP ve todas. El frontend no filtra por rol.
+ * según las credenciales, y desde la v1.1.0 del contrato (11/09/2026) la regla
+ * es: sólo el Técnico URP queda acotado a su propia Unidad Ejecutora (RN01);
+ * Viabilizador, Técnico PRE y Coordinador PRE ven todos los proyectos sin
+ * restricción (RN02). El frontend no filtra por rol.
  *
  * Búsqueda libre sobre CUP, nombre y unidad ejecutora (RN03) y filtro por cada
  * columna (RN05), ambos en el servidor. Al pulsar el CUP se abre el proyecto
