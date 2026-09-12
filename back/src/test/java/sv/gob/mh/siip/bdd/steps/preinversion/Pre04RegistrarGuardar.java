@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -41,7 +42,11 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  * el botón {string}", "hace clic en el botón {string}", "el sistema muestra el mensaje {string}
  * \(Anexo A.{double})", "el Técnico URP hace clic en {string}") y solo hacen no-op; la accion real
  * de guardar se dispara en el primer paso propio de esta clase que sigue al clic
- * ("el sistema guarda la información registrada").
+ * ("el sistema guarda la información registrada"). Ese mismo texto es identico al de
+ * CU-PRE-06-registrar-matriz-interesados.feature (Cucumber exige una unica definicion por texto,
+ * mismo criterio que Pre02Bandeja/Pre01ResponderObservaciones): se delega en
+ * {@link Pre06RegistrarMatrizInteresados} o {@link Pre07RegistrarAnalisisPoblacion} cuando su
+ * respectivo escenario esta activo.
  */
 public class Pre04RegistrarGuardar {
 
@@ -60,6 +65,16 @@ public class Pre04RegistrarGuardar {
     private IdentificacionRequestDto borrador;
     private IdentificacionDto guardado;
     private String campoActual;
+
+    // El paso "el sistema guarda la información registrada" es texto identico al de
+    // CU-PRE-06-registrar-matriz-interesados.feature y CU-PRE-07-registrar-analisis-poblacion.feature;
+    // Cucumber no admite duplicarlo (ver javadoc de la clase).
+    @Autowired
+    private Pre06RegistrarMatrizInteresados matrizInteresados;
+    @Autowired
+    private Pre07RegistrarAnalisisPoblacion analisisPoblacion;
+    @Autowired
+    private Pre08RegistrarAreaInfluencia areaInfluencia;
 
     public Pre04RegistrarGuardar(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository,
@@ -140,6 +155,18 @@ public class Pre04RegistrarGuardar {
 
     @Entonces("el sistema guarda la información registrada")
     public void el_sistema_guarda_la_informacion_registrada() {
+        if (areaInfluencia.esEscenarioAreaInfluencia()) {
+            areaInfluencia.guardarInformacionRegistrada();
+            return;
+        }
+        if (matrizInteresados.esEscenarioMatrizInteresados()) {
+            matrizInteresados.guardarInformacionRegistrada();
+            return;
+        }
+        if (analisisPoblacion.esEscenarioAnalisisPoblacion()) {
+            analisisPoblacion.guardarInformacionRegistrada();
+            return;
+        }
         guardado = identificacionService.guardar(contextoProyecto.getProyectoActual().getId(), borrador);
         assertThat(guardado.getAntecedentes()).isNotBlank();
         assertThat(guardado.getFechaUltimoGuardado()).isNotNull();

@@ -3,8 +3,8 @@ package sv.gob.mh.siip.model.preinversion.service;
 import java.util.List;
 
 import sv.gob.mh.siip.exception.NoAutenticadoException;
-import sv.gob.mh.siip.model.preinversion.dto.MedidaCatalogoDto;
-import sv.gob.mh.siip.model.preinversion.dto.TipoMedidaCatalogoDto;
+import sv.gob.mh.siip.model.administracion.dto.MedidaCatalogoDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoMedidaCatalogoDto;
 
 /** Catálogo de referencia del botón "Ver descripción de categorías" (Anexos C.1, C.1.5, C.2). */
 public interface MedidaCatalogoService {

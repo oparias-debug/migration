@@ -1,4 +1,4 @@
-import { CatlogosApi, RegistrosApi } from './generated/administracion-catalogos';
+import { CatlogosApi, RegistrosApi } from './generated/administracion-catalogos-admin';
 import { createHttpClient } from './httpClient';
 
 /**
@@ -19,7 +19,7 @@ export const registrosCatalogoApi = new RegistrosApi(undefined, undefined, admin
 export {
   TipoCampo,
   EstadoVigencia,
-} from './generated/administracion-catalogos';
+} from './generated/administracion-catalogos-admin';
 
 export type {
   CampoDefinicion,
@@ -32,4 +32,4 @@ export type {
   RegistroValoresResponse,
   ListaRegistrosResponse,
   Vigencia,
-} from './generated/administracion-catalogos';
+} from './generated/administracion-catalogos-admin';

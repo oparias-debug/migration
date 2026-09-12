@@ -19,6 +19,7 @@ import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.preinversion.dto.EstadoProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.IniciativaInversionDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectosCapturaResponseDto;
+import sv.gob.mh.siip.model.preinversion.service.ProyectoCapturaFiltro;
 import sv.gob.mh.siip.model.preinversion.service.ProyectoCapturaService;
 import sv.gob.mh.siip.security.ActorContexto;
 
@@ -62,8 +63,8 @@ class ProyectoCapturaControllerTest {
     @DisplayName("Filtro 1/6: Evalua mapeo exclusivo de 'busqueda'")
     void listarProyectosCaptura_evaluaParametro_busqueda() {
         ProyectosCapturaResponseDto expectedResponse = new ProyectosCapturaResponseDto();
-        when(proyectoCapturaService.listarProyectosCaptura(
-                "Hospital", null, null, null, null, null,0, 10))
+        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro("Hospital", null, null, null, null, null);
+        when(proyectoCapturaService.listarProyectosCaptura(filtro, 0, 10))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<ProyectosCapturaResponseDto> respuesta = controller.listarProyectosCaptura(
@@ -71,16 +72,15 @@ class ProyectoCapturaControllerTest {
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(respuesta.getBody()).isSameAs(expectedResponse);
-        verify(proyectoCapturaService).listarProyectosCaptura(
-                "Hospital", null, null, null, null, null, 0,  10);
+        verify(proyectoCapturaService).listarProyectosCaptura(filtro, 0, 10);
     }
 
     @Test
     @DisplayName("Filtro 2/6: Evalua mapeo exclusivo de 'cup'")
     void listarProyectosCaptura_evaluaParametro_cup() {
         ProyectosCapturaResponseDto expectedResponse = new ProyectosCapturaResponseDto();
-        when(proyectoCapturaService.listarProyectosCaptura(
-                null, "99996", null, null, null, null, 0,  10))
+        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro(null, "99996", null, null, null, null);
+        when(proyectoCapturaService.listarProyectosCaptura(filtro, 0, 10))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<ProyectosCapturaResponseDto> respuesta = controller.listarProyectosCaptura(
@@ -88,16 +88,15 @@ class ProyectoCapturaControllerTest {
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(respuesta.getBody()).isSameAs(expectedResponse);
-        verify(proyectoCapturaService).listarProyectosCaptura(
-                null, "99996", null, null, null, null, 0, 10);
+        verify(proyectoCapturaService).listarProyectosCaptura(filtro, 0, 10);
     }
 
     @Test
     @DisplayName("Filtro 3/6: Evalua mapeo exclusivo de 'nombreProyecto'")
     void listarProyectosCaptura_evaluaParametro_nombreProyecto() {
         ProyectosCapturaResponseDto expectedResponse = new ProyectosCapturaResponseDto();
-        when(proyectoCapturaService.listarProyectosCaptura(
-                null, null, "Construccion de Escuela", null, null, null, 0,  10))
+        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro(null, null, "Construccion de Escuela", null, null, null);
+        when(proyectoCapturaService.listarProyectosCaptura(filtro, 0, 10))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<ProyectosCapturaResponseDto> respuesta = controller.listarProyectosCaptura(
@@ -105,16 +104,15 @@ class ProyectoCapturaControllerTest {
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(respuesta.getBody()).isSameAs(expectedResponse);
-        verify(proyectoCapturaService).listarProyectosCaptura(
-                null, null, "Construccion de Escuela", null, null, null, 0,  10);
+        verify(proyectoCapturaService).listarProyectosCaptura(filtro, 0, 10);
     }
 
     @Test
     @DisplayName("Filtro 4/6: Evalua mapeo exclusivo de 'iniciativaInversion'")
     void listarProyectosCaptura_evaluaParametro_iniciativaInversion() {
         ProyectosCapturaResponseDto expectedResponse = new ProyectosCapturaResponseDto();
-        when(proyectoCapturaService.listarProyectosCaptura(
-                null, null, null, IniciativaInversionDto.PROYECTO, null, null, 0, 10))
+        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro(null, null, null, IniciativaInversionDto.PROYECTO, null, null);
+        when(proyectoCapturaService.listarProyectosCaptura(filtro, 0, 10))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<ProyectosCapturaResponseDto> respuesta = controller.listarProyectosCaptura(
@@ -122,16 +120,15 @@ class ProyectoCapturaControllerTest {
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(respuesta.getBody()).isSameAs(expectedResponse);
-        verify(proyectoCapturaService).listarProyectosCaptura(
-                null, null, null, IniciativaInversionDto.PROYECTO, null, null, 0,  10);
+        verify(proyectoCapturaService).listarProyectosCaptura(filtro, 0, 10);
     }
 
     @Test
     @DisplayName("Filtro 5/6: Evalua mapeo exclusivo de 'estado'")
     void listarProyectosCaptura_evaluaParametro_estado() {
         ProyectosCapturaResponseDto expectedResponse = new ProyectosCapturaResponseDto();
-        when(proyectoCapturaService.listarProyectosCaptura(
-                null, null, null, null, EstadoProyectoDto.EN_REGISTRO, null, 0, 10))
+        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro(null, null, null, null, EstadoProyectoDto.EN_REGISTRO, null);
+        when(proyectoCapturaService.listarProyectosCaptura(filtro, 0, 10))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<ProyectosCapturaResponseDto> respuesta = controller.listarProyectosCaptura(
@@ -139,16 +136,15 @@ class ProyectoCapturaControllerTest {
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(respuesta.getBody()).isSameAs(expectedResponse);
-        verify(proyectoCapturaService).listarProyectosCaptura(
-                null, null, null, null, EstadoProyectoDto.EN_REGISTRO, null, 0,  10);
+        verify(proyectoCapturaService).listarProyectosCaptura(filtro, 0, 10);
     }
 
     @Test
     @DisplayName("Filtro 6/6: Evalua mapeo exclusivo de 'idUnidadEjecutora'")
     void listarProyectosCaptura_evaluaParametro_idUnidadEjecutora() {
         ProyectosCapturaResponseDto expectedResponse = new ProyectosCapturaResponseDto();
-        when(proyectoCapturaService.listarProyectosCaptura(
-                null, null, null, null, null, 25L, 0, 10))
+        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro(null, null, null, null, null, 25L);
+        when(proyectoCapturaService.listarProyectosCaptura(filtro, 0, 10))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<ProyectosCapturaResponseDto> respuesta = controller.listarProyectosCaptura(
@@ -156,8 +152,7 @@ class ProyectoCapturaControllerTest {
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(respuesta.getBody()).isSameAs(expectedResponse);
-        verify(proyectoCapturaService).listarProyectosCaptura(
-                null, null, null, null, null, 25L, 0, 10);
+        verify(proyectoCapturaService).listarProyectosCaptura(filtro, 0, 10);
     }
 
     // =========================================================================
@@ -168,9 +163,9 @@ class ProyectoCapturaControllerTest {
     @DisplayName("Verificacion integradora: Todos los parametros de filtro con valores explicitos")
     void listarProyectosCaptura_todosLosFiltrosLlenos_delegaCorrectamente() {
         ProyectosCapturaResponseDto expectedResponse = new ProyectosCapturaResponseDto();
-        when(proyectoCapturaService.listarProyectosCaptura(
-                "Busqueda Global", "12345", "Paso a Desnivel", IniciativaInversionDto.PROGRAMA,
-                EstadoProyectoDto.CUP_ASIGNADO, 50L, 1,  20))
+        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro("Busqueda Global", "12345", "Paso a Desnivel",
+                IniciativaInversionDto.PROGRAMA, EstadoProyectoDto.CUP_ASIGNADO, 50L);
+        when(proyectoCapturaService.listarProyectosCaptura(filtro, 1, 20))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<ProyectosCapturaResponseDto> respuesta = controller.listarProyectosCaptura(
@@ -180,8 +175,6 @@ class ProyectoCapturaControllerTest {
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(respuesta.getBody()).isSameAs(expectedResponse);
 
-        verify(proyectoCapturaService).listarProyectosCaptura(
-                "Busqueda Global", "12345", "Paso a Desnivel", IniciativaInversionDto.PROGRAMA,
-                EstadoProyectoDto.CUP_ASIGNADO, 50L, 1, 20);
+        verify(proyectoCapturaService).listarProyectosCaptura(filtro, 1, 20);
     }
 }

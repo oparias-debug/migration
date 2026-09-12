@@ -3,10 +3,10 @@ package sv.gob.mh.siip.model.preinversion.service;
 import java.util.List;
 
 import sv.gob.mh.siip.exception.NoAutenticadoException;
-import sv.gob.mh.siip.model.preinversion.dto.EjePlanGobiernoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.EjeTematicoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.PlanSectorialRegionalResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.SectorResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.EjePlanGobiernoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.EjeTematicoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.PlanSectorialRegionalResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.SectorResumenDto;
 
 /**
  * Catálogos seleccionables de la pantalla "Nuevo registro" (Anexos C.3, C.4, C.5, C.6):

@@ -49,7 +49,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: >
             El actor autenticado no corresponde a ninguno de los roles de
@@ -59,7 +59,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: >
             El proyecto no existe, o (solo para Técnico PRE/Usuarios
@@ -68,7 +68,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
     put:
       operationId: guardarIdentificacion
@@ -81,7 +81,7 @@ paths:
         (RNC-2 solo sombrea sus bordes en rojo — es retroalimentación
         visual de cliente, no un rechazo del servidor). Por eso, a
         diferencia de otros fragmentos de este contrato (p. ej.
-        `registrarFichaEmergencia` en CU-PRE-3.5), este endpoint no define
+        `registrarFichaEmergencia` en CU-PRE-03.5), este endpoint no define
         una respuesta 400 por campos incompletos. Los límites de caracteres
         (`maxLength`) sí se documentan en el schema, pero el Esquema del
         escenario de la BDD los describe como un tope de entrada de cliente
@@ -111,7 +111,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: >
             El actor autenticado no es Técnico URP, o el proyecto no está en
@@ -120,13 +120,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
   /proyectos/{idProyecto}/identificacion/arbol-problemas:
     parameters:
@@ -173,19 +173,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: El actor autenticado no es Técnico URP (inferido de `x-roles`/RNB-1, "habilitado solo cuando esté permitida la edición").
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "415":
           description: >
             El archivo no está en formato PDF/A (RNB-1). Inferido de la
@@ -194,7 +194,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
     get:
       operationId: descargarArbolProblemas
@@ -215,19 +215,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: El actor autenticado no corresponde a ninguno de los roles de este CU, o está fuera de su alcance de Unidad Ejecutora.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe, o no hay ningún archivo cargado en el árbol de problemas.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
     delete:
       operationId: eliminarArbolProblemas
@@ -243,19 +243,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe, o no hay ningún archivo cargado para eliminar.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
   /proyectos/{idProyecto}/identificacion/arbol-objetivos:
     parameters:
@@ -295,25 +295,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: El actor autenticado no es Técnico URP (inferido de `x-roles`/RNB-2).
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "415":
           description: El archivo no está en formato PDF/A (RNB-2). Inferido, sin escenario BDD negativo explícito.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
     get:
       operationId: descargarArbolObjetivos
@@ -334,19 +334,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: El actor autenticado no corresponde a ninguno de los roles de este CU, o está fuera de su alcance de Unidad Ejecutora.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe, o no hay ningún archivo cargado en el árbol de objetivos.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
     delete:
       operationId: eliminarArbolObjetivos
@@ -362,19 +362,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe, o no hay ningún archivo cargado para eliminar.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
 components:
   securitySchemes:
@@ -418,7 +418,7 @@ components:
           description: >
             Lista completa de objetivos específicos vigentes tras este
             guardado (reemplaza la lista anterior por completo, igual que
-            `actualizarEtapas` en CU-PRE-3.5 — un solo botón "Guardar" para
+            `actualizarEtapas` en CU-PRE-03.5 — un solo botón "Guardar" para
             toda la pantalla, no una operación incremental por fila). Agregar
             o eliminar una fila en el cliente ocurre antes de este `PUT`, no
             como llamadas separadas.

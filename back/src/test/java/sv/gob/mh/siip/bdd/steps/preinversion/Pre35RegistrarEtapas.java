@@ -27,7 +27,8 @@ import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.ActualizarEtapasRequestDto;
-import sv.gob.mh.siip.model.preinversion.dto.AplicaActualizacionOtDto;
+import sv.gob.mh.siip.model.administracion.dto.AplicaActualizacionOtDto;
+import sv.gob.mh.siip.model.administracion.dto.ContenidoIniciativaResumenDto;
 import sv.gob.mh.siip.model.preinversion.dto.ComplejidadProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.CriteriosCalificacionDto;
 import sv.gob.mh.siip.model.preinversion.dto.EtapaDto;
@@ -41,6 +42,7 @@ import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
+import sv.gob.mh.siip.model.preinversion.service.CatalogosSeleccionEtapasService;
 import sv.gob.mh.siip.model.preinversion.service.SeleccionYRegistroDeEtapasService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
@@ -54,8 +56,10 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  * (Opinión Técnica, Programación Financiera de la Preinversión) no están implementadas en el
  * repositorio: se simula el efecto que esos CU producirían y se verifica el comportamiento que sí
  * es responsabilidad de este CU (p.ej. que {@code actualizarEtapas} ignore el costo enviado para
- * EJECUCION, RN05/RN11). El Anexo F (habilitación de campos de otros CU) se verifica contra una
- * tabla estática con solo la muestra representativa que trae la propia historia BDD.
+ * EJECUCION, RN05/RN11). El Anexo F (habilitación de campos de otros CU) se verifica contra
+ * {@link CatalogosSeleccionEtapasService#listarContenidoIniciativasProyecto()} real — antes se
+ * comparaba contra una copia estática de 5 filas transcritas a mano en el propio test, que no
+ * podía detectar una regresión en el catálogo real de 26 filas.
  */
 public class Pre35RegistrarEtapas {
 
@@ -66,14 +70,6 @@ public class Pre35RegistrarEtapas {
             "Fecha estimada de inicio", "fechaInicio",
             "Fecha estimada de finalización", "fechaFin");
 
-    /** Muestra representativa del Anexo F transcrita en la propia historia BDD (no la matriz completa). */
-    private static final Map<String, String[]> ANEXO_F_MUESTRA = Map.of(
-            "Perfil|Proyecto", new String[] { "Antecedentes", "CUPRE-04" },
-            "Prefactibilidad|Proyecto", new String[] { "Análisis de Alternativas de Solución", "CUPRE-05" },
-            "Factibilidad|Proyecto", new String[] { "Descripción Técnica", "CUPRE-11" },
-            "Diseño|Estudio General", new String[] { "Programación Financiera Preinversión", "CUPRE-22.1" },
-            "Perfil|Programa", new String[] { "Presupuesto de Inversión", "CUPRE-17" });
-
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final UsuarioRepository usuarioRepository;
@@ -83,6 +79,7 @@ public class Pre35RegistrarEtapas {
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
     private final SeleccionYRegistroDeEtapasService service;
+    private final CatalogosSeleccionEtapasService catalogosSeleccionEtapasService;
     private final Validator validator;
 
     private Proyecto proyecto;
@@ -92,14 +89,14 @@ public class Pre35RegistrarEtapas {
     private Set<ConstraintViolation<EtapaRegistroRequestDto>> violaciones;
     private String etapaAnexoF;
     private String iniciativaAnexoF;
-    private AplicaActualizacionOtDto aplicaActualizacionOt;
+    private ContenidoIniciativaResumenDto filaAnexoFSeleccionada;
 
     public Pre35RegistrarEtapas(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
             ProyectoRepository proyectoRepository, EtapaPreinversionRepository etapaPreinversionRepository,
             MacroSectorRepository macroSectorRepository, SectorActividadRepository sectorActividadRepository,
             EjeTematicoRepository ejeTematicoRepository, SeleccionYRegistroDeEtapasService service,
-            Validator validator) {
+            CatalogosSeleccionEtapasService catalogosSeleccionEtapasService, Validator validator) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -109,6 +106,7 @@ public class Pre35RegistrarEtapas {
         this.sectorActividadRepository = sectorActividadRepository;
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.service = service;
+        this.catalogosSeleccionEtapasService = catalogosSeleccionEtapasService;
         this.validator = validator;
     }
 
@@ -297,24 +295,54 @@ public class Pre35RegistrarEtapas {
 
     @Entonces("el sistema habilita el campo {string} de {string} según la matriz del Anexo F \\(RN20)")
     public void el_sistema_habilita_el_campo_segun_matriz_anexo_f(String contenido, String ubicacionCu) {
-        String[] esperado = ANEXO_F_MUESTRA.get(etapaAnexoF + "|" + iniciativaAnexoF);
-        assertThat(esperado)
-                .withFailMessage("Combinación etapa/iniciativa no cubierta por la muestra representativa del Anexo F: %s/%s",
-                        etapaAnexoF, iniciativaAnexoF)
-                .isNotNull();
-        assertThat(contenido).isEqualTo(esperado[0]);
-        assertThat(ubicacionCu).isEqualTo(esperado[1]);
+        ContenidoIniciativaResumenDto fila = catalogosSeleccionEtapasService.listarContenidoIniciativasProyecto()
+                .stream()
+                .filter(f -> contenido.equals(f.getContenido()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "El Anexo F real no tiene ninguna fila con contenido '" + contenido + "'"));
+
+        assertThat(fila.getUbicacionCasoUso())
+                .as("Ubicación en caso de uso del campo '%s' en el Anexo F real", contenido)
+                .isEqualTo(ubicacionCu);
+        assertThat(aplicaParaEtapaEIniciativa(fila, etapaAnexoF, iniciativaAnexoF))
+                .as("El campo '%s' debería estar habilitado para la etapa '%s' e iniciativa '%s' según el Anexo F real",
+                        contenido, etapaAnexoF, iniciativaAnexoF)
+                .isTrue();
+    }
+
+    private boolean aplicaParaEtapaEIniciativa(ContenidoIniciativaResumenDto fila, String etapa, String iniciativa) {
+        return switch (iniciativa) {
+            case "Programa" -> Boolean.TRUE.equals(fila.getAplicaPrograma());
+            case "Estudio General" -> Boolean.TRUE.equals(fila.getAplicaEstudioGeneral());
+            case "Proyecto" -> switch (etapa) {
+                case "Perfil" -> Boolean.TRUE.equals(fila.getAplicaPerfil());
+                case "Prefactibilidad" -> Boolean.TRUE.equals(fila.getAplicaPrefactibilidad());
+                case "Factibilidad" -> Boolean.TRUE.equals(fila.getAplicaFactibilidad());
+                case "Diseño" -> Boolean.TRUE.equals(fila.getAplicaDiseno());
+                default -> throw new IllegalArgumentException("Etapa no reconocida en el Anexo F: " + etapa);
+            };
+            default -> throw new IllegalArgumentException("Iniciativa no reconocida en el Anexo F: " + iniciativa);
+        };
     }
 
     @Dado("una fila del Anexo F con el símbolo \"-\" en la columna \"Campos a habilitar para Actualización de O.T.\"")
     public void una_fila_del_anexo_f_con_simbolo_guion_en_actualizacion_ot() {
-        aplicaActualizacionOt = AplicaActualizacionOtDto.NO_APLICA_AL_CU;
+        filaAnexoFSeleccionada = catalogosSeleccionEtapasService.listarContenidoIniciativasProyecto().stream()
+                .filter(f -> f.getAplicaActualizacionOt() == AplicaActualizacionOtDto.NO_APLICA_AL_CU)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "El Anexo F real no tiene ninguna fila con símbolo '-' en Actualización de O.T."));
     }
 
     @Entonces("ese campo no aplica al proceso de Actualización de Opinión Técnica \\(distinto de una celda vacía, que indica ausencia de dato)")
     public void ese_campo_no_aplica_al_proceso_de_actualizacion_de_opinion_tecnica() {
-        assertThat(aplicaActualizacionOt).isEqualTo(AplicaActualizacionOtDto.NO_APLICA_AL_CU);
-        assertThat(aplicaActualizacionOt).isNotEqualTo(AplicaActualizacionOtDto.SIN_DATO);
+        assertThat(filaAnexoFSeleccionada.getAplicaActualizacionOt())
+                .as("La fila seleccionada del Anexo F real debe marcar el símbolo '-' (NO_APLICA_AL_CU)")
+                .isEqualTo(AplicaActualizacionOtDto.NO_APLICA_AL_CU);
+        assertThat(filaAnexoFSeleccionada.getAplicaActualizacionOt())
+                .as("El símbolo '-' es distinto de una celda vacía (SIN_DATO)")
+                .isNotEqualTo(AplicaActualizacionOtDto.SIN_DATO);
     }
 
     // -----------------------------------------------------------------------------------------

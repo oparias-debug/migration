@@ -10,11 +10,11 @@ import sv.gob.mh.siip.model.common.domain.Departamento;
 import sv.gob.mh.siip.model.common.domain.Municipio;
 import sv.gob.mh.siip.model.common.repository.DepartamentoRepository;
 import sv.gob.mh.siip.model.common.repository.MunicipioRepository;
-import sv.gob.mh.siip.model.preinversion.dto.AplicaActualizacionOtDto;
-import sv.gob.mh.siip.model.preinversion.dto.ContenidoIniciativaResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.ProductoIndicadorDto;
-import sv.gob.mh.siip.model.preinversion.dto.TipoCostoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.UbicacionGeograficaDto;
+import sv.gob.mh.siip.model.administracion.dto.AplicaActualizacionOtDto;
+import sv.gob.mh.siip.model.administracion.dto.ContenidoIniciativaResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.ProductoIndicadorDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoCostoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.UbicacionGeograficaDto;
 import sv.gob.mh.siip.model.preinversion.mapper.SeleccionYRegistroDeEtapasMapper;
 import sv.gob.mh.siip.model.preinversion.repository.ProductoIndicadorCatalogoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.TipoCostoRepository;
@@ -108,39 +108,52 @@ public class CatalogosSeleccionEtapasServiceImpl implements CatalogosSeleccionEt
      * contenido habilitable.
      */
     private static final List<ContenidoIniciativaResumenDto> CONTENIDO_INICIATIVAS_PROYECTO = List.of(
-            fila("Antecedentes", CUPRE_04, true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
-            fila("Problema Central", CUPRE_04, true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
-            fila("Objetivo General", CUPRE_04, true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
-            fila("Objetivos Específicos", CUPRE_04, true, true, true, true, true, true, AplicaActualizacionOtDto.SIN_DATO),
-            fila("Análisis de Alternativas de Solución", "CUPRE-05", true, true, false, false, false, false, AplicaActualizacionOtDto.SIN_DATO),
-            fila("Análisis de Interesados", "CUPRE-06", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
-            fila("Análisis de la Población", "CUPRE-07", true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Área de Influencia", "CUPRE-08", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
-            fila("Análisis de Mercado", "CUPRE-09", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
-            fila("Descripción Técnica", "CUPRE-11", true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Localización", "CUPRE-12", true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Análisis Ambiental", "CUPRE-14", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
-            fila("Análisis de Riesgos", "CUPRE-15", true, true, true, true, true, false, AplicaActualizacionOtDto.APLICA),
-            fila("Análisis Legal", "CUPRE-16", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
-            fila("Presupuesto de Inversión", "CUPRE-17", true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Fuentes de Financiamiento", "CUPRE-17", true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Presupuesto de O&M", "CUPRE-18", true, true, true, true, true, false, AplicaActualizacionOtDto.APLICA),
-            fila("Productos del Proyecto", "CUPRE-23", true, true, true, true, true, false, AplicaActualizacionOtDto.APLICA),
-            fila("Flujo de Beneficios", "CUPRE-20", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
-            fila("Flujo de Caja e Indicadores", "CUPRE-21", true, true, true, true, false, false, AplicaActualizacionOtDto.APLICA),
-            fila("Programación Financiera Preinversión", "CUPRE-22.1", true, true, true, false, false, true, AplicaActualizacionOtDto.NO_APLICA_AL_CU),
-            fila("Programación Física Preinversión", "CUPRE-22.3", true, true, true, false, false, true, AplicaActualizacionOtDto.NO_APLICA_AL_CU),
-            fila("Nota de solicitud de OT", null, true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Documento de Preinversión", null, true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Otros documentos", null, true, true, true, true, true, true, AplicaActualizacionOtDto.APLICA),
-            fila("Marco Lógico", null, false, false, false, false, true, false, AplicaActualizacionOtDto.SIN_DATO));
+            fila("Antecedentes", CUPRE_04, aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.SIN_DATO),
+            fila("Problema Central", CUPRE_04, aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.SIN_DATO),
+            fila("Objetivo General", CUPRE_04, aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.SIN_DATO),
+            fila("Objetivos Específicos", CUPRE_04, aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.SIN_DATO),
+            fila("Análisis de Alternativas de Solución", "CUPRE-05", aplicaA(true, true, false, false, false, false), AplicaActualizacionOtDto.SIN_DATO),
+            fila("Análisis de Interesados", "CUPRE-06", aplicaA(true, true, true, true, false, false), AplicaActualizacionOtDto.APLICA),
+            fila("Análisis de la Población", "CUPRE-07", aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.APLICA),
+            fila("Área de Influencia", "CUPRE-08", aplicaA(true, true, true, true, false, false), AplicaActualizacionOtDto.APLICA),
+            fila("Análisis de Mercado", "CUPRE-09", aplicaA(true, true, true, true, false, false), AplicaActualizacionOtDto.APLICA),
+            fila("Descripción Técnica", "CUPRE-11", aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.APLICA),
+            fila("Localización", "CUPRE-12", aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.APLICA),
+            fila("Análisis Ambiental", "CUPRE-14", aplicaA(true, true, true, true, false, false), AplicaActualizacionOtDto.APLICA),
+            fila("Análisis de Riesgos", "CUPRE-15", aplicaA(true, true, true, true, true, false), AplicaActualizacionOtDto.APLICA),
+            fila("Análisis Legal", "CUPRE-16", aplicaA(true, true, true, true, false, false), AplicaActualizacionOtDto.APLICA),
+            fila("Presupuesto de Inversión", "CUPRE-17", aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.APLICA),
+            fila("Fuentes de Financiamiento", "CUPRE-17", aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.APLICA),
+            fila("Presupuesto de O&M", "CUPRE-18", aplicaA(true, true, true, true, true, false), AplicaActualizacionOtDto.APLICA),
+            fila("Productos del Proyecto", "CUPRE-23", aplicaA(true, true, true, true, true, false), AplicaActualizacionOtDto.APLICA),
+            fila("Flujo de Beneficios", "CUPRE-20", aplicaA(true, true, true, true, false, false), AplicaActualizacionOtDto.APLICA),
+            fila("Flujo de Caja e Indicadores", "CUPRE-21", aplicaA(true, true, true, true, false, false), AplicaActualizacionOtDto.APLICA),
+            fila("Programación Financiera Preinversión", "CUPRE-22.1", aplicaA(true, true, true, false, false, true), AplicaActualizacionOtDto.NO_APLICA_AL_CU),
+            fila("Programación Física Preinversión", "CUPRE-22.3", aplicaA(true, true, true, false, false, true), AplicaActualizacionOtDto.NO_APLICA_AL_CU),
+            fila("Nota de solicitud de OT", null, aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.APLICA),
+            fila("Documento de Preinversión", null, aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.APLICA),
+            fila("Otros documentos", null, aplicaA(true, true, true, true, true, true), AplicaActualizacionOtDto.APLICA),
+            fila("Marco Lógico", null, aplicaA(false, false, false, false, true, false), AplicaActualizacionOtDto.SIN_DATO));
+
+    /**
+     * Aplicabilidad por etapa, en el orden fijo perfil, prefactibilidad, factibilidad, diseño,
+     * programa, estudio general (ver Anexo F).
+     */
+    private record AplicaPorEtapa(boolean perfil, boolean prefactibilidad, boolean factibilidad, boolean diseno,
+            boolean programa, boolean estudioGeneral) {
+    }
+
+    private static AplicaPorEtapa aplicaA(boolean perfil, boolean prefactibilidad, boolean factibilidad,
+            boolean diseno, boolean programa, boolean estudioGeneral) {
+        return new AplicaPorEtapa(perfil, prefactibilidad, factibilidad, diseno, programa, estudioGeneral);
+    }
 
     private static ContenidoIniciativaResumenDto fila(String contenido, String ubicacionCasoUso,
-            boolean perfil, boolean prefactibilidad, boolean factibilidad, boolean diseno, boolean programa,
-            boolean estudioGeneral, AplicaActualizacionOtDto aplicaActualizacionOt) {
+            AplicaPorEtapa aplicaPorEtapa, AplicaActualizacionOtDto aplicaActualizacionOt) {
         return new ContenidoIniciativaResumenDto().contenido(contenido).ubicacionCasoUso(ubicacionCasoUso)
-                .aplicaPerfil(perfil).aplicaPrefactibilidad(prefactibilidad).aplicaFactibilidad(factibilidad)
-                .aplicaDiseno(diseno).aplicaPrograma(programa).aplicaEstudioGeneral(estudioGeneral)
+                .aplicaPerfil(aplicaPorEtapa.perfil()).aplicaPrefactibilidad(aplicaPorEtapa.prefactibilidad())
+                .aplicaFactibilidad(aplicaPorEtapa.factibilidad()).aplicaDiseno(aplicaPorEtapa.diseno())
+                .aplicaPrograma(aplicaPorEtapa.programa()).aplicaEstudioGeneral(aplicaPorEtapa.estudioGeneral())
                 .aplicaActualizacionOt(aplicaActualizacionOt);
     }
 }

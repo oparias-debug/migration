@@ -11,12 +11,12 @@ import static org.mockito.Mockito.when;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import sv.gob.mh.siip.model.preinversion.dto.EjePlanGobiernoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.EjeTematicoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.MedidaCatalogoDto;
-import sv.gob.mh.siip.model.preinversion.dto.PlanSectorialRegionalResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.SectorResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.TipoMedidaCatalogoDto;
+import sv.gob.mh.siip.model.administracion.dto.EjePlanGobiernoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.EjeTematicoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.MedidaCatalogoDto;
+import sv.gob.mh.siip.model.administracion.dto.PlanSectorialRegionalResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.SectorResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoMedidaCatalogoDto;
 import sv.gob.mh.siip.model.preinversion.service.CatalogoPreinversionService;
 import sv.gob.mh.siip.model.preinversion.service.MedidaCatalogoService;
 

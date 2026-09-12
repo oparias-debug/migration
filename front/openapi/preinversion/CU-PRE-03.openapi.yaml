@@ -1,24 +1,31 @@
-# NOTA: el fragmento original de siipV2 referencia './CU-01.openapi.yaml', que
-# no existe —el fichero real se llama CU-PRE-01.openapi.yaml—, y por eso no
-# generaba cliente. Aquí las ocho referencias van corregidas. Reportado para
-# que se arregle también en el repositorio de especificaciones.
 openapi: 3.0.3
 info:
   title: SIIP - Preinversión - CU-PRE-03 Captura de Proyectos
-  version: "1.0.0"
+  version: "1.1.0"
   description: >
     Fragmento OpenAPI derivado de CU-PRE-03 "Captura de Proyectos"
     (UC-PRE-03-Captura_de_Proyectos.md) y su historia BDD (CU-PRE-03.feature).
-    CU sin actor principal único: Técnico URP, Viabilizador y "Usuarios
-    Internos/Externos" ven el listado acotado a sus credenciales de Unidad
-    Ejecutora (RN01); Técnico PRE y Coordinador PRE lo ven sin restricción
-    (RN02). Es enteramente de solo consulta: la única acción de escritura del
+    CU sin actor principal único: solo el Técnico URP ve el listado acotado a
+    su propia Unidad Ejecutora (RN01); Viabilizador, Técnico PRE y Coordinador
+    PRE lo ven sin restricción (RN02) — decisión funcional del usuario
+    (11/09/2026), no proveniente del PDF fuente, ver contrato-CU-PRE-03.md.
+    "Usuarios Internos/Externos" no aplica a este CU (nunca fue un rol formal
+    — ver nota en Actores Secundarios del UC — y el usuario confirmó que no
+    corresponde incluirlo aquí). Es enteramente de solo consulta: la única
+    acción de escritura del
     CU es la navegación al hacer clic en el CUP (FA-01), que no requiere un
     endpoint propio (ver contrato-CU-PRE-03.md). Reutiliza `EstadoProyecto`,
-    `IniciativaInversion` y `UnidadEjecutoraResumen` de CU-01.openapi.yaml
+    `IniciativaInversion` y `UnidadEjecutoraResumen` de CU-PRE-01.openapi.yaml
     vía referencia externa; este fragmento motivó una corrección del catálogo
     `EstadoProyecto` en ese archivo (ver contrato-CU-PRE-01.md y
     contrato-CU-PRE-03.md).
+
+
+    ⚠️ Actualización v1.1.0 (11/09/2026, decisión funcional del usuario, no
+    proveniente del PDF fuente): se agregó `etapaActual` a `ProyectoCapturaItem`,
+    reutilizando `NombreEtapa` de CU-PRE-03.5.openapi.yaml vía referencia
+    externa — dependencia hacia adelante en la numeración (mismo patrón ya
+    aplicado por CU-PRE-03.5 hacia CU-PRE-17). Ver contrato-CU-PRE-03.md.
 
 paths:
 
@@ -34,10 +41,16 @@ paths:
         este listado, no algo que el cliente controle. RN01/RN02 determinan el
         alcance de Unidades Ejecutoras visibles según el actor autenticado, de
         forma automática (no hay parámetro de consulta para esto tampoco): el
-        servidor debe resolverlo según el rol.
+        servidor debe resolverlo según el rol. Únicamente el Técnico URP queda
+        acotado a su propia Unidad Ejecutora (RN01); el resto de los roles ve
+        todos los proyectos sin restricción (RN02) — decisión funcional del
+        usuario (11/09/2026), no proveniente del PDF fuente; ver
+        contrato-CU-PRE-03.md. "Usuarios Internos/Externos" no aplica a este CU
+        (nunca fue un rol formal — ver nota en Actores Secundarios del UC — y
+        el propio usuario confirmó que no corresponde incluirlo aquí).
       tags: [Preinversión - Captura de Proyectos]
       security: [{ bearerAuth: [] }]
-      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador]
       parameters:
         - name: busqueda
           in: query
@@ -64,7 +77,7 @@ paths:
           in: query
           description: >
             RN04/RN05 — filtro por columna Estado, usando el catálogo oficial
-            de 13 estados de RN04 (ver `EstadoProyecto` en CU-01.openapi.yaml,
+            de 13 estados de RN04 (ver `EstadoProyecto` en CU-PRE-01.openapi.yaml,
             corregido a partir del análisis de este mismo CU). No incluye los
             valores "En análisis DGICP" ni "Viabilizado" que aparecen en el
             mockup del Anexo A.1 pero no en RN04 — ver nota en
@@ -93,7 +106,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: >
             El actor autenticado no corresponde a ninguno de los roles
@@ -105,7 +118,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
 components:
   securitySchemes:
@@ -120,9 +133,10 @@ components:
       type: object
       description: >
         Fila del listado "Captura de Proyectos" (Anexo A.1). Deliberadamente
-        más liviano que `Proyecto` (CU-PRE-01): solo expone las 5 columnas
+        más liviano que `Proyecto` (CU-PRE-01): expone las 5 columnas
         documentadas por el Anexo B.1 de este CU, más `idProyecto` (necesario
-        para la navegación de FA-01, aunque el clic ocurra sobre la columna CUP).
+        para la navegación de FA-01, aunque el clic ocurra sobre la columna CUP)
+        y `etapaActual` (agregado en v1.1.0, ver info.description).
       required: [idProyecto, cup, nombreProyecto, iniciativaInversion, estado, unidadEjecutora]
       properties:
         idProyecto:
@@ -141,6 +155,18 @@ components:
           $ref: './CU-PRE-01.openapi.yaml#/components/schemas/EstadoProyecto'
         unidadEjecutora:
           $ref: './CU-PRE-01.openapi.yaml#/components/schemas/UnidadEjecutoraResumen'
+        etapaActual:
+          type: object
+          allOf:
+            - $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+          nullable: true
+          description: >
+            Etapa actual del proyecto dentro de la Ruta de Preinversión
+            (CU-PRE-03.5), reutilizando `NombreEtapa` vía referencia externa.
+            Nulo si el proyecto todavía no tiene una Ruta de Preinversión
+            aceptada (`RutaPreinversion.etapasAceptadas` vacío en
+            CU-PRE-03.5.openapi.yaml). No forma parte del Anexo B.1 de este
+            CU (ver contrato-CU-PRE-03.md).
 
     ProyectosCapturaResponse:
       type: object

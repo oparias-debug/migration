@@ -5,13 +5,13 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import sv.gob.mh.siip.model.preinversion.api.CatlogosPreinversinApi;
-import sv.gob.mh.siip.model.preinversion.dto.EjePlanGobiernoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.EjeTematicoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.MedidaCatalogoDto;
-import sv.gob.mh.siip.model.preinversion.dto.PlanSectorialRegionalResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.SectorResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.TipoMedidaCatalogoDto;
+import sv.gob.mh.siip.model.administracion.api.CatlogosRegistroDeProyectosApi;
+import sv.gob.mh.siip.model.administracion.dto.EjePlanGobiernoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.EjeTematicoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.MedidaCatalogoDto;
+import sv.gob.mh.siip.model.administracion.dto.PlanSectorialRegionalResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.SectorResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoMedidaCatalogoDto;
 import sv.gob.mh.siip.model.preinversion.service.CatalogoPreinversionService;
 import sv.gob.mh.siip.model.preinversion.service.MedidaCatalogoService;
 
@@ -24,7 +24,7 @@ import sv.gob.mh.siip.model.preinversion.service.MedidaCatalogoService;
  * por rol: están disponibles para cualquier actor autenticado.
  */
 @RestController
-public class CatalogosController implements CatlogosPreinversinApi {
+public class CatalogosController implements CatlogosRegistroDeProyectosApi {
 
     private final MedidaCatalogoService medidaCatalogoService;
     private final CatalogoPreinversionService catalogoPreinversionService;

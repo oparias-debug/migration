@@ -51,7 +51,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: >
             El actor autenticado no es Técnico PRE, o siéndolo, la solicitud no le
@@ -63,13 +63,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "409":
           description: >
             El proyecto no se encuentra en estado ENVIADO_DGICP_REGISTRO (precondición
@@ -78,7 +78,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
   /proyectos/{idProyecto}/cup:
     parameters:
@@ -117,7 +117,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: >
             El actor autenticado no es Técnico PRE, o siéndolo, la solicitud no le
@@ -127,13 +127,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "409":
           description: >
             El proyecto no se encuentra en estado ENVIADO_DGICP_REGISTRO. Cubre tanto
@@ -143,7 +143,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
 components:
   securitySchemes:

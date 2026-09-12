@@ -1,14 +1,17 @@
-import { CatlogosPreinversinApi, PreinversinRegistroYSolicitudDeCUPApi } from './generated/preinversion';
+import { PreinversinRegistroYSolicitudDeCUPApi } from './generated/preinversion';
 import { PreinversinRevisinYEmisinDeCUPApi } from './generated/preinversion-revision-cup';
 import { PreinversinIdentificacinApi } from './generated/preinversion-identificacion';
-import { PreinversinBandejaPreinversinApi, CatlogosPreinversinApi as CatlogosBandejaApi } from './generated/preinversion-bandeja';
+import { PreinversinBandejaPreinversinApi } from './generated/preinversion-bandeja';
 import { PreinversinCapturaDeProyectosApi } from './generated/preinversion-captura';
-import { CatlogosSeleccinYRegistroDeEtapasApi, PreinversinSeleccinYRegistroDeEtapasApi } from './generated/preinversion-etapas';
+import { PreinversinSeleccinYRegistroDeEtapasApi } from './generated/preinversion-etapas';
 import { PreinversinAlternativasDeSolucinApi } from './generated/preinversion-alternativas';
+import { PreinversinPresupuestoDeInversinApi } from './generated/preinversion-presupuesto';
 import {
-  PreinversinPresupuestoDeInversinApi,
-  CatlogosPreinversinApi as CatlogosPresupuestoApi,
-} from './generated/preinversion-presupuesto';
+  CatlogosRegistroDeProyectosApi,
+  CatlogosPresupuestoApi,
+  CatlogosBandejaPreinversinApi,
+  CatlogosSeleccinYRegistroDeEtapasApi,
+} from './generated/administracion-catalogos';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -25,7 +28,7 @@ export const preinversionApi = new PreinversinRegistroYSolicitudDeCUPApi(undefin
 // Catálogos seleccionables (sectores, ejes temáticos, ejes del Plan de Gobierno, planes
 // sectoriales/regionales, medidas GRD/GRC/ACC): tag distinto en el OpenAPI, por eso el
 // generador los separó en su propia clase de cliente.
-export const catalogoPreinversionApi = new CatlogosPreinversinApi(undefined, undefined, preinversionAxios);
+export const catalogoPreinversionApi = new CatlogosRegistroDeProyectosApi(undefined, undefined, preinversionAxios);
 // CU-PRE-01.5 (Revisión y Emisión de CUP): mismo recurso Proyecto y mismo basePath /back,
 // pero tag distinto en el OpenAPI -> fragmento y módulo generado propios
 // (generated/preinversion-revision-cup); comparte la instancia de axios de arriba.
@@ -35,17 +38,17 @@ export const revisionCupApi = new PreinversinRevisinYEmisinDeCUPApi(undefined, u
 // comparte la instancia de axios de arriba.
 export const identificacionApi = new PreinversinIdentificacinApi(undefined, undefined, preinversionAxios);
 // CU-PRE-3.5 (Selección y Registro de Etapas): mismo recurso Proyecto y mismo basePath /back,
-// fragmento y módulo generado propios (generated/preinversion-etapas). Los 3 endpoints de
-// catálogo de este CU tienen su propio tag (ver nota en el YAML sobre el choque con
-// CatlogosPreinversinApi de CU-PRE-01) y por eso el generador los separó en su propia clase.
+// fragmento y módulo generado propios (generated/preinversion-etapas). Sus 4 endpoints de
+// catálogo tienen tag propio y viven ahora en CU-ADM-02-catalogos.openapi.yaml (dominio
+// "administracion"), junto con los del resto de CUs — ver catalogoEtapasApi más abajo.
 // CU-PRE-02 (Bandeja Preinversión): mismo basePath /back, tag propio -> módulo
 // generado propio (generated/preinversion-bandeja). Su fragmento reutiliza por
 // $ref los schemas de CU-PRE-01 (UnidadEjecutoraResumen, EstadoProyecto, Error),
 // así que los dos YAML tienen que vivir en la misma carpeta para generar.
 export const bandejaApi = new PreinversinBandejaPreinversinApi(undefined, undefined, preinversionAxios);
-// El catálogo "Nombres Técnicos PRE" (Anexo C, RN04) va con tag de catálogos y
-// por eso el generador lo separó en su propia clase dentro del mismo módulo.
-export const catalogoBandejaApi = new CatlogosBandejaApi(undefined, undefined, preinversionAxios);
+// El catálogo "Nombres Técnicos PRE" (Anexo C, RN04) vive en CU-ADM-02-catalogos.openapi.yaml
+// (dominio "administracion"), junto con el resto de catálogos.
+export const catalogoBandejaApi = new CatlogosBandejaPreinversinApi(undefined, undefined, preinversionAxios);
 // CU-PRE-03 (Captura de Proyectos): mismo basePath /back, tag propio -> módulo
 // generado propio (generated/preinversion-captura).
 export const capturaApi = new PreinversinCapturaDeProyectosApi(undefined, undefined, preinversionAxios);
@@ -62,12 +65,6 @@ export type {
   ProyectoListItem,
   ProyectoListResponse,
   PaginacionMetadata,
-  MedidaCatalogo,
-  SectorResumen,
-  MacrosectorResumen,
-  EjeTematicoResumen,
-  EjePlanGobiernoResumen,
-  PlanSectorialRegionalResumen,
   RespuestaObservacionRequest,
   CambioUnidadEjecutoraRequest,
   ComentarioSolicitud,
@@ -75,7 +72,22 @@ export type {
   InstitucionResumen,
   UnidadEjecutoraResumen,
 } from './generated/preinversion';
-export { EstadoProyecto, IniciativaInversion, TipoMedidaCatalogo } from './generated/preinversion';
+export { EstadoProyecto, IniciativaInversion } from './generated/preinversion';
+// Catálogos de CU-PRE-01/02/3.5 (sectores, ejes, medidas, tipos de costo, ubicaciones,
+// productos e indicadores): reorganizados a un tag/spec propio de "administracion"
+// (CU-ADM-02-catalogos.openapi.yaml), separado del CU que los consume.
+export type {
+  MedidaCatalogo,
+  SectorResumen,
+  MacrosectorResumen,
+  EjeTematicoResumen,
+  EjePlanGobiernoResumen,
+  PlanSectorialRegionalResumen,
+  TipoCostoResumen,
+  UbicacionGeografica,
+  ProductoIndicador,
+} from './generated/administracion-catalogos';
+export { TipoMedidaCatalogo } from './generated/administracion-catalogos';
 // Único tipo propio de este fragmento (el resto son los mismos schemas de CU-PRE-01,
 // duplicados por el generador en su módulo — ver comentario de revisionCupApi arriba).
 export type { DevolucionSolicitudRequest } from './generated/preinversion-revision-cup';
@@ -101,9 +113,6 @@ export type {
   FichaEmergenciaRequest,
   ProductoSeleccionado,
   ComponenteCosto,
-  TipoCostoResumen,
-  UbicacionGeografica,
-  ProductoIndicador,
 } from './generated/preinversion-etapas';
 export { NombreEtapa, TipoCapital, TamanioProyecto, ComplejidadProyecto, FuenteFinanciamiento } from './generated/preinversion-etapas';
 

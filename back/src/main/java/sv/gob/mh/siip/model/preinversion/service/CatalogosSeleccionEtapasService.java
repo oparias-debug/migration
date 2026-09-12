@@ -3,10 +3,10 @@ package sv.gob.mh.siip.model.preinversion.service;
 import java.util.List;
 
 import sv.gob.mh.siip.exception.NoAutenticadoException;
-import sv.gob.mh.siip.model.preinversion.dto.ContenidoIniciativaResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.ProductoIndicadorDto;
-import sv.gob.mh.siip.model.preinversion.dto.TipoCostoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.UbicacionGeograficaDto;
+import sv.gob.mh.siip.model.administracion.dto.ContenidoIniciativaResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.ProductoIndicadorDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoCostoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.UbicacionGeograficaDto;
 
 /**
  * Catálogos de apoyo de CU-PRE-3.5: Tipo de Costos, ubicaciones geográficas, Productos e

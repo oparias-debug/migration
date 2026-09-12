@@ -8,6 +8,7 @@ import sv.gob.mh.siip.model.preinversion.api.PreinversinCapturaDeProyectosApi;
 import sv.gob.mh.siip.model.preinversion.dto.EstadoProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.IniciativaInversionDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectosCapturaResponseDto;
+import sv.gob.mh.siip.model.preinversion.service.ProyectoCapturaFiltro;
 import sv.gob.mh.siip.model.preinversion.service.ProyectoCapturaService;
 
 
@@ -52,13 +53,17 @@ public class ProyectoCapturaController implements PreinversinCapturaDeProyectosA
             Integer pagina,
             Integer tamanio) {
 
-        ProyectosCapturaResponseDto response = proyectoCapturaService.listarProyectosCaptura(
+        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro(
                 busqueda,
                 cup,
                 nombreProyecto,
                 iniciativaInversion,
                 estado,
-                idUnidadEjecutora,
+                idUnidadEjecutora
+        );
+
+        ProyectosCapturaResponseDto response = proyectoCapturaService.listarProyectosCaptura(
+                filtro,
                 pagina,
                 tamanio
         );

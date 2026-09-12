@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
+import sv.gob.mh.siip.model.administracion.mapper.CatalogosAdministracionMapper;
 import sv.gob.mh.siip.model.common.domain.Usuario;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
@@ -28,7 +29,7 @@ import sv.gob.mh.siip.model.preinversion.dto.SolicitudArchivadaItemDto;
 import sv.gob.mh.siip.model.preinversion.dto.SolicitudesActivasResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.SolicitudesArchivadasResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.TipoSolicitudDto;
-import sv.gob.mh.siip.model.preinversion.dto.UsuarioResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.UsuarioResumenDto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoSolicitud;
 import sv.gob.mh.siip.model.preinversion.enums.TipoSolicitud;
@@ -45,14 +46,17 @@ public class BandejaPreinversionService {
     private final UsuarioRepository usuarios;
     private final ActorContexto actores;
     private final ProyectoMapper mapper;
+    private final CatalogosAdministracionMapper catalogosMapper;
     private final NotificacionService notificaciones;
 
     public BandejaPreinversionService(SolicitudPreinversionRepository solicitudes, UsuarioRepository usuarios,
-            ActorContexto actores, ProyectoMapper mapper, NotificacionService notificaciones) {
+            ActorContexto actores, ProyectoMapper mapper, CatalogosAdministracionMapper catalogosMapper,
+            NotificacionService notificaciones) {
         this.solicitudes = solicitudes;
         this.usuarios = usuarios;
         this.actores = actores;
         this.mapper = mapper;
+        this.catalogosMapper = catalogosMapper;
         this.notificaciones = notificaciones;
     }
 
@@ -122,7 +126,7 @@ public class BandejaPreinversionService {
     @Transactional(readOnly = true)
     public List<UsuarioResumenDto> tecnicos() {
         actores.exigirRol(RolUsuario.COORDINADOR_PRE);
-        return usuarios.findByRolAndActivoTrue(RolUsuario.TECNICO_PRE).stream().map(mapper::toResumen).toList();
+        return usuarios.findByRolAndActivoTrue(RolUsuario.TECNICO_PRE).stream().map(catalogosMapper::toResumen).toList();
     }
 
     private SolicitudPreinversion buscar(Long id) {

@@ -9,11 +9,11 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
+import sv.gob.mh.siip.model.administracion.mapper.CatalogosAdministracionMapper;
 import sv.gob.mh.siip.model.common.domain.Usuario;
 import sv.gob.mh.siip.model.preinversion.domain.EjePlanGobierno;
 import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
 import sv.gob.mh.siip.model.preinversion.domain.PlanSectorialRegional;
-import sv.gob.mh.siip.model.preinversion.mapper.ProyectoMapper;
 import sv.gob.mh.siip.model.preinversion.repository.EjePlanGobiernoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.PlanSectorialRegionalRepository;
@@ -28,7 +28,7 @@ class CatalogoPreinversionServiceImplTest {
     private final EjePlanGobiernoRepository ejePlanGobiernoRepository = mock(EjePlanGobiernoRepository.class);
     private final PlanSectorialRegionalRepository planSectorialRegionalRepository = mock(
             PlanSectorialRegionalRepository.class);
-    private final ProyectoMapper mapper = Mappers.getMapper(ProyectoMapper.class);
+    private final CatalogosAdministracionMapper mapper = Mappers.getMapper(CatalogosAdministracionMapper.class);
     private final ActorContexto actorContexto = mock(ActorContexto.class);
 
     private final CatalogoPreinversionServiceImpl service = new CatalogoPreinversionServiceImpl(

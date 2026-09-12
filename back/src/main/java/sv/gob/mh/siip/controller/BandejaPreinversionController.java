@@ -4,12 +4,13 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import sv.gob.mh.siip.model.preinversion.bandeja.api.PreinversinBandejaPreinversinApi;
-import sv.gob.mh.siip.model.preinversion.bandeja.api.CatlogosPreinversinApi;
+import sv.gob.mh.siip.model.administracion.api.CatlogosBandejaPreinversinApi;
+import sv.gob.mh.siip.model.administracion.dto.UsuarioResumenDto;
 import sv.gob.mh.siip.model.preinversion.dto.*;
 import sv.gob.mh.siip.model.preinversion.service.BandejaPreinversionService;
 
 @RestController
-public class BandejaPreinversionController implements PreinversinBandejaPreinversinApi, CatlogosPreinversinApi {
+public class BandejaPreinversionController implements PreinversinBandejaPreinversinApi, CatlogosBandejaPreinversinApi {
     private final BandejaPreinversionService service;
     public BandejaPreinversionController(BandejaPreinversionService service) { this.service = service; }
 

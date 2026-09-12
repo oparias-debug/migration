@@ -4,7 +4,7 @@ codigo: UC-PRE-03
 nombre: Captura de Proyectos
 modulo: "Preinversión (derivado del prefijo 'PRE' del código 'UC-PRE-03' y de la referencia 'Equipo Preinversión' en el Historial de Revisiones; el documento no tiene un campo explícito llamado 'Módulo')"
 submodulo: No especificado en el documento.
-version: "1.1"
+version: "1.2"
 nota_version: >
   Versión 1.1: se aplica la resolución de negocio de la Ronda 2
   (RQ-C-02): se corrige, en RN04, la redacción de los nombres de los
@@ -15,6 +15,21 @@ nota_version: >
   modifica ningún otro contenido de RN04 (duración de los estados,
   actores, casos de uso referenciados), ya que ninguna otra
   resolución de la Ronda 2 lo cubre para este documento.
+nota_cambio_v1_2: >
+  Cambio solicitado por el usuario (11/09/2026), NO proveniente de una
+  nueva versión del PDF fuente: se agrega "Etapa" como sexta columna de
+  la pantalla "Captura de Proyectos", ausente del Anexo B.1 del PDF
+  original (que documenta solo 5 columnas: Unidad Ejecutora, CUP,
+  Nombre del proyecto, Estado, Iniciativa de inversión). Representa la
+  etapa actual del proyecto dentro de la Ruta de Preinversión, catálogo
+  definido en CU-PRE-03.5 "Selección y Registro de Etapas" (RN07-RN10 de
+  ese documento: Perfil, Prefactibilidad, Factibilidad, Diseño,
+  Ejecución) — no debe confundirse con el campo "Estado" ya documentado
+  en RN04 de este mismo documento, que sigue un catálogo distinto. Se
+  añade como fila nueva en "Campos", marcada explícitamente como adición
+  posterior al PDF, sin alterar ninguna otra fila ya transcrita del
+  Anexo B.1. Ver contrato-CU-PRE-03.md para el detalle de la
+  implementación (campo `etapaActual` de `ProyectoCapturaItem`).
 fuente_pdf: UC-PRE-03_Captura_de_Proyectos_JUL_2025_V1_F.pdf
 pagina_inicio: 3
 pagina_fin: 6
@@ -26,7 +41,7 @@ estado: Analizado
 depende_de:
   - "CU-PRE-01 Registro de proyectos (precondición: contar con CUP)"
 casos_relacionados:
-  - "CU-PRE-3.5 Selección y registro de etapas"
+  - "CU-PRE-03.5 Selección y registro de etapas"
   - "CU-PRE-04 Identificación"
   - "CU-PRE-23 Indicadores del Proyecto"
   - "CU-PRE-24 Viabilidad"
@@ -108,6 +123,8 @@ trazabilidad:
 - Unidad Ejecutora
 - Estado
 
+> ⚠️ Adición posterior al PDF (v1.2, 11/09/2026, decisión funcional del usuario): se agrega **Etapa** como sexto campo/columna de la pantalla, no listado en el PDF original. Ver `nota_cambio_v1_2` y la sección "Campos" más abajo.
+
 > Nota: el documento usa el patrón de identificación en tabla ("Identificación"), no el patrón numerado con "Ruta de Acceso"; por lo tanto no aplica una sección de "Ruta de Acceso" para este caso de uso.
 
 ## Historial de Revisiones
@@ -128,7 +145,7 @@ No se detectó discrepancia entre la versión indicada en la portada/encabezados
 
 # Descripción
 
-Muestra una tabla con el listado de proyectos a los cuales se ha emitido coordinador CUP. Permitirá dar clic en el CUP de cada proyecto a fin de ir a la pantalla "Registro de Etapas" en CU-PRE-3.5 "Selección y registro de etapas".
+Muestra una tabla con el listado de proyectos a los cuales se ha emitido coordinador CUP. Permitirá dar clic en el CUP de cada proyecto a fin de ir a la pantalla "Registro de Etapas" en CU-PRE-03.5 "Selección y registro de etapas".
 
 # Actor Principal
 
@@ -178,7 +195,7 @@ Muestra una tabla con el listado de proyectos a los cuales se ha emitido coordin
 
 **Flujo**
 
-1.1. Sistema. Muestra la pantalla "Registro de Etapas" en CU-PRE-3.5 "Selección y registro de etapas".
+1.1. Sistema. Muestra la pantalla "Registro de Etapas" en CU-PRE-03.5 "Selección y registro de etapas".
 
 **Resultado**
 
@@ -194,7 +211,7 @@ Muestra una tabla con el listado de proyectos a los cuales se ha emitido coordin
 
 El documento lista las siguientes postcondiciones, sin verbo introductorio explícito (solo los códigos y nombres de los casos de uso a los que se continúa):
 
-1. CU-PRE-3.5 Selección y registro de etapas
+1. CU-PRE-03.5 Selección y registro de etapas
 2. CU-PRE-04 Identificación
 3. CU-PRE-23 Indicadores del Proyecto
 4. CU-PRE-24 Viabilidad
@@ -270,6 +287,7 @@ Tabla construida a partir del Anexo B.1 – Formatos (Pantalla "Captura de Proye
 | Nombre del proyecto | Mostrará el nombre del proyecto. Contará con un filtro. | Texto | Texto | No especificado en el documento. | No especificado en el documento. | Editable: No (según Anexo B.1). |
 | Estado | Mostrará el estado en el que se encuentra cada proyecto. Contará con un filtro para poder visualizar proyectos según el estado en el que se encuentren. | Texto | Texto | No especificado en el documento. | No especificado en el documento. | Editable: No (según Anexo B.1). Ver catálogo de Estados en RN04 y discrepancia con los valores mostrados en el mockup del Anexo A.1 (ver Observaciones). |
 | Iniciativa de inversión | Mostrará el tipo de iniciativa identificada en el registro del proyecto, desde CU-PRE-01 "Registro de proyectos". | Texto | Texto | No especificado en el documento. | No especificado en el documento. | Editable: No (según Anexo B.1). |
+| Etapa ⚠️ | Mostrará la etapa actual del proyecto dentro de la Ruta de Preinversión (catálogo Perfil/Prefactibilidad/Factibilidad/Diseño/Ejecución de CU-PRE-03.5 "Selección y Registro de Etapas"). | Texto | Texto | No especificado en el documento. | No especificado en el documento. | Editable: No. **Fila agregada en v1.2 (11/09/2026), no proveniente del Anexo B.1 del PDF** — ver `nota_cambio_v1_2` y Observaciones. |
 
 > Nota: el campo "Buscador", listado en "Campos requeridos" de la Identificación y visible en el mockup del Anexo A.1 (control de búsqueda con placeholder "CUP; NOMBRE; UNIDAD EJECUTORA"), no cuenta con una fila propia en el Anexo B.1 – Formatos. Su comportamiento se describe únicamente de forma indirecta en RN03 ("En el campo 'Búsqueda' podrán buscarse proyectos por CUP, por Nombre y por Unidad Ejecutora"). No se documenta su Tipo/Formato/Editable de forma explícita en el Anexo B.1 (ver Datos Pendientes de Definir).
 
@@ -315,7 +333,7 @@ No se detectaron valores de "Tipo"/"Formato" atípicos respecto al resto de la t
 
 **Casos de uso mencionados:**
 - CU-PRE-01 "Registro de proyectos" (precondición; también referenciado dentro de RN04)
-- CU-PRE-3.5 "Selección y registro de etapas" (postcondición; destino del FA-01)
+- CU-PRE-03.5 "Selección y registro de etapas" (postcondición; destino del FA-01)
 - CU-PRE-04 "Identificación" (postcondición; referenciado dentro de RN04)
 - CU-PRE-23 "Indicadores del Proyecto" (postcondición; referenciado dentro de RN04)
 - CU-PRE-24 "Viabilidad" (postcondición; referenciado dentro de RN04)
@@ -347,7 +365,7 @@ No se detectaron valores de "Tipo"/"Formato" atípicos respecto al resto de la t
 
 **Acciones:**
 - Cada columna (CUP, Nombre del proyecto, Iniciativa de inversión, Estado, Unidad Ejecutora) muestra un ícono de filtro (▼) junto a su encabezado, conforme a RN05.
-- Dar clic en el CUP de un proyecto lleva a la pantalla "Registro de Etapas" (CU-PRE-3.5), según el Flujo Alternativo FA-01.
+- Dar clic en el CUP de un proyecto lleva a la pantalla "Registro de Etapas" (CU-PRE-03.5), según el Flujo Alternativo FA-01.
 
 **Ejemplo de datos mostrados en el mockup (Anexo A.1):**
 
@@ -377,11 +395,13 @@ No se detectaron valores de "Tipo"/"Formato" atípicos respecto al resto de la t
 
 # Observaciones
 
+- **Columna "Etapa" agregada en v1.2 (11/09/2026), no proveniente del PDF:** por decisión funcional del usuario, se agregó "Etapa" como sexta columna de la pantalla "Captura de Proyectos", ausente del Anexo B.1 y del mockup del Anexo A.1 del PDF original (que solo documentan 5 columnas). Representa la etapa actual del proyecto dentro de la Ruta de Preinversión (catálogo Perfil/Prefactibilidad/Factibilidad/Diseño/Ejecución definido en CU-PRE-03.5 "Selección y Registro de Etapas"), no debe confundirse con el campo "Estado" ya documentado en RN04 de este mismo documento. Se marca con ⚠️ en las tablas de "Campos", "Entidades Detectadas" y "Catálogos Detectados" para distinguirla del resto del contenido, que sí proviene fielmente del PDF fuente. Ver `nota_cambio_v1_2` en el encabezado y contrato-CU-PRE-03.md (campo `etapaActual`) para el detalle de implementación.
+
 - **Discrepancia entre el catálogo de Estados (RN04) y los valores de ejemplo del mockup (Anexo A.1):** RN04 define explícitamente 13 estados posibles para el campo "Estado" ("En Elaboración", "Enviado a DGICP (Registro)", "Observado DGICP (Registro)", "CUP asignado", "En F&E", "Proyecto formulado", "Observado", "En viabilidad", "Proyecto viable", "En elegibilidad", "Proyecto elegible", "En OT", "Proyecto con O.T."). Sin embargo, el mockup del Anexo A.1 muestra los valores "En análisis DGICP" y "Viabilizado" en la columna "Estado", ninguno de los cuales coincide textualmente con los 13 estados listados en RN04. Los valores "CUP asignado" y "En elaboración" del mockup sí coinciden (este último con diferencia de mayúscula inicial: "En Elaboración" en RN04 vs. "En elaboración" en el mockup). No se resuelve esta discrepancia (no fue parte de las resoluciones de la Ronda 2); se documenta para que sea aclarada en una etapa posterior. *(Nota: los nombres "Enviado a DGICP (Registro)" y "Observado DGICP (Registro)" fueron actualizados en la Ronda 2 — RQ-C-02 — para alinearse con la redacción oficial de UC-PRE-01; ver RN04.)*
 
 - **Campo "Buscador" sin fila propia en el Anexo B.1:** el campo "Buscador" aparece en la sección "Campos requeridos" de la Identificación y en el mockup del Anexo A.1, y su comportamiento funcional se describe en RN03, pero el Anexo B.1 – Formatos no incluye una fila dedicada a este campo con su Tipo/Formato/Editable, a diferencia de los demás campos de la pantalla que sí están documentados individualmente.
 
-- **Postcondiciones sin verbo introductorio:** la sección "Postcondiciones" de la Identificación lista seis casos de uso (CU-PRE-3.5, CU-PRE-04, CU-PRE-23, CU-PRE-24, CU-PRE-25, CU-PRE-26) sin una frase que indique la naturaleza exacta de la postcondición (ver nota de ambigüedad en la sección correspondiente).
+- **Postcondiciones sin verbo introductorio:** la sección "Postcondiciones" de la Identificación lista seis casos de uso (CU-PRE-03.5, CU-PRE-04, CU-PRE-23, CU-PRE-24, CU-PRE-25, CU-PRE-26) sin una frase que indique la naturaleza exacta de la postcondición (ver nota de ambigüedad en la sección correspondiente).
 
 - **Flujo Alternativo FA-01 sin apartados explícitos de "Condición" y "Resultado":** el documento no incluye encabezados o frases explícitas para estos apartados; se completaron con "No especificado en el documento." conforme al criterio de no sintetizar contenido no verificable.
 
@@ -398,6 +418,7 @@ No se detectaron valores de "Tipo"/"Formato" atípicos respecto al resto de la t
 | Unidad Ejecutora | Entidad institucional responsable del proyecto. | Consulta/visualización (Anexo B.1); Filtro (RN03, RN05); Determina visibilidad de proyectos según rol (RN01, RN02). |
 | Estado | Estado del proyecto dentro del ciclo de Preinversión. | Cálculo/transición automática según eventos descritos en RN04; Filtro (RN04, RN05). |
 | Iniciativa de inversión | Tipo de iniciativa identificada en el registro del proyecto (CU-PRE-01). | Consulta/visualización (Anexo B.1); Filtro (RN05). |
+| Etapa ⚠️ | Etapa actual del proyecto dentro de la Ruta de Preinversión (CU-PRE-03.5). Entidad agregada en v1.2, no proveniente del Anexo B.1 del PDF original (ver nota_cambio_v1_2). | Consulta/visualización. |
 
 ---
 
@@ -406,6 +427,7 @@ No se detectaron valores de "Tipo"/"Formato" atípicos respecto al resto de la t
 | Catálogo | Valores conocidos |
 |---|---|
 | Estados de Proyecto (RN04) | En Elaboración; Enviado a DGICP (Registro); Observado DGICP (Registro); CUP asignado; En F&E; Proyecto formulado; Observado; En viabilidad; Proyecto viable; En elegibilidad; Proyecto elegible; En OT; Proyecto con O.T. Este catálogo está definido íntegramente dentro de RN04 (ver Reglas de Negocio; nombres de "Enviado a DGICP (Registro)" y "Observado DGICP (Registro)" actualizados en la Ronda 2 — RQ-C-02 — para alinearse con UC-PRE-01). Ver discrepancia con los valores de ejemplo mostrados en el mockup del Anexo A.1 ("En análisis DGICP", "Viabilizado") en la sección Observaciones. |
+| Etapas de la Ruta de Preinversión ⚠️ | Perfil; Prefactibilidad; Factibilidad; Diseño; Ejecución. Catálogo definido en CU-PRE-03.5 "Selección y Registro de Etapas" (RN07-RN10 de ese documento), no en este PDF. Referenciado aquí solo porque, a partir de v1.2 (11/09/2026), respalda la columna "Etapa" agregada por decisión funcional del usuario — ver nota_cambio_v1_2 y Observaciones. Distinto del catálogo "Estados de Proyecto" de arriba. |
 
 ---
 
@@ -414,7 +436,7 @@ No se detectaron valores de "Tipo"/"Formato" atípicos respecto al resto de la t
 | Evento | Origen | Destino |
 |---|---|---|
 | Registro/listado de proyectos con CUP en "Captura de Proyectos" | Sistema | Pantalla "Captura de Proyectos" (Anexo A.1) |
-| Visualización de la pantalla "Registro de Etapas" | Sistema (tras clic en CUP, FA-01) | CU-PRE-3.5 "Selección y registro de etapas" |
+| Visualización de la pantalla "Registro de Etapas" | Sistema (tras clic en CUP, FA-01) | CU-PRE-03.5 "Selección y registro de etapas" |
 
 ---
 

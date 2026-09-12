@@ -1,5 +1,6 @@
 package sv.gob.mh.siip.model.preinversion.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,4 +15,7 @@ public interface EtapaPreinversionRepository extends JpaRepository<EtapaPreinver
     List<EtapaPreinversion> findByProyectoIdOrderByTipoEtapaAsc(Long idProyecto);
 
     Optional<EtapaPreinversion> findByProyectoIdAndTipoEtapa(Long idProyecto, TipoEtapaPreinversion tipoEtapa);
+
+    /** Etapas aceptadas de varios proyectos a la vez (una sola consulta para una página completa). */
+    List<EtapaPreinversion> findByProyectoIdIn(Collection<Long> idsProyecto);
 }

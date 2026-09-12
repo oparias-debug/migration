@@ -48,7 +48,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: >
             El actor autenticado no corresponde a ninguno de los roles de
@@ -58,7 +58,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: >
             El proyecto no existe, o (solo para Técnico PRE/Usuarios
@@ -67,7 +67,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
     put:
       operationId: guardarAlternativasSolucion
@@ -106,7 +106,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: >
             El actor autenticado no es Técnico URP, o el proyecto no está en
@@ -115,13 +115,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
   /proyectos/{idProyecto}/alternativas-solucion/avance:
     parameters:
@@ -170,25 +170,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "401":
           description: No autenticado.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "403":
           description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         "404":
           description: El proyecto no existe.
           content:
             application/json:
               schema:
-                $ref: './CU-PRE-01.openapi.yaml#/components/schemas/Error'
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
 
 components:
   securitySchemes:
@@ -244,7 +244,7 @@ components:
             (reemplaza la lista anterior por completo — un solo botón
             "Guardar" para toda la sección, mismo criterio que
             `objetivosEspecificos` en CU-PRE-04 y `actualizarEtapas` en
-            CU-PRE-3.5). Agregar/eliminar una fila o cambiar la selección
+            CU-PRE-03.5). Agregar/eliminar una fila o cambiar la selección
             radial ocurre en el cliente antes de este `PUT`.
           items:
             $ref: '#/components/schemas/AlternativaSolucionRequest'

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -45,7 +46,12 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  * acción real se dispara en el primer paso propio que sigue. "el sistema muestra el mensaje
  * {string}" también es compartido (definido en Pre01RegistrarNuevoProyecto): la excepción que
  * lanza {@code registrarFichaEmergencia} se guarda en {@link ContextoValidacionBdd} para que ese
- * paso la verifique.
+ * paso la verifique. "el Técnico URP hace clic en {string} sin haber completado el campo
+ * {string}" es texto identico al de CU-PRE-06-registrar-matriz-interesados.feature y
+ * CU-PRE-07-registrar-analisis-poblacion.feature (Cucumber exige una unica definicion por texto,
+ * mismo criterio que Pre02Bandeja/Pre01ResponderObservaciones): se delega en
+ * {@link Pre06RegistrarMatrizInteresados} o {@link Pre07RegistrarAnalisisPoblacion} cuando su
+ * respectivo escenario esta activo.
  */
 public class Pre35RegistrarFichaEmergencia {
 
@@ -72,6 +78,14 @@ public class Pre35RegistrarFichaEmergencia {
 
     private Proyecto proyecto;
     private FichaEmergenciaDto fichaGuardada;
+
+    // El paso "el Técnico URP hace clic en {string} sin haber completado el campo {string}" es
+    // texto identico al de CU-PRE-06-registrar-matriz-interesados.feature; Cucumber no admite
+    // duplicarlo (ver javadoc de la clase).
+    @Autowired
+    private Pre06RegistrarMatrizInteresados matrizInteresados;
+    @Autowired
+    private Pre07RegistrarAnalisisPoblacion analisisPoblacion;
 
     public Pre35RegistrarFichaEmergencia(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
@@ -132,6 +146,14 @@ public class Pre35RegistrarFichaEmergencia {
 
     @Cuando("el Técnico URP hace clic en {string} sin haber completado el campo {string}")
     public void el_tecnico_urp_hace_clic_sin_haber_completado_el_campo(String boton, String campo) {
+        if (matrizInteresados.esEscenarioMatrizInteresados()) {
+            matrizInteresados.guardarSinCompletarCampo(campo);
+            return;
+        }
+        if (analisisPoblacion.esEscenarioAnalisisPoblacion()) {
+            analisisPoblacion.guardarSinCompletarCampo(campo);
+            return;
+        }
         FichaEmergenciaRequestDto request = formularioValido();
         switch (campo) {
             case "Planteamiento del problema" -> request.setPlanteamientoProblema(null);

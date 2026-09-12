@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -41,7 +42,11 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  * Pre01RegistrarNuevoProyecto; la accion real (RN2-4/RN2-3) se dispara en el primer paso propio
  * que sigue a ese clic — "el sistema avanza a la sección..." en el camino feliz, "el sistema
  * muestra la alerta..." en los dos casos de error (mismo texto en ambos escenarios negativos,
- * definido una unica vez aqui).
+ * definido una unica vez aqui). "el sistema avanza a la sección {string} \(CU-PRE-{word})" es
+ * texto identico al de CU-PRE-06-avanzar-poblacion-objetivo.feature (Cucumber exige una unica
+ * definicion por texto, mismo criterio que Pre02Bandeja/Pre01ResponderObservaciones): se delega en
+ * {@link Pre06AvanzarPoblacionObjetivo} o {@link Pre07AvanzarAreaInfluencia} cuando su respectivo
+ * escenario esta activo.
  */
 public class Pre05AvanzarAnalisisInteresados {
 
@@ -56,6 +61,14 @@ public class Pre05AvanzarAnalisisInteresados {
     private final MacroSectorRepository macroSectorRepository;
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
+
+    // El paso "el sistema avanza a la sección {string} \(CU-PRE-{word})" es texto identico al de
+    // CU-PRE-06-avanzar-poblacion-objetivo.feature; Cucumber no admite duplicarlo (ver javadoc de
+    // la clase).
+    @Autowired
+    private Pre06AvanzarPoblacionObjetivo avanzarPoblacionObjetivo;
+    @Autowired
+    private Pre07AvanzarAreaInfluencia avanzarAreaInfluencia;
 
     public Pre05AvanzarAnalisisInteresados(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository,
@@ -145,8 +158,19 @@ public class Pre05AvanzarAnalisisInteresados {
         // La justificacion quedo vacia (null) en el guardado del paso anterior: nada que hacer.
     }
 
-    @Entonces("el sistema avanza a la sección {string} \\(CU-PRE-{int})")
-    public void el_sistema_avanza_a_la_seccion(String seccion, Integer numeroCu) {
+    // {word} en vez de {int} para el numero de CU: el tipo integrado {int} de Cucumber usa
+    // Integer.decode (octal con cero inicial) y falla con valores como "08" (CU-PRE-08); el valor
+    // no se usa en el cuerpo del paso, solo hace falta que capture sin error.
+    @Entonces("el sistema avanza a la sección {string} \\(CU-PRE-{word})")
+    public void el_sistema_avanza_a_la_seccion(String seccion, String numeroCu) {
+        if (avanzarPoblacionObjetivo.esEscenarioAvanzarPoblacionObjetivo()) {
+            avanzarPoblacionObjetivo.confirmarAvance();
+            return;
+        }
+        if (avanzarAreaInfluencia.esEscenarioAvanzarAreaInfluencia()) {
+            avanzarAreaInfluencia.confirmarAvance();
+            return;
+        }
         RegistroAlternativasDto resultado = alternativaSolucionService
                 .avanzarAAnalisisInteresados(contextoProyecto.getProyectoActual().getId());
         assertThat(resultado).isNotNull();

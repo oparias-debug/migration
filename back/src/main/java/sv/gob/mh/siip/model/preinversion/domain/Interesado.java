@@ -1,14 +1,30 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
-import sv.gob.mh.siip.model.preinversion.enums.PosicionInteresado;
+import sv.gob.mh.siip.model.preinversion.enums.NivelInfluencia;
+import sv.gob.mh.siip.model.preinversion.enums.NivelInteres;
 import sv.gob.mh.siip.model.preinversion.enums.TipoInteresado;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-/** Analisis de interesados del proyecto. CU-PRE-06. */
+/** Fila de la "Matriz de gestion de interesados" (Anexo A.1). CU-PRE-06. */
 @Entity
 @Table(name = "INTERESADO")
 @Getter
@@ -30,20 +46,26 @@ public class Interesado {
     @JoinColumn(name = "ID_PROYECTO", nullable = false)
     private Proyecto proyecto;
 
-    @NotBlank
-    @Column(name = "NOMBRE", nullable = false, length = 250)
-    private String nombre;
+    /** Ninguno de los campos de fila es obligatorio a nivel de servidor (CU-PRE-06, RN06). */
+    @Column(name = "NOMBRE_INTERESADO", length = 300)
+    private String nombreInteresado;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "TIPO_INTERESADO", nullable = false, length = 30)
-    private TipoInteresado tipoInteresado;
+    @Column(name = "TIPO", length = 20)
+    private TipoInteresado tipo;
 
-    @Column(name = "ROL_INTERES", length = 500)
-    private String rolInteres;
-
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "POSICION", nullable = false, length = 20)
-    private PosicionInteresado posicion;
+    @Column(name = "NIVEL_INFLUENCIA", length = 10)
+    private NivelInfluencia nivelInfluencia;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "NIVEL_INTERES", length = 10)
+    private NivelInteres nivelInteres;
+
+    @Column(name = "ESTRATEGIA_GESTION")
+    private String estrategiaGestion;
+
+    /** Preserva el orden de las filas entre guardados (mismo criterio que AlternativaSolucion). */
+    @Column(name = "ORDEN")
+    private Integer orden;
 }

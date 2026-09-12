@@ -1,0 +1,1096 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - Catálogos Consolidados
+  version: 1.0.0
+  description: 'Fragmento OpenAPI de CATÁLOGOS CONSOLIDADOS de todo el módulo de
+
+    Preinversión. Creado el 10/09/2026 a partir de un hallazgo real reportado
+
+    por el pipeline de generación de código (Maven/openapi-generator): todos
+
+    los endpoints de catálogo del contrato compartían el mismo tag
+
+    "Catálogos Preinversión" en 9 archivos distintos (CU-PRE-01, 02, 3.5, 11,
+
+    17, 20, 23, 25, 26.5). Como openapi-generator genera un archivo Java por
+
+    tag (no por fragmento de origen), y cada fragmento se ejecuta como su
+
+    propia <execution> de Maven contra el mismo apiPackage, la ejecución que
+
+    corre al final sobrescribía por completo el archivo generado de las
+
+    ejecuciones anteriores para ese mismo tag — perdiendo silenciosamente los
+
+    métodos de catálogo de todos los demás CU. El síntoma reportado
+
+    específicamente fue en CU-PRE-01 (5 operaciones), CU-PRE-02 (1) y
+
+    CU-PRE-11 (1), pero el inventario completo mostró que el riesgo alcanzaba
+
+    a los 9 archivos (19 operaciones en total) — no solo a los 3 señalados.
+
+
+    Se consolidaron aquí TODOS los endpoints /catalogos/* de todo el contrato
+
+    (incluidos los de CU-PRE-03.5, que aunque no colisionaban hoy, usaban el
+
+    mismo tag genérico y habrían colisionado con el primer CU nuevo que lo
+
+    reutilizara). Cada operación se retaggeó con un tag específico por CU de
+
+    origen (p. ej. "Catálogos - Elegibilidad", "Catálogos - Priorización") en
+
+    vez del tag genérico compartido — así, aunque todos vivan en este mismo
+
+    archivo/ejecución de Maven, cada uno genera su propia interfaz Java sin
+
+    colisionar entre sí, según el mismo patrón que ya funcionaba sin
+
+    problemas para "Catálogos Selección y Registro de Etapas" (tag único de
+
+    CU-PRE-03.5, que el reporte original identificó correctamente como el
+
+    patrón a seguir).
+
+
+    Todos los fragmentos de origen (CU-PRE-01, 02, 3.5, 11, 17, 20, 23, 25,
+
+    26.5) fueron actualizados para eliminar estos paths y schemas, y para
+
+    referenciarlos aquí vía `$ref` externo donde los necesitan como parte de
+
+    sus propios modelos de dominio (p. ej. `Proyecto.sector` en CU-PRE-01,
+
+    `Beneficio.parametro` en CU-PRE-20). Los archivos que ya reutilizaban
+
+    alguno de estos catálogos desde otro fragmento (CU-PRE-18 → InsumoTipoResumen
+
+    de CU-PRE-17; CU-PRE-11/17 → TipoCostoResumen de CU-PRE-03.5; CU-PRE-26 →
+
+    ContenidoIniciativaResumen de CU-PRE-03.5) también se actualizaron para
+
+    apuntar aquí en vez de al archivo de origen anterior. Ver
+
+    contrato-CU-PRE-00-catalogos.md para el detalle completo de la migración,
+
+    archivo por archivo.'
+paths:
+  /catalogos/contenido-iniciativas-proyecto:
+    get:
+      operationId: listarContenidoIniciativasProyecto
+      summary: Consultar el "Anexo F — Contenido de Iniciativas de Proyecto" (RN20)
+      description: '✅ Confirmado (04/09/2026, decisión funcional v1.3): este catálogo corresponde efectivamente al anexo referenciado por RN20 — antes sin confirmar, lo que dejaba a `CU-PRE-26.openapi.yaml` con un campo genérico (`camposHabilitados: array of string`) por falta de esta misma confirmación; ese fragmento debería actualizarse para referenciar este catálogo real (ver contrato-CU-PRE-03.5.md). Determina, para cada "contenido" (Antecedentes, Análisis de Alternativas de Solución, Descripción Técnica, etc.), en cuáles etapas de la Ruta de Preinversión aplica, y si aplica al proceso de Actualización de Opinión Técnica — con 3 estados posibles en esta última columna, ahora distinguidos explícitamente: "X" (aplica, `APLICA`), "-" guion (no aplica al caso de uso, `NO_APLICA_AL_CU`) y celda vacía (ausencia de dato, `SIN_DATO`) — antes de esta confirmación no era posible distinguir los dos últimos casos.
+
+        '
+      tags:
+      - Catálogos - Selección y Registro de Etapas
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      responses:
+        '200':
+          description: Listado del contenido de iniciativas de proyecto (30 filas, Anexo F).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContenidoIniciativaResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/criterios-elegibilidad:
+    get:
+      operationId: listarCriteriosElegibilidad
+      summary: Consultar el catálogo de criterios de elegibilidad (dimensiones y criterios)
+      description: '⚠️ No incluye ningún campo de ponderación ni puntaje — ver info.description del archivo y contrato-CU-PRE-25.md sobre el mayor hueco de este fragmento (tabla de 6 dimensiones/20 criterios/100 puntos, sin pertenencia confirmada a este CU). Solo expone la estructura necesaria para renderizar la tabla de selección: a qué dimensión pertenece cada criterio, y qué tipo de control usa su columna "Especificar" (RN08: algunos permiten selección múltiple).
+
+        '
+      tags:
+      - Catálogos - Elegibilidad
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Viabilizador
+      responses:
+        '200':
+          description: Listado de criterios de elegibilidad.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CriterioElegibilidadResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/criterios-priorizacion:
+    get:
+      operationId: listarCriteriosPriorizacion
+      summary: Consultar el catálogo de criterios y subcriterios de priorización
+      description: '⚠️ Contenido bloqueado por ambigüedad de versión — ver info.description del archivo. Este endpoint expone la forma estructural necesaria (criterio → subcriterios → ponderaciones), pero su contenido real (número de subcriterios por criterio y sus ponderaciones exactas) debe resolverse antes de implementar el backend, una vez el negocio confirme cuál de las dos versiones del anexo Excel es la vigente.
+
+        '
+      tags:
+      - Catálogos - Priorización
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico PRE
+      - Técnico SYMP
+      responses:
+        '200':
+          description: Listado de criterios con sus subcriterios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CriterioPriorizacionResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/ejes-plan-gobierno:
+    get:
+      operationId: listarEjesPlanGobierno
+      summary: 'Consultar el catálogo de Ejes del Plan Cuscatlán (Anexo C.3) — fuente del listado seleccionable del campo "Línea/Eje del Plan de Gobierno"
+
+        '
+      tags:
+      - Catálogos - Registro de Proyectos
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      - Técnico PRE
+      - Administrador del Sistema
+      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
+      responses:
+        '200':
+          description: Listado de ejes del Plan de Gobierno.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EjePlanGobiernoResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/ejes-tematicos:
+    get:
+      operationId: listarEjesTematicos
+      summary: 'Consultar el catálogo "Eje temático" (Anexo C.6) — fuente del listado seleccionable del campo "Eje temático" en la pantalla "Nuevo registro"
+
+        '
+      tags:
+      - Catálogos - Registro de Proyectos
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      - Técnico PRE
+      - Administrador del Sistema
+      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
+      responses:
+        '200':
+          description: Listado de ejes temáticos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EjeTematicoResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/escala-calificacion-subcriterio:
+    get:
+      operationId: listarEscalaCalificacionSubcriterio
+      summary: Consultar la Escala de Calificación de un subcriterio (botón "Ver Escala de Calificación", RN08, Anexo C)
+      description: 'Cada subcriterio tiene su propia escala descriptiva para los valores N/A y 0-5 (Anexo C) — disponible para todos los actores del CU, sin restricción de rol adicional a la autenticación misma.
+
+        '
+      tags:
+      - Catálogos - Priorización
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico PRE
+      - Técnico SYMP
+      - Coordinador PRE
+      - Coordinador SYMP
+      - Subjefe DGI
+      - Jefe DGI
+      parameters:
+      - name: codigoSubcriterio
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Escala de calificación del subcriterio solicitado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EscalaCalificacionValor'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '404':
+          description: El subcriterio indicado no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/especificar-elegibilidad:
+    get:
+      operationId: listarCatalogoEspecificarElegibilidad
+      summary: Consultar los catálogos C.1, C.3, C.4, C.5 y los dos adicionales de "Especificar" (Anexo C)
+      description: 'Mismo patrón que `GET /catalogos/medidas` en CU-PRE-03.5 (un endpoint parametrizado por `tipo`, en vez de 6 endpoints separados). El catálogo C.2 (Ejes del Plan de Gobierno) **no** se expone aquí: es el mismo catálogo ya servido por `GET /catalogos/ejes-plan-gobierno` en CU-PRE-03.5.openapi.yaml (mismo concepto de "ejes/pilares del Plan de Gobierno"), reutilizado en vez de duplicado.
+
+        '
+      tags:
+      - Catálogos - Elegibilidad
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Viabilizador
+      parameters:
+      - name: tipo
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/TipoCatalogoEspecificar'
+      responses:
+        '200':
+          description: Listado del catálogo solicitado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EntradaCatalogoEspecificar'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/indicadores-resultado:
+    get:
+      operationId: listarIndicadoresResultado
+      summary: Consultar el catálogo "C.2 Indicadores de Resultado"
+      description: 'Catálogo nuevo (no compartido con otro CU procesado hasta ahora). RN06 menciona que "los CU de Administración del Catálogo de Indicadores" deben definir reglas de mantenimiento periódico — ese CU de administración no ha sido procesado; este fragmento solo expone la consulta de lectura que necesita el selector de `registrarIndicadorResultado`.
+
+        '
+      tags:
+      - Catálogos - Indicadores del Proyecto
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      parameters:
+      - name: busqueda
+        in: query
+        description: Filtro por palabra clave (FA01, paso 1.2 — "el sistema permitirá filtrar por palabra los indicadores").
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Listado de indicadores de resultado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IndicadorResultadoResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/insumos-tipo:
+    get:
+      operationId: listarInsumosTipo
+      summary: Consultar el catálogo "Insumo Tipo" (con Factor de Corrección)
+      description: 'El propio CU aclara: "Este catálogo estará sujeto a actualización por parte de la DGICP" (mismo tipo de nota que "Tipo de Costos" en CU-PRE-03.5) — administrado, requiere endpoint propio, a diferencia de catálogos fijos modelados como `enum` en este mismo fragmento (`FuenteFinanciamiento`).
+
+        '
+      tags:
+      - Catálogos - Presupuesto
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      responses:
+        '200':
+          description: Listado de tipos de insumo con su factor de corrección.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InsumoTipoResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/medidas:
+    get:
+      operationId: listarMedidasCatalogo
+      summary: 'Consultar el catálogo de medidas de GRD/GRC/ACC (botón "Ver descripción de categorías", Anexos C.1, C.1.5 y C.2; también fuente del listado seleccionable de los campos medidasGrd/medidasGrc/medidasAcc en la pantalla "Nuevo registro")
+
+        '
+      description: 'Disponible para cualquier actor autenticado; no restringe por rol.
+
+        '
+      tags:
+      - Catálogos - Registro de Proyectos
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      - Técnico PRE
+      - Administrador del Sistema
+      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
+      parameters:
+      - name: tipo
+        in: query
+        required: true
+        description: Anexo C.1 (GRD), C.1.5 (GRC) o C.2 (ACC).
+        schema:
+          $ref: '#/components/schemas/TipoMedidaCatalogo'
+      responses:
+        '200':
+          description: Listado del catálogo solicitado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedidaCatalogo'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/parametros-beneficio:
+    get:
+      operationId: listarParametrosBeneficio
+      summary: Consultar el catálogo "Parámetros" (con Factor de Corrección)
+      description: 'El propio CU aclara: "Este catálogo estará sujeto a actualización por parte de la DGICP" — administrado, requiere endpoint propio, mismo criterio que "Insumo Tipo" (CU-PRE-17/18). El mockup del Anexo A.2 muestra un FC de 1.10 para "Valor social del tiempo", pero el catálogo documentado lista 1.00 para todos sus valores — discrepancia del propio CU entre catálogo y ejemplo, no resuelta; el catálogo real que exponga este endpoint es la fuente de verdad.
+
+        '
+      tags:
+      - Catálogos - Flujo de Beneficios
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      responses:
+        '200':
+          description: Listado de parámetros con su factor de corrección.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParametroResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/planes-sectoriales:
+    get:
+      operationId: listarPlanesSectoriales
+      summary: 'Consultar el catálogo de Planes Sectoriales/Regionales (Anexo C.4) — fuente del listado seleccionable del campo "Plan Sectorial/Regional al que contribuye"
+
+        '
+      tags:
+      - Catálogos - Registro de Proyectos
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      - Técnico PRE
+      - Administrador del Sistema
+      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
+      responses:
+        '200':
+          description: Listado de planes sectoriales/regionales.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanSectorialRegionalResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/productos-indicadores:
+    get:
+      operationId: listarProductosIndicadores
+      summary: Consultar el catálogo de Productos e Indicadores (Anexo C.6)
+      tags:
+      - Catálogos - Selección y Registro de Etapas
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      responses:
+        '200':
+          description: Listado de productos e indicadores.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductoIndicador'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/rangos-interpretacion-priorizacion:
+    get:
+      operationId: listarRangosInterpretacionPriorizacion
+      summary: Consultar los Rangos de Interpretación del puntaje de priorización (botón "Rangos de interpretación", RN09)
+      description: 'A diferencia del catálogo de criterios, estos 4 rangos están completamente confirmados por el documento, sin ambigüedad de versión — se exponen con su contenido real.
+
+        '
+      tags:
+      - Catálogos - Priorización
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico PRE
+      - Técnico SYMP
+      - Coordinador PRE
+      - Coordinador SYMP
+      - Subjefe DGI
+      - Jefe DGI
+      responses:
+        '200':
+          description: Listado de los 4 rangos de interpretación.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RangoInterpretacion'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/sectores:
+    get:
+      operationId: listarSectores
+      summary: 'Consultar el catálogo "Macrosectores y sectores" (Anexo C.5) — fuente del listado seleccionable del campo "Sector" en la pantalla "Nuevo registro"
+
+        '
+      description: 'Cada Sector incluye su Macrosector asociado, ya que el campo "Macrosector" se asigna automáticamente según el Sector elegido y no es seleccionable directamente por el Técnico URP.
+
+        '
+      tags:
+      - Catálogos - Registro de Proyectos
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      - Técnico PRE
+      - Administrador del Sistema
+      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
+      responses:
+        '200':
+          description: Listado de sectores.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SectorResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/tecnicos-pre:
+    get:
+      operationId: listarTecnicosPre
+      summary: Consultar el catálogo "Nombres Técnicos PRE" (Anexo C, RN04)
+      description: 'Fuente del listado desplegable de la columna "Asignado a" en la tabla "Solicitudes Activas". Reutiliza `UsuarioResumen` (usuarios con ROL = TECNICO_PRE en el modelo de dominio) en vez de definir un schema de catálogo nuevo, ya que el Anexo C solo enumera nombres de usuario ya existentes como actores del sistema.
+
+        '
+      tags:
+      - Catálogos - Bandeja Preinversión
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Coordinador PRE
+      responses:
+        '200':
+          description: Listado de Técnicos PRE disponibles para asignación.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../preinversion/CU-PRE-01.openapi.yaml#/components/schemas/UsuarioResumen
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/tipos-costo:
+    get:
+      operationId: listarTiposCosto
+      summary: Consultar el catálogo "Tipo de Costos" (Anexo C.2)
+      description: 'El propio CU aclara: "Este catálogo estará sujeto a actualización por parte de la DGICP" — a diferencia de Tipo de capital/Tamaño/Complejidad (Anexos C.1/C.3/C.4), que son listados fijos modelados como enum (`TipoCapital`, `TamanioProyecto`, `ComplejidadProyecto`) sin necesidad de endpoint propio, este catálogo sí es administrado y requiere uno.
+
+        '
+      tags:
+      - Catálogos - Selección y Registro de Etapas
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      responses:
+        '200':
+          description: Listado de tipos de costo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TipoCostoResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/ubicaciones-geograficas:
+    get:
+      operationId: listarUbicacionesGeograficas
+      summary: Consultar el catálogo de ubicaciones geográficas (Anexo C.5)
+      description: 'RN sobre el campo "Distrito": "Solamente se mostrarán los distritos del Departamento seleccionado" (parámetro `departamento`) y "la celda permitirá digitar una palabra clave y el Sistema la autocompletará" (parámetro `busqueda`). Incluye entradas especiales de nivel departamental (p. ej. "Ahuachapán - Nivel departamental") además de los distritos individuales, tal como aparecen en el catálogo original; "Nivel nacional" (mencionado en el campo "Coordenadas" de la Ficha de emergencia) también se modela como un valor más de `distrito`, no como un concepto propio.
+
+        '
+      tags:
+      - Catálogos - Selección y Registro de Etapas
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      parameters:
+      - name: departamento
+        in: query
+        description: Filtra los distritos al departamento indicado.
+        schema:
+          type: string
+      - name: busqueda
+        in: query
+        description: Autocompletado por palabra clave sobre el nombre del distrito.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Listado de ubicaciones geográficas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UbicacionGeografica'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /catalogos/unidades-medida:
+    get:
+      operationId: listarUnidadesMedida
+      summary: Consultar el catálogo de unidades de medida (Anexo D.1 de este CU / Anexo C.1 de CU-PRE-09)
+      description: 'El propio CU señala que este catálogo "es idéntico en contenido" al del Anexo C.1 de CU-PRE-09 "Análisis de Mercado". Se expone aquí como endpoint propio porque CU-PRE-09 nunca lo expuso como catálogo independiente (allá, `unidadMedida` viaja denormalizado dentro de `ProductoIndicador`/`ProductoSeleccionado`). Si se revisa CU-PRE-09 más adelante, debería evaluarse apuntar a este mismo endpoint en vez de mantener el dato solo denormalizado, para no tener dos fuentes del mismo catálogo.
+
+        '
+      tags:
+      - Catálogos - Descripción Técnica
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      responses:
+        '200':
+          description: Listado de unidades de medida.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UnidadMedidaResumen'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AplicaActualizacionOt:
+      type: string
+      description: '3 estados de la columna "Campos a habilitar para Actualización de O.T." del Anexo F, distinguidos explícitamente desde la confirmación v1.3 (04/09/2026).
+
+        '
+      enum:
+      - APLICA
+      - NO_APLICA_AL_CU
+      - SIN_DATO
+    ContenidoIniciativaResumen:
+      type: object
+      description: 'Fila del "Anexo F — Contenido de Iniciativas de Proyecto" (RN20, confirmado v1.3). `ubicacionCasoUso` es el código del CU donde vive ese contenido (p. ej. "CUPRE-04"); nulo para filas sin CU asignado (sección "5. Documentos anexos", p. ej. "Nota de solicitud de OT"). Nota heredada sin resolver: "Presupuesto de Inversión" y "Fuentes de Financiamiento" comparten la misma celda combinada de `ubicacionCasoUso` ("CUPRE-17") en el documento original — no se puede confirmar si "Fuentes de Financiamiento" debería tener una referencia propia distinta.
+
+        '
+      required:
+      - contenido
+      - aplicaPerfil
+      - aplicaPrefactibilidad
+      - aplicaFactibilidad
+      - aplicaDiseno
+      - aplicaPrograma
+      - aplicaEstudioGeneral
+      - aplicaActualizacionOt
+      properties:
+        contenido:
+          type: string
+          description: p. ej. "Antecedentes", "Análisis de Alternativas de Solución", "Descripción Técnica".
+        ubicacionCasoUso:
+          type: string
+          nullable: true
+          description: Código del caso de uso (p. ej. "CUPRE-04"); nulo para contenidos sin CU asignado.
+        aplicaPerfil:
+          type: boolean
+        aplicaPrefactibilidad:
+          type: boolean
+        aplicaFactibilidad:
+          type: boolean
+        aplicaDiseno:
+          type: boolean
+        aplicaPrograma:
+          type: boolean
+        aplicaEstudioGeneral:
+          type: boolean
+        aplicaActualizacionOt:
+          $ref: '#/components/schemas/AplicaActualizacionOt'
+    CriterioElegibilidadResumen:
+      type: object
+      description: 'Entrada del catálogo de criterios (dimensión + criterio + tipo de "Especificar"). Sin campo de ponderación/puntaje — ver nota de alcance en el archivo.
+
+        '
+      required:
+      - codigo
+      - dimension
+      - criterio
+      - tipoEspecificar
+      properties:
+        codigo:
+          type: string
+        dimension:
+          type: string
+        criterio:
+          type: string
+        tipoEspecificar:
+          $ref: '#/components/schemas/TipoEspecificar'
+        catalogoEspecificar:
+          allOf:
+          - $ref: '#/components/schemas/TipoCatalogoEspecificar'
+          nullable: true
+          type: string
+          description: 'No nulo únicamente si tipoEspecificar = CATALOGO. Ver `TipoCatalogoEspecificar` para cómo resolver cada valor (`GET /catalogos/especificar-elegibilidad` o, para EJE_PLAN_GOBIERNO, `GET /catalogos/ejes-plan-gobierno` de CU-PRE-03.5).
+
+            '
+        permiteSeleccionMultiple:
+          type: boolean
+          description: RN08 — algunos criterios con tipoEspecificar = CATALOGO permiten seleccionar más de un elemento.
+    CriterioPriorizacionResumen:
+      type: object
+      required:
+      - codigo
+      - numeroCriterio
+      - nombreCriterio
+      - ponderacionCriterio
+      - subcriterios
+      properties:
+        codigo:
+          type: string
+        numeroCriterio:
+          type: integer
+          description: 1 a 4.
+        nombreCriterio:
+          type: string
+        ponderacionCriterio:
+          type: number
+          format: double
+          description: Porcentaje; "sujeto a actualización por parte de la DGI" (Anexo B.1).
+        subcriterios:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubcriterioPriorizacionResumen'
+    EjePlanGobiernoResumen:
+      type: object
+      description: Catálogo de Ejes del Plan Cuscatlán (Anexo C.3).
+      required:
+      - idEjePlanGobierno
+      - nombre
+      properties:
+        idEjePlanGobierno:
+          type: integer
+          format: int64
+        codigo:
+          type: string
+        nombre:
+          type: string
+    EjeTematicoResumen:
+      type: object
+      description: Catálogo "Eje temático" (Anexo C.6).
+      required:
+      - idEjeTematico
+      - nombre
+      properties:
+        idEjeTematico:
+          type: integer
+          format: int64
+        codigo:
+          type: string
+        nombre:
+          type: string
+    EntradaCatalogoEspecificar:
+      type: object
+      description: Entrada de cualquiera de los catálogos C.1, C.3, C.4, C.5, o los dos adicionales (grupos poblacionales, mejoras en calidad de vida).
+      required:
+      - codigo
+      - nombre
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+    EscalaCalificacionValor:
+      type: object
+      description: Fila de la Escala de Calificación de un subcriterio (Anexo C).
+      required:
+      - valor
+      - descripcion
+      properties:
+        valor:
+          $ref: '#/components/schemas/ValorCalificacion'
+        descripcion:
+          type: string
+    IndicadorResultadoResumen:
+      type: object
+      description: Entrada del catálogo "C.2 Indicadores de Resultado".
+      required:
+      - codigo
+      - nombre
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+        unidadMedida:
+          type: string
+          nullable: true
+    InsumoTipoResumen:
+      type: object
+      description: Entrada del catálogo "Insumo Tipo" (Anexo C, con Factor de Corrección).
+      required:
+      - codigo
+      - nombre
+      - factorCorreccion
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        factorCorreccion:
+          type: number
+          format: double
+          description: FC — usado para calcular precios ajustados (F1 paso 1.2).
+    MacrosectorResumen:
+      type: object
+      description: 'Catálogo "Macrosectores y sectores" (Anexo C.5), nivel Macrosector. Se asigna automáticamente según el Sector elegido; no es seleccionable directamente.
+
+        '
+      required:
+      - idMacrosector
+      - nombre
+      properties:
+        idMacrosector:
+          type: integer
+          format: int64
+        codigo:
+          type: string
+        nombre:
+          type: string
+    MedidaCatalogo:
+      type: object
+      description: Entrada del catálogo de medidas (Anexos C.1 GRD, C.1.5 GRC, C.2 ACC).
+      required:
+      - codigo
+      - descripcion
+      properties:
+        codigo:
+          type: string
+          description: Código a persistir en medidasGrd/medidasGrc/medidasAcc de ProyectoRequest.
+        descripcion:
+          type: string
+    ParametroResumen:
+      type: object
+      description: Entrada del catálogo "Parámetros".
+      required:
+      - codigo
+      - nombre
+      - factorCorreccion
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        factorCorreccion:
+          type: number
+          format: double
+    PlanSectorialRegionalResumen:
+      type: object
+      description: Catálogo de Planes Sectoriales/Regionales (Anexo C.4).
+      required:
+      - idPlanSectorialRegional
+      - nombre
+      properties:
+        idPlanSectorialRegional:
+          type: integer
+          format: int64
+        codigo:
+          type: string
+        nombre:
+          type: string
+    ProductoIndicador:
+      type: object
+      description: Entrada del catálogo de Productos e Indicadores (Anexo C.6).
+      required:
+      - codigoProducto
+      - producto
+      - codigoIndicador
+      - indicador
+      - unidadMedida
+      - esIndicadorPrincipal
+      properties:
+        codigoProducto:
+          type: string
+        producto:
+          type: string
+        descripcionProducto:
+          type: string
+          nullable: true
+        codigoIndicador:
+          type: string
+        indicador:
+          type: string
+        unidadMedida:
+          type: string
+        esIndicadorPrincipal:
+          type: boolean
+    RangoInterpretacion:
+      type: object
+      description: Entrada del Catálogo Rangos de Interpretación (Anexo A.2), contenido confirmado.
+      required:
+      - puntajeMinimo
+      - puntajeMaximo
+      - categoria
+      - implicacion
+      properties:
+        puntajeMinimo:
+          type: number
+          format: double
+        puntajeMaximo:
+          type: number
+          format: double
+        categoria:
+          type: string
+        implicacion:
+          type: string
+    SectorResumen:
+      type: object
+      description: Catálogo "Macrosectores y sectores" (Anexo C.5), nivel Sector.
+      required:
+      - idSector
+      - nombre
+      - macrosector
+      properties:
+        idSector:
+          type: integer
+          format: int64
+        codigo:
+          type: string
+        nombre:
+          type: string
+        macrosector:
+          $ref: '#/components/schemas/MacrosectorResumen'
+    SubcriterioPriorizacionResumen:
+      type: object
+      description: 'Subcriterio dentro de un criterio (ver ambigüedad de contenido en info.description del archivo).
+
+        '
+      required:
+      - codigo
+      - numero
+      - nombre
+      - ponderacionSubcriterio
+      properties:
+        codigo:
+          type: string
+        numero:
+          type: string
+          description: 'Ejemplo confirmado: "1.1", "1.2"... (Criterio 1, único con datos de ejemplo verificados).'
+        nombre:
+          type: string
+        ponderacionSubcriterio:
+          type: number
+          format: double
+          description: Porcentaje dentro del criterio; "sujeto a actualización por parte de la DGI" (Anexo B.1).
+    TipoCatalogoEspecificar:
+      type: string
+      description: 'A cuál catálogo de "Especificar" pertenece un criterio con `tipoEspecificar = CATALOGO`. `EJE_PLAN_GOBIERNO` (catálogo C.2) es el único valor que **no** se resuelve con `GET /catalogos/especificar-elegibilidad` — se resuelve con `GET /catalogos/ejes-plan-gobierno` de CU-PRE-03.5.openapi.yaml.
+
+        '
+      enum:
+      - ODS
+      - EJE_PLAN_GOBIERNO
+      - COMPONENTE_MEDIO_AMBIENTE
+      - MEDIDA_GRD
+      - MEDIDA_ACC
+      - GRUPO_POBLACIONAL_VULNERABLE
+      - MEJORA_CALIDAD_VIDA
+    TipoCostoResumen:
+      type: object
+      description: Entrada del catálogo "Tipo de Costos" (Anexo C.2).
+      required:
+      - codigo
+      - nombre
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+    TipoEspecificar:
+      type: string
+      description: Sub-formato de la columna "Especificar" según el criterio (Anexo B).
+      enum:
+      - SI_NO
+      - CATALOGO
+      - TEXTO_LIBRE
+    TipoMedidaCatalogo:
+      type: string
+      description: 'Tipo de catálogo de medidas referenciado por el botón "Ver descripción de categorías".
+
+        '
+      enum:
+      - GRD
+      - GRC
+      - ACC
+    TipoUnidadMedida:
+      type: string
+      enum:
+      - BIEN
+      - SERVICIO
+      - MIXTA
+    UbicacionGeografica:
+      type: object
+      description: Entrada del catálogo de ubicaciones geográficas (Anexo C.5).
+      required:
+      - distrito
+      - departamento
+      - region
+      properties:
+        distrito:
+          type: string
+        departamento:
+          type: string
+        region:
+          type: string
+    UnidadMedidaResumen:
+      type: object
+      description: Entrada del catálogo de unidades de medida.
+      required:
+      - tipo
+      - categoria
+      - unidadMedida
+      properties:
+        tipo:
+          $ref: '#/components/schemas/TipoUnidadMedida'
+        categoria:
+          type: string
+        unidadMedida:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+    ValorCalificacion:
+      type: string
+      description: 'Botón radial con 7 valores posibles (RN08). "NO_APLICA" corresponde a "N/A"; el resto son los puntajes numéricos 0 a 5.
+
+        '
+      enum:
+      - NO_APLICA
+      - CERO
+      - UNO
+      - DOS
+      - TRES
+      - CUATRO
+      - CINCO

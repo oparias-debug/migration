@@ -5,11 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import sv.gob.mh.siip.model.preinversion.dto.EjePlanGobiernoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.EjeTematicoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.PlanSectorialRegionalResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.SectorResumenDto;
-import sv.gob.mh.siip.model.preinversion.mapper.ProyectoMapper;
+import sv.gob.mh.siip.model.administracion.dto.EjePlanGobiernoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.EjeTematicoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.PlanSectorialRegionalResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.SectorResumenDto;
+import sv.gob.mh.siip.model.administracion.mapper.CatalogosAdministracionMapper;
 import sv.gob.mh.siip.model.preinversion.repository.EjePlanGobiernoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.PlanSectorialRegionalRepository;
@@ -24,14 +24,14 @@ public class CatalogoPreinversionServiceImpl implements CatalogoPreinversionServ
     private final EjeTematicoRepository ejeTematicoRepository;
     private final EjePlanGobiernoRepository ejePlanGobiernoRepository;
     private final PlanSectorialRegionalRepository planSectorialRegionalRepository;
-    private final ProyectoMapper mapper;
+    private final CatalogosAdministracionMapper mapper;
     private final ActorContexto actorContexto;
 
     public CatalogoPreinversionServiceImpl(SectorActividadRepository sectorActividadRepository,
             EjeTematicoRepository ejeTematicoRepository,
             EjePlanGobiernoRepository ejePlanGobiernoRepository,
             PlanSectorialRegionalRepository planSectorialRegionalRepository,
-            ProyectoMapper mapper,
+            CatalogosAdministracionMapper mapper,
             ActorContexto actorContexto) {
         this.sectorActividadRepository = sectorActividadRepository;
         this.ejeTematicoRepository = ejeTematicoRepository;

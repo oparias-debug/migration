@@ -16,5 +16,7 @@ public enum RolUsuario {
     COORDINADOR_PROGRAMACION,
     ADMINISTRADOR,
     /** Coordinador SYMP: unica accion, seleccionar Co-ejecutor (CU-PRE-3.5, RN16). */
-    COORDINADOR_SYMP
+    COORDINADOR_SYMP,
+    /** Administra catalogos maestros y sus registros (CU-ADM-01). Actor aun no incorporado a catalogo-actores.md. */
+    ADMINISTRADOR_DE_CATALOGOS
 }

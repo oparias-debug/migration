@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Administración - CU-ADM-03 Manejo de Errores
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI que centraliza el esquema estándar de error (`Error`)
+    usado en todas las respuestas 4xx/5xx de todo el proyecto SIIP v2 —
+    no corresponde a un caso de uso de negocio propio, sino a un componente
+    transversal de infraestructura, siguiendo el mismo criterio ya aplicado
+    a `CU-ADM-02-catalogos.openapi.yaml`.
+
+    Extraído de `CU-PRE-01.openapi.yaml` el 10/09/2026, a solicitud
+    explícita, tras la consolidación de catálogos: `Error` se referenciaba
+    externamente desde los otros 32 fragmentos del contrato (440 usos en
+    total, uno por cada respuesta de error documentada), lo que lo
+    convertía de facto en un componente de infraestructura compartido, no
+    en un schema propio de "Registro de Proyectos" (CU-PRE-01). Mantenerlo
+    ahí generaba una dependencia estructural de todo el contrato hacia un
+    único CU de negocio sin relación funcional con el manejo de errores en
+    sí — se traslada aquí para que esa dependencia sea explícita y
+    correcta: todo el contrato depende de `CU-ADM-03-manejo-errores.openapi.yaml`
+    para sus respuestas de error, no de `CU-PRE-01.openapi.yaml`.
+
+    `ErrorDetalle` se mueve junto con `Error` (su único uso es como el
+    array `Error.detalles`, sin ninguna referencia externa a él fuera de
+    ese contexto).
+
+paths: {}
+
+components:
+  schemas:
+    Error:
+      type: object
+      description: Esquema estándar de error para todas las respuestas 4xx/5xx del proyecto SIIP v2.
+      required:
+        - codigo
+        - mensaje
+        - timestamp
+      properties:
+        codigo:
+          type: string
+        mensaje:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetalle'
+
+    ErrorDetalle:
+      type: object
+      description: Detalle de un error de validación a nivel de campo (Anexo B.2).
+      required:
+        - campo
+        - mensaje
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string

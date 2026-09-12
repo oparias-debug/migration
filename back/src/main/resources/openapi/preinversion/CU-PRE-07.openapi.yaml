@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-07 Población Objetivo
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-07 "Población Objetivo"
+    (UC-PRE-07-Poblacion-Objetivo.md) y sus 4 historias BDD. Actor
+    principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE.
+    Mismo criterio que CU-PRE-06 para RN01 ("Todos los demás actores" sin
+    identificar): `x-roles` no incluye "Usuarios Internos/Externos" ni
+    ningún otro rol. Introduce el recurso `AnalisisPoblacion`, hijo de
+    `Proyecto` (CU-PRE-01.openapi.yaml). El Anexo C.1 de este CU es el mismo
+    catálogo de ubicaciones geográficas (Distrito/Departamento/Región, con
+    entradas de "Nivel departamental"/"Nivel nacional") ya definido en
+    `GET /catalogos/ubicaciones-geograficas` de CU-PRE-03.5.openapi.yaml, no
+    uno nuevo — pero, igual que el campo `distrito` de `FichaEmergenciaRequest`
+    en ese fragmento, `ubicacion` se modela aquí como `string` simple, no
+    como `$ref` anidado; por eso este archivo no tiene una dependencia de
+    `$ref` externo real hacia CU-PRE-03.5.openapi.yaml, solo una nota de
+    documentación (ver contrato-CU-PRE-07.md).
+    A diferencia de CU-PRE-04/05/06, "Guardar" en este CU sí puede rechazar
+    el guardado completo (FA-03), no solo mostrar bordes rojos — ver
+    `guardarAnalisisPoblacion`.
+
+paths:
+
+  /proyectos/{idProyecto}/analisis-poblacion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerAnalisisPoblacion
+      summary: Consultar el "Análisis de la Población" (Anexo A.1)
+      description: >
+        Igual que CU-PRE-06 (y a diferencia de CU-PRE-04/05): ninguna regla
+        de este CU condiciona el acceso de Técnico PRE a que la información
+        ya se haya guardado al menos una vez; no se modeló ese 404 condicional.
+      tags: [Preinversión - Población Objetivo]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        "200":
+          description: Análisis de la población del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalisisPoblacion'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP ni Técnico PRE, o
+            (Técnico URP/Técnico PRE) el proyecto no está dentro de su
+            alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarAnalisisPoblacion
+      summary: Registrar y guardar el análisis de la población (botón "Guardar", FA-01/FA-03)
+      description: >
+        A diferencia de `guardarIdentificacion`/`guardarAlternativasSolucion`/
+        `guardarMatrizInteresados`: aquí "Guardar" **sí puede rechazar el
+        guardado completo**. RN07 (bordes rojos por campos pendientes) sigue
+        siendo puramente visual, igual que en los fragmentos anteriores — no
+        genera un 400. Pero FA-03 describe dos validaciones cruzadas que sí
+        bloquean todo el guardado ("Sistema no guarda la información
+        registrada y regresa a la pestaña anterior"): que en alguna
+        ubicación la Población Afectada supere a la de Referencia, o que la
+        Población Objetivo supere a la Afectada — ambas se modelan como 400.
+      tags: [Preinversión - Población Objetivo]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalisisPoblacionRequest'
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "¡Guardado! Sus datos han sido
+            guardados exitosamente.", Anexo A.2); el modal y su "Aceptar"
+            son de cliente. La respuesta incluye los valores calculados
+            (Población en Espera, porcentajes, totales, RN04/RN05/RN06/RN09).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalisisPoblacion'
+        "400":
+          description: >
+            RN respectiva incumplida. `Error.codigo` distingue el caso:
+            `POBLACION_AFECTADA_MAYOR_QUE_REFERENCIA` (Anexo A.3) o
+            `POBLACION_OBJETIVO_MAYOR_QUE_AFECTADA` (Anexo A.4). El texto de
+            `Error.mensaje` no está fijado en este contrato: el CU tiene dos
+            redacciones distintas para cada mensaje (tabla de "Validaciones"
+            vs. el mockup del Anexo A.3/A.4 respectivo) sin definir cuál es
+            la definitiva — ver contrato-CU-PRE-07.md.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP, o el proyecto no está en
+            su alcance de Unidad Ejecutora (RN01). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    CeldaUbicacionRequest:
+      type: object
+      description: >
+        Una columna agrupada "Ubicación"/"N° de Personas" (RN09) dentro de
+        una fila de población. Agregar una nueva ubicación (botón "Adicionar
+        Ubicación") ocurre en el cliente antes de este `PUT` — el array
+        completo se reemplaza en cada guardado, mismo criterio que el resto
+        del contrato.
+      properties:
+        ubicacion:
+          type: string
+          description: >
+            Tomado de GET /catalogos/ubicaciones-geograficas (external,
+            CU-PRE-03.5). No aplica para la fila "Población en Espera"
+            (RN05: siempre bloqueada y vacía) — omitir o dejar nulo ahí.
+        numeroPersonas:
+          type: integer
+
+    CeldaUbicacion:
+      type: object
+      description: Forma de lectura de una celda de ubicación, con el porcentaje ya calculado.
+      properties:
+        ubicacion:
+          type: string
+          nullable: true
+          description: Nulo siempre para la fila "Población en Espera" (RN05).
+        numeroPersonas:
+          type: integer
+          nullable: true
+        porcentaje:
+          type: number
+          format: double
+          nullable: true
+          description: >
+            Nulo siempre para "Población de Referencia" (RN04). Constante en
+            100 para "Población Afectada". Calculado como
+            (Objetivo/Afectada)×100 para "Población Objetivo". Calculado como
+            %Afectada − %Objetivo para "Población en Espera".
+
+    FilaPoblacionRequest:
+      type: object
+      description: >
+        Fila editable de la tabla (Población de Referencia, Afectada u
+        Objetivo — "Población en Espera" no se envía nunca, es 100% calculada
+        por el servidor: ver `AnalisisPoblacionRequest`).
+      properties:
+        descripcion:
+          type: string
+          description: >
+            RN06: solo aplica a Afectada/Objetivo. Para Referencia, cualquier
+            valor enviado aquí se ignora (permanece bloqueada y vacía).
+        ubicaciones:
+          type: array
+          items:
+            $ref: '#/components/schemas/CeldaUbicacionRequest'
+
+    FilaPoblacion:
+      type: object
+      description: Forma de lectura de una fila de la tabla (cualquiera de las 4).
+      required: [ubicaciones, totalNumeroPersonas]
+      properties:
+        descripcion:
+          type: string
+          nullable: true
+          description: Nulo siempre para "Población de Referencia" y "Población en Espera" (RN06).
+        ubicaciones:
+          type: array
+          items:
+            $ref: '#/components/schemas/CeldaUbicacion'
+        totalNumeroPersonas:
+          type: integer
+          description: Suma de numeroPersonas de todas las ubicaciones de esta fila (RN09).
+        totalPorcentaje:
+          type: number
+          format: double
+          nullable: true
+          description: Nulo siempre para "Población de Referencia" (RN04); mismas reglas de cálculo que `CeldaUbicacion.porcentaje`, a nivel de total de fila.
+
+    AnalisisPoblacionRequest:
+      type: object
+      description: >
+        Se modela con 3 propiedades nombradas (no un array de 4 filas)
+        porque "Población en Espera" nunca se envía — es enteramente
+        calculada por el servidor (ubicación siempre bloqueada RN05, N° de
+        personas = Afectada − Objetivo, % = %Afectada − %Objetivo). Un
+        array genérico de filas habría permitido, sin sentido, enviar
+        también una fila "ESPERA" editable.
+      properties:
+        poblacionReferencia:
+          $ref: '#/components/schemas/FilaPoblacionRequest'
+        poblacionAfectada:
+          $ref: '#/components/schemas/FilaPoblacionRequest'
+        poblacionObjetivo:
+          $ref: '#/components/schemas/FilaPoblacionRequest'
+
+    AnalisisPoblacion:
+      type: object
+      description: >
+        Análisis de la población del proyecto (lectura), incluida la fila
+        calculada "Población en Espera" (`poblacionEnEspera`), enteramente
+        calculada por el servidor (RN05, RN09: ubicación siempre bloqueada,
+        N° de personas = Afectada − Objetivo) y que nunca se recibe en
+        `AnalisisPoblacionRequest`.
+      required: [idProyecto, poblacionReferencia, poblacionAfectada, poblacionObjetivo, poblacionEnEspera]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        poblacionReferencia:
+          $ref: '#/components/schemas/FilaPoblacion'
+        poblacionAfectada:
+          $ref: '#/components/schemas/FilaPoblacion'
+        poblacionObjetivo:
+          $ref: '#/components/schemas/FilaPoblacion'
+        poblacionEnEspera:
+          $ref: '#/components/schemas/FilaPoblacion'

@@ -13,7 +13,7 @@ import sv.gob.mh.siip.model.common.domain.Usuario;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.preinversion.domain.MedidaCatalogo;
 import sv.gob.mh.siip.model.preinversion.enums.TipoMedidaCatalogo;
-import sv.gob.mh.siip.model.preinversion.dto.TipoMedidaCatalogoDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoMedidaCatalogoDto;
 import sv.gob.mh.siip.model.preinversion.repository.MedidaCatalogoRepository;
 import sv.gob.mh.siip.security.ActorContexto;
 
@@ -30,7 +30,7 @@ class MedidaCatalogoServiceImplTest {
                 MedidaCatalogo.builder().tipo(TipoMedidaCatalogo.GRD).codigo("GRD-1").descripcion("Descripcion 1")
                         .build()));
 
-        List<sv.gob.mh.siip.model.preinversion.dto.MedidaCatalogoDto> resultado = service
+        List<sv.gob.mh.siip.model.administracion.dto.MedidaCatalogoDto> resultado = service
                 .listar(TipoMedidaCatalogoDto.GRD);
 
         assertThat(resultado).hasSize(1);

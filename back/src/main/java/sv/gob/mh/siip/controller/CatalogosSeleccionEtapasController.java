@@ -6,11 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.RestController;
 
-import sv.gob.mh.siip.model.preinversion.api.CatlogosSeleccinYRegistroDeEtapasApi;
-import sv.gob.mh.siip.model.preinversion.dto.ContenidoIniciativaResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.ProductoIndicadorDto;
-import sv.gob.mh.siip.model.preinversion.dto.TipoCostoResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.UbicacionGeograficaDto;
+import sv.gob.mh.siip.model.administracion.api.CatlogosSeleccinYRegistroDeEtapasApi;
+import sv.gob.mh.siip.model.administracion.dto.ContenidoIniciativaResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.ProductoIndicadorDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoCostoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.UbicacionGeograficaDto;
 import sv.gob.mh.siip.model.preinversion.service.CatalogosSeleccionEtapasService;
 
 /**

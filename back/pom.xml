@@ -15,6 +15,8 @@
 	<description>Backend unico: catalogos, usuarios, proyectos, workflow y preinversion</description>
 
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<cucumber.version>7.22.1</cucumber.version>
 		<openapi-generator.version>7.25.0</openapi-generator.version>
 	</properties>
@@ -197,13 +199,42 @@
 				</configuration>
 				<executions>
 					<execution>
-						<id>generate-preinversion-cu02-api</id>
+						<id>generate-administracion-cu01-api</id>
 						<phase>generate-sources</phase>
-						<goals><goal>generate</goal></goals>
+						<goals>
+							<goal>generate</goal>
+						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-02.openapi.yaml</inputSpec>
-							<apiPackage>sv.gob.mh.siip.model.preinversion.bandeja.api</apiPackage>
-							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/administracion/CU-ADM-01-administracion-de-catalogos.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-administracion-cu02-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/administracion/CU-ADM-02-catalogos.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-administracion-cu03-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/administracion/CU-ADM-03-manejo-errores.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
 						</configuration>
 					</execution>
 					<execution>
@@ -233,14 +264,27 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>generate-preinversion-cu04-api</id>
+						<id>generate-preinversion-cu02-api</id>
 						<phase>generate-sources</phase>
 						<goals>
 							<goal>generate</goal>
 						</goals>
 						<configuration>
 							<inputSpec>
-								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-04.openapi.yaml</inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-02.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.bandeja.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu03-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-03.openapi.yaml</inputSpec>
 							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
 							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
 						</configuration>
@@ -259,29 +303,83 @@
 						</configuration>
 					</execution>
 					<execution>
+						<id>generate-preinversion-cu04-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-04.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
 						<id>generate-preinversion-cu05-api</id>
 						<phase>generate-sources</phase>
 						<goals>
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-05.openapi.yaml</inputSpec>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-05.openapi.yaml</inputSpec>
 							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
 							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
 						</configuration>
 					</execution>
-                    <execution>
-                        <id>generate-preinversion-cu03-api</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-03.openapi.yaml</inputSpec>
-                            <apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
-                            <modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
-                        </configuration>
-                    </execution>
+					<execution>
+						<id>generate-preinversion-cu06-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-06.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu17-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-17.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.presupuesto.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu07-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-07.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu08-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-08.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>

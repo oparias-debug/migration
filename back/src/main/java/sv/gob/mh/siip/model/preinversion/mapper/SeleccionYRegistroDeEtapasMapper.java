@@ -9,8 +9,8 @@ import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.domain.ProductoIndicadorCatalogo;
 import sv.gob.mh.siip.model.preinversion.domain.TipoCosto;
 import sv.gob.mh.siip.model.preinversion.dto.EtapaDto;
-import sv.gob.mh.siip.model.preinversion.dto.ProductoIndicadorDto;
-import sv.gob.mh.siip.model.preinversion.dto.TipoCostoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.ProductoIndicadorDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoCostoResumenDto;
 
 /** Traduce las entidades de dominio de CU-PRE-3.5 a los DTOs generados desde CU-PRE-03.5.openapi.yaml. */
 @Mapper(componentModel = "spring")
