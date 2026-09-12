@@ -31,7 +31,7 @@ export const macroactividadSchema = z
   })
   .superRefine((valores, ctx) => {
     // El CU pide "al menos un campo de Período n" por fila, pero la tabla se
-    // pinta con TODO el catálogo de insumos (RN05): exigirlo fila a fila
+    // pinta con el catálogo de insumos completo (RN05): exigirlo fila a fila
     // obligaría a rellenar insumos que no aplican, y contradiría esa regla. Se
     // interpreta como lo que tiene sentido: al menos una fila con algún costo.
     const hayAlgunCosto = valores.insumos.some((fila) => fila.costos.some((c) => c.trim() !== ''));

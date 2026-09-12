@@ -34,7 +34,7 @@ function leerDelAlmacen(): AuthState {
 
     /**
      * El access token dura 5 minutos, pero el refresh vale mucho más. Antes se
-     * descartaba TODO el estado en cuanto vencía el primero, y con él se tiraba
+     * descartaba el estado entero en cuanto vencía el primero, y con él se tiraba
      * un refresh token perfectamente válido: cualquier recarga pasados esos 5
      * minutos echaba al usuario al login aunque su sesión siguiera viva. Ese es
      * el "se cierra demasiado rápido" que reportó el cliente.
