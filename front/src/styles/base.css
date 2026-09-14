@@ -719,3 +719,49 @@ tbody tr:hover td { background: var(--azul-suave); }
 .modal-detalle table input { width: 100%; min-width: 92px; text-align: right; }
 .modal-detalle tfoot th { text-align: left; }
 .modal-detalle .acciones-form { margin: 14px -20px -20px; }
+
+/* ================================================== PASOS DEL PROYECTO ==
+   Barra sobre cada pantalla que cuelga de un proyecto. Arriba los grupos (la
+   columna C del árbol funcional), abajo los pasos del grupo como píldoras
+   numeradas. Lo que aún no tiene pantalla se ve en su sitio, con borde
+   discontinuo y sin enlace.
+   La clase es `sin-pantalla` y no `pendiente`: `.pendiente` es la tarjeta de
+   "Mis pendientes" de Inicio y se colaría aquí. */
+.pasos-proyecto {
+  background: #fff; border: 1px solid var(--n200); border-radius: var(--r2);
+  box-shadow: var(--sombra); padding: 12px 16px; margin-bottom: 16px;
+}
+.pasos-cabecera { margin: 0 0 8px; font-size: 13px; color: var(--n700); }
+.pasos-grupos {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  border-bottom: 1px solid var(--n200); margin-bottom: 10px;
+}
+.pasos-grupo {
+  background: none; border: 0; border-bottom: 2px solid transparent;
+  padding: 7px 10px; margin-bottom: -1px;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--n500); cursor: pointer;
+}
+.pasos-grupo:hover { color: var(--azul); }
+.pasos-grupo.activo { color: var(--azul); border-bottom-color: var(--azul); }
+.pasos-grupo.actual::after { content: "\2022"; margin-left: 5px; }
+.pasos-grupo:focus-visible { outline: 2px solid var(--azul); outline-offset: -2px; }
+
+.pasos-lista ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.pasos-paso {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px 5px 5px; border: 1px solid var(--n200); border-radius: 999px;
+  background: #fff; color: var(--n700); font-size: 12.5px; text-decoration: none; white-space: nowrap;
+}
+/* :not(.actual) hace falta: a.pasos-paso:hover pesa más que .pasos-paso.actual y
+   pintaba el texto azul sobre la píldora azul del paso actual, que se quedaba
+   en blanco al pasarle el ratón por encima. */
+a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul); }
+a.pasos-paso:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.pasos-paso.actual { background: var(--azul); border-color: var(--azul); color: #fff; }
+.pasos-paso.sin-pantalla { border-style: dashed; color: var(--n500); background: #F7F8FA; cursor: default; }
+.pasos-numero {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #F1F2F4; color: var(--n700); font-size: 11px; font-weight: 700;
+}
+.pasos-paso.actual .pasos-numero { background: #fff; color: var(--azul); }

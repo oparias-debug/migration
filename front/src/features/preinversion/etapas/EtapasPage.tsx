@@ -190,9 +190,9 @@ export function EtapasPage() {
             </table>
           </div>
 
-          {/* CU-PRE-04 a CU-PRE-26 (identificación/formulación/evaluación/programación) no están
-              implementados en este frontend: no hay a dónde navegar aunque habilitadoParaRegistro
-              sea true, así que no se dibuja un botón de navegación por etapa. */}
+          {/* No se dibuja un botón de navegación por etapa aunque habilitadoParaRegistro sea
+              true: el CU no dice a qué pantalla lleva cada etapa. Los pasos del proyecto que ya
+              tienen pantalla (CU-PRE-04 en adelante) se alcanzan desde PasosProyectoLayout. */}
           <p className="nota-form">{t('preinversion.registroEtapas.notaSinNavegacion')}</p>
 
           <div className="acciones-form">

@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { BandaRuta, type Tramo } from './BandaRuta';
 import { MODULOS } from './navegacion';
+import { ubicarPaso } from '../features/preinversion/pasos/pasosProyecto';
 
 /** Armazón del diseño: menú lateral + barra superior + banda de ruta + contenido. */
 export function AppLayout() {
@@ -54,6 +55,20 @@ export function AppLayout() {
 function describir(pathname: string, t: (clave: string) => string): { titulo: string; tramos: Tramo[] } {
   if (pathname === '/') {
     return { titulo: t('menu.inicio'), tramos: [{ texto: 'menu.inicio' }] };
+  }
+
+  // Pasos de un proyecto: el título es el paso, no "Registro de Proyecto", y la
+  // banda de ruta cuelga del listado de proyectos.
+  const ubicacion = ubicarPaso(pathname);
+  if (ubicacion) {
+    return {
+      titulo: t(ubicacion.paso.texto),
+      tramos: [
+        { texto: 'menu.preinversion' },
+        { texto: 'menu.registroProyecto', ruta: '/preinversion/proyectos' },
+        { texto: ubicacion.paso.texto },
+      ],
+    };
   }
 
   for (const modulo of MODULOS) {

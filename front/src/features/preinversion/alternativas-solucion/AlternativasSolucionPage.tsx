@@ -33,10 +33,9 @@ function registroToFormValues(registro: RegistroAlternativas): RegistroAlternati
 }
 
 // Pantalla "Registro de Alternativas de Solución" (Anexo A.1, CU-PRE-05-registrar-alternativas.feature).
-// La pestaña "Identificación del proyecto" (CU-PRE-04) todavía no existe en este frontend, así que
-// esta sección se accede directamente por URL, sin navegación de entrada ni de salida hacia
-// "Análisis de interesados" (CU-PRE-06, tampoco implementado) — mismo criterio que EtapasPage con
-// CU-PRE-04 a CU-PRE-26.
+// Se llega desde el "Siguiente" de Identificación (CU-PRE-04) o desde la barra de pasos del
+// proyecto (PasosProyectoLayout). No hay navegación de salida hacia "Análisis de interesados"
+// (CU-PRE-06) porque esa pantalla todavía no existe.
 export function AlternativasSolucionPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
@@ -234,8 +233,6 @@ export function AlternativasSolucionPage() {
               />
             </FormRow>
           </div>
-
-          <p className="nota-form">{t('preinversion.alternativasSolucion.notaSinNavegacionIdentificacion')}</p>
 
           <div className="acciones-form">
             <button type="button" className="btn neutro" onClick={() => navigate(`/preinversion/proyectos/${idProyecto}`)}>

@@ -179,9 +179,11 @@ export function CapturaPage() {
               {proyectos.map((p) => (
                 <tr key={p.idProyecto}>
                   <td>
-                    {/* FA-01: el CUP abre el proyecto. */}
+                    {/* FA-01: el CUP abre "Registro de Etapas" (CU-PRE-3.5), que es la entrada a
+                          los pasos del proyecto; no la ficha del registro
+                          (CU-PRE-03-navegar-registro-etapas.feature). */}
                     <button type="button" className="enlace-fila mono"
-                      onClick={() => navigate(`/preinversion/proyectos/${p.idProyecto}`)}>
+                      onClick={() => navigate(`/preinversion/proyectos/${p.idProyecto}/etapas`)}>
                       {p.cup}
                     </button>
                   </td>

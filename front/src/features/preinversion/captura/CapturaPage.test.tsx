@@ -13,6 +13,12 @@ vi.mock('../../../api/preinversionApi', async (importOriginal) => ({
   catalogoPreinversionApi: { listarSectores: () => listarSectores() },
 }));
 
+const navigate = vi.fn();
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router-dom')>()),
+  useNavigate: () => navigate,
+}));
+
 const { CapturaPage } = await import('./CapturaPage');
 
 const RESPUESTA = {
@@ -114,5 +120,21 @@ describe('CapturaPage', () => {
     );
     montar();
     expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('errores.servidor'));
+  });
+});
+
+// CU-PRE-03-navegar-registro-etapas.feature (FA-01): el CUP abre "Registro de
+// Etapas", que es la entrada a los pasos del proyecto, no la ficha del registro.
+describe('CapturaPage · navegación desde el CUP', () => {
+  it('el CUP lleva a Registro de Etapas del proyecto', async () => {
+    navigate.mockReset();
+    listarProyectosCaptura.mockResolvedValue(RESPUESTA);
+    render(
+      <MemoryRouter>
+        <CapturaPage />
+      </MemoryRouter>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: '10001' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/etapas');
   });
 });

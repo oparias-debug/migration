@@ -17,6 +17,7 @@ import { EtapasPage } from './features/preinversion/etapas/EtapasPage';
 import { FichaInformacionGeneralPage } from './features/preinversion/etapas/FichaInformacionGeneralPage';
 import { FichaEmergenciaPage } from './features/preinversion/etapas/FichaEmergenciaPage';
 import { IdentificacionPage } from './features/preinversion/identificacion/IdentificacionPage';
+import { PasosProyectoLayout } from './features/preinversion/pasos/PasosProyectoLayout';
 import { PresupuestoPage } from './features/preinversion/presupuesto/PresupuestoPage';
 import { CrearCatalogoPage } from './features/administracion/catalogos/CrearCatalogoPage';
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
@@ -65,20 +66,18 @@ export function App() {
             <Route path="/preinversion/opinion-tecnica/:id" element={<OpinionTecnicaEntradaPage />} />
             <Route path="/preinversion/proyectos/nuevo" element={<ProyectoFormPage />} />
             <Route path="/preinversion/proyectos/:id" element={<ProyectoFormPage />} />
-
-            {/* CU-PRE-3.5 "Selección y Registro de Etapas": pantallas de detalle de un proyecto
-                puntual, sin entrada propia en el sidebar (mismo criterio que CU-PRE-01.5). */}
-            <Route path="/preinversion/proyectos/:id/ruta-preinversion" element={<RutaPreinversionPage />} />
-            <Route path="/preinversion/proyectos/:id/etapas" element={<EtapasPage />} />
-            <Route path="/preinversion/proyectos/:id/ficha-informacion-general" element={<FichaInformacionGeneralPage />} />
-            <Route path="/preinversion/proyectos/:id/ficha-emergencia" element={<FichaEmergenciaPage />} />
-
-            {/* CU-PRE-05 "Alternativas de Solución": sin entrada propia en el sidebar, mismo
-                criterio que CU-PRE-3.5 — la pestaña "Identificación del proyecto" (CU-PRE-04) que
-                enlazaría aquí todavía no existe en este frontend (ver AlternativasSolucionPage). */}
-            <Route path="/preinversion/proyectos/:id/identificacion" element={<IdentificacionPage />} />
-            <Route path="/preinversion/proyectos/:id/presupuesto" element={<PresupuestoPage />} />
-            <Route path="/preinversion/proyectos/:id/alternativas-solucion" element={<AlternativasSolucionPage />} />
+            {/* Pasos de un proyecto: comparten la barra de pasos (PasosProyectoLayout),
+                que pinta cada pantalla en su <Outlet />. La ficha del proyecto y el alta
+                quedan fuera: son anteriores al CUP, no pasos de la formulación. */}
+            <Route element={<PasosProyectoLayout />}>
+              <Route path="/preinversion/proyectos/:id/etapas" element={<EtapasPage />} />
+              <Route path="/preinversion/proyectos/:id/ruta-preinversion" element={<RutaPreinversionPage />} />
+              <Route path="/preinversion/proyectos/:id/ficha-informacion-general" element={<FichaInformacionGeneralPage />} />
+              <Route path="/preinversion/proyectos/:id/ficha-emergencia" element={<FichaEmergenciaPage />} />
+              <Route path="/preinversion/proyectos/:id/identificacion" element={<IdentificacionPage />} />
+              <Route path="/preinversion/proyectos/:id/alternativas-solucion" element={<AlternativasSolucionPage />} />
+              <Route path="/preinversion/proyectos/:id/presupuesto" element={<PresupuestoPage />} />
+            </Route>
 
             {PLACEHOLDER_PATHS.map((path) => (
               <Route key={path} path={`/${path}`} element={<PlaceholderPage />} />

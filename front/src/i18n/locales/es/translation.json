@@ -199,7 +199,7 @@
       "estadoConOpinionTecnica": "Con Opinión Técnica",
       "estadoBloqueada": "Bloqueada por modificación",
       "notaCostoEjecucion": "El costo de Ejecución lo determina el Presupuesto de inversión u Opinión Técnica más reciente; no es editable aquí.",
-      "notaSinNavegacion": "La navegación hacia identificación/formulación/evaluación/programación (CU-PRE-04 a CU-PRE-26) todavía no existe en este frontend.",
+      "notaSinNavegacion": "Desde esta tabla las etapas todavía no abren su formulación. Los pasos del proyecto que ya tienen pantalla se abren desde la barra de pasos.",
       "mensajeGuardado": "¡Guardado! La información de las etapas ha sido guardada exitosamente.",
       "botonRutaPreinversion": "Ruta de Preinversión",
       "botonFichaGeneral": "Ficha de información general",
@@ -249,8 +249,7 @@
       "botonEliminarFila": "x",
       "campoJustificacion": "Justificación",
       "botonSiguiente": "Siguiente",
-      "mensajeAvanzado": "El proyecto avanza a \"Análisis de interesados\" (CU-PRE-06); esa pantalla todavía no existe en este frontend.",
-      "notaSinNavegacionIdentificacion": "La pestaña \"Identificación del proyecto\" (CU-PRE-04) todavía no existe en este frontend: esta sección se accede directamente por URL."
+      "mensajeAvanzado": "El proyecto avanza a \"Análisis de interesados\" (CU-PRE-06); esa pantalla todavía no existe en este frontend."
     },
     "revisionPre": {
       "titulo": "Revisión PRE",
@@ -462,5 +461,39 @@
       "sinRespaldoAbrir": "Abrir un catálogo para editarlo o gestionar sus registros",
       "sinRespaldoNota": "El contrato del CU-ADM-01 no expone GET /catalogos ni GET /catalogos/{codigo}. Sin la definición de un catálogo no se pueden dibujar su ficha ni el formulario de sus registros, porque los campos los define el propio catálogo."
     }
+  },
+  "pasos": {
+    "titulo": "Pasos del proyecto",
+    "sinPantalla": "Sin pantalla todavía",
+    "grupo": {
+      "formulacion": "Formulación",
+      "analisisTecnico": "Análisis técnico",
+      "presupuesto": "Presupuesto",
+      "evaluacion": "Evaluación socioeconómica",
+      "viabilidad": "Viabilidad"
+    },
+    "registroEtapas": "Registro de etapas",
+    "identificacion": "Identificación",
+    "alternativas": "Alternativas de solución",
+    "interesados": "Análisis de interesados",
+    "poblacion": "Población objetivo",
+    "areaInfluencia": "Área de influencia",
+    "mercado": "Análisis de mercado",
+    "descripcionTecnica": "Descripción técnica",
+    "localizacion": "Localización",
+    "ambiental": "Análisis ambiental",
+    "riesgo": "Análisis de riesgo",
+    "legal": "Análisis legal",
+    "presupuestoInversion": "Presupuesto de inversión",
+    "flujoCostos": "Flujo de costos de O&M",
+    "beneficios": "Flujo de beneficios",
+    "flujoCaja": "Flujo de caja e indicadores",
+    "flujoFinanciero": "Flujo de caja financiero",
+    "indicadores": "Indicadores del proyecto",
+    "programacionFinanciera": "Programación financiera",
+    "viabilidad": "Viabilidad",
+    "elegibilidad": "Elegibilidad",
+    "opinionTecnica": "Opinión técnica",
+    "priorizacion": "Priorización"
   }
 }
