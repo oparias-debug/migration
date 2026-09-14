@@ -10,6 +10,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.OrderColumn;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Analisis de oferta, demanda y brecha. CU-PRE-09. */
 @Entity
@@ -54,4 +59,10 @@ public class AnalisisMercado {
 
     @Column(name = "METODOLOGIA", length = 2000)
     private String metodologia;
+
+    @ElementCollection
+    @CollectionTable(name = "ANALISIS_MERCADO_FILA", joinColumns = @JoinColumn(name = "ID_ANALISIS_MERCADO"))
+    @OrderColumn(name = "ORDEN")
+    @Builder.Default
+    private List<FilaAnalisisMercado> filas = new ArrayList<>();
 }

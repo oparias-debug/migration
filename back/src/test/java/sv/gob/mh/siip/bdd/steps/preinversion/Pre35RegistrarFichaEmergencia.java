@@ -86,6 +86,8 @@ public class Pre35RegistrarFichaEmergencia {
     private Pre06RegistrarMatrizInteresados matrizInteresados;
     @Autowired
     private Pre07RegistrarAnalisisPoblacion analisisPoblacion;
+    @Autowired
+    private Pre09RegistrarAnalisisMercado analisisMercado;
 
     public Pre35RegistrarFichaEmergencia(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
@@ -152,6 +154,10 @@ public class Pre35RegistrarFichaEmergencia {
         }
         if (analisisPoblacion.esEscenarioAnalisisPoblacion()) {
             analisisPoblacion.guardarSinCompletarCampo(campo);
+            return;
+        }
+        if (analisisMercado.esEscenarioAnalisisMercado()) {
+            analisisMercado.guardarSinCompletarCampo(campo);
             return;
         }
         FichaEmergenciaRequestDto request = formularioValido();

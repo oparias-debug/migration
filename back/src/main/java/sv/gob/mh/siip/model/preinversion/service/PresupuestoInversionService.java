@@ -1,17 +1,41 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
-import java.util.*;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
-import sv.gob.mh.siip.model.preinversion.domain.*;
-import sv.gob.mh.siip.model.preinversion.dto.*;
+import sv.gob.mh.siip.model.preinversion.domain.FichaEmergencia;
+import sv.gob.mh.siip.model.preinversion.domain.MacroactividadPresupuesto;
+import sv.gob.mh.siip.model.preinversion.domain.PresupuestoProyecto;
+import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
+import sv.gob.mh.siip.model.preinversion.dto.ConfigurarPeriodosEjecucionRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
+import sv.gob.mh.siip.model.preinversion.dto.FuenteFinanciamientoDto;
+import sv.gob.mh.siip.model.preinversion.dto.FuentesFinanciamientoRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.MacroactividadDto;
+import sv.gob.mh.siip.model.preinversion.dto.MacroactividadInsumoRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.MacroactividadRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.MontoPorPeriodoDto;
+import sv.gob.mh.siip.model.preinversion.dto.PresupuestoDto;
+import sv.gob.mh.siip.model.preinversion.dto.ProductoPresupuestoDto;
+import sv.gob.mh.siip.model.preinversion.dto.ProductoSeleccionadoDto;
 import sv.gob.mh.siip.model.preinversion.enums.FuenteFinanciamiento;
-import sv.gob.mh.siip.model.preinversion.repository.*;
+import sv.gob.mh.siip.model.preinversion.repository.FichaEmergenciaRepository;
+import sv.gob.mh.siip.model.preinversion.repository.MacroactividadPresupuestoRepository;
+import sv.gob.mh.siip.model.preinversion.repository.PresupuestoProyectoRepository;
+import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
 import sv.gob.mh.siip.security.ActorContexto;
 
 @Service
@@ -41,10 +65,11 @@ public class PresupuestoInversionService {
 
   public PresupuestoDto periodos(Long id, ConfigurarPeriodosEjecucionRequestDto req) {
     actor.exigirRol(RolUsuario.TECNICO_URP);
-    if (req.getPeriodosEstimados() < 0)
+    Integer peridosEstimados = req.getPeriodosEstimados(); 
+    if (peridosEstimados == null || peridosEstimados < 0)
       throw invalido("periodosEstimados");
     PresupuestoProyecto p = obtenerOCrear(buscar(id));
-    p.setPeriodosEstimados(req.getPeriodosEstimados());
+    p.setPeriodosEstimados(peridosEstimados);
     return dto(buscar(id), p);
   }
 
@@ -61,7 +86,7 @@ public class PresupuestoInversionService {
           .numeroProducto(producto).nombre(req.getNombreMacroactividad().trim())
           .insumosJson(json.writeValueAsString(req.getInsumos())).build());
       return macroDto(m);
-    } catch (Exception e) {
+    } catch (JsonProcessingException e) {
       throw new IllegalStateException("No fue posible guardar la macroactividad", e);
     }
   }
@@ -90,12 +115,12 @@ public class PresupuestoInversionService {
         .orElseThrow(() -> new RecursoNoEncontradoException("No existe ficha de proyecto"));
     if (req.getFuentesFinanciamiento() == null || req.getFuentesFinanciamiento().isEmpty())
       throw invalido("fuentesFinanciamiento");
-    String fuenteRecursos = req.getFuenteRecursos();
-    if (fuenteRecursos == null || fuenteRecursos.isBlank())
+    String fuenteRecuros = req.getFuenteRecursos();
+    if (fuenteRecuros == null || fuenteRecuros.isBlank())
       throw invalido("fuenteRecursos");
     f.setFuentesFinanciamiento(
         req.getFuentesFinanciamiento().stream().map(x -> FuenteFinanciamiento.valueOf(x.name())).toList());
-    f.setFuenteRecursos(fuenteRecursos.trim());
+    f.setFuenteRecursos(fuenteRecuros.trim());
     fichas.save(f);
     return fuentesDto(f);
   }
@@ -151,7 +176,7 @@ public class PresupuestoInversionService {
       List<Double> total = totalesInsumos(ins);
       long n = macros.countByPresupuestoIdAndNumeroProducto(m.getPresupuesto().getId(), m.getNumeroProducto());
       return new MacroactividadDto(m.getId(), m.getNumeroProducto() + "." + n, m.getNombre(), List.of(), total);
-    } catch (Exception e) {
+    } catch (JsonProcessingException e) {
       throw new IllegalStateException(e);
     }
   }
