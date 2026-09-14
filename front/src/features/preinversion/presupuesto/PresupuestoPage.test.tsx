@@ -204,3 +204,77 @@ describe('PresupuestoPage · CU-PRE-17', () => {
     });
   });
 });
+
+// Cada parte de la pantalla carga por separado: que falle el catálogo o las
+// fuentes no puede tapar un presupuesto que sí llegó.
+describe('PresupuestoPage · carga por partes', () => {
+  const PRESUPUESTO_CON_MACRO = {
+    ...PRESUPUESTO_BASE,
+    productos: [
+      {
+        ...PRESUPUESTO_BASE.productos[0],
+        macroactividades: [
+          {
+            idMacroactividad: 10,
+            numero: '1.1',
+            nombreMacroactividad: 'Cimentación',
+            insumos: [],
+            totalPeriodoPrecioMercado: [100, 200],
+          },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    rolesActivos = ['TECNICO_URP'];
+    swalFire.mockResolvedValue({ isConfirmed: true });
+    obtenerPresupuesto.mockResolvedValue({ data: PRESUPUESTO_BASE });
+    listarInsumosTipo.mockResolvedValue({ data: INSUMOS });
+    obtenerFuentesFinanciamiento.mockResolvedValue({ data: { fuentesFinanciamiento: [], fuenteRecursos: '' } });
+  });
+
+  it('si falla el presupuesto, la pantalla muestra el error', async () => {
+    obtenerPresupuesto.mockRejectedValue(new Error('caído'));
+    montar();
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByText('Aulas construidas')).not.toBeInTheDocument();
+  });
+
+  it('sin catálogo de insumos, el presupuesto se ve y no deja agregar macroactividades', async () => {
+    listarInsumosTipo.mockRejectedValue(new Error('405'));
+    montar();
+    expect(await screen.findByText('Aulas construidas')).toBeInTheDocument();
+    expect(screen.getByText(/No se pudo cargar el catálogo de tipos de insumo/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Agregar macroactividad' })).toBeDisabled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('sin fuentes legibles, el presupuesto se ve y la sección de fuentes lo explica', async () => {
+    obtenerFuentesFinanciamiento.mockRejectedValue(new Error('404'));
+    montar();
+    expect(await screen.findByText('Aulas construidas')).toBeInTheDocument();
+    expect(screen.getByText(/No se pudieron consultar las fuentes de financiamiento/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Agregar fuente de financiamiento' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Fuente de recursos')).not.toBeInTheDocument();
+  });
+
+  it('sin fuentes legibles, Guardar guarda el presupuesto y no intenta las fuentes', async () => {
+    obtenerPresupuesto.mockResolvedValue({ data: PRESUPUESTO_CON_MACRO });
+    obtenerFuentesFinanciamiento.mockRejectedValue(new Error('404'));
+    guardarPresupuesto.mockResolvedValue({ data: {} });
+    montar();
+    await screen.findByText('Cimentación');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(guardarPresupuesto).toHaveBeenCalledWith({ idProyecto: 7 }));
+    expect(guardarFuentesFinanciamiento).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(swalFire).toHaveBeenCalledWith(
+        expect.objectContaining({ icon: 'success', text: expect.stringMatching(/no se guardaron/) }),
+      ),
+    );
+  });
+});

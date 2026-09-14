@@ -21,6 +21,63 @@ import { formatearMonto } from './presupuestoFormSchema';
 
 const ROL_EDITA = 'TECNICO_URP';
 
+type Traducir = (clave: string) => string;
+
+/** Datos de la pantalla ya resueltos, con el motivo de lo que no se pudo cargar. */
+interface DatosPresupuesto {
+  readonly presupuesto: Presupuesto | null;
+  readonly errorPresupuesto: string | null;
+  readonly insumos: InsumoTipoResumen[];
+  readonly errorInsumos: string | null;
+  readonly fuentes: FuenteFinanciamiento[];
+  readonly fuenteRecursos: string;
+  readonly errorFuentes: string | null;
+}
+
+/**
+ * Carga las tres partes de la pantalla por separado.
+ *
+ * Con Promise.all bastaba que fallara una para tapar la pantalla entera aunque el
+ * presupuesto hubiera llegado bien, y fallan en casos normales: el catálogo de
+ * tipos de insumo (CU-ADM-02) todavía no tiene back, y las fuentes devuelven 404
+ * "No existe ficha de proyecto" en cualquier proyecto sin ficha de emergencia.
+ * Sólo el presupuesto es imprescindible; lo demás se degrada con su aviso.
+ *
+ * Vive fuera del componente para no sumarle ramas: la pantalla ya está cerca del
+ * límite de complejidad cognitiva de Sonar.
+ */
+async function cargarDatos(idProyecto: number, t: Traducir): Promise<DatosPresupuesto> {
+  const [pres, cat, fue] = await Promise.allSettled([
+    presupuestoApi.obtenerPresupuesto({ idProyecto }),
+    catalogoInsumosApi.listarInsumosTipo(),
+    presupuestoApi.obtenerFuentesFinanciamiento({ idProyecto }),
+  ]);
+  const motivo = (r: PromiseSettledResult<unknown>) =>
+    r.status === 'rejected' ? mensajeDeError(toErrorApi(r.reason), t) : null;
+  const leidas = fue.status === 'fulfilled' ? fue.value.data : null;
+  return {
+    presupuesto: pres.status === 'fulfilled' ? pres.value.data : null,
+    errorPresupuesto: motivo(pres),
+    insumos: cat.status === 'fulfilled' ? cat.value.data : [],
+    errorInsumos: motivo(cat),
+    fuentes: leidas?.fuentesFinanciamiento ?? [],
+    fuenteRecursos: leidas?.fuenteRecursos ?? '',
+    errorFuentes: motivo(fue),
+  };
+}
+
+const periodosComoTexto = (p: Presupuesto | null): string =>
+  p?.periodosEstimados == null ? '' : String(p.periodosEstimados);
+
+/** Aviso de una sección que no se pudo cargar, con el motivo al final. */
+function AvisoSeccion({ texto, motivo }: { readonly texto: string; readonly motivo: string }) {
+  return (
+    <p className="nota">
+      {texto} <b>{motivo}</b>
+    </p>
+  );
+}
+
 /**
  * "Presupuesto del Proyecto" (Anexo A.1 del CU-PRE-17).
  *
@@ -42,6 +99,8 @@ export function PresupuestoPage() {
 
   const [presupuesto, setPresupuesto] = useState<Presupuesto | null>(null);
   const [insumos, setInsumos] = useState<InsumoTipoResumen[]>([]);
+  const [errorInsumos, setErrorInsumos] = useState<string | null>(null);
+  const [errorFuentes, setErrorFuentes] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
@@ -57,23 +116,16 @@ export function PresupuestoPage() {
 
   const cargar = async () => {
     setCargando(true);
-    setErrorCarga(null);
-    try {
-      const [pres, cat, fue] = await Promise.all([
-        presupuestoApi.obtenerPresupuesto({ idProyecto }),
-        catalogoInsumosApi.listarInsumosTipo(),
-        presupuestoApi.obtenerFuentesFinanciamiento({ idProyecto }),
-      ]);
-      setPresupuesto(pres.data);
-      setInsumos(cat.data);
-      setFuentes(fue.data.fuentesFinanciamiento ?? []);
-      setFuenteRecursos(fue.data.fuenteRecursos ?? '');
-      setPeriodosBorrador(pres.data.periodosEstimados != null ? String(pres.data.periodosEstimados) : '');
-    } catch (error_) {
-      setErrorCarga(mensajeDeError(toErrorApi(error_), t));
-    } finally {
-      setCargando(false);
-    }
+    const datos = await cargarDatos(idProyecto, t);
+    setErrorCarga(datos.errorPresupuesto);
+    setPresupuesto(datos.presupuesto);
+    setPeriodosBorrador(periodosComoTexto(datos.presupuesto));
+    setInsumos(datos.insumos);
+    setErrorInsumos(datos.errorInsumos);
+    setFuentes(datos.fuentes);
+    setFuenteRecursos(datos.fuenteRecursos);
+    setErrorFuentes(datos.errorFuentes);
+    setCargando(false);
   };
 
   useEffect(() => {
@@ -128,12 +180,20 @@ export function PresupuestoPage() {
     }
     setGuardando(true);
     try {
-      await presupuestoApi.guardarFuentesFinanciamiento({
-        idProyecto,
-        fuentesFinanciamientoRequest: { fuentesFinanciamiento: fuentes, fuenteRecursos: fuenteRecursos || undefined },
-      });
+      // Si las fuentes no se pudieron leer tampoco se pueden guardar: se guarda el
+      // presupuesto y se avisa de lo que quedó fuera, en vez de fallar entero.
+      const conFuentes = errorFuentes === null;
+      if (conFuentes) {
+        await presupuestoApi.guardarFuentesFinanciamiento({
+          idProyecto,
+          fuentesFinanciamientoRequest: { fuentesFinanciamiento: fuentes, fuenteRecursos: fuenteRecursos || undefined },
+        });
+      }
       await presupuestoApi.guardarPresupuesto({ idProyecto });
-      await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
+      await Swal.fire({
+        icon: 'success',
+        text: t(conFuentes ? 'preinversion.registro.mensajeGuardado' : 'preinversion.presupuesto.guardadoSinFuentes'),
+      });
       await cargar();
     } catch (error_) {
       await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
@@ -152,6 +212,8 @@ export function PresupuestoPage() {
     );
   }
 
+  const sinCatalogo = errorInsumos !== null;
+  const sinFuentes = errorFuentes !== null;
   const columnas = Array.from({ length: periodos }, (_, i) => i);
 
   return (
@@ -181,6 +243,10 @@ export function PresupuestoPage() {
             </div>
           )}
         </div>
+
+        {sinCatalogo && (
+          <AvisoSeccion texto={t('preinversion.presupuesto.avisoSinCatalogo')} motivo={errorInsumos ?? ''} />
+        )}
 
         {periodos === 0 ? (
           <p className="nota">{t('preinversion.presupuesto.sinPeriodos')}</p>
@@ -214,6 +280,7 @@ export function PresupuestoPage() {
                           <button
                             type="button"
                             className="btn secundario"
+                            disabled={sinCatalogo}
                             onClick={() => setDetalle({ producto })}
                           >
                             {t('preinversion.presupuesto.agregarMacroactividad')}
@@ -234,6 +301,7 @@ export function PresupuestoPage() {
                             <button
                               type="button"
                               className="btn neutro"
+                              disabled={sinCatalogo}
                               onClick={() => setDetalle({ producto, macro })}
                             >
                               {t('common.editar')}
@@ -299,57 +367,63 @@ export function PresupuestoPage() {
 
         {/* Fuente de financiamiento y de recursos (Anexo A.5, RN14). */}
         <h3 className="seccion">{t('preinversion.presupuesto.fuentes')}</h3>
-        {fuentes.map((fuente, indice) => (
-          <div className="fuente-fila" key={`${fuente}-${indice}`}>
-            <select
-              aria-label={t('preinversion.presupuesto.fuenteNumero', { numero: indice + 1 })}
-              value={fuente}
-              disabled={!puedeEditar}
-              onChange={(e) =>
-                setFuentes(fuentes.map((f, i) => (i === indice ? (e.target.value as FuenteFinanciamiento) : f)))
-              }
-            >
-              {Object.values(FuenteFinanciamiento).map((valor) => (
-                <option key={valor} value={valor}>
-                  {t(`preinversion.presupuesto.fuente.${valor}`)}
-                </option>
-              ))}
-            </select>
+        {sinFuentes ? (
+          <AvisoSeccion texto={t('preinversion.presupuesto.avisoSinFuentes')} motivo={errorFuentes ?? ''} />
+        ) : (
+          <>
+            {fuentes.map((fuente, indice) => (
+              <div className="fuente-fila" key={`${fuente}-${indice}`}>
+                <select
+                  aria-label={t('preinversion.presupuesto.fuenteNumero', { numero: indice + 1 })}
+                  value={fuente}
+                  disabled={!puedeEditar}
+                  onChange={(e) =>
+                    setFuentes(fuentes.map((f, i) => (i === indice ? (e.target.value as FuenteFinanciamiento) : f)))
+                  }
+                >
+                  {Object.values(FuenteFinanciamiento).map((valor) => (
+                    <option key={valor} value={valor}>
+                      {t(`preinversion.presupuesto.fuente.${valor}`)}
+                    </option>
+                  ))}
+                </select>
+                {puedeEditar && (
+                  <button
+                    type="button"
+                    className="btn neutro"
+                    aria-label={t('preinversion.presupuesto.quitarFuente', { numero: indice + 1 })}
+                    onClick={() => setFuentes(fuentes.filter((_, i) => i !== indice))}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
             {puedeEditar && (
               <button
                 type="button"
-                className="btn neutro"
-                aria-label={t('preinversion.presupuesto.quitarFuente', { numero: indice + 1 })}
-                onClick={() => setFuentes(fuentes.filter((_, i) => i !== indice))}
+                className="btn secundario"
+                onClick={() => setFuentes([...fuentes, FuenteFinanciamiento.FondoGeneral])}
               >
-                ✕
+                {t('preinversion.presupuesto.agregarFuente')}
               </button>
             )}
-          </div>
-        ))}
-        {puedeEditar && (
-          <button
-            type="button"
-            className="btn secundario"
-            onClick={() => setFuentes([...fuentes, FuenteFinanciamiento.FondoGeneral])}
-          >
-            {t('preinversion.presupuesto.agregarFuente')}
-          </button>
-        )}
 
-        <div className="campo crece">
-          <label htmlFor="fuente-recursos">{t('preinversion.presupuesto.fuenteRecursos')}</label>
-          <input
-            id="fuente-recursos"
-            type="text"
-            value={fuenteRecursos}
-            readOnly={!puedeEditar}
-            onChange={(e) => setFuenteRecursos(e.target.value)}
-          />
-        </div>
-        {/* El contrato modela la fuente de recursos como texto libre a propósito:
-            está pendiente de decidir a qué catálogo enlaza. No se inventa. */}
-        <p className="nota-form">{t('preinversion.presupuesto.notaFuenteRecursos')}</p>
+            <div className="campo crece">
+              <label htmlFor="fuente-recursos">{t('preinversion.presupuesto.fuenteRecursos')}</label>
+              <input
+                id="fuente-recursos"
+                type="text"
+                value={fuenteRecursos}
+                readOnly={!puedeEditar}
+                onChange={(e) => setFuenteRecursos(e.target.value)}
+              />
+            </div>
+            {/* El contrato modela la fuente de recursos como texto libre a propósito:
+                está pendiente de decidir a qué catálogo enlaza. No se inventa. */}
+            <p className="nota-form">{t('preinversion.presupuesto.notaFuenteRecursos')}</p>
+          </>
+        )}
 
         <div className="acciones-form">
           <button

@@ -360,7 +360,10 @@
         "PRESTAMOS_INTERNOS": "Préstamos internos (P.Int)",
         "DONACIONES": "Donaciones (Don.)",
         "OTROS": "Otros"
-      }
+      },
+      "avisoSinCatalogo": "No se pudo cargar el catálogo de tipos de insumo, así que no se pueden agregar ni editar macroactividades. Motivo:",
+      "avisoSinFuentes": "No se pudieron consultar las fuentes de financiamiento de este proyecto, así que tampoco se pueden editar ni guardar aquí. Motivo:",
+      "guardadoSinFuentes": "Se guardó el presupuesto. Las fuentes de financiamiento no se guardaron porque no se pudieron consultar."
     }
   },
   "app": {
