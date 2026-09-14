@@ -30,6 +30,7 @@ public class Pre08RegistrarAreaInfluencia {
     private final MunicipioRepository municipioRepository;
     private final AnalisisPoblacionService analisisPoblacionService;
     private final AreaInfluenciaService areaInfluenciaService;
+    private final Pre09RegistrarAnalisisMercado analisisMercado;
 
     private AreaInfluenciaDto resultado;
     private boolean escenarioActivo;
@@ -38,17 +39,23 @@ public class Pre08RegistrarAreaInfluencia {
             DepartamentoRepository departamentoRepository,
             MunicipioRepository municipioRepository,
             AnalisisPoblacionService analisisPoblacionService,
-            AreaInfluenciaService areaInfluenciaService) {
+            AreaInfluenciaService areaInfluenciaService,
+            Pre09RegistrarAnalisisMercado analisisMercado) {
         this.contextoProyecto = contextoProyecto;
         this.departamentoRepository = departamentoRepository;
         this.municipioRepository = municipioRepository;
         this.analisisPoblacionService = analisisPoblacionService;
         this.areaInfluenciaService = areaInfluenciaService;
+        this.analisisMercado = analisisMercado;
     }
 
     @Dado("se encuentra en la pantalla {string} \\(Anexo A.{int})")
     public void se_encuentra_en_la_pantalla_anexo_a(String pantalla, Integer anexo) {
         assertThat(contextoProyecto.getProyectoActual()).as("proyecto de prueba").isNotNull();
+        if ("Análisis de Mercado".equals(pantalla)) {
+            analisisMercado.activarEscenario();
+            return;
+        }
         assertThat(pantalla).isEqualTo("Área de Influencia");
         escenarioActivo = true;
     }

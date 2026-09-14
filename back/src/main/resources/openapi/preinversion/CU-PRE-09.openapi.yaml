@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-09 Análisis de Mercado
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-09 "Análisis de Mercado"
+    (UC-PRE-09-Analisis_de_Mercado.md) y sus 3 historias BDD. Actor
+    principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE.
+    Mismo criterio que CU-PRE-06/07/08 para RN01 ("Todos los demás
+    actores"/"Otros actores" sin identificar): `x-roles` no incluye
+    "Usuarios Internos/Externos". Introduce el recurso `AnalisisMercado`,
+    hijo de `Proyecto` (CU-PRE-01.openapi.yaml). RN07 confirma que "Producto"
+    proviene del mismo "Catálogo de Productos e Indicadores" ya definido en
+    CU-PRE-03.5 (`GET /catalogos/productos-indicadores`); a diferencia de
+    CU-PRE-07/08 (donde el catálogo geográfico compartido se referenció solo
+    en texto), aquí sí se reutiliza literalmente el schema `ProductoSeleccionado`
+    de CU-PRE-03.5.openapi.yaml vía `$ref` externo, porque la forma coincide
+    exactamente. "Déficit", "Promedio Demanda", "Promedio Oferta" y
+    "Promedio Déficit" se modelan únicamente como campos calculados de
+    solo lectura (nunca en el request), resolviendo a favor del
+    comportamiento funcional la contradicción del Anexo B.1 sobre la
+    editabilidad de "Promedio Demanda"/"Promedio Oferta" — ver
+    contrato-CU-PRE-09.md. A diferencia de CU-PRE-04/05/06/08, "Guardar" en
+    este CU sí puede rechazar (RN04: ninguna fila completamente diligenciada).
+
+paths:
+
+  /proyectos/{idProyecto}/analisis-mercado:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerAnalisisMercado
+      summary: Consultar la pantalla "Análisis de Mercado" (Anexo A.1)
+      description: >
+        Igual que CU-PRE-06/07/08: ninguna regla de este CU condiciona el
+        acceso de Técnico PRE a que la información ya se haya guardado al
+        menos una vez; no se modeló ese 404 condicional.
+      tags: [Preinversión - Análisis de Mercado]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        "200":
+          description: Análisis de mercado del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalisisMercado'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP ni Técnico PRE, o
+            (Técnico URP/Técnico PRE) el proyecto no está dentro de su
+            alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarAnalisisMercado
+      summary: Registrar y guardar el análisis de mercado (botón "Guardar", FA-01)
+      description: >
+        RN05 (bordes rojos por campos pendientes en una fila individual)
+        sigue siendo puramente visual, mismo criterio que CU-PRE-04/05/06/08
+        — no genera 400 por sí solo. Pero RN04 sí bloquea todo el guardado:
+        "Mínimo debe haber una fila de registro de la información
+        diligenciada completamente" — si ninguna fila del array `filas`
+        tiene todos sus campos de entrada completos (producto, demanda,
+        oferta, aniosAProyectar, tasaDemanda, tasaOferta), este endpoint
+        responde 400 (escenario BDD explícito: "el sistema no permite
+        guardar"). `deficit`, `promedioDemanda`, `promedioOferta` y
+        `promedioDeficit` no se envían nunca: son siempre calculados por el
+        servidor (ver `FilaAnalisisMercado`).
+      tags: [Preinversión - Análisis de Mercado]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalisisMercadoRequest'
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "¡Guardado! Sus datos han sido
+            guardados exitosamente.", Anexo A.2); el modal y su "Aceptar"
+            son de cliente. La respuesta incluye Déficit y los tres
+            promedios ya calculados para cada fila.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalisisMercado'
+        "400":
+          description: >
+            RN04: ninguna fila del array `filas` está completamente
+            diligenciada (producto, demanda, oferta, aniosAProyectar,
+            tasaDemanda, tasaOferta). Escenario BDD explícito, aunque sin
+            texto de mensaje literal documentado por el CU.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP, o el proyecto no está en
+            su alcance de Unidad Ejecutora (RN01). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    FilaAnalisisMercadoRequest:
+      type: object
+      description: >
+        Fila de la tabla "Análisis de Mercado". Agregar/eliminar una fila
+        (RN03) ocurre en el cliente antes de este `PUT` — reemplazo completo
+        del array, mismo criterio que el resto del contrato. `unidadMedida`
+        no se envía: se autocompleta en el servidor a partir de `producto`
+        (Anexo B.1). Ninguna propiedad es obligatoria a nivel de schema
+        (RN05 es solo visual); RN04 (al menos una fila completa) se valida
+        a nivel del array completo en `guardarAnalisisMercado`, no aquí.
+      properties:
+        producto:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/ProductoSeleccionado'
+        demanda:
+          type: number
+          format: double
+          minimum: 0
+          description: "Anexo B.1: \"Rango: valores positivos\"."
+        oferta:
+          type: number
+          format: double
+          minimum: 0
+          description: "Anexo B.1: \"Rango: valores positivos\"."
+        aniosAProyectar:
+          type: integer
+          description: Campo "Años" — número de años a proyectar demanda y oferta.
+        tasaDemanda:
+          type: number
+          format: double
+          description: Tasa de crecimiento de la demanda (porcentaje), específica del bien/servicio.
+        tasaOferta:
+          type: number
+          format: double
+          description: Tasa de crecimiento de la oferta (porcentaje), específica del bien/servicio.
+
+    FilaAnalisisMercado:
+      type: object
+      description: >
+        Forma de lectura de una fila. `unidadMedida`, `deficit`,
+        `promedioDemanda`, `promedioOferta` y `promedioDeficit` son siempre
+        calculados por el servidor y nunca se reciben en
+        `FilaAnalisisMercadoRequest` — incluye `promedioDemanda`/
+        `promedioOferta`, a pesar de que el Anexo B.1 los marca
+        "Editable: Sí" (contradicho por su propia fórmula de cálculo, igual
+        que "Déficit"/"Promedio Déficit", marcados "No" editables); se
+        siguió el comportamiento funcional (campos calculados) para los
+        cuatro, dejando la contradicción señalada para el Gestor de
+        Requisitos, no resuelta aquí.
+      required: [producto, deficit, promedioDemanda, promedioOferta, promedioDeficit]
+      properties:
+        producto:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/ProductoSeleccionado'
+        unidadMedida:
+          type: string
+          nullable: true
+          description: Autocompletada desde el Catálogo de Productos e Indicadores al seleccionar `producto`.
+        demanda:
+          type: number
+          format: double
+          nullable: true
+        oferta:
+          type: number
+          format: double
+          nullable: true
+        deficit:
+          type: number
+          format: double
+          nullable: true
+          description: Calculado como demanda − oferta.
+        aniosAProyectar:
+          type: integer
+          nullable: true
+        tasaDemanda:
+          type: number
+          format: double
+          nullable: true
+        tasaOferta:
+          type: number
+          format: double
+          nullable: true
+        promedioDemanda:
+          type: number
+          format: double
+          nullable: true
+          description: >
+            Calculado según la fórmula de proyección del Anexo B.1 a partir
+            de demanda (año base), tasaDemanda y aniosAProyectar.
+        promedioOferta:
+          type: number
+          format: double
+          nullable: true
+          description: Misma fórmula que promedioDemanda, aplicada a oferta/tasaOferta.
+        promedioDeficit:
+          type: number
+          format: double
+          nullable: true
+          description: Calculado como promedioDemanda − promedioOferta.
+
+    AnalisisMercadoRequest:
+      type: object
+      properties:
+        filas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaAnalisisMercadoRequest'
+
+    AnalisisMercado:
+      type: object
+      description: Análisis de mercado del proyecto (lectura).
+      required: [idProyecto, filas]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        filas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaAnalisisMercado'

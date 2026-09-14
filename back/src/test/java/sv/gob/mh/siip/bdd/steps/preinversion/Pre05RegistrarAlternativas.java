@@ -54,6 +54,7 @@ public class Pre05RegistrarAlternativas {
     private final MacroSectorRepository macroSectorRepository;
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
+    private final Pre09RegistrarAnalisisMercado analisisMercado;
 
     private RegistroAlternativasRequestDto borrador;
     private RegistroAlternativasDto guardado;
@@ -66,7 +67,8 @@ public class Pre05RegistrarAlternativas {
             ContextoProyectoBdd contextoProyecto,
             MacroSectorRepository macroSectorRepository,
             SectorActividadRepository sectorActividadRepository,
-            EjeTematicoRepository ejeTematicoRepository) {
+            EjeTematicoRepository ejeTematicoRepository,
+            Pre09RegistrarAnalisisMercado analisisMercado) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -76,6 +78,7 @@ public class Pre05RegistrarAlternativas {
         this.macroSectorRepository = macroSectorRepository;
         this.sectorActividadRepository = sectorActividadRepository;
         this.ejeTematicoRepository = ejeTematicoRepository;
+        this.analisisMercado = analisisMercado;
     }
 
     @Dado("que el Técnico URP ingresa a la sección {string} de la pestaña {string}")
@@ -153,6 +156,10 @@ public class Pre05RegistrarAlternativas {
 
     @Entonces("se mantiene en la sección {string}")
     public void se_mantiene_en_la_seccion(String seccion) {
+        if (analisisMercado.esEscenarioAnalisisMercado()) {
+            analisisMercado.verificarSeccion();
+            return;
+        }
         RegistroAlternativasDto recargado = alternativaSolucionService
                 .obtener(contextoProyecto.getProyectoActual().getId());
         assertThat(recargado.getAlternativas()).hasSize(2);

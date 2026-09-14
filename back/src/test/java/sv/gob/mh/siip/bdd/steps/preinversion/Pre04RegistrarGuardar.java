@@ -75,6 +75,8 @@ public class Pre04RegistrarGuardar {
     private Pre07RegistrarAnalisisPoblacion analisisPoblacion;
     @Autowired
     private Pre08RegistrarAreaInfluencia areaInfluencia;
+    @Autowired
+    private Pre09RegistrarAnalisisMercado analisisMercado;
 
     public Pre04RegistrarGuardar(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository,
@@ -165,6 +167,10 @@ public class Pre04RegistrarGuardar {
         }
         if (analisisPoblacion.esEscenarioAnalisisPoblacion()) {
             analisisPoblacion.guardarInformacionRegistrada();
+            return;
+        }
+        if (analisisMercado.esEscenarioAnalisisMercado()) {
+            analisisMercado.guardarInformacionRegistrada();
             return;
         }
         guardado = identificacionService.guardar(contextoProyecto.getProyectoActual().getId(), borrador);

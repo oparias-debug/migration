@@ -479,6 +479,23 @@ CREATE TABLE ANALISIS_MERCADO (
 );
 COMMENT ON TABLE ANALISIS_MERCADO IS 'Análisis de oferta, demanda y brecha. CU-PRE-09';
 
+CREATE TABLE ANALISIS_MERCADO_FILA (
+    ID_ANALISIS_MERCADO NUMBER(19) NOT NULL,
+    ORDEN               NUMBER(10) NOT NULL,
+    CODIGO_PRODUCTO     VARCHAR2(30),
+    PRODUCTO            VARCHAR2(300),
+    UNIDAD_MEDIDA       VARCHAR2(100),
+    DEMANDA             NUMBER,
+    OFERTA              NUMBER,
+    ANIOS_A_PROYECTAR   NUMBER(10),
+    TASA_DEMANDA        NUMBER,
+    TASA_OFERTA         NUMBER,
+    CONSTRAINT PK_ANALISIS_MERCADO_FILA PRIMARY KEY (ID_ANALISIS_MERCADO, ORDEN),
+    CONSTRAINT FK_ANALISIS_MERCADO_FILA FOREIGN KEY (ID_ANALISIS_MERCADO)
+        REFERENCES ANALISIS_MERCADO (ID_ANALISIS_MERCADO)
+);
+COMMENT ON TABLE ANALISIS_MERCADO_FILA IS 'Filas del análisis de mercado. CU-PRE-09';
+
 --------------------------------------------------------------------------------
 -- 4. ESTUDIOS TÉCNICO, AMBIENTAL, RIESGO Y LEGAL (PRE-11, 12, 14, 15, 16)
 --------------------------------------------------------------------------------
