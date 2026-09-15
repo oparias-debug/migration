@@ -1,18 +1,20 @@
-import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ubicarEnMenu } from '../layout/navegacion';
 
-// Equivalente al fragmento "🚧 Página en Construcción" servido hoy por
-// CustomErrorController para las rutas del sidebar aún no implementadas.
+/**
+ * Opciones del menú que todavía no se han desarrollado. Por pedido del cliente
+ * muestra sólo el título de la opción y "En construcción", sin notas.
+ */
 export function PlaceholderPage() {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const ubicacion = ubicarEnMenu(pathname);
 
   return (
     <div className="text-center p-5">
-      <h1 className="display-4 text-warning">{t('placeholder.title')}</h1>
-      <p className="lead">{t('placeholder.text')}</p>
-      <Link className="btn primario" to="/">
-        {t('placeholder.backHome')}
-      </Link>
+      {ubicacion && <h2>{t(ubicacion.titulo)}</h2>}
+      <p className="lead">{t('placeholder.title')}</p>
     </div>
   );
 }
