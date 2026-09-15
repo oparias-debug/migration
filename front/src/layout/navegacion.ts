@@ -136,7 +136,8 @@ export const MODULOS: readonly Modulo[] = [
     texto: 'menu.administracion',
     submenu: [
       { clave: 'seguridad', texto: 'menu.seguridad', ruta: '/administracion/seguridad' },
-      { clave: 'catalogos', texto: 'menu.catalogos', ruta: '/catalogos-generales' },
+      // Sólo para el rol que el back del CU-ADM-01 acepta; a cualquier otro le respondería 403.
+      { clave: 'catalogos', texto: 'menu.catalogos', ruta: '/catalogos-generales', rolesRequeridos: ['ADMINISTRADOR_DE_CATALOGOS'] },
     ],
   },
 ];

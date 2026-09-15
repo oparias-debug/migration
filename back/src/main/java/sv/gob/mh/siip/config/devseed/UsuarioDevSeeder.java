@@ -82,6 +82,11 @@ public class UsuarioDevSeeder implements DevSeeder {
                 RolUsuario.COORDINADOR_PRE, null, null);
         crearUsuarioSiNoExiste("admin", "Administrador del Sistema (prueba)", "admin@example.com",
                 RolUsuario.ADMINISTRADOR, null, null);
+        // Rol distinto del "admin" genérico de arriba: CatalogoService/RegistroService (CU-ADM-01)
+        // exigen específicamente ADMINISTRADOR_DE_CATALOGOS vía ActorContexto.exigirRol, resuelto
+        // desde USUARIO.ROL (no desde los roles de Keycloak — ver nota en api-gateway/SecurityConfig).
+        crearUsuarioSiNoExiste("admin.catalogos", "Administrador de Catálogos (prueba)",
+                "admin.catalogos@example.com", RolUsuario.ADMINISTRADOR_DE_CATALOGOS, null, null);
     }
 
     private void crearUsuarioSiNoExiste(String nombreUsuario, String nombreCompleto, String correo,

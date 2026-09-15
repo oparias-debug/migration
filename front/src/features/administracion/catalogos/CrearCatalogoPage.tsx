@@ -16,12 +16,12 @@ import {
 } from './catalogoFormSchema';
 
 /**
- * El CU llama al actor "Administrador de Catálogos", pero ese rol no existe en
- * el realm: los definidos son ADMINISTRADOR_DEL_SISTEMA, los coordinadores y
- * los técnicos. Se usa el que sí existe y más se le parece. Si el cliente
- * quiere un rol propio para catálogos, hay que crearlo en Keycloak primero.
+ * Actor del CU: "Administrador de Catálogos". El back del CU-ADM-01 exige este
+ * rol en todas sus operaciones, y existe en Keycloak y en el seeder (usuario
+ * admin.catalogos) desde el 14/09/2026. Antes se usaba ADMINISTRADOR_DEL_SISTEMA
+ * porque el rol no existía, pero el back respondía 403 a ese usuario.
  */
-const ROL_ADMIN = 'ADMINISTRADOR_DEL_SISTEMA';
+const ROL_ADMIN = 'ADMINISTRADOR_DE_CATALOGOS';
 
 /**
  * Crear catálogo — Flujo Principal del CU-ADM-01 (§6).

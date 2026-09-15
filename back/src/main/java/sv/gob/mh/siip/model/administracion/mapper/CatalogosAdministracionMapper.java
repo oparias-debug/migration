@@ -3,16 +3,36 @@ package sv.gob.mh.siip.model.administracion.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import sv.gob.mh.siip.model.administracion.dto.CriterioElegibilidadResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.CriterioPriorizacionResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.EjePlanGobiernoResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.EjeTematicoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.EntradaCatalogoEspecificarDto;
+import sv.gob.mh.siip.model.administracion.dto.EscalaCalificacionValorDto;
+import sv.gob.mh.siip.model.administracion.dto.IndicadorResultadoResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.InsumoTipoResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.MacrosectorResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.ParametroResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.PlanSectorialRegionalResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.RangoInterpretacionDto;
 import sv.gob.mh.siip.model.administracion.dto.SectorResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.SubcriterioPriorizacionResumenDto;
+import sv.gob.mh.siip.model.administracion.dto.UnidadMedidaResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.UsuarioResumenDto;
 import sv.gob.mh.siip.model.common.domain.Usuario;
+import sv.gob.mh.siip.model.preinversion.domain.CriterioElegibilidad;
+import sv.gob.mh.siip.model.preinversion.domain.CriterioPriorizacion;
 import sv.gob.mh.siip.model.preinversion.domain.EjePlanGobierno;
 import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
+import sv.gob.mh.siip.model.preinversion.domain.EntradaCatalogoEspecificar;
+import sv.gob.mh.siip.model.preinversion.domain.EscalaCalificacionSubcriterio;
+import sv.gob.mh.siip.model.preinversion.domain.IndicadorResultado;
+import sv.gob.mh.siip.model.preinversion.domain.InsumoTipo;
+import sv.gob.mh.siip.model.preinversion.domain.Parametro;
 import sv.gob.mh.siip.model.preinversion.domain.PlanSectorialRegional;
+import sv.gob.mh.siip.model.preinversion.domain.RangoInterpretacionPriorizacion;
+import sv.gob.mh.siip.model.preinversion.domain.SubcriterioPriorizacion;
+import sv.gob.mh.siip.model.preinversion.domain.UnidadMedida;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 
@@ -42,4 +62,25 @@ public interface CatalogosAdministracionMapper {
 
     @Mapping(target = "idUsuario", source = "id")
     UsuarioResumenDto toResumen(Usuario usuario);
+
+    InsumoTipoResumenDto toResumen(InsumoTipo insumoTipo);
+
+    @Mapping(target = "unidadMedida", source = "nombre")
+    UnidadMedidaResumenDto toResumen(UnidadMedida unidadMedida);
+
+    ParametroResumenDto toResumen(Parametro parametro);
+
+    IndicadorResultadoResumenDto toResumen(IndicadorResultado indicadorResultado);
+
+    RangoInterpretacionDto toResumen(RangoInterpretacionPriorizacion rango);
+
+    CriterioPriorizacionResumenDto toResumen(CriterioPriorizacion criterioPriorizacion);
+
+    SubcriterioPriorizacionResumenDto toResumen(SubcriterioPriorizacion subcriterioPriorizacion);
+
+    EscalaCalificacionValorDto toResumen(EscalaCalificacionSubcriterio escalaCalificacionSubcriterio);
+
+    CriterioElegibilidadResumenDto toResumen(CriterioElegibilidad criterioElegibilidad);
+
+    EntradaCatalogoEspecificarDto toResumen(EntradaCatalogoEspecificar entradaCatalogoEspecificar);
 }

@@ -78,4 +78,9 @@ describe('ubicarEnMenu', () => {
   it('una ruta que no está en el menú', () => {
     expect(ubicarEnMenu('/no-existe')).toBeNull();
   });
+  it('Catálogos sólo aparece para el rol que el back del CU-ADM-01 acepta', () => {
+    const admin = MODULOS.find((m) => m.clave === 'admin');
+    const catalogos = admin?.submenu?.find((s) => s.clave === 'catalogos');
+    expect(catalogos?.rolesRequeridos).toEqual(['ADMINISTRADOR_DE_CATALOGOS']);
+  });
 });

@@ -1,20 +1,19 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -67,7 +66,7 @@ class ProyectoCapturaServiceImplTest {
     }
 
     @Test
-    void listaProyectos_mapeaEntidadCompleta_yRespetaPaginacion() {
+    void listaProyectosMapeaEntidadCompletaRespetaPaginacion() {
         Proyecto proyecto = Proyecto.builder()
                 .id(7L)
                 .cup("CUP-7")
@@ -122,7 +121,7 @@ class ProyectoCapturaServiceImplTest {
     }
 
     @Test
-    void listaProyectos_devuelveContenidoVacio() {
+    void listaProyectosDevuelveContenidoVacio() {
         when(repository.findAll(any(Specification.class), eq(PageRequest.of(0, 20))))
                 .thenReturn(new PageImpl<>(List.of()));
 
@@ -135,7 +134,7 @@ class ProyectoCapturaServiceImplTest {
     }
 
     @Test
-    void listarProyectosCaptura_devuelveLaEtapaAceptadaMasAvanzadaPorProyecto() {
+    void listarProyectosCapturaDevuelveLaEtapaAceptadaMasAvanzadaPorProyecto() {
         Proyecto conVariasEtapas = Proyecto.builder().id(1L).nombre("Con etapas aceptadas").build();
         Proyecto sinEtapas = Proyecto.builder().id(2L).nombre("Sin etapas aceptadas").build();
 
@@ -157,7 +156,7 @@ class ProyectoCapturaServiceImplTest {
     }
 
     @Test
-    void listarProyectosCaptura_sinActorAutenticado_lanzaNoAutenticado() {
+    void listarProyectosCapturaSinActorAutenticadoLanzaNoAutenticado() {
         when(actorContexto.exigir()).thenThrow(new NoAutenticadoException("No autenticado"));
 
         assertThatThrownBy(() -> service.listarProyectosCaptura(FILTRO_VACIO, 0, 20))

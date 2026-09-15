@@ -56,6 +56,10 @@
       {
         "name": "VIABILIZADOR",
         "description": "Viabilizador (SIIP). Evaluación de viabilidad, elegibilidad y opinión técnica de proyectos (4 CU)."
+      },
+      {
+        "name": "ADMINISTRADOR_DE_CATALOGOS",
+        "description": "Administrador de Catálogos (SIIP). Administra catálogos maestros y sus registros (CU-ADM-01). Actor aún no incorporado formalmente a catalogo-actores.md."
       }
     ]
   },
@@ -164,6 +168,24 @@
       ],
       "realmRoles": [
         "USUARIOS_INTERNOS"
+      ]
+    },
+    {
+      "username": "admin.catalogos",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin.catalogos@example.com",
+      "firstName": "Administrador",
+      "lastName": "de Catálogos",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "adminCatalogos123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMINISTRADOR_DE_CATALOGOS"
       ]
     },
     {

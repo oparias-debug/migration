@@ -19,7 +19,7 @@ vi.mock('../../../api/administracionApi', async (importOriginal) => {
   };
 });
 
-let rolesActivos: string[] = ['ADMINISTRADOR_DEL_SISTEMA'];
+let rolesActivos: string[] = ['ADMINISTRADOR_DE_CATALOGOS'];
 vi.mock('../../../auth/useAuth', () => ({
   useAuth: () => ({ hasRole: (rol: string) => rolesActivos.includes(rol) }),
 }));
@@ -42,7 +42,7 @@ function rellenarMinimo() {
 describe('CrearCatalogoPage · CU-ADM-01 flujo principal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    rolesActivos = ['ADMINISTRADOR_DEL_SISTEMA'];
+    rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
     swalFire.mockResolvedValue({ isConfirmed: true });
     buscarCatalogoPorNombre.mockResolvedValue({ data: { nombre: '', existe: false } });
   });
@@ -163,6 +163,13 @@ describe('CrearCatalogoPage · CU-ADM-01 flujo principal', () => {
 
   it('quien no administra catálogos no ve el formulario', async () => {
     rolesActivos = ['TECNICO_URP'];
+    montar();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Crear catálogo' })).not.toBeInTheDocument();
+  });
+
+  it('el administrador del sistema tampoco lo ve: el back del CU-ADM-01 sólo acepta ADMINISTRADOR_DE_CATALOGOS', async () => {
+    rolesActivos = ['ADMINISTRADOR_DEL_SISTEMA'];
     montar();
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Crear catálogo' })).not.toBeInTheDocument();

@@ -18,5 +18,10 @@ public enum RolUsuario {
     /** Coordinador SYMP: unica accion, seleccionar Co-ejecutor (CU-PRE-3.5, RN16). */
     COORDINADOR_SYMP,
     /** Administra catalogos maestros y sus registros (CU-ADM-01). Actor aun no incorporado a catalogo-actores.md. */
-    ADMINISTRADOR_DE_CATALOGOS
+    ADMINISTRADOR_DE_CATALOGOS,
+    /** Priorizacion de proyectos (CU-PRE-26.5). Actores aun no incorporados a catalogo-actores.md;
+     *  ya existen como rol de Keycloak (realm-export.json) con estos mismos nombres. */
+    TECNICO_SYMP,
+    SUBJEFE_DGI,
+    JEFE_DGI
 }
