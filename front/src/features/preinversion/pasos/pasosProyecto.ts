@@ -1,30 +1,33 @@
 /**
- * Pasos de un proyecto de preinversión, agrupados como la columna C del árbol
- * funcional (arbol de ejecucion.xlsx) y ordenados según la cadena de botones
- * "Siguiente" de los casos de uso: cada .feature de "avanzar" dice a qué
- * sección lleva, y de ahí sale el orden, no de una suposición.
+ * Pasos de un proyecto de preinversión, según el árbol del sistema que envió el
+ * cliente el 14/09/2026 ("árbol del sistema (2)"). Columnas del árbol:
+ *
+ *   B MACROPROCESO → C PROCESO → D SUBPROCESO → E CAPÍTULO → F PESTAÑA
+ *
+ * Aquí cada GRUPO es un proceso de Preinversión (1.2 a 1.5), cada SECCIÓN un
+ * subproceso y cada PASO un capítulo. Las pestañas de un capítulo se guardan
+ * para cuando exista su pantalla. Los pasos muestran el código del árbol
+ * (1.3.2.6…), que es como el cliente se ubica.
+ *
+ * No están 1.1 Asignación CUP, que es anterior al CUP y se trabaja desde Registro
+ * de Proyecto y la Bandeja, ni Priorización, que el cliente movió a
+ * Programación (2.1), fuera de los pasos del proyecto.
  *
  * Son pasos de UN proyecto: sus endpoints cuelgan de /proyectos/{idProyecto},
- * así que viven dentro del proyecto y no en el menú lateral, que no sabe de
- * qué proyecto se trata.
+ * así que viven dentro del proyecto y no en el menú lateral. Cada grupo guarda la
+ * ruta de su opción de menú, que es donde se elige el proyecto.
  *
- * Un paso sin `rutas` no tiene pantalla todavía: se muestra en su sitio de la
- * secuencia, pero no enlaza. Así se ve el recorrido que describen los casos de
- * uso y cuánto falta, en vez de una barra que salte de Alternativas a
- * Presupuesto como si no hubiera nada en medio.
- *
- * Dos decisiones que dependen de lo que confirme el cliente, y que se cambian
- * aquí mismo sin tocar componentes:
- *   - "Tamaño" no va como paso propio: el CU-PRE-12 lo trata como sección de
- *     Localización y el árbol no lo lista.
- *   - Viabilidad, Elegibilidad, Opinión técnica y Priorización se agrupan como
- *     en el árbol, bajo Viabilidad.
+ * Un paso sin `rutas` no tiene pantalla todavía: se ve en su sitio, sin enlace.
  */
 export interface PasoProyecto {
   readonly clave: string;
+  /** Código del árbol del sistema. */
+  readonly codigo: string;
   /** Clave de i18n. */
   readonly texto: string;
   readonly cu: string;
+  /** Claves de i18n de las pestañas del capítulo (columna F del árbol). */
+  readonly pestanas?: readonly string[];
   /**
    * Sufijos de ruta bajo /preinversion/proyectos/:id/ que pertenecen a este
    * paso. El primero es el destino del enlace. Sin rutas = sin pantalla aún.
@@ -32,76 +35,148 @@ export interface PasoProyecto {
   readonly rutas?: readonly string[];
 }
 
-export interface GrupoPasos {
-  readonly clave: string;
-  readonly texto: string;
+export interface SeccionPasos {
+  /** Subproceso del árbol. Sin código ni texto cuando el proceso no se subdivide. */
+  readonly codigo?: string;
+  readonly texto?: string;
   readonly pasos: readonly PasoProyecto[];
 }
 
+export type ClaveGrupo = 'creacion-ruta' | 'formulacion' | 'programacion' | 'gestion';
+
+export interface GrupoPasos {
+  readonly clave: ClaveGrupo;
+  readonly codigo: string;
+  readonly texto: string;
+  /** Opción del menú lateral de este proceso, donde se elige el proyecto. */
+  readonly ruta: string;
+  readonly secciones: readonly SeccionPasos[];
+}
+
+/**
+ * Código del árbol a partir de sus niveles: arbol(1, 3, 2, 6) → '1.3.2.6'. Escrito
+ * como texto, Sonar confunde los códigos de cuatro niveles con direcciones IP.
+ */
+const arbol = (...niveles: number[]) => niveles.join('.');
+
 export const GRUPOS_PASOS: readonly GrupoPasos[] = [
   {
-    clave: 'formulacion',
-    texto: 'pasos.grupo.formulacion',
-    pasos: [
-      // CU-PRE-03 FA-01: el CUP de Captura abre "Registro de Etapas". Ruta de
-      // Preinversión y las dos fichas son pantallas de ese mismo paso.
+    clave: 'creacion-ruta',
+    codigo: '1.2',
+    texto: 'pasos.grupo.creacionRuta',
+    ruta: '/preinversion/creacion-ruta',
+    secciones: [
       {
-        clave: 'registro-etapas',
-        texto: 'pasos.registroEtapas',
-        cu: 'CU-PRE-3.5',
-        rutas: ['etapas', 'ruta-preinversion', 'ficha-informacion-general', 'ficha-emergencia'],
+        pasos: [
+          // CU-PRE-03 FA-01: el CUP de Captura abre "Registro de Etapas". Ruta de
+          // Preinversión y las dos fichas son pantallas de este mismo capítulo.
+          {
+            clave: 'seleccion-etapa',
+            codigo: arbol(1, 2, 1, 1),
+            texto: 'pasos.seleccionEtapa',
+            cu: 'CU-PRE-3.5',
+            pestanas: ['pasos.pestana.criteriosRuta', 'pasos.pestana.fichaInformacion'],
+            rutas: ['etapas', 'ruta-preinversion', 'ficha-informacion-general', 'ficha-emergencia'],
+          },
+        ],
       },
-      { clave: 'identificacion', texto: 'pasos.identificacion', cu: 'CU-PRE-04', rutas: ['identificacion'] },
-      { clave: 'alternativas', texto: 'pasos.alternativas', cu: 'CU-PRE-05', rutas: ['alternativas-solucion'] },
-      { clave: 'interesados', texto: 'pasos.interesados', cu: 'CU-PRE-06' },
-      { clave: 'poblacion', texto: 'pasos.poblacion', cu: 'CU-PRE-07' },
-      { clave: 'area-influencia', texto: 'pasos.areaInfluencia', cu: 'CU-PRE-08' },
-      { clave: 'mercado', texto: 'pasos.mercado', cu: 'CU-PRE-09' },
     ],
   },
   {
-    clave: 'analisis-tecnico',
-    texto: 'pasos.grupo.analisisTecnico',
-    pasos: [
-      { clave: 'descripcion-tecnica', texto: 'pasos.descripcionTecnica', cu: 'CU-PRE-11' },
-      { clave: 'localizacion', texto: 'pasos.localizacion', cu: 'CU-PRE-12' },
-      { clave: 'ambiental', texto: 'pasos.ambiental', cu: 'CU-PRE-14' },
-      { clave: 'riesgo', texto: 'pasos.riesgo', cu: 'CU-PRE-15' },
-      { clave: 'legal', texto: 'pasos.legal', cu: 'CU-PRE-16' },
+    clave: 'formulacion',
+    codigo: '1.3',
+    texto: 'pasos.grupo.formulacion',
+    ruta: '/preinversion/formulacion',
+    secciones: [
+      {
+        codigo: '1.3.1',
+        texto: 'pasos.seccion.identificacion',
+        pasos: [
+          { clave: 'identificacion', codigo: arbol(1, 3, 1, 1), texto: 'pasos.identificacion', cu: 'CU-PRE-04', rutas: ['identificacion'] },
+          { clave: 'alternativas', codigo: arbol(1, 3, 1, 2), texto: 'pasos.alternativas', cu: 'CU-PRE-05', rutas: ['alternativas-solucion'] },
+        ],
+      },
+      {
+        codigo: '1.3.2',
+        texto: 'pasos.seccion.formulacion',
+        pasos: [
+          {
+            clave: 'diagnostico',
+            codigo: arbol(1, 3, 2, 1),
+            texto: 'pasos.diagnostico',
+            cu: 'CU-PRE-06 a 09',
+            pestanas: ['pasos.pestana.interesados', 'pasos.pestana.poblacion', 'pasos.pestana.areaInfluencia', 'pasos.pestana.mercado'],
+          },
+          {
+            clave: 'estudio-tecnico',
+            codigo: arbol(1, 3, 2, 2),
+            texto: 'pasos.estudioTecnico',
+            cu: 'CU-PRE-11 y 12',
+            pestanas: ['pasos.pestana.descripcionTecnica', 'pasos.pestana.localizacion'],
+          },
+          { clave: 'ambiental', codigo: arbol(1, 3, 2, 3), texto: 'pasos.ambiental', cu: 'CU-PRE-14' },
+          { clave: 'riesgos', codigo: arbol(1, 3, 2, 4), texto: 'pasos.riesgos', cu: 'CU-PRE-15' },
+          { clave: 'legal', codigo: arbol(1, 3, 2, 5), texto: 'pasos.legal', cu: 'CU-PRE-16' },
+          { clave: 'presupuesto-inversion', codigo: arbol(1, 3, 2, 6), texto: 'pasos.presupuestoInversion', cu: 'CU-PRE-17', rutas: ['presupuesto'] },
+          { clave: 'presupuesto-operacion', codigo: arbol(1, 3, 2, 7), texto: 'pasos.presupuestoOperacion', cu: 'CU-PRE-18' },
+        ],
+      },
+      {
+        codigo: '1.3.3',
+        texto: 'pasos.seccion.evaluacion',
+        pasos: [
+          { clave: 'beneficios', codigo: arbol(1, 3, 3, 1), texto: 'pasos.beneficios', cu: 'CU-PRE-20' },
+          { clave: 'flujo-socioeconomico', codigo: arbol(1, 3, 3, 2), texto: 'pasos.flujoSocioeconomico', cu: 'CU-PRE-21' },
+          { clave: 'flujo-financiero', codigo: arbol(1, 3, 3, 3), texto: 'pasos.flujoFinanciero', cu: 'CU-PRE-21.5' },
+        ],
+      },
     ],
   },
   {
-    clave: 'presupuesto',
-    texto: 'pasos.grupo.presupuesto',
-    pasos: [
-      { clave: 'presupuesto-inversion', texto: 'pasos.presupuestoInversion', cu: 'CU-PRE-17', rutas: ['presupuesto'] },
-      { clave: 'flujo-costos', texto: 'pasos.flujoCostos', cu: 'CU-PRE-18' },
+    clave: 'programacion',
+    codigo: '1.4',
+    texto: 'pasos.grupo.programacion',
+    ruta: '/preinversion/programacion-proyecto',
+    secciones: [
+      {
+        pasos: [
+          {
+            clave: 'indicadores',
+            codigo: '1.4.1',
+            texto: 'pasos.indicadores',
+            cu: 'CU-PRE-23',
+            pestanas: ['pasos.pestana.indicadoresResultado', 'pasos.pestana.indicadoresProducto'],
+          },
+          { clave: 'programacion-financiera', codigo: '1.4.2', texto: 'pasos.programacionFinanciera', cu: 'CU-PRE-22.1' },
+        ],
+      },
     ],
   },
   {
-    clave: 'evaluacion',
-    texto: 'pasos.grupo.evaluacion',
-    pasos: [
-      { clave: 'beneficios', texto: 'pasos.beneficios', cu: 'CU-PRE-20' },
-      { clave: 'flujo-caja', texto: 'pasos.flujoCaja', cu: 'CU-PRE-21' },
-      { clave: 'flujo-financiero', texto: 'pasos.flujoFinanciero', cu: 'CU-PRE-21.5' },
-      { clave: 'indicadores', texto: 'pasos.indicadores', cu: 'CU-PRE-23' },
-      { clave: 'programacion-financiera', texto: 'pasos.programacionFinanciera', cu: 'CU-PRE-22.1' },
-    ],
-  },
-  {
-    clave: 'viabilidad',
-    texto: 'pasos.grupo.viabilidad',
-    pasos: [
-      { clave: 'viabilidad', texto: 'pasos.viabilidad', cu: 'CU-PRE-24' },
-      { clave: 'elegibilidad', texto: 'pasos.elegibilidad', cu: 'CU-PRE-25' },
-      { clave: 'opinion-tecnica', texto: 'pasos.opinionTecnica', cu: 'CU-PRE-26' },
-      { clave: 'priorizacion', texto: 'pasos.priorizacion', cu: 'CU-PRE-26.5' },
+    clave: 'gestion',
+    codigo: '1.5',
+    texto: 'pasos.grupo.gestion',
+    ruta: '/preinversion/gestion-proyecto',
+    secciones: [
+      {
+        pasos: [
+          { clave: 'viabilidad', codigo: '1.5.1', texto: 'pasos.viabilidad', cu: 'CU-PRE-24' },
+          { clave: 'elegibilidad', codigo: '1.5.2', texto: 'pasos.elegibilidad', cu: 'CU-PRE-25' },
+          { clave: 'opinion-tecnica', codigo: '1.5.3', texto: 'pasos.opinionTecnica', cu: 'CU-PRE-26' },
+        ],
+      },
     ],
   },
 ];
 
-const RUTA_DE_PASO = /^\/preinversion\/proyectos\/(\d+)\/([^/]+)/;
+/** Los pasos de un grupo, en orden, sin las secciones. */
+export const pasosDe = (grupo: GrupoPasos): PasoProyecto[] => grupo.secciones.flatMap((s) => s.pasos);
+
+export const esClaveGrupo = (valor: string | null): valor is ClaveGrupo =>
+  GRUPOS_PASOS.some((g) => g.clave === valor);
+
+const RUTA_DE_PASO = /^\/preinversion\/proyectos\/(\d+)\/([^/?#]+)/;
+const raizProyecto = (idProyecto: number) => `/preinversion/proyectos/${idProyecto}`;
 
 export interface UbicacionPaso {
   readonly idProyecto: number;
@@ -115,7 +190,7 @@ export function ubicarPaso(pathname: string): UbicacionPaso | null {
   if (!coincidencia) return null;
   const [, id, sufijo] = coincidencia;
   for (const grupo of GRUPOS_PASOS) {
-    const paso = grupo.pasos.find((p) => p.rutas?.includes(sufijo));
+    const paso = pasosDe(grupo).find((p) => p.rutas?.includes(sufijo));
     if (paso) return { idProyecto: Number(id), grupo, paso };
   }
   return null;
@@ -124,10 +199,19 @@ export function ubicarPaso(pathname: string): UbicacionPaso | null {
 /** Destino del enlace de un paso, o null si el paso aún no tiene pantalla. */
 export function rutaDePaso(idProyecto: number, paso: PasoProyecto): string | null {
   const primera = paso.rutas?.[0];
-  return primera ? `/preinversion/proyectos/${idProyecto}/${primera}` : null;
+  return primera ? `${raizProyecto(idProyecto)}/${primera}` : null;
 }
 
-/** Número de cada paso, correlativo a través de los grupos (1, 2, 3…). */
-export const NUMERO_DE_PASO: ReadonlyMap<string, number> = new Map(
-  GRUPOS_PASOS.flatMap((g) => g.pasos).map((paso, i) => [paso.clave, i + 1]),
-);
+/**
+ * Adónde lleva elegir un proyecto desde la opción de menú de un proceso: al
+ * primer capítulo del grupo que ya tenga pantalla. Si el grupo todavía no tiene
+ * ninguna, a Selección de la etapa con ?grupo=, que abre la barra en ese proceso
+ * para que al menos se vean sus capítulos.
+ */
+export function entradaDeGrupo(idProyecto: number, clave: ClaveGrupo): string {
+  const grupo = GRUPOS_PASOS.find((g) => g.clave === clave) ?? GRUPOS_PASOS[0];
+  const conPantalla = pasosDe(grupo).find((p) => p.rutas?.length);
+  if (conPantalla?.rutas) return `${raizProyecto(idProyecto)}/${conPantalla.rutas[0]}`;
+  const inicial = pasosDe(GRUPOS_PASOS[0])[0].rutas?.[0] ?? 'etapas';
+  return `${raizProyecto(idProyecto)}/${inicial}?grupo=${grupo.clave}`;
+}

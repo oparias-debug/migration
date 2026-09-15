@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { BandaRuta, type Tramo } from './BandaRuta';
-import { MODULOS } from './navegacion';
-import { ubicarPaso } from '../features/preinversion/pasos/pasosProyecto';
+import { ubicarEnMenu } from './navegacion';
 
 /** Armazón del diseño: menú lateral + barra superior + banda de ruta + contenido. */
 export function AppLayout() {
@@ -49,41 +48,11 @@ export function AppLayout() {
 }
 
 /**
- * Título de la barra superior y tramos de la banda de ruta, deducidos de la URL
- * y del mismo árbol que pinta el menú, para que nunca discrepen.
+ * Título de la barra superior y tramos de la banda de ruta. Salen del mismo
+ * resolvedor que marca el menú lateral (ubicarEnMenu), para que nunca discrepen.
  */
 function describir(pathname: string, t: (clave: string) => string): { titulo: string; tramos: Tramo[] } {
-  if (pathname === '/') {
-    return { titulo: t('menu.inicio'), tramos: [{ texto: 'menu.inicio' }] };
-  }
-
-  // Pasos de un proyecto: el título es el paso, no "Registro de Proyecto", y la
-  // banda de ruta cuelga del listado de proyectos.
-  const ubicacion = ubicarPaso(pathname);
-  if (ubicacion) {
-    return {
-      titulo: t(ubicacion.paso.texto),
-      tramos: [
-        { texto: 'menu.preinversion' },
-        { texto: 'menu.registroProyecto', ruta: '/preinversion/proyectos' },
-        { texto: ubicacion.paso.texto },
-      ],
-    };
-  }
-
-  for (const modulo of MODULOS) {
-    for (const sub of modulo.submenu ?? []) {
-      if (pathname !== sub.ruta && !pathname.startsWith(`${sub.ruta}/`)) continue;
-
-      const tramos: Tramo[] = [{ texto: modulo.texto }, { texto: sub.texto, ruta: sub.ruta }];
-      if (pathname === sub.ruta) {
-        return { titulo: t(sub.texto), tramos: [{ texto: modulo.texto }, { texto: sub.texto }] };
-      }
-      // Pantalla de detalle bajo el listado: alta o edición de un registro.
-      const hoja = pathname.endsWith('/nuevo') ? t('ruta.nuevo') : t('ruta.detalle');
-      return { titulo: t(sub.texto), tramos: [...tramos, { texto: hoja, literal: true }] };
-    }
-  }
-
-  return { titulo: t('menu.inicio'), tramos: [{ texto: 'menu.inicio' }] };
+  const ubicacion = ubicarEnMenu(pathname);
+  if (!ubicacion) return { titulo: t('menu.inicio'), tramos: [{ texto: 'menu.inicio' }] };
+  return { titulo: t(ubicacion.titulo), tramos: [...ubicacion.tramos] };
 }

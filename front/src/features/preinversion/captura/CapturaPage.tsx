@@ -7,6 +7,7 @@ import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { Pagination } from '../../../components/table/Pagination';
 import { formatEstado, formatIniciativa } from '../proyectos/proyectoLabels';
 import { formatNombreEtapa } from '../etapas/etapasLabels';
+import { entradaDeGrupo, type ClaveGrupo } from '../pasos/pasosProyecto';
 
 const TAMANIO_PAGINA = 20;
 
@@ -30,7 +31,12 @@ const INICIATIVAS = [IniciativaInversion.Programa, IniciativaInversion.Proyecto,
  * la discrepancia pendiente y aquí no se usan: el desplegable ofrece el enum
  * del contrato.
  */
-export function CapturaPage() {
+/**
+ * `proceso`: la opción del menú desde la que se llegó (1.2 a 1.5 del árbol).
+ * Decide adónde lleva el CUP: al primer capítulo de ese proceso que tenga
+ * pantalla. Sin proceso, como antes, a Registro de Etapas.
+ */
+export function CapturaPage({ proceso = 'creacion-ruta' }: { readonly proceso?: ClaveGrupo } = {}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -179,11 +185,10 @@ export function CapturaPage() {
               {proyectos.map((p) => (
                 <tr key={p.idProyecto}>
                   <td>
-                    {/* FA-01: el CUP abre "Registro de Etapas" (CU-PRE-3.5), que es la entrada a
-                          los pasos del proyecto; no la ficha del registro
-                          (CU-PRE-03-navegar-registro-etapas.feature). */}
+                    {/* FA-01: el CUP abre los pasos del proyecto, en el proceso desde el que
+                          se entró. Desde Creación ruta, Registro de Etapas (CU-PRE-3.5). */}
                     <button type="button" className="enlace-fila mono"
-                      onClick={() => navigate(`/preinversion/proyectos/${p.idProyecto}/etapas`)}>
+                      onClick={() => navigate(entradaDeGrupo(p.idProyecto, proceso))}>
                       {p.cup}
                     </button>
                   </td>

@@ -761,7 +761,27 @@ a.pasos-paso:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px
 .pasos-paso.sin-pantalla { border-style: dashed; color: var(--n500); background: #F7F8FA; cursor: default; }
 .pasos-numero {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%;
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
   background: #F1F2F4; color: var(--n700); font-size: 11px; font-weight: 700;
+  font-variant-numeric: tabular-nums; /* código del árbol: 1.3.2.6 */
 }
 .pasos-paso.actual .pasos-numero { background: #fff; color: var(--azul); }
+
+/* Subprocesos del árbol dentro de la barra de pasos. */
+.pasos-codigo { font-variant-numeric: tabular-nums; opacity: .75; }
+.pasos-seccion + .pasos-seccion { margin-top: 10px; }
+.pasos-seccion-titulo {
+  margin: 0 0 6px; font-size: 11px; font-weight: 700; color: var(--n500); letter-spacing: .3px;
+}
+
+/* ============================== CU-PRE-04 · PESTAÑAS DE IDENTIFICACIÓN ==
+   Los paneles no se desmontan: se ocultan con el atributo hidden. */
+.pestanas { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--n200); margin: 14px 0; }
+.pestana {
+  background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--n500); cursor: pointer;
+}
+.pestana:hover { color: var(--azul); }
+.pestana.activa { color: var(--azul); border-bottom-color: var(--azul); }
+.pestana:focus-visible { outline: 2px solid var(--azul); outline-offset: -2px; }
+.pestana.con-pendientes::after { content: '•'; color: var(--malo, #C0392B); margin-left: 6px; }

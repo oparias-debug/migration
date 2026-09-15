@@ -23,6 +23,62 @@ import {
 /** Los dos árboles se manejan igual; sólo cambian los métodos del cliente. */
 type Arbol = 'problemas' | 'objetivos';
 
+/**
+ * Pestañas de Identificación, por decisión del cliente (15/09/2026): los campos
+ * pueden ser muy largos. El Anexo A.1 del CU-PRE-04 los muestra en una sola
+ * pantalla; se agrupan como el propio CU los relaciona, cada árbol con su campo.
+ */
+const PESTANAS = ['antecedentes', 'problemas', 'objetivos'] as const;
+type Pestana = (typeof PESTANAS)[number];
+
+/** Qué pestañas tienen algún campo pendiente de completar (RNC-2). */
+function pestanasPendientes(
+  v: IdentificacionFormValues,
+  pendiente: (valor: string) => boolean,
+): Record<Pestana, boolean> {
+  return {
+    antecedentes: pendiente(v.antecedentes),
+    problemas: pendiente(v.problemaCentral),
+    objetivos: pendiente(v.objetivoGeneral) || (v.objetivosEspecificos ?? []).some((o) => pendiente(o.texto ?? '')),
+  };
+}
+
+/**
+ * Barra de pestañas. Marca las que tienen campos pendientes: si no, el borde rojo
+ * de RNC-2 quedaría escondido en una pestaña que el usuario no está viendo.
+ */
+function BarraPestanas({
+  activa,
+  pendientes,
+  onCambiar,
+}: {
+  readonly activa: Pestana;
+  readonly pendientes: Record<Pestana, boolean>;
+  readonly onCambiar: (pestana: Pestana) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="pestanas" role="tablist" aria-label={t('preinversion.identificacion.pestanas')}>
+      {PESTANAS.map((p) => (
+        <button
+          key={p}
+          type="button"
+          role="tab"
+          id={`pestana-${p}`}
+          aria-controls={`panel-${p}`}
+          aria-selected={p === activa}
+          className={`pestana${p === activa ? ' activa' : ''}${pendientes[p] ? ' con-pendientes' : ''}`}
+          onClick={() => onCambiar(p)}
+        >
+          {t(`preinversion.identificacion.pestana.${p}`)}
+          {/* El punto rojo lo pinta el CSS (.con-pendientes); esto es para lectores de pantalla. */}
+          {pendientes[p] && <span className="sr-only">{` (${t('preinversion.identificacion.pestanaPendiente')})`}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function identificacionToFormValues(datos: Identificacion): IdentificacionFormValues {
   return {
     antecedentes: datos.antecedentes ?? '',
@@ -64,6 +120,7 @@ export function IdentificacionPage() {
   });
   const [adjuntos, setAdjuntos] = useState<Partial<Record<Arbol, ArchivoAdjuntoResumen>>>({});
   const [subiendo, setSubiendo] = useState<Arbol | null>(null);
+  const [pestana, setPestana] = useState<Pestana>('antecedentes');
 
   const entradaProblemas = useRef<HTMLInputElement>(null);
   const entradaObjetivos = useRef<HTMLInputElement>(null);
@@ -273,79 +330,90 @@ export function IdentificacionPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <FormRow label={t('preinversion.identificacion.antecedentes')} controlId="id-antecedentes">
-            <textarea
-              rows={5}
-              maxLength={ANTECEDENTES_MAXLENGTH}
-              readOnly={!puedeEditar}
-              aria-invalid={pendiente(valores.antecedentes)}
-              className={pendiente(valores.antecedentes) ? 'malo' : undefined}
-              id="id-antecedentes"
-              {...register('antecedentes')}
-            />
-          </FormRow>
+          <BarraPestanas activa={pestana} pendientes={pestanasPendientes(valores, pendiente)} onCambiar={setPestana} />
 
-          <FormRow label={t('preinversion.identificacion.problemaCentral')} controlId="id-problema-central">
-            <textarea
-              rows={3}
-              maxLength={PROBLEMA_CENTRAL_MAXLENGTH}
-              readOnly={!puedeEditar}
-              aria-invalid={pendiente(valores.problemaCentral)}
-              className={pendiente(valores.problemaCentral) ? 'malo' : undefined}
-              id="id-problema-central"
-              {...register('problemaCentral')}
-            />
-          </FormRow>
+          {/* Las pestañas ocultan su panel en vez de desmontarlo: el formulario
+              conserva los valores y un solo Guardar envía las tres. */}
+          <div role="tabpanel" id="panel-antecedentes" hidden={pestana !== 'antecedentes'}>
+            <FormRow label={t('preinversion.identificacion.antecedentes')} controlId="id-antecedentes">
+              <textarea
+                rows={5}
+                maxLength={ANTECEDENTES_MAXLENGTH}
+                readOnly={!puedeEditar}
+                aria-invalid={pendiente(valores.antecedentes)}
+                className={pendiente(valores.antecedentes) ? 'malo' : undefined}
+                id="id-antecedentes"
+                {...register('antecedentes')}
+              />
+            </FormRow>
+          </div>
 
-          <FormRow label={t('preinversion.identificacion.objetivoGeneral')} controlId="id-objetivo-general">
-            <textarea
-              rows={3}
-              maxLength={OBJETIVO_GENERAL_MAXLENGTH}
-              readOnly={!puedeEditar}
-              aria-invalid={pendiente(valores.objetivoGeneral)}
-              className={pendiente(valores.objetivoGeneral) ? 'malo' : undefined}
-              id="id-objetivo-general"
-              {...register('objetivoGeneral')}
-            />
-          </FormRow>
+          <div role="tabpanel" id="panel-problemas" hidden={pestana !== 'problemas'}>
+            <FormRow label={t('preinversion.identificacion.problemaCentral')} controlId="id-problema-central">
+              <textarea
+                rows={3}
+                maxLength={PROBLEMA_CENTRAL_MAXLENGTH}
+                readOnly={!puedeEditar}
+                aria-invalid={pendiente(valores.problemaCentral)}
+                className={pendiente(valores.problemaCentral) ? 'malo' : undefined}
+                id="id-problema-central"
+                {...register('problemaCentral')}
+              />
+            </FormRow>
+            <div className="arboles">{bloqueArbol('problemas')}</div>
+          </div>
 
-          <fieldset className="objetivos-especificos">
-            <legend>{t('preinversion.identificacion.objetivosEspecificos')}</legend>
-            {fields.map((fila, indice) => (
-              <div className="objetivo-fila" key={fila.id}>
-                <input
-                  type="text"
-                  maxLength={OBJETIVO_ESPECIFICO_MAXLENGTH}
-                  readOnly={!puedeEditar}
-                  aria-label={t('preinversion.identificacion.objetivoNumero', { numero: indice + 1 })}
-                  aria-invalid={pendiente(valores.objetivosEspecificos?.[indice]?.texto ?? '')}
-                  className={pendiente(valores.objetivosEspecificos?.[indice]?.texto ?? '') ? 'malo' : undefined}
-                  {...register(`objetivosEspecificos.${indice}.texto` as const)}
-                />
-                {puedeEditar && (
-                  <button
-                    type="button"
-                    className="btn neutro"
-                    aria-label={t('preinversion.identificacion.eliminarObjetivo', { numero: indice + 1 })}
-                    onClick={() => remove(indice)}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-            {puedeEditar && (
-              <button
-                type="button"
-                className="btn secundario"
-                onClick={() => append({ ...OBJETIVO_ESPECIFICO_DEFAULT })}
-              >
-                {t('preinversion.identificacion.agregarObjetivo')}
-              </button>
-            )}
-          </fieldset>
+          <div role="tabpanel" id="panel-objetivos" hidden={pestana !== 'objetivos'}>
+            <FormRow label={t('preinversion.identificacion.objetivoGeneral')} controlId="id-objetivo-general">
+              <textarea
+                rows={3}
+                maxLength={OBJETIVO_GENERAL_MAXLENGTH}
+                readOnly={!puedeEditar}
+                aria-invalid={pendiente(valores.objetivoGeneral)}
+                className={pendiente(valores.objetivoGeneral) ? 'malo' : undefined}
+                id="id-objetivo-general"
+                {...register('objetivoGeneral')}
+              />
+            </FormRow>
 
-          <div className="arboles">{bloqueArbol('problemas')}{bloqueArbol('objetivos')}</div>
+            <fieldset className="objetivos-especificos">
+              <legend>{t('preinversion.identificacion.objetivosEspecificos')}</legend>
+              {fields.map((fila, indice) => (
+                <div className="objetivo-fila" key={fila.id}>
+                  <input
+                    type="text"
+                    maxLength={OBJETIVO_ESPECIFICO_MAXLENGTH}
+                    readOnly={!puedeEditar}
+                    aria-label={t('preinversion.identificacion.objetivoNumero', { numero: indice + 1 })}
+                    aria-invalid={pendiente(valores.objetivosEspecificos?.[indice]?.texto ?? '')}
+                    className={pendiente(valores.objetivosEspecificos?.[indice]?.texto ?? '') ? 'malo' : undefined}
+                    {...register(`objetivosEspecificos.${indice}.texto` as const)}
+                  />
+                  {puedeEditar && (
+                    <button
+                      type="button"
+                      className="btn neutro"
+                      aria-label={t('preinversion.identificacion.eliminarObjetivo', { numero: indice + 1 })}
+                      onClick={() => remove(indice)}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              {puedeEditar && (
+                <button
+                  type="button"
+                  className="btn secundario"
+                  onClick={() => append({ ...OBJETIVO_ESPECIFICO_DEFAULT })}
+                >
+                  {t('preinversion.identificacion.agregarObjetivo')}
+                </button>
+              )}
+            </fieldset>
+
+            <div className="arboles">{bloqueArbol('objetivos')}</div>
+          </div>
 
           <div className="acciones-form">
             <button

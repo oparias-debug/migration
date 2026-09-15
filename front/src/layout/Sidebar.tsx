@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { IconoMascara } from '../components/Icono';
-import { MODULOS, type Modulo, type SubModulo } from './navegacion';
+import { MODULOS, destinoDe, ubicarEnMenu, type Modulo, type SubModulo } from './navegacion';
 
 /**
  * Menú lateral, según el diseño aprobado (siip-INICIO-NUEVA-GRIS /
@@ -37,15 +37,12 @@ export function Sidebar({
   const visible = (sub: SubModulo) => !sub.rolesRequeridos || sub.rolesRequeridos.some(hasRole);
   const submenuDe = (m: Modulo) => m.submenu?.filter(visible) ?? [];
 
-  // Qué está seleccionado se deduce de la URL, no de un estado paralelo.
-  const subActivo =
-    MODULOS.flatMap(submenuDe).find(
-      (s) => pathname === s.ruta || pathname.startsWith(`${s.ruta}/`),
-    ) ?? null;
-  const moduloConSub = subActivo
-    ? (MODULOS.find((m) => submenuDe(m).some((s) => s.clave === subActivo.clave)) ?? null)
-    : null;
-  const claveActiva = moduloConSub?.clave ?? (pathname === '/' ? 'inicio' : null);
+  // Qué está seleccionado se deduce de la URL, con el mismo resolvedor que usa
+  // la barra superior (ubicarEnMenu), para que menú y título nunca discrepen.
+  const ubicacion = ubicarEnMenu(pathname);
+  const subActivo = ubicacion?.sub ?? null;
+  const moduloConSub = subActivo ? (ubicacion?.modulo ?? null) : null;
+  const claveActiva = ubicacion?.modulo.clave ?? null;
 
   // El despliegue sí es estado local: se puede plegar sin salir de la pantalla.
   const [desplegado, setDesplegado] = useState<string | null>(moduloConSub?.clave ?? null);
@@ -138,7 +135,7 @@ export function Sidebar({
                       tabIndex={abiertoAqui ? 0 : -1}
                       className={`sni${subActivo?.clave === sub.clave ? ' activo' : ''}`}
                       aria-current={subActivo?.clave === sub.clave ? 'page' : undefined}
-                      onClick={() => ir(sub.ruta)}
+                      onClick={() => ir(destinoDe(sub, hasRole))}
                     >
                       {t(sub.texto)}
                     </button>

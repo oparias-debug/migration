@@ -138,3 +138,30 @@ describe('CapturaPage · navegación desde el CUP', () => {
     expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/etapas');
   });
 });
+
+// Procesos 1.2 a 1.5 del árbol del sistema: el CUP lleva a los pasos del proceso.
+describe('CapturaPage · entrada a cada proceso', () => {
+  it('desde Formulación y evaluación, el CUP abre Identificación', async () => {
+    navigate.mockReset();
+    listarProyectosCaptura.mockResolvedValue(RESPUESTA);
+    render(
+      <MemoryRouter>
+        <CapturaPage proceso="formulacion" />
+      </MemoryRouter>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: '10001' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/identificacion');
+  });
+
+  it('desde un proceso sin pantallas todavía, abre la barra en ese proceso', async () => {
+    navigate.mockReset();
+    listarProyectosCaptura.mockResolvedValue(RESPUESTA);
+    render(
+      <MemoryRouter>
+        <CapturaPage proceso="gestion" />
+      </MemoryRouter>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: '10001' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/etapas?grupo=gestion');
+  });
+});

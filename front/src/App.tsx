@@ -22,23 +22,22 @@ import { PresupuestoPage } from './features/preinversion/presupuesto/Presupuesto
 import { CrearCatalogoPage } from './features/administracion/catalogos/CrearCatalogoPage';
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
 
-// Módulos del sidebar aún no implementados en back — se muestran como
-// "🚧 Página en Construcción". catalogosGenerales/tablasRangos estaban
-// implementados contra el back viejo; se retiraron cuando back reemplazó ese
-// layer de controllers/servicios por el nuevo modelo de dominio
-// (administracion/convenios/ejecucion/oym/preinversion/programacion), que
-// todavía no expone endpoints REST.
+// Opciones del menú lateral (layout/navegacion.ts) que todavía no tienen
+// pantalla: se muestran como "🚧 Página en Construcción".
 const PLACEHOLDER_PATHS = [
-  'tablas-rangos',
-  'usuarios',
-  'programacion',
-  'seguimiento',
-  'ingreso',
-  'pripme',
-  'financiero',
-  'geografico',
-  'fisico',
-  'procesos',
+  // Opciones del menú del árbol del sistema que todavía no tienen pantalla.
+  'banco-proyectos',
+  'programacion/priorizacion',
+  'programacion/pap',
+  'programacion/pripme',
+  'programacion/paip',
+  'ejecucion/actualizaciones',
+  'seguimiento/proyectos',
+  'seguimiento/pap',
+  'seguimiento/paip',
+  'convenios/gestion',
+  'reportes',
+  'administracion/seguridad',
 ];
 
 export function App() {
@@ -60,6 +59,13 @@ export function App() {
             <Route path="/catalogos-generales" element={<CrearCatalogoPage />} />
             <Route path="/preinversion/bandeja" element={<BandejaPage />} />
             <Route path="/preinversion/captura" element={<CapturaPage />} />
+            {/* Procesos 1.2 a 1.5 del árbol: eligen un proyecto con CUP y entran a sus
+                pasos. `key` remonta Captura al cambiar de proceso, para no arrastrar
+                filtros ni página de uno a otro. */}
+            <Route path="/preinversion/creacion-ruta" element={<CapturaPage key="creacion-ruta" proceso="creacion-ruta" />} />
+            <Route path="/preinversion/formulacion" element={<CapturaPage key="formulacion" proceso="formulacion" />} />
+            <Route path="/preinversion/programacion-proyecto" element={<CapturaPage key="programacion" proceso="programacion" />} />
+            <Route path="/preinversion/gestion-proyecto" element={<CapturaPage key="gestion" proceso="gestion" />} />
             <Route path="/preinversion/proyectos" element={<ProyectosPage />} />
             <Route path="/preinversion/bandeja" element={<BandejaPreinversionPage key="activas" />} />
             <Route path="/preinversion/bandeja/archivadas" element={<BandejaPreinversionPage key="archivadas" archivadas />} />

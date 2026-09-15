@@ -57,6 +57,10 @@ const montar = () =>
     </MemoryRouter>,
   );
 
+/** Las pestañas ocultan su panel: lo que no está a la vista no es accesible por rol. */
+const abrirPestana = (nombre: 'Antecedentes' | 'Problemas' | 'Objetivos') =>
+  fireEvent.click(screen.getByRole('tab', { name: new RegExp(`^${nombre}`) }));
+
 describe('IdentificacionPage · CU-PRE-04', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -128,6 +132,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
     await screen.findByDisplayValue('MINSAL');
     expect(screen.getAllByLabelText(/^Objetivo específico/)).toHaveLength(1);
 
+    abrirPestana('Objetivos');
     fireEvent.click(screen.getByRole('button', { name: 'Agregar objetivo específico' }));
     await waitFor(() => expect(screen.getAllByLabelText(/^Objetivo específico/)).toHaveLength(2));
 
@@ -140,6 +145,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
     montar();
     await screen.findByDisplayValue('MINSAL');
 
+    abrirPestana('Objetivos');
     fireEvent.change(screen.getByLabelText('Objetivo específico 1'), { target: { value: 'Objetivo uno' } });
     fireEvent.click(screen.getByRole('button', { name: 'Agregar objetivo específico' }));
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -160,6 +166,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
       });
       montar();
       await screen.findByDisplayValue('MINSAL');
+      abrirPestana('Problemas');
 
       const entrada = screen.getByTestId('archivo-problemas');
       const archivo = new File(['%PDF-1.4'], 'arbol.pdf', { type: 'application/pdf' });
@@ -177,6 +184,8 @@ describe('IdentificacionPage · CU-PRE-04', () => {
         },
       });
       montar();
+      await screen.findByDisplayValue('MINSAL');
+      abrirPestana('Problemas');
       expect(await screen.findByRole('button', { name: 'previo.pdf' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Reemplazar' })).toBeInTheDocument();
     });
@@ -190,6 +199,8 @@ describe('IdentificacionPage · CU-PRE-04', () => {
       });
       eliminarArbolProblemas.mockResolvedValue({});
       montar();
+      await screen.findByDisplayValue('MINSAL');
+      abrirPestana('Problemas');
       await screen.findByRole('button', { name: 'previo.pdf' });
 
       fireEvent.click(screen.getByRole('button', { name: 'Eliminar' }));
@@ -207,6 +218,8 @@ describe('IdentificacionPage · CU-PRE-04', () => {
       });
       swalFire.mockResolvedValue({ isConfirmed: false });
       montar();
+      await screen.findByDisplayValue('MINSAL');
+      abrirPestana('Problemas');
       await screen.findByRole('button', { name: 'previo.pdf' });
 
       fireEvent.click(screen.getByRole('button', { name: 'Eliminar' }));
@@ -228,6 +241,8 @@ describe('IdentificacionPage · CU-PRE-04', () => {
       const antecedentes = await screen.findByLabelText('Antecedentes');
       expect(antecedentes).toHaveAttribute('readonly');
       expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
+      abrirPestana('Objetivos');
+      expect(screen.getByLabelText('Objetivo específico 1')).toHaveAttribute('readonly');
       expect(screen.queryByRole('button', { name: 'Agregar objetivo específico' })).not.toBeInTheDocument();
     });
 
@@ -240,8 +255,75 @@ describe('IdentificacionPage · CU-PRE-04', () => {
         },
       });
       montar();
+      await screen.findByDisplayValue('MINSAL');
+      abrirPestana('Problemas');
       expect(await screen.findByRole('button', { name: 'previo.pdf' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument();
+    });
+  });
+
+  // Decisión del cliente (15/09/2026): cada bloque en su pestaña, por lo largo de los campos.
+  describe('pestañas', () => {
+    it('abre en Antecedentes y cambia de pestaña sin perder lo escrito', async () => {
+      montar();
+      await screen.findByDisplayValue('MINSAL');
+      expect(screen.getByRole('tab', { name: 'Antecedentes' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('textbox', { name: 'Antecedentes' })).toBeVisible();
+      expect(screen.queryByRole('textbox', { name: 'Problema central' })).not.toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText('Antecedentes'), { target: { value: 'Escrito antes' } });
+      abrirPestana('Problemas');
+      expect(screen.getByRole('tab', { name: 'Problemas' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('textbox', { name: 'Problema central' })).toBeInTheDocument();
+      expect(screen.getByTestId('archivo-problemas')).toBeInTheDocument();
+
+      abrirPestana('Antecedentes');
+      expect(screen.getByRole('textbox', { name: 'Antecedentes' })).toHaveValue('Escrito antes');
+    });
+
+    it('el árbol de objetivos va con los objetivos', async () => {
+      montar();
+      await screen.findByDisplayValue('MINSAL');
+      abrirPestana('Objetivos');
+      expect(screen.getByRole('textbox', { name: 'Objetivo general' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Objetivo específico 1' })).toBeInTheDocument();
+      expect(screen.getByRole('tabpanel')).toContainElement(screen.getByTestId('archivo-objetivos'));
+    });
+
+    it('un solo Guardar envía lo de las tres pestañas', async () => {
+      guardarIdentificacion.mockResolvedValue({ data: IDENTIFICACION_VACIA });
+      montar();
+      await screen.findByDisplayValue('MINSAL');
+      fireEvent.change(screen.getByLabelText('Antecedentes'), { target: { value: 'A' } });
+      abrirPestana('Problemas');
+      fireEvent.change(screen.getByLabelText('Problema central'), { target: { value: 'P' } });
+      abrirPestana('Objetivos');
+      fireEvent.change(screen.getByLabelText('Objetivo general'), { target: { value: 'O' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+      await waitFor(() =>
+        expect(guardarIdentificacion).toHaveBeenCalledWith(
+          expect.objectContaining({
+            identificacionRequest: expect.objectContaining({ antecedentes: 'A', problemaCentral: 'P', objetivoGeneral: 'O' }),
+          }),
+        ),
+      );
+    });
+
+    // RNC-2 con pestañas: el rojo de un campo oculto no se vería.
+    it('al guardar incompleto, marca las pestañas con campos pendientes', async () => {
+      // El formulario se repone con lo que devuelve el servidor tras guardar.
+      guardarIdentificacion.mockResolvedValue({ data: { ...IDENTIFICACION_VACIA, antecedentes: 'Completo' } });
+      montar();
+      await screen.findByDisplayValue('MINSAL');
+      fireEvent.change(screen.getByLabelText('Antecedentes'), { target: { value: 'Completo' } });
+      expect(screen.getByRole('tab', { name: 'Problemas' })).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+      expect(await screen.findByRole('tab', { name: /^Problemas\s*\(con campos pendientes\)$/ })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /^Objetivos\s*\(con campos pendientes\)$/ })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Antecedentes' })).toBeInTheDocument();
     });
   });
 

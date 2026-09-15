@@ -1,36 +1,82 @@
 import { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { preinversionApi } from '../../../api/preinversionApi';
-import { GRUPOS_PASOS, NUMERO_DE_PASO, rutaDePaso, ubicarPaso } from './pasosProyecto';
+import { GRUPOS_PASOS, esClaveGrupo, rutaDePaso, ubicarPaso, type PasoProyecto } from './pasosProyecto';
+
+/**
+ * Un capítulo en la barra: enlace si tiene pantalla, marca sin enlace si no.
+ * Muestra el código del árbol del sistema y, como ayuda, sus pestañas.
+ */
+function PasoEnBarra({
+  paso,
+  destino,
+  esActual,
+}: {
+  readonly paso: PasoProyecto;
+  readonly destino: string | null;
+  readonly esActual: boolean;
+}) {
+  const { t } = useTranslation();
+  const lista = paso.pestanas?.map((p) => t(p)).join(', ');
+  const ayuda = lista ? t('pasos.pestanas', { lista }) : undefined;
+  const contenido = (
+    <>
+      <span className="pasos-numero" aria-hidden="true">
+        {paso.codigo}
+      </span>
+      {t(paso.texto)}
+    </>
+  );
+  if (destino) {
+    return (
+      <Link
+        to={destino}
+        className={`pasos-paso${esActual ? ' actual' : ''}`}
+        aria-current={esActual ? 'step' : undefined}
+        title={ayuda}
+      >
+        {contenido}
+      </Link>
+    );
+  }
+  const sinPantalla = t('pasos.sinPantalla');
+  return (
+    <span className="pasos-paso sin-pantalla" title={ayuda ? `${sinPantalla} · ${ayuda}` : sinPantalla}>
+      {contenido}
+      <span className="sr-only"> ({sinPantalla})</span>
+    </span>
+  );
+}
 
 /**
  * Barra de pasos de un proyecto, sobre cada pantalla que cuelga de él.
  *
- * Existe porque, sin ella, varias pantallas terminadas no se alcanzaban
- * haciendo clic: Identificación, Alternativas y Presupuesto sólo se abrían
- * escribiendo la URL, y el recorrido se cortaba en Etapas.
+ * Sigue el árbol del sistema: arriba los procesos de Preinversión (1.2 a 1.5),
+ * debajo sus subprocesos y capítulos con su código. Es una ruta de diseño sin
+ * path: envuelve las rutas de los pasos y pinta la pantalla en el <Outlet />, así
+ * que el nombre del proyecto se pide una sola vez al moverse entre pasos.
  *
- * Es una ruta de diseño sin path: envuelve las rutas de los pasos y pinta la
- * pantalla del paso en el <Outlet />. Las pantallas no se tocan, y como el
- * layout sigue montado al pasar de un paso a otro, el nombre del proyecto se
- * pide una sola vez.
- *
- * Los grupos son botones que sólo cambian qué pasos se ven, sin navegar; los
- * pasos son enlaces, con aria-current="step" en el actual.
+ * Los procesos son botones que sólo cambian qué capítulos se ven, sin navegar;
+ * los capítulos son enlaces, con aria-current="step" en el actual.
  */
 export function PasosProyectoLayout() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const [parametros] = useSearchParams();
   const ubicacion = ubicarPaso(pathname);
   const idProyecto = ubicacion?.idProyecto;
   const grupoActual = ubicacion?.grupo.clave;
+  // ?grupo= lo pone la opción de menú de un proceso que todavía no tiene
+  // pantallas: la barra se abre en ese proceso aunque la pantalla sea de otro.
+  const pedido = parametros.get('grupo');
+  const grupoPedido = esClaveGrupo(pedido) ? pedido : null;
 
-  const [grupoVisible, setGrupoVisible] = useState(grupoActual ?? GRUPOS_PASOS[0].clave);
-  // Al llegar a un paso de otro grupo, la barra se va a ese grupo.
+  const [grupoVisible, setGrupoVisible] = useState(grupoPedido ?? grupoActual ?? GRUPOS_PASOS[0].clave);
   useEffect(() => {
-    if (grupoActual) setGrupoVisible(grupoActual);
-  }, [grupoActual]);
+    const destino = grupoPedido ?? grupoActual;
+    if (destino) setGrupoVisible(destino);
+  }, [grupoActual, grupoPedido]);
 
   const [cabecera, setCabecera] = useState<{ nombre: string; cup: string | null } | null>(null);
   useEffect(() => {
@@ -73,43 +119,32 @@ export function PasosProyectoLayout() {
               aria-pressed={g.clave === grupo.clave}
               onClick={() => setGrupoVisible(g.clave)}
             >
-              {t(g.texto)}
+              <span className="pasos-codigo">{g.codigo}</span> {t(g.texto)}
             </button>
           ))}
         </div>
 
         <nav className="pasos-lista" aria-label={t('pasos.titulo')}>
-          <ol>
-            {grupo.pasos.map((paso) => {
-              const destino = rutaDePaso(ubicacion.idProyecto, paso);
-              const esActual = paso.clave === ubicacion.paso.clave;
-              const numero = (
-                <span className="pasos-numero" aria-hidden="true">
-                  {NUMERO_DE_PASO.get(paso.clave)}
-                </span>
-              );
-              return (
-                <li key={paso.clave}>
-                  {destino ? (
-                    <Link
-                      to={destino}
-                      className={`pasos-paso${esActual ? ' actual' : ''}`}
-                      aria-current={esActual ? 'step' : undefined}
-                    >
-                      {numero}
-                      {t(paso.texto)}
-                    </Link>
-                  ) : (
-                    <span className="pasos-paso sin-pantalla" title={t('pasos.sinPantalla')}>
-                      {numero}
-                      {t(paso.texto)}
-                      <span className="sr-only"> ({t('pasos.sinPantalla')})</span>
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
+          {grupo.secciones.map((seccion) => (
+            <div className="pasos-seccion" key={seccion.codigo ?? grupo.clave}>
+              {seccion.texto && (
+                <p className="pasos-seccion-titulo">
+                  {seccion.codigo} {t(seccion.texto)}
+                </p>
+              )}
+              <ol>
+                {seccion.pasos.map((paso) => (
+                  <li key={paso.clave}>
+                    <PasoEnBarra
+                      paso={paso}
+                      destino={rutaDePaso(ubicacion.idProyecto, paso)}
+                      esActual={paso.clave === ubicacion.paso.clave}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
         </nav>
       </div>
 

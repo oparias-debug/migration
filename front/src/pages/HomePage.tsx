@@ -13,9 +13,9 @@ import { useConteosProyecto } from './useConteosProyecto';
  */
 const MODULOS_TARJETA = [
   { clave: 'preinversion', icono: 'mod-preinversion', texto: 'menu.preinversion', desc: 'mod.preinversion.desc', color: 'var(--preinv-txt)', ruta: '/preinversion/proyectos' },
-  { clave: 'programacion', icono: 'mod-programacion', texto: 'menu.programacion', desc: 'mod.programacion.desc', color: 'var(--progra)', ruta: '/programacion' },
-  { clave: 'ejecucion', icono: 'mod-ejecucion', texto: 'menu.ejecucion', desc: 'mod.ejecucion.desc', color: 'var(--ejec-txt)', ruta: '/procesos' },
-  { clave: 'seguimiento', icono: 'mod-seguimiento', texto: 'menu.seguimiento', desc: 'mod.seguimiento.desc', color: 'var(--segui)', ruta: '/seguimiento' },
+  { clave: 'programacion', icono: 'mod-programacion', texto: 'menu.programacion', desc: 'mod.programacion.desc', color: 'var(--progra)', ruta: '/programacion/priorizacion' },
+  { clave: 'ejecucion', icono: 'mod-ejecucion', texto: 'menu.ejecucion', desc: 'mod.ejecucion.desc', color: 'var(--ejec-txt)', ruta: '/ejecucion/actualizaciones' },
+  { clave: 'seguimiento', icono: 'mod-seguimiento', texto: 'menu.seguimiento', desc: 'mod.seguimiento.desc', color: 'var(--segui)', ruta: '/seguimiento/proyectos' },
 ] as const;
 
 // Los tres estados de CU-PRE-01 sobre los que el Técnico URP tiene que actuar.
