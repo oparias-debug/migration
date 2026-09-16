@@ -307,15 +307,15 @@ h2.seccion { font-family: var(--tipo-titulo); font-size: 17px; color: var(--menu
   background: #fff; border: 1px solid var(--n200); border-radius: var(--r2);
   padding: 22px 18px; text-align: center; cursor: pointer; box-shadow: var(--sombra);
   -webkit-user-select: none; user-select: none; display: block; width: 100%;
+  /* En el diseño la flecha va abajo a la derecha y siempre en azul, no en el
+   color del módulo. */
+  position: relative; padding-bottom: 34px;
 }
 .modulo:hover { border-color: var(--azul); }
 /* 119 px en el diseño del cliente (siip-INICIO-NUEVA-GRIS). */
 .modulo img { width: 113px; height: 106px; object-fit: contain; display: block; margin: 0 auto 14px; }
 .modulo h3 { font-size: 15.5px; margin: 0 0 5px; }
 .modulo p { font-size: 12.5px; color: var(--n500); margin: 0; }
-/* En el diseño la flecha va abajo a la derecha y siempre en azul, no en el
-   color del módulo. */
-.modulo { position: relative; padding-bottom: 34px; }
 .modulo .flecha {
   position: absolute; right: 18px; bottom: 12px;
   font-size: 16px; color: var(--azul); margin: 0;
@@ -437,8 +437,6 @@ tbody tr:hover td { background: var(--azul-suave); }
   .hero { flex-direction: column; align-items: flex-start; }
   .hero .marca { margin-right: 0; }
   .hero::after { display: none; }
-}
-@media (min-width: 1001px) {
 }
 
 /* ======================================================= INICIO DE SESIÓN ==

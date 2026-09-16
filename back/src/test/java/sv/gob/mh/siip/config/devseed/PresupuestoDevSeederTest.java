@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,10 +19,12 @@ import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
 import sv.gob.mh.siip.model.common.repository.InstitucionRepository;
 import sv.gob.mh.siip.model.common.repository.UnidadEjecutoraRepository;
+import sv.gob.mh.siip.model.preinversion.domain.Componente;
 import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
 import sv.gob.mh.siip.model.preinversion.domain.FichaEmergencia;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
+import sv.gob.mh.siip.model.preinversion.repository.ComponenteRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.FichaEmergenciaRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
@@ -32,6 +35,7 @@ class PresupuestoDevSeederTest {
 
     private ProyectoRepository proyectoRepository;
     private FichaEmergenciaRepository fichaEmergenciaRepository;
+    private ComponenteRepository componenteRepository;
     private InstitucionRepository institucionRepository;
     private UnidadEjecutoraRepository unidadEjecutoraRepository;
     private SectorActividadRepository sectorActividadRepository;
@@ -42,12 +46,13 @@ class PresupuestoDevSeederTest {
     void setUp() {
         proyectoRepository = mock(ProyectoRepository.class);
         fichaEmergenciaRepository = mock(FichaEmergenciaRepository.class);
+        componenteRepository = mock(ComponenteRepository.class);
         institucionRepository = mock(InstitucionRepository.class);
         unidadEjecutoraRepository = mock(UnidadEjecutoraRepository.class);
         sectorActividadRepository = mock(SectorActividadRepository.class);
         ejeTematicoRepository = mock(EjeTematicoRepository.class);
-        seeder = new PresupuestoDevSeeder(proyectoRepository, fichaEmergenciaRepository, institucionRepository,
-                unidadEjecutoraRepository, sectorActividadRepository, ejeTematicoRepository);
+        seeder = new PresupuestoDevSeeder(proyectoRepository, fichaEmergenciaRepository, componenteRepository,
+                institucionRepository, unidadEjecutoraRepository, sectorActividadRepository, ejeTematicoRepository);
 
         Institucion institucion = Institucion.builder().id(1L).codigo("MH-DGICP").build();
         UnidadEjecutora unidadEjecutora = UnidadEjecutora.builder().id(2L).codigo("URP-01").build();
@@ -80,6 +85,8 @@ class PresupuestoDevSeederTest {
                 && p.getEstado() == EstadoProyecto.CUP_ASIGNADO && "10000".equals(p.getCup())));
         verify(fichaEmergenciaRepository).save(argThat((FichaEmergencia f) -> f.getProyecto() != null
                 && f.getProyecto().getId().equals(99L) && !f.getProductos().isEmpty()));
+        verify(componenteRepository, times(2)).save(argThat((Componente c) -> c.getProyecto() != null
+                && c.getProyecto().getId().equals(99L) && c.getCodigoProducto() != null));
     }
 
     @Test
@@ -91,5 +98,6 @@ class PresupuestoDevSeederTest {
 
         verify(proyectoRepository, never()).save(any());
         verify(fichaEmergenciaRepository, never()).save(any());
+        verify(componenteRepository, never()).save(any());
     }
 }

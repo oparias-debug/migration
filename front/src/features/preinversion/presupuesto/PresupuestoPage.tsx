@@ -84,7 +84,7 @@ function AvisoSeccion({ texto, motivo }: { readonly texto: string; readonly moti
  * Los productos vienen de CU-PRE-11 y son de sólo lectura aquí (RN16): no se
  * pueden añadir ni eliminar, sólo colgarles macroactividades.
  *
- * Casi todo el cálculo es del servidor y llega resuelto: los totales por
+ * El cálculo es del servidor y llega resuelto: los totales por
  * período (RN04, RN07), el redondeo de la inversión estimada (RN12) y el
  * resumen por componente (RN09). La pantalla no recalcula nada de eso; sólo lo
  * muestra. Los precios ajustados llegan en `null` cuando el actor no es interno

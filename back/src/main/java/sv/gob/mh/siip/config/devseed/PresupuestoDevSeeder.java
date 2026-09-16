@@ -12,12 +12,14 @@ import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
 import sv.gob.mh.siip.model.common.repository.InstitucionRepository;
 import sv.gob.mh.siip.model.common.repository.UnidadEjecutoraRepository;
+import sv.gob.mh.siip.model.preinversion.domain.Componente;
 import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
 import sv.gob.mh.siip.model.preinversion.domain.FichaEmergencia;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.FuenteFinanciamiento;
 import sv.gob.mh.siip.model.preinversion.enums.IniciativaInversion;
+import sv.gob.mh.siip.model.preinversion.repository.ComponenteRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.FichaEmergenciaRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
@@ -25,11 +27,12 @@ import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
- * Proyecto de emergencia con Ficha de emergencia (CU-PRE-3.5, Anexo A.4) ya registrada, para
- * probar CU-PRE-17 (Presupuesto de Inversión) sin registrar la ficha a mano: sin ella,
- * {@code PresupuestoInversionService.fuentes/guardarFuentes} responden 404 ("No existe ficha de
- * proyecto") para cualquier proyecto — {@code FichaEmergencia} es 1:1 con {@code Proyecto} y solo
- * aplica a proyectos con {@code esProyectoEmergencia = true} (ver javadoc de {@code FichaEmergencia}).
+ * Proyecto de emergencia con Ficha de emergencia (CU-PRE-3.5, Anexo A.4) ya registrada, y con dos
+ * filas de Descripción Técnica (CU-PRE-11, {@link Componente}) para tener "productos" con los que
+ * probar CU-PRE-17 (Presupuesto de Inversión) sin registrar ambas pantallas a mano.
+ * {@code fuentesFinanciamiento}/{@code fuenteRecursos} de {@code FichaEmergencia} son datos propios
+ * de CU-PRE-3.5: CU-PRE-17 tiene sus propios campos homónimos en {@code PresupuestoProyecto}, que
+ * cualquier proyecto puede completar sin necesitar una Ficha de emergencia.
  */
 @Component
 @Profile("dev")
@@ -41,17 +44,19 @@ public class PresupuestoDevSeeder implements DevSeeder {
 
     private final ProyectoRepository proyectoRepository;
     private final FichaEmergenciaRepository fichaEmergenciaRepository;
+    private final ComponenteRepository componenteRepository;
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
 
     public PresupuestoDevSeeder(ProyectoRepository proyectoRepository,
-            FichaEmergenciaRepository fichaEmergenciaRepository, InstitucionRepository institucionRepository,
-            UnidadEjecutoraRepository unidadEjecutoraRepository, SectorActividadRepository sectorActividadRepository,
-            EjeTematicoRepository ejeTematicoRepository) {
+            FichaEmergenciaRepository fichaEmergenciaRepository, ComponenteRepository componenteRepository,
+            InstitucionRepository institucionRepository, UnidadEjecutoraRepository unidadEjecutoraRepository,
+            SectorActividadRepository sectorActividadRepository, EjeTematicoRepository ejeTematicoRepository) {
         this.proyectoRepository = proyectoRepository;
         this.fichaEmergenciaRepository = fichaEmergenciaRepository;
+        this.componenteRepository = componenteRepository;
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.sectorActividadRepository = sectorActividadRepository;
@@ -105,6 +110,26 @@ public class PresupuestoDevSeeder implements DevSeeder {
                 .inversionEstimada(250000.0)
                 .fuentesFinanciamiento(List.of(FuenteFinanciamiento.FONDO_GENERAL))
                 .fuenteRecursos("Fondo General de la Nación (prueba)")
+                .build());
+
+        // Filas de Descripción Técnica (CU-PRE-11): son las que alimentan "productos" en
+        // GET /proyectos/{id}/presupuesto (RN16, solo lectura ahí) — mismos códigos que
+        // FichaEmergencia.productos, arriba, solo por consistencia entre ambos seeds de prueba.
+        componenteRepository.save(Componente.builder()
+                .proyecto(proyecto)
+                .nombre("TC-EQUIPAMIENTO")
+                .descripcion("Equipamiento de prueba (BDD/dev).")
+                .codigoProducto("P-01")
+                .cantidad(1.0)
+                .unidadMedida("Unidad")
+                .build());
+        componenteRepository.save(Componente.builder()
+                .proyecto(proyecto)
+                .nombre("TC-EQUIPAMIENTO")
+                .descripcion("Equipamiento de prueba (BDD/dev).")
+                .codigoProducto("P-02")
+                .cantidad(1.0)
+                .unidadMedida("Unidad")
                 .build());
     }
 

@@ -22,25 +22,21 @@ import { App } from './App';
  * Si el refresco falla —refresh vencido o revocado— se limpia el estado y la
  * aplicación arranca sin sesión, que es lo correcto.
  */
-async function arrancar() {
-  const { getAuthState, setAuthState, clearAuthState, stateFromTokens } = await import('./auth/tokenStore');
-  const { accessToken, refreshToken } = getAuthState();
+const { getAuthState, setAuthState, clearAuthState, stateFromTokens } = await import('./auth/tokenStore');
+const { accessToken, refreshToken } = getAuthState();
 
-  if (!accessToken && refreshToken) {
-    try {
-      const { authApi } = await import('./api/authApi');
-      const tokens = await authApi.refresh(refreshToken);
-      setAuthState(stateFromTokens(tokens.access_token, tokens.refresh_token));
-    } catch {
-      clearAuthState();
-    }
+if (!accessToken && refreshToken) {
+  try {
+    const { authApi } = await import('./api/authApi');
+    const tokens = await authApi.refresh(refreshToken);
+    setAuthState(stateFromTokens(tokens.access_token, tokens.refresh_token));
+  } catch {
+    clearAuthState();
   }
-
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
 }
 
-void arrancar();
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);

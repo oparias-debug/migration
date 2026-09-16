@@ -7,6 +7,11 @@ const proxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8080'
 
 export default defineConfig({
   plugins: [react()],
+  // Coincide con el "target": "ES2022" de tsconfig.json; sin esto, esbuild usa un
+  // target por defecto anterior a la introducción de top-level await en main.tsx.
+  build: {
+    target: 'es2022',
+  },
   server: {
     port: 5173,
     proxy: {

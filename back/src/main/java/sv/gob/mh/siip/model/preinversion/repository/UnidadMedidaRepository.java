@@ -12,4 +12,10 @@ public interface UnidadMedidaRepository extends JpaRepository<UnidadMedida, Long
     List<UnidadMedida> findAllByOrderByCategoriaAscNombreAsc();
 
     Optional<UnidadMedida> findByCategoriaAndNombre(String categoria, String nombre);
+
+    /**
+     * Resuelve por nombre sin categoría: CU-PRE-11 referencia la unidad de medida como un código
+     * plano (sin desambiguar por categoría, a diferencia del catálogo administrado de CU-ADM-02).
+     */
+    Optional<UnidadMedida> findFirstByNombre(String nombre);
 }

@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
-import sv.gob.mh.siip.model.preinversion.domain.FichaEmergencia;
+import sv.gob.mh.siip.model.preinversion.domain.Componente;
 import sv.gob.mh.siip.model.preinversion.domain.MacroactividadPresupuesto;
 import sv.gob.mh.siip.model.preinversion.domain.PresupuestoProyecto;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
@@ -32,7 +32,7 @@ import sv.gob.mh.siip.model.preinversion.dto.PresupuestoDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProductoPresupuestoDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProductoSeleccionadoDto;
 import sv.gob.mh.siip.model.preinversion.enums.FuenteFinanciamiento;
-import sv.gob.mh.siip.model.preinversion.repository.FichaEmergenciaRepository;
+import sv.gob.mh.siip.model.preinversion.repository.ComponenteRepository;
 import sv.gob.mh.siip.model.preinversion.repository.MacroactividadPresupuestoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.PresupuestoProyectoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
@@ -42,16 +42,16 @@ import sv.gob.mh.siip.security.ActorContexto;
 @Transactional
 public class PresupuestoInversionService {
   private final ProyectoRepository proyectos;
-  private final FichaEmergenciaRepository fichas;
+  private final ComponenteRepository componentes;
   private final PresupuestoProyectoRepository presupuestos;
   private final MacroactividadPresupuestoRepository macros;
   private final ActorContexto actor;
   private final ObjectMapper json;
 
-  public PresupuestoInversionService(ProyectoRepository p, FichaEmergenciaRepository f,
+  public PresupuestoInversionService(ProyectoRepository p, ComponenteRepository c,
       PresupuestoProyectoRepository pr, MacroactividadPresupuestoRepository m, ActorContexto a, ObjectMapper j) {
     proyectos = p;
-    fichas = f;
+    componentes = c;
     presupuestos = pr;
     macros = m;
     actor = a;
@@ -95,8 +95,8 @@ public class PresupuestoInversionService {
     actor.exigirRol(RolUsuario.TECNICO_URP);
     Proyecto proyecto = buscar(id);
     PresupuestoProyecto p = obtenerOCrear(proyecto);
-    List<String> productos = fichas.findByProyectoId(id).map(FichaEmergencia::getProductos).orElse(List.of());
-    for (int i = 1; i <= productos.size(); i++)
+    long totalProductos = componentes.findByProyectoIdOrderByIdAsc(id).size();
+    for (int i = 1; i <= totalProductos; i++)
       if (macros.countByPresupuestoIdAndNumeroProducto(p.getId(), i) == 0)
         throw invalido("macroactividades");
     return dto(proyecto, p);
@@ -104,25 +104,22 @@ public class PresupuestoInversionService {
 
   public FuentesFinanciamientoRequestDto fuentes(Long id) {
     actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
-    FichaEmergencia f = fichas.findByProyectoId(id)
-        .orElseThrow(() -> new RecursoNoEncontradoException("No existe ficha de proyecto"));
-    return fuentesDto(f);
+    return fuentesDto(obtenerOCrear(buscar(id)));
   }
 
   public FuentesFinanciamientoRequestDto guardarFuentes(Long id, FuentesFinanciamientoRequestDto req) {
     actor.exigirRol(RolUsuario.TECNICO_URP);
-    FichaEmergencia f = fichas.findByProyectoId(id)
-        .orElseThrow(() -> new RecursoNoEncontradoException("No existe ficha de proyecto"));
     if (req.getFuentesFinanciamiento() == null || req.getFuentesFinanciamiento().isEmpty())
       throw invalido("fuentesFinanciamiento");
     String fuenteRecuros = req.getFuenteRecursos();
     if (fuenteRecuros == null || fuenteRecuros.isBlank())
       throw invalido("fuenteRecursos");
-    f.setFuentesFinanciamiento(
+    PresupuestoProyecto p = obtenerOCrear(buscar(id));
+    p.setFuentesFinanciamiento(
         req.getFuentesFinanciamiento().stream().map(x -> FuenteFinanciamiento.valueOf(x.name())).toList());
-    f.setFuenteRecursos(fuenteRecuros.trim());
-    fichas.save(f);
-    return fuentesDto(f);
+    p.setFuenteRecursos(fuenteRecuros.trim());
+    presupuestos.save(p);
+    return fuentesDto(p);
   }
 
   private Proyecto buscar(Long id) {
@@ -144,9 +141,9 @@ public class PresupuestoInversionService {
         .anyMatch(i -> i.getCostosPorPeriodo() != null && i.getCostosPorPeriodo().stream().anyMatch(Objects::nonNull));
   }
 
-  private FuentesFinanciamientoRequestDto fuentesDto(FichaEmergencia f) {
-    return new FuentesFinanciamientoRequestDto().fuenteRecursos(f.getFuenteRecursos()).fuentesFinanciamiento(
-        f.getFuentesFinanciamiento().stream().map(x -> FuenteFinanciamientoDto.valueOf(x.name())).toList());
+  private FuentesFinanciamientoRequestDto fuentesDto(PresupuestoProyecto p) {
+    return new FuentesFinanciamientoRequestDto().fuenteRecursos(p.getFuenteRecursos()).fuentesFinanciamiento(
+        p.getFuentesFinanciamiento().stream().map(x -> FuenteFinanciamientoDto.valueOf(x.name())).toList());
   }
 
   private PresupuestoDto dto(Proyecto proyecto, PresupuestoProyecto p) {
@@ -154,14 +151,16 @@ public class PresupuestoInversionService {
     Map<Integer, List<MacroactividadDto>> porProducto = new LinkedHashMap<>();
     for (MacroactividadPresupuesto m : ms)
       porProducto.computeIfAbsent(m.getNumeroProducto(), k -> new ArrayList<>()).add(macroDto(m));
-    List<String> codigos = fichas.findByProyectoId(proyecto.getId()).map(FichaEmergencia::getProductos)
-        .orElse(List.of());
+    // Productos desde CU-PRE-11 (Descripción Técnica, RN16, solo lectura aquí) — no desde
+    // FichaEmergencia, que solo existe para proyectos de emergencia (CU-PRE-3.5).
+    List<Componente> filas = componentes.findByProyectoIdOrderByIdAsc(proyecto.getId());
     List<ProductoPresupuestoDto> ps = new ArrayList<>();
-    for (int i = 0; i < codigos.size(); i++) {
+    for (int i = 0; i < filas.size(); i++) {
       List<MacroactividadDto> lista = porProducto.getOrDefault(i + 1, List.of());
       List<Double> totalProducto = totales(lista);
-      ps.add(new ProductoPresupuestoDto(i + 1, new ProductoSeleccionadoDto().codigoProducto(codigos.get(i)), lista,
-          totalProducto).costoProductoTotal(sum(totalProducto)));
+      ps.add(new ProductoPresupuestoDto(i + 1,
+          new ProductoSeleccionadoDto().codigoProducto(filas.get(i).getCodigoProducto()), lista, totalProducto)
+          .costoProductoTotal(sum(totalProducto)));
     }
     List<Double> total = totales(ps.stream().flatMap(x -> x.getMacroactividades().stream()).toList());
     MontoPorPeriodoDto monto = new MontoPorPeriodoDto(total, sum(total));

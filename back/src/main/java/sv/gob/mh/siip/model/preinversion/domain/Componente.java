@@ -33,4 +33,16 @@ public class Componente {
 
     @Column(name = "DESCRIPCION", length = 1000)
     private String descripcion;
+
+    /** Código de producto (catálogo C.6, CU-PRE-09/CU-PRE-3.5). CU-PRE-11, fila de Descripción Técnica. */
+    @Column(name = "CODIGO_PRODUCTO", length = 30)
+    private String codigoProducto;
+
+    /** CU-PRE-11, fila de Descripción Técnica. */
+    @Column(name = "CANTIDAD")
+    private Double cantidad;
+
+    /** Nombre tomado de {@code GET /catalogos/unidades-medida} (CU-ADM-02). CU-PRE-11. */
+    @Column(name = "UNIDAD_MEDIDA", length = 100)
+    private String unidadMedida;
 }

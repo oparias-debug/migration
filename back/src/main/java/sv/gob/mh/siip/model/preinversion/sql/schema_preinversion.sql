@@ -595,16 +595,49 @@ COMMENT ON TABLE ANALISIS_LEGAL IS 'Análisis legal del proyecto. CU-PRE-16';
 -- 5. PRESUPUESTO Y COSTOS (PRE-17, PRE-18)
 --------------------------------------------------------------------------------
 
+-- NOTA: COMPONENTE también es la fila de "Descripción Técnica" (CU-PRE-11): CODIGO_PRODUCTO,
+-- CANTIDAD y UNIDAD_MEDIDA los llena ese CU; NOMBRE/DESCRIPCION son, pese al nombre de la
+-- columna, el código de "Componente" (tipo de costo, catálogo de CU-ADM-02) y la descripción del
+-- producto. CU-PRE-17 los lee de aquí (RN16, solo lectura ahí) para "productos" de
+-- GET /proyectos/{id}/presupuesto — no desde FICHA_EMERGENCIA, que solo existe para proyectos de
+-- emergencia (CU-PRE-3.5).
 CREATE SEQUENCE COMPONENTE_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE COMPONENTE (
     ID_COMPONENTE       NUMBER(19)      NOT NULL,
     ID_PROYECTO         NUMBER(19)      NOT NULL,
     NOMBRE              VARCHAR2(250)   NOT NULL,
     DESCRIPCION         VARCHAR2(1000),
+    CODIGO_PRODUCTO     VARCHAR2(30),
+    CANTIDAD            NUMBER,
+    UNIDAD_MEDIDA       VARCHAR2(100),
     CONSTRAINT PK_COMPONENTE PRIMARY KEY (ID_COMPONENTE),
     CONSTRAINT FK_COMPONENTE_PROYECTO FOREIGN KEY (ID_PROYECTO) REFERENCES PROYECTO (ID_PROYECTO)
 );
-COMMENT ON TABLE COMPONENTE IS 'Componente/rubro en que se desglosa el proyecto. CU-PRE-17';
+COMMENT ON TABLE COMPONENTE IS 'Fila de Descripción Técnica (CU-PRE-11) / componente-rubro del presupuesto (CU-PRE-17)';
+
+-- NOTA: PRESUPUESTO_PROYECTO y MACROACTIVIDAD_PRESUPUESTO son las tablas reales que respaldan hoy
+-- CU-PRE-17 (ver PresupuestoProyecto.java / MacroactividadPresupuesto.java); el resto de esta
+-- sección 5 (PRESUPUESTO_INVERSION, FLUJO_COSTO_OM, etc., abajo) quedó desactualizado de una
+-- implementación anterior y no se reconcilió en este cambio — no reescribirlo silenciosamente por
+-- ahora, por si documenta un diseño alternativo pendiente de decisión.
+CREATE SEQUENCE PRESUPUESTO_PROYECTO_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE TABLE PRESUPUESTO_PROYECTO (
+    ID_PRESUPUESTO_PROYECTO NUMBER(19)  NOT NULL,
+    ID_PROYECTO         NUMBER(19)      NOT NULL,
+    PERIODOS_ESTIMADOS  NUMBER(10),
+    FUENTE_RECURSOS     VARCHAR2(200),
+    CONSTRAINT PK_PRESUPUESTO_PROYECTO PRIMARY KEY (ID_PRESUPUESTO_PROYECTO),
+    CONSTRAINT UK_PRESUPUESTO_PROYECTO UNIQUE (ID_PROYECTO),
+    CONSTRAINT FK_PRESUPUESTO_PROYECTO_PROYECTO FOREIGN KEY (ID_PROYECTO) REFERENCES PROYECTO (ID_PROYECTO)
+);
+COMMENT ON TABLE PRESUPUESTO_PROYECTO IS 'Cabecera de Presupuesto de Inversión del proyecto. CU-PRE-17';
+
+CREATE TABLE PRESUPUESTO_FUENTE_FINANC (
+    ID_PRESUPUESTO_PROYECTO NUMBER(19)  NOT NULL,
+    CODIGO_FUENTE       VARCHAR2(20)    NOT NULL,
+    CONSTRAINT FK_PRES_FUENTE_FINANC FOREIGN KEY (ID_PRESUPUESTO_PROYECTO) REFERENCES PRESUPUESTO_PROYECTO (ID_PRESUPUESTO_PROYECTO)
+);
+COMMENT ON TABLE PRESUPUESTO_FUENTE_FINANC IS '"Fuentes de financiamiento" (Anexo A.5, RN14) del presupuesto de cada proyecto. CU-PRE-17';
 
 CREATE SEQUENCE PRESUPUESTO_INVERSION_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE PRESUPUESTO_INVERSION (

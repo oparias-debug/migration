@@ -16,19 +16,19 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
-import sv.gob.mh.siip.model.preinversion.domain.FichaEmergencia;
+import sv.gob.mh.siip.model.preinversion.domain.Componente;
 import sv.gob.mh.siip.model.preinversion.domain.MacroactividadPresupuesto;
 import sv.gob.mh.siip.model.preinversion.domain.PresupuestoProyecto;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.ConfigurarPeriodosEjecucionRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.FuenteFinanciamientoDto;
 import sv.gob.mh.siip.model.preinversion.dto.FuentesFinanciamientoRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.MacroactividadInsumoRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.MacroactividadRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.PresupuestoDto;
 import sv.gob.mh.siip.model.preinversion.enums.FuenteFinanciamiento;
-import sv.gob.mh.siip.model.preinversion.repository.FichaEmergenciaRepository;
+import sv.gob.mh.siip.model.preinversion.repository.ComponenteRepository;
 import sv.gob.mh.siip.model.preinversion.repository.MacroactividadPresupuestoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.PresupuestoProyectoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
@@ -36,7 +36,7 @@ import sv.gob.mh.siip.security.ActorContexto;
 
 class PresupuestoInversionServiceTest {
   private ProyectoRepository proyectos;
-  private FichaEmergenciaRepository fichas;
+  private ComponenteRepository componentes;
   private PresupuestoProyectoRepository presupuestos;
   private MacroactividadPresupuestoRepository macros;
   private ActorContexto actor;
@@ -47,18 +47,20 @@ class PresupuestoInversionServiceTest {
   @BeforeEach
   void setup() {
     proyectos = mock(ProyectoRepository.class);
-    fichas = mock(FichaEmergenciaRepository.class);
+    componentes = mock(ComponenteRepository.class);
     presupuestos = mock(PresupuestoProyectoRepository.class);
     macros = mock(MacroactividadPresupuestoRepository.class);
     actor = mock(ActorContexto.class);
-    service = new PresupuestoInversionService(proyectos, fichas, presupuestos, macros, actor, new ObjectMapper());
+    service = new PresupuestoInversionService(proyectos, componentes, presupuestos, macros, actor,
+        new ObjectMapper());
     proyecto = Proyecto.builder().id(1L).build();
     presupuesto = PresupuestoProyecto.builder().id(2L).proyecto(proyecto).periodosEstimados(3).build();
     when(proyectos.findById(1L)).thenReturn(Optional.of(proyecto));
     when(presupuestos.findByProyectoId(1L)).thenReturn(Optional.of(presupuesto));
     when(macros.findByPresupuestoIdOrderByNumeroProductoAscIdAsc(2L)).thenReturn(List.of());
-    when(fichas.findByProyectoId(1L)).thenReturn(Optional.of(FichaEmergencia.builder()
-        .proyecto(proyecto).productos(List.of("P1", "P2")).build()));
+    when(componentes.findByProyectoIdOrderByIdAsc(1L)).thenReturn(List.of(
+        Componente.builder().id(10L).proyecto(proyecto).nombre("TC-1").codigoProducto("P1").build(),
+        Componente.builder().id(11L).proyecto(proyecto).nombre("TC-2").codigoProducto("P2").build()));
   }
 
   @Test
@@ -149,39 +151,34 @@ class PresupuestoInversionServiceTest {
 
   @Test
   void obtieneFuentesYGuardaFuentesNormalizadas() {
-    FichaEmergencia ficha = FichaEmergencia.builder().proyecto(proyecto)
-        .fuentesFinanciamiento(List.of(FuenteFinanciamiento.FONDO_GENERAL))
-        .fuenteRecursos(" anterior ").build();
-    when(fichas.findByProyectoId(1L)).thenReturn(Optional.of(ficha));
+    presupuesto.setFuentesFinanciamiento(List.of(FuenteFinanciamiento.FONDO_GENERAL));
+    presupuesto.setFuenteRecursos(" anterior ");
 
     assertThat(service.fuentes(1L).getFuenteRecursos()).isEqualTo(" anterior ");
     FuentesFinanciamientoRequestDto request = new FuentesFinanciamientoRequestDto()
-        .fuentesFinanciamiento(List.of(sv.gob.mh.siip.model.preinversion.dto.FuenteFinanciamientoDto.DONACIONES))
+        .fuentesFinanciamiento(List.of(FuenteFinanciamientoDto.DONACIONES))
         .fuenteRecursos("  presupuesto nacional  ");
 
     var response = service.guardarFuentes(1L, request);
 
-    assertThat(ficha.getFuenteRecursos()).isEqualTo("presupuesto nacional");
-    assertThat(response.getFuentesFinanciamiento()).containsExactly(
-        sv.gob.mh.siip.model.preinversion.dto.FuenteFinanciamientoDto.DONACIONES);
-    verify(fichas).save(ficha);
+    assertThat(presupuesto.getFuenteRecursos()).isEqualTo("presupuesto nacional");
+    assertThat(response.getFuentesFinanciamiento()).containsExactly(FuenteFinanciamientoDto.DONACIONES);
+    verify(presupuestos).save(presupuesto);
   }
 
   @Test
-  void fuentesYGuardarFuentesRechazanFichaInexistenteYDatosInvalidos() {
-    when(fichas.findByProyectoId(1L)).thenReturn(Optional.empty());
-    assertThatThrownBy(() -> service.fuentes(1L)).isInstanceOf(RecursoNoEncontradoException.class);
+  void fuentesNoRequiereFichaDeEmergenciaYGuardarFuentesRechazaDatosInvalidos() {
+    // Proyecto normal (sin FichaEmergencia, CU-PRE-3.5): antes respondía 404 "No existe ficha de
+    // proyecto" para cualquier proyecto que no fuera de emergencia; ya no debe fallar.
+    assertThat(service.fuentes(1L)).isNotNull();
+
     FuentesFinanciamientoRequestDto requestVacio = new FuentesFinanciamientoRequestDto();
     assertThatThrownBy(() -> service.guardarFuentes(1L, requestVacio))
-        .isInstanceOf(RecursoNoEncontradoException.class);
-
-    FichaEmergencia ficha = FichaEmergencia.builder().proyecto(proyecto).build();
-    when(fichas.findByProyectoId(1L)).thenReturn(Optional.of(ficha));
-    assertThatThrownBy(() -> service.guardarFuentes(1L, requestVacio))
         .isInstanceOf(ValidacionNegocioException.class);
-    FuentesFinanciamientoRequestDto requestOtros = new FuentesFinanciamientoRequestDto()
-        .fuentesFinanciamiento(List.of(sv.gob.mh.siip.model.preinversion.dto.FuenteFinanciamientoDto.OTROS));
-    assertThatThrownBy(() -> service.guardarFuentes(1L, requestOtros))
+
+    FuentesFinanciamientoRequestDto requestSinFuenteRecursos = new FuentesFinanciamientoRequestDto()
+        .fuentesFinanciamiento(List.of(FuenteFinanciamientoDto.OTROS));
+    assertThatThrownBy(() -> service.guardarFuentes(1L, requestSinFuenteRecursos))
         .isInstanceOf(ValidacionNegocioException.class);
   }
 }

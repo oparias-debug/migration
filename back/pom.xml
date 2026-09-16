@@ -393,7 +393,19 @@
 							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
 						</configuration>
 					</execution>
-				</executions>
+                    <execution>
+                        <id>generate-preinversion-cu11-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-11.openapi.yaml</inputSpec>
+                            <apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+                            <modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+                        </configuration>
+                    </execution>
+                </executions>
 			</plugin>
 		</plugins>
 	</build>
