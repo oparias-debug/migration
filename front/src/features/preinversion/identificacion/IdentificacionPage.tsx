@@ -9,6 +9,7 @@ import type { ArchivoAdjuntoResumen, Identificacion } from '../../../api/preinve
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
+import { Pestanas } from '../../../components/Pestanas';
 import {
   ANTECEDENTES_MAXLENGTH,
   IDENTIFICACION_FORM_DEFAULTS,
@@ -28,8 +29,12 @@ type Arbol = 'problemas' | 'objetivos';
  * pueden ser muy largos. El Anexo A.1 del CU-PRE-04 los muestra en una sola
  * pantalla; se agrupan como el propio CU los relaciona, cada árbol con su campo.
  */
-const PESTANAS = ['antecedentes', 'problemas', 'objetivos'] as const;
-type Pestana = (typeof PESTANAS)[number];
+const PESTANAS = [
+  { clave: 'antecedentes', texto: 'preinversion.identificacion.pestana.antecedentes' },
+  { clave: 'problemas', texto: 'preinversion.identificacion.pestana.problemas' },
+  { clave: 'objetivos', texto: 'preinversion.identificacion.pestana.objetivos' },
+] as const;
+type Pestana = (typeof PESTANAS)[number]['clave'];
 
 /** Qué pestañas tienen algún campo pendiente de completar (RNC-2). */
 function pestanasPendientes(
@@ -43,41 +48,6 @@ function pestanasPendientes(
   };
 }
 
-/**
- * Barra de pestañas. Marca las que tienen campos pendientes: si no, el borde rojo
- * de RNC-2 quedaría escondido en una pestaña que el usuario no está viendo.
- */
-function BarraPestanas({
-  activa,
-  pendientes,
-  onCambiar,
-}: {
-  readonly activa: Pestana;
-  readonly pendientes: Record<Pestana, boolean>;
-  readonly onCambiar: (pestana: Pestana) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="pestanas" role="tablist" aria-label={t('preinversion.identificacion.pestanas')}>
-      {PESTANAS.map((p) => (
-        <button
-          key={p}
-          type="button"
-          role="tab"
-          id={`pestana-${p}`}
-          aria-controls={`panel-${p}`}
-          aria-selected={p === activa}
-          className={`pestana${p === activa ? ' activa' : ''}${pendientes[p] ? ' con-pendientes' : ''}`}
-          onClick={() => onCambiar(p)}
-        >
-          {t(`preinversion.identificacion.pestana.${p}`)}
-          {/* El punto rojo lo pinta el CSS (.con-pendientes); esto es para lectores de pantalla. */}
-          {pendientes[p] && <span className="sr-only">{` (${t('preinversion.identificacion.pestanaPendiente')})`}</span>}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function identificacionToFormValues(datos: Identificacion): IdentificacionFormValues {
   return {
@@ -330,7 +300,13 @@ export function IdentificacionPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <BarraPestanas activa={pestana} pendientes={pestanasPendientes(valores, pendiente)} onCambiar={setPestana} />
+          <Pestanas
+            pestanas={PESTANAS}
+            activa={pestana}
+            onCambiar={setPestana}
+            pendientes={pestanasPendientes(valores, pendiente)}
+            etiqueta="preinversion.identificacion.pestanas"
+          />
 
           {/* Las pestañas ocultan su panel en vez de desmontarlo: el formulario
               conserva los valores y un solo Guardar envía las tres. */}

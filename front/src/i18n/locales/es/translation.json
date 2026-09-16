@@ -18,7 +18,8 @@
     "siguiente": "Siguiente",
     "regresar": "Regresar",
     "eliminar": "Eliminar",
-    "editar": "Editar"
+    "editar": "Editar",
+    "acciones": "Acciones"
   },
   "errores": {
     "validacion": "Hay campos con datos inválidos. Revise los mensajes indicados en cada campo.",
@@ -370,6 +371,99 @@
       "avisoSinCatalogo": "No se pudo cargar el catálogo de tipos de insumo, así que no se pueden agregar ni editar macroactividades. Motivo:",
       "avisoSinFuentes": "No se pudieron consultar las fuentes de financiamiento de este proyecto, así que tampoco se pueden editar ni guardar aquí. Motivo:",
       "guardadoSinFuentes": "Se guardó el presupuesto. Las fuentes de financiamiento no se guardaron porque no se pudieron consultar."
+    },
+    "diagnostico": {
+      "titulo": "Diagnóstico de la situación actual",
+      "pestanas": "Secciones del diagnóstico",
+      "pestana": {
+        "interesados": "Gestión de interesados",
+        "poblacion": "Análisis de población",
+        "areaInfluencia": "Área de influencia",
+        "mercado": "Análisis de mercado"
+      },
+      "interesados": {
+        "nombre": "Nombre del interesado",
+        "tipo": "Tipo",
+        "influencia": "Nivel de influencia",
+        "interes": "Nivel de interés",
+        "estrategia": "Estrategia de gestión",
+        "nombreFila": "Nombre del interesado {{numero}}",
+        "tipoFila": "Tipo del interesado {{numero}}",
+        "nivelInfluenciaFila": "Nivel de influencia del interesado {{numero}}",
+        "nivelInteresFila": "Nivel de interés del interesado {{numero}}",
+        "estrategiaFila": "Estrategia de gestión del interesado {{numero}}",
+        "eliminarFila": "Eliminar el interesado {{numero}}",
+        "agregar": "Agregar interesado",
+        "sinFilas": "Todavía no hay interesados registrados.",
+        "duplicado": "Hay interesados repetidos: dos filas coinciden en nombre, tipo, nivel de influencia y nivel de interés.",
+        "tipos": {
+          "COOPERANTE": "Cooperante",
+          "OPONENTE": "Oponente",
+          "BENEFICIARIO": "Beneficiario",
+          "PERJUDICADO": "Perjudicado"
+        },
+        "niveles": {
+          "ALTO": "Alto",
+          "BAJO": "Bajo"
+        }
+      },
+      "mercado": {
+        "producto": "Producto",
+        "unidadMedida": "Unidad de medida",
+        "demanda": "Demanda",
+        "oferta": "Oferta",
+        "anios": "Años a proyectar",
+        "tasaDemanda": "Tasa de demanda (%)",
+        "tasaOferta": "Tasa de oferta (%)",
+        "deficit": "Déficit",
+        "promedioDemanda": "Promedio demanda",
+        "promedioOferta": "Promedio oferta",
+        "promedioDeficit": "Promedio déficit",
+        "productoFila": "Producto de la fila {{numero}}",
+        "demandaFila": "Demanda de la fila {{numero}}",
+        "ofertaFila": "Oferta de la fila {{numero}}",
+        "aniosAProyectarFila": "Años a proyectar de la fila {{numero}}",
+        "tasaDemandaFila": "Tasa de demanda de la fila {{numero}}",
+        "tasaOfertaFila": "Tasa de oferta de la fila {{numero}}",
+        "eliminarFila": "Eliminar la fila {{numero}}",
+        "agregar": "Agregar producto",
+        "filaIncompleta": "Complete al menos una fila con producto, demanda, oferta, años a proyectar y las dos tasas.",
+        "sinCatalogo": "El catálogo de productos no está disponible: no se puede elegir producto hasta que responda."
+      },
+      "area": {
+        "distrito": "Distrito",
+        "departamento": "Departamento",
+        "region": "Región",
+        "ubicacionEspecifica": "Ubicación específica",
+        "distritoFila": "Distrito de la fila {{numero}}",
+        "ubicacionEspecificaFila": "Ubicación específica de la fila {{numero}}",
+        "eliminarFila": "Eliminar la fila {{numero}}",
+        "agregar": "Agregar ubicación",
+        "autocompletar": "Autocompletar desde población objetivo",
+        "autocompletado": "Se trajeron las ubicaciones de la población objetivo. Revise y guarde.",
+        "sinPoblacion": "La población objetivo todavía no tiene ubicaciones registradas.",
+        "sinCatalogo": "El catálogo de ubicaciones no está disponible: no se puede elegir distrito hasta que responda.",
+        "distritoODesconocido": "No se encontró el proyecto o alguno de los distritos elegidos. Revise los distritos de la tabla."
+      },
+      "poblacion": {
+        "fila": "Población",
+        "descripcion": "Descripción",
+        "totalPersonas": "Total de personas",
+        "porcentaje": "Porcentaje",
+        "ubicacionNumero": "Ubicación {{numero}}",
+        "poblacionReferencia": "Población de referencia",
+        "poblacionAfectada": "Población afectada",
+        "poblacionObjetivo": "Población objetivo",
+        "poblacionEnEspera": "Población en espera",
+        "descripcionDe": "Descripción de {{fila}}",
+        "ubicacionDe": "Ubicación {{numero}} de {{fila}}",
+        "personasDe": "Personas en la ubicación {{numero}} de {{fila}}",
+        "agregarUbicacion": "Agregar ubicación",
+        "enEsperaCalculada": "La calcula el sistema: población afectada menos población objetivo.",
+        "afectadaMayor": "La población afectada no puede ser mayor que la de referencia. No se guardó nada.",
+        "objetivoMayor": "La población objetivo no puede ser mayor que la afectada. No se guardó nada.",
+        "sinCatalogo": "El catálogo de ubicaciones no está disponible: no se puede elegir ubicación hasta que responda."
+      }
     }
   },
   "app": {
@@ -522,5 +616,8 @@
       "indicadoresResultado": "Indicadores de resultado",
       "indicadoresProducto": "Indicadores de producto"
     }
+  },
+  "pestanas": {
+    "pendiente": "con campos pendientes"
   }
 }

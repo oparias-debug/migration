@@ -1,0 +1,194 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-06 Análisis de Interesados
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-06 "Análisis de Interesados"
+    (UC-PRE-06-Analisis_de_Interesados.md) y sus 3 historias BDD. Actor
+    principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE.
+    RN01 menciona genéricamente "Todos los demás actores" con permiso de
+    solo visualización, sin identificarlos individualmente; siguiendo el
+    mismo criterio del propio CU (no inventar un nombre de rol para ese
+    grupo genérico), `x-roles` de este fragmento **no** incluye
+    "Usuarios Internos/Externos" ni ningún otro rol además de Técnico URP y
+    Técnico PRE — a diferencia de CU-PRE-04/05, donde sí se resolvió
+    explícitamente una variante textual a esa entrada del catálogo. Queda
+    como insumo pendiente para el Gestor de Requisitos, tal como señala el
+    propio CU-PRE-06.md. Introduce el recurso `MatrizInteresados`, hijo de
+    `Proyecto` (CU-PRE-01.openapi.yaml, reutilizado vía `$ref` externo).
+
+paths:
+
+  /proyectos/{idProyecto}/matriz-interesados:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerMatrizInteresados
+      summary: Consultar la "Matriz de gestión de interesados" (Anexo A.1)
+      description: >
+        A diferencia de CU-PRE-04/CU-PRE-05, ninguna regla de este CU
+        condiciona el acceso de Técnico PRE a que la matriz ya se haya
+        guardado al menos una vez (RN02 no lo menciona) — no se modeló un
+        404 condicional para ese caso, para no inventar una restricción que
+        el CU no describe.
+      tags: [Preinversión - Análisis de Interesados]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        "200":
+          description: Matriz de gestión de interesados del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrizInteresados'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP ni Técnico PRE, o
+            (Técnico URP/Técnico PRE) el proyecto no está dentro de su
+            alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarMatrizInteresados
+      summary: Registrar y guardar la matriz de gestión de interesados (botón "Guardar", FA-01)
+      description: >
+        Igual que en CU-PRE-04/CU-PRE-05: ningún campo es obligatorio a
+        nivel de servidor. RN06 (sombrear bordes en rojo) es
+        retroalimentación visual de cliente; FA-01 (paso 1.4) guarda la
+        información igual, sin importar campos pendientes. RN05 (un mismo
+        interesado puede repetirse si cambia al menos una columna, pero no
+        si las cuatro columnas son idénticas) tampoco se aplica como error
+        400: el propio CU no especifica qué ocurre en el caso rechazado
+        (mensaje, bloqueo), y la historia BDD señala explícitamente que no
+        inventa ese comportamiento — este endpoint permite guardar
+        cualquier combinación de filas, incluidas duplicadas exactas.
+      tags: [Preinversión - Análisis de Interesados]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatrizInteresadosRequest'
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "¡Guardado! Sus datos han sido
+            guardados exitosamente.", Anexo A.2); el modal y su "Aceptar"
+            son de cliente, no un paso adicional de la API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrizInteresados'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP, o el proyecto no está en
+            su alcance de Unidad Ejecutora (RN01). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TipoInteresado:
+      type: string
+      description: Catálogo de tipo de interesado (Anexo C.1), listado fijo (sin nota de administración externa, a diferencia de C.2 en CU-PRE-03.5).
+      enum: [COOPERANTE, OPONENTE, BENEFICIARIO, PERJUDICADO]
+
+    NivelInfluencia:
+      type: string
+      enum: [ALTO, BAJO]
+
+    NivelInteres:
+      type: string
+      enum: [ALTO, BAJO]
+
+    InteresadoRequest:
+      type: object
+      description: >
+        Fila de la tabla "Matriz de gestión de interesados". Se reutiliza
+        también como forma de lectura (mismo criterio que
+        `AlternativaSolucionRequest` en CU-PRE-05: no hay campos calculados
+        por el servidor a nivel de fila). Ningún campo es obligatorio a
+        nivel de schema (ver descripción de `guardarMatrizInteresados`).
+      properties:
+        nombreInteresado:
+          type: string
+        tipo:
+          $ref: '#/components/schemas/TipoInteresado'
+        nivelInfluencia:
+          $ref: '#/components/schemas/NivelInfluencia'
+        nivelInteres:
+          $ref: '#/components/schemas/NivelInteres'
+        estrategiaGestion:
+          type: string
+
+    MatrizInteresadosRequest:
+      type: object
+      properties:
+        interesados:
+          type: array
+          description: >
+            Lista completa de interesados vigentes tras este guardado
+            (reemplaza la lista anterior por completo — un solo botón
+            "Guardar" para toda la tabla, mismo criterio que fragmentos
+            anteriores). Agregar/eliminar una fila ocurre en el cliente
+            antes de este `PUT`. No se valida RN05 (duplicados exactos) a
+            nivel de servidor — ver descripción del endpoint.
+          items:
+            $ref: '#/components/schemas/InteresadoRequest'
+
+    MatrizInteresados:
+      type: object
+      description: Matriz de gestión de interesados del proyecto (lectura).
+      required: [idProyecto, interesados]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        interesados:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteresadoRequest'

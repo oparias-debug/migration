@@ -81,8 +81,17 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
 
   it('un capítulo sin pantalla se ve en su sitio pero no enlaza', async () => {
     montar(IDENTIFICACION);
-    expect(screen.getByText('Diagnóstico de la situación actual')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Diagnóstico/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Análisis ambiental')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Análisis ambiental/ })).not.toBeInTheDocument();
+    await screen.findByText('Hospital de Santa Ana');
+  });
+
+  it('Diagnóstico ya enlaza a su pantalla (CU-PRE-06 a 09)', async () => {
+    montar(IDENTIFICACION);
+    expect(screen.getByRole('link', { name: 'Diagnóstico de la situación actual' })).toHaveAttribute(
+      'href',
+      '/preinversion/proyectos/7/diagnostico',
+    );
     await screen.findByText('Hospital de Santa Ana');
   });
 

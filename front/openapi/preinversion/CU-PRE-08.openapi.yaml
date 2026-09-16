@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversion - CU-PRE-08 Area de Influencia
+  version: "1.0.0"
+  description: Contrato del area de influencia del proyecto.
+paths:
+  /proyectos/{idProyecto}/area-influencia:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: obtenerAreaInfluencia
+      summary: Consultar el area de influencia
+      tags: [Preinversion - Area de Influencia]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Tecnico URP, Tecnico PRE]
+      responses:
+        "200":
+          description: Area de influencia del proyecto.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AreaInfluencia' }
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+        "403":
+          description: Actor sin acceso al proyecto.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+        "404":
+          description: Proyecto inexistente.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+    put:
+      operationId: guardarAreaInfluencia
+      summary: Guardar el area de influencia
+      tags: [Preinversion - Area de Influencia]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Tecnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AreaInfluenciaRequest' }
+      responses:
+        "200":
+          description: Area de influencia guardada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AreaInfluencia' }
+        "400":
+          description: Solicitud invalida.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+        "403":
+          description: Actor sin permiso o proyecto fuera de alcance.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+        "404":
+          description: Proyecto o distrito inexistente.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+  /proyectos/{idProyecto}/area-influencia/autocompletado:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: autocompletarAreaInfluenciaDesdePoblacionObjetivo
+      summary: Autocompletar desde Poblacion Objetivo
+      tags: [Preinversion - Area de Influencia]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Tecnico URP]
+      responses:
+        "200":
+          description: Filas derivadas de Poblacion Objetivo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AreaInfluencia' }
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+        "403":
+          description: Actor sin permiso o proyecto fuera de alcance.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+        "404":
+          description: Proyecto inexistente.
+          content:
+            application/json:
+              schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AreaInfluenciaFilaRequest:
+      type: object
+      required: [distrito]
+      properties:
+        distrito:
+          type: string
+          description: Codigo o nombre del distrito del catalogo geografico.
+        ubicacionEspecifica:
+          type: string
+          maxLength: 1000
+    AreaInfluenciaRequest:
+      type: object
+      required: [filas]
+      properties:
+        filas:
+          type: array
+          items: { $ref: '#/components/schemas/AreaInfluenciaFilaRequest' }
+    AreaInfluenciaFila:
+      type: object
+      required: [region, departamento, distrito]
+      properties:
+        region: { type: string, nullable: true }
+        departamento: { type: string }
+        distrito: { type: string }
+        ubicacionEspecifica: { type: string, nullable: true }
+    AreaInfluencia:
+      type: object
+      required: [idProyecto, filas]
+      properties:
+        idProyecto: { type: integer, format: int64 }
+        filas:
+          type: array
+          items: { $ref: '#/components/schemas/AreaInfluenciaFila' }

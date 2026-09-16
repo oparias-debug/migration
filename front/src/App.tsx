@@ -21,6 +21,7 @@ import { PasosProyectoLayout } from './features/preinversion/pasos/PasosProyecto
 import { PresupuestoPage } from './features/preinversion/presupuesto/PresupuestoPage';
 import { CrearCatalogoPage } from './features/administracion/catalogos/CrearCatalogoPage';
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
+import { DiagnosticoPage } from './features/preinversion/diagnostico/DiagnosticoPage';
 
 // Opciones del menú lateral (layout/navegacion.ts) que todavía no tienen
 // pantalla: se muestran como "🚧 Página en Construcción".
@@ -82,6 +83,7 @@ export function App() {
               <Route path="/preinversion/proyectos/:id/ficha-emergencia" element={<FichaEmergenciaPage />} />
               <Route path="/preinversion/proyectos/:id/identificacion" element={<IdentificacionPage />} />
               <Route path="/preinversion/proyectos/:id/alternativas-solucion" element={<AlternativasSolucionPage />} />
+              <Route path="/preinversion/proyectos/:id/diagnostico" element={<DiagnosticoPage />} />
               <Route path="/preinversion/proyectos/:id/presupuesto" element={<PresupuestoPage />} />
             </Route>
 

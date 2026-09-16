@@ -6,6 +6,10 @@ import { PreinversinCapturaDeProyectosApi } from './generated/preinversion-captu
 import { PreinversinSeleccinYRegistroDeEtapasApi } from './generated/preinversion-etapas';
 import { PreinversinAlternativasDeSolucinApi } from './generated/preinversion-alternativas';
 import { PreinversinPresupuestoDeInversinApi } from './generated/preinversion-presupuesto';
+import { PreinversinAnlisisDeInteresadosApi } from './generated/preinversion-interesados';
+import { PreinversinPoblacinObjetivoApi } from './generated/preinversion-poblacion';
+import { PreinversionAreaDeInfluenciaApi } from './generated/preinversion-area-influencia';
+import { PreinversinAnlisisDeMercadoApi } from './generated/preinversion-mercado';
 import {
   CatlogosRegistroDeProyectosApi,
   CatlogosPresupuestoApi,
@@ -58,6 +62,14 @@ export const catalogoEtapasApi = new CatlogosSeleccinYRegistroDeEtapasApi(undefi
 // distinto en el OpenAPI -> fragmento y módulo generado propios (generated/preinversion-alternativas);
 // comparte la instancia de axios de arriba.
 export const alternativasSolucionApi = new PreinversinAlternativasDeSolucinApi(undefined, undefined, preinversionAxios);
+// Capítulo 1.3.2.1 del árbol, "Diagnóstico de la situación actual": cuatro CUs que
+// el cliente ve como pestañas de una misma pantalla. Mismo recurso Proyecto y mismo
+// basePath /back; cada uno con su tag en el OpenAPI, así que el generador les dio
+// módulo propio. Comparten la instancia de axios de arriba.
+export const interesadosApi = new PreinversinAnlisisDeInteresadosApi(undefined, undefined, preinversionAxios);
+export const poblacionApi = new PreinversinPoblacinObjetivoApi(undefined, undefined, preinversionAxios);
+export const areaInfluenciaApi = new PreinversionAreaDeInfluenciaApi(undefined, undefined, preinversionAxios);
+export const analisisMercadoApi = new PreinversinAnlisisDeMercadoApi(undefined, undefined, preinversionAxios);
 
 export type {
   Proyecto,

@@ -783,3 +783,9 @@ a.pasos-paso:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px
 .pestana.activa { color: var(--azul); border-bottom-color: var(--azul); }
 .pestana:focus-visible { outline: 2px solid var(--azul); outline-offset: -2px; }
 .pestana.con-pendientes::after { content: '•'; color: var(--malo, #C0392B); margin-left: 6px; }
+
+/* Diagnóstico de la situación actual (1.3.2.1): tablas con celdas compuestas. */
+.celda-ubicacion { display: table-cell; }
+.celda-ubicacion select { margin-bottom: 4px; }
+.fila-calculada { background: var(--n50); }
+.fila-duplicada td { background: #FDECEA; }

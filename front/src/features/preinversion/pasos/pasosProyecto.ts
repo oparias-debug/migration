@@ -106,6 +106,7 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
             texto: 'pasos.diagnostico',
             cu: 'CU-PRE-06 a 09',
             pestanas: ['pasos.pestana.interesados', 'pasos.pestana.poblacion', 'pasos.pestana.areaInfluencia', 'pasos.pestana.mercado'],
+            rutas: ['diagnostico'],
           },
           {
             clave: 'estudio-tecnico',
