@@ -10,11 +10,13 @@ import { PreinversinAnlisisDeInteresadosApi } from './generated/preinversion-int
 import { PreinversinPoblacinObjetivoApi } from './generated/preinversion-poblacion';
 import { PreinversionAreaDeInfluenciaApi } from './generated/preinversion-area-influencia';
 import { PreinversinAnlisisDeMercadoApi } from './generated/preinversion-mercado';
+import { PreinversinDescripcinTcnicaApi } from './generated/preinversion-descripcion-tecnica';
 import {
   CatlogosRegistroDeProyectosApi,
   CatlogosPresupuestoApi,
   CatlogosBandejaPreinversinApi,
   CatlogosSeleccinYRegistroDeEtapasApi,
+  CatlogosDescripcinTcnicaApi,
 } from './generated/administracion-catalogos';
 import { createHttpClient } from './httpClient';
 
@@ -70,6 +72,10 @@ export const interesadosApi = new PreinversinAnlisisDeInteresadosApi(undefined, 
 export const poblacionApi = new PreinversinPoblacinObjetivoApi(undefined, undefined, preinversionAxios);
 export const areaInfluenciaApi = new PreinversionAreaDeInfluenciaApi(undefined, undefined, preinversionAxios);
 export const analisisMercadoApi = new PreinversinAnlisisDeMercadoApi(undefined, undefined, preinversionAxios);
+// CU-PRE-11 (Descripción técnica), pestaña del capítulo 1.3.2.2 "Estudio técnico".
+export const descripcionTecnicaApi = new PreinversinDescripcinTcnicaApi(undefined, undefined, preinversionAxios);
+// El catálogo de unidades de medida quedó con tag propio en CU-ADM-02.
+export const catalogoUnidadesApi = new CatlogosDescripcinTcnicaApi(undefined, undefined, preinversionAxios);
 
 export type {
   Proyecto,

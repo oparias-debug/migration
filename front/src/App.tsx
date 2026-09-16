@@ -22,6 +22,7 @@ import { PresupuestoPage } from './features/preinversion/presupuesto/Presupuesto
 import { CrearCatalogoPage } from './features/administracion/catalogos/CrearCatalogoPage';
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
 import { DiagnosticoPage } from './features/preinversion/diagnostico/DiagnosticoPage';
+import { EstudioTecnicoPage } from './features/preinversion/estudio-tecnico/EstudioTecnicoPage';
 
 // Opciones del menú lateral (layout/navegacion.ts) que todavía no tienen
 // pantalla: se muestran como "🚧 Página en Construcción".
@@ -84,6 +85,7 @@ export function App() {
               <Route path="/preinversion/proyectos/:id/identificacion" element={<IdentificacionPage />} />
               <Route path="/preinversion/proyectos/:id/alternativas-solucion" element={<AlternativasSolucionPage />} />
               <Route path="/preinversion/proyectos/:id/diagnostico" element={<DiagnosticoPage />} />
+              <Route path="/preinversion/proyectos/:id/estudio-tecnico" element={<EstudioTecnicoPage />} />
               <Route path="/preinversion/proyectos/:id/presupuesto" element={<PresupuestoPage />} />
             </Route>
 

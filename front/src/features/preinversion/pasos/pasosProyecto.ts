@@ -114,6 +114,7 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
             texto: 'pasos.estudioTecnico',
             cu: 'CU-PRE-11 y 12',
             pestanas: ['pasos.pestana.descripcionTecnica', 'pasos.pestana.localizacion'],
+            rutas: ['estudio-tecnico'],
           },
           { clave: 'ambiental', codigo: arbol(1, 3, 2, 3), texto: 'pasos.ambiental', cu: 'CU-PRE-14' },
           { clave: 'riesgos', codigo: arbol(1, 3, 2, 4), texto: 'pasos.riesgos', cu: 'CU-PRE-15' },

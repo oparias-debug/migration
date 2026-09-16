@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-11 Descripción Técnica
+  version: 1.0.0
+  description: 'Fragmento OpenAPI derivado de CU-PRE-11 "Descripción Técnica" (UC-PRE-11-Descripcion_Tecnica.md) y sus 3 historias BDD. Actor principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE. Mismo criterio que CU-PRE-06/07/08/09 para RN01: `x-roles` no incluye "Usuarios Internos/Externos". Introduce el recurso `DescripcionTecnica`, hijo de `Proyecto`. Reutiliza `ProductoSeleccionado` de CU-PRE-03.5.openapi.yaml (mismo catálogo de Productos e Indicadores que ya usa CU-PRE-09) y, para el campo "Componente", reutiliza `TipoCostoResumen`/`GET /catalogos/tipos-costo` — también de CU-PRE-03.5.openapi.yaml — en vez del catálogo estático "Componentes del proyecto" (Anexo C.1) documentado localmente en este CU: el propio mockup muestra un valor "Ambiental" que no existe en ese Anexo C.1, pero sí en el catálogo administrado de CU-PRE-03.5 (Anexo C.2 de aquel CU), lo que sugiere que ambos son, en realidad, el mismo catálogo — ver contrato-CU-PRE-11.md. Introduce un catálogo nuevo,
+    `GET /catalogos/unidades-medida`, porque CU-PRE-09 nunca expuso el suyo como endpoint propio (solo como valor denormalizado).
+
+    '
+paths:
+  /proyectos/{idProyecto}/descripcion-tecnica:
+    parameters:
+    - name: idProyecto
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    get:
+      operationId: obtenerDescripcionTecnica
+      summary: Consultar la pantalla "Descripción Técnica" (Anexo A.1)
+      description: 'A diferencia de CU-PRE-08 (donde el autocompletado requiere un botón explícito, "Traer ubicación de Población Objetivo"), aquí RN03/RN04 describen el autocompletado como automático, sin un botón propio en el mockup (solo "+", "x", "Guardar", "Siguiente"): mientras `DescripcionTecnica` no se haya guardado, este `GET` ya refleja `descripcionProyecto` desde CU-PRE-01 (o desde la última Orden de Trabajo/O.T. emitida, si existe, RN03) y `filas` desde los productos de CU-PRE-09 (RN04), sin necesidad de un endpoint de autocompletado separado. Igual que CU-PRE-06/07/08/09: ninguna regla condiciona el acceso de Técnico PRE a que ya se haya guardado.
+
+        '
+      tags:
+      - Preinversión - Descripción Técnica
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      - Técnico PRE
+      responses:
+        '200':
+          description: Descripción técnica del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DescripcionTecnica'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '403':
+          description: 'El actor autenticado no es Técnico URP ni Técnico PRE, o (Técnico URP/Técnico PRE) el proyecto no está dentro de su alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`; sin escenario BDD negativo explícito.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '404':
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+    put:
+      operationId: guardarDescripcionTecnica
+      summary: Registrar y guardar la descripción técnica (botón "Guardar", FA-01)
+      description: 'RN07 (bordes rojos por campos pendientes) es puramente visual, mismo criterio que CU-PRE-04/05/06/08. RN06 ("debe haber al menos una fila con toda la información registrada") se interpretó como una restricción de la interacción "eliminar fila" en el cliente (no dejar borrar la última fila completa), no como un rechazo de `Guardar` — a diferencia de la RN04 de CU-PRE-09, aquí no hay un escenario BDD que pruebe "guardar sin ninguna fila completa → el sistema no permite guardar"; el único escenario relacionado es "Eliminar una fila... manteniendo al menos una fila completa", que describe la interacción de borrado, no el guardado. Por eso este endpoint no define un 400 para "ninguna fila completa" — ver contrato-CU-PRE-11.md para la ambigüedad completa. `componente` y `unidadMedida` sí se tratan como seleccionables por el usuario (no autocompletados/bloqueados), siguiendo el comportamiento funcional descrito en el camino feliz de la BDD, a pesar de que el Anexo B.1 los marca
+        "Editable: No" — mismo criterio que la propia serie ya aplicó a "Producto" en este mismo CU.
+
+        '
+      tags:
+      - Preinversión - Descripción Técnica
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DescripcionTecnicaRequest'
+      responses:
+        '200':
+          description: 'Información guardada (mensaje "¡Guardado! Sus datos han sido guardados exitosamente.", Anexo A.2); el modal y su "Aceptar" son de cliente.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DescripcionTecnica'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '403':
+          description: 'El actor autenticado no es Técnico URP, o el proyecto no está en su alcance de Unidad Ejecutora (RN01). Inferido de `x-roles`; sin escenario BDD negativo explícito.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '404':
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    FilaDescripcionTecnicaRequest:
+      type: object
+      description: 'Fila de la tabla "Descripción Técnica". Agregar una fila (RN05) para un producto adicional u eliminarla (RN06) ocurre en el cliente antes de este `PUT` — reemplazo completo del array. Ningún campo es obligatorio a nivel de schema (RN07 es solo visual).
+
+        '
+      properties:
+        producto:
+          $ref: ./CU-PRE-03.5.openapi.yaml#/components/schemas/ProductoSeleccionado
+        componente:
+          type: string
+          description: 'Código tomado de GET /catalogos/tipos-costo (CU-PRE-03.5, no del Anexo C.1 local de este CU — ver info.description del archivo).
+
+            '
+        descripcionProducto:
+          type: string
+          maxLength: 500
+        cantidad:
+          type: number
+          format: double
+        unidadMedida:
+          type: string
+          description: Código tomado de GET /catalogos/unidades-medida.
+    FilaDescripcionTecnica:
+      type: object
+      description: 'Forma de lectura de una fila, con `componente` y `unidadMedida` ya resueltos a su objeto completo del catálogo.
+
+        '
+      properties:
+        producto:
+          $ref: ./CU-PRE-03.5.openapi.yaml#/components/schemas/ProductoSeleccionado
+        componente:
+          type: object
+          nullable: true
+          allOf:
+          - $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/TipoCostoResumen
+        descripcionProducto:
+          type: string
+          nullable: true
+          maxLength: 500
+        cantidad:
+          type: number
+          format: double
+          nullable: true
+        unidadMedida:
+          type: object
+          nullable: true
+          allOf:
+          - $ref: '../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/UnidadMedidaResumen'
+    DescripcionTecnicaRequest:
+      type: object
+      properties:
+        descripcionProyecto:
+          type: string
+          description: 'RN03: campo editable; inicialmente autocompletado desde CU-PRE-01 o desde la última O.T. emitida (ver `obtenerDescripcionTecnica`).
+
+            '
+        filas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaDescripcionTecnicaRequest'
+    DescripcionTecnica:
+      type: object
+      description: Descripción técnica del proyecto (lectura).
+      required:
+      - idProyecto
+      - filas
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        descripcionProyecto:
+          type: string
+          nullable: true
+        filas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaDescripcionTecnica'

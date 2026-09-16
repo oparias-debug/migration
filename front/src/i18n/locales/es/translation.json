@@ -464,6 +464,29 @@
         "objetivoMayor": "La población objetivo no puede ser mayor que la afectada. No se guardó nada.",
         "sinCatalogo": "El catálogo de ubicaciones no está disponible: no se puede elegir ubicación hasta que responda."
       }
+    },
+    "estudioTecnico": {
+      "titulo": "Estudio técnico",
+      "pestanas": "Secciones del estudio técnico",
+      "pestana": {
+        "descripcion": "Descripción técnica",
+        "localizacion": "Localización"
+      },
+      "descripcionProyecto": "Descripción del proyecto",
+      "producto": "Producto",
+      "componente": "Componente",
+      "descripcionProducto": "Descripción del producto",
+      "cantidad": "Cantidad",
+      "unidadMedida": "Unidad de medida",
+      "productoFila": "Producto de la fila {{numero}}",
+      "componenteFila": "Componente de la fila {{numero}}",
+      "descripcionProductoFila": "Descripción del producto de la fila {{numero}}",
+      "cantidadFila": "Cantidad de la fila {{numero}}",
+      "unidadMedidaFila": "Unidad de medida de la fila {{numero}}",
+      "eliminarFila": "Eliminar la fila {{numero}}",
+      "agregar": "Agregar producto",
+      "sinCatalogos": "Estos catálogos no están disponibles: {{catalogos}}. No se puede elegir en esas columnas hasta que respondan.",
+      "componenteObligatorio": "Cada fila necesita un componente. Elíjalo antes de guardar."
     }
   },
   "app": {
