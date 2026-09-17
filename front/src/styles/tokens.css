@@ -50,6 +50,10 @@
      tono de azul de la banda de inicio. --menu se queda como color de texto
      (títulos, cifras, migas), que no cambia. */
   --menu-fondo:  #2F5F9E;
+  /* Texto secundario sobre el menú (nombre del sistema, rol del usuario). Sube
+     a 4.77:1 sobre --menu-fondo; los grises anteriores (#B9C0CB y #C4CAD3)
+     quedaron en 3.5 y 3.9 al aclararse el fondo el 17/09/2026. */
+  --menu-txt-2:  #D8DEE6;
   --menu-2:      #002a6b;
   --arena:       #c9a892;   /* acento del manual */
 
@@ -62,7 +66,10 @@
   --hero:        #2F5F9E;
   --hero-2:      #2A568F;   /* extremo oscuro, para que la banda no quede plana */
   --hero-linea:  #3ADDFF;   /* subrayado bajo SIIP, medido sobre el diseño */
-  --azul-vivo:   #0172FE;   /* HOVER y píldora activa del menú (diseño 09/09/2026) */
+  /* HOVER y píldora activa del menú (diseño 09/09/2026). Se oscureció un punto
+     respecto del #0172FE del diseño: con blanco encima daba 4.34:1, por debajo
+     del mínimo de 4.5; así queda en 5.09:1. */
+  --azul-vivo:   #0168E6;
   --azul:        #003DB9;   /* botón primario, enlaces, foco */
   --azul-suave:  #DFEDFE;   /* tinte azul (tarjeta "En formulación") */
 
@@ -110,6 +117,12 @@
   --info:    #003DB9;  --info-bg: #DFEDFE;
   --neutro-bg: #EEF1F5;
   --error:   #C62828;
+  /* Anillo de foco. Dos aros concéntricos: el blanco se ve sobre los azules
+     (menú, banda, botón primario) y el azul se ve sobre los fondos claros.
+     Con un solo aro azul, el foco era invisible sobre cualquier superficie
+     azul (1.0:1 sobre el propio botón primario). */
+  --foco:        #003DB9;
+  --foco-claro:  #FFFFFF;
 
   /* --- Tipografía --------------------------------------------------------- */
   /* Roboto, confirmada por el cliente el 31/08/2026 ("Usa la Roboto").
