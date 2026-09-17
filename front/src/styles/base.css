@@ -33,7 +33,7 @@ a { color: var(--azul); }
 /* ------------------------------------------------------------ MENÚ LATERAL -- */
 .menu {
   width: var(--menu-ancho);
-  background: var(--menu);
+  background: var(--menu-fondo);
   color: var(--nav-txt);
   flex-shrink: 0;
   display: flex;
@@ -250,7 +250,11 @@ a { color: var(--azul); }
   background: linear-gradient(100deg, var(--hero) 0%, var(--hero-2) 100%);
   border-radius: var(--r2); padding: 13px 45px; min-height: 123px;
   display: flex; justify-content: space-between; align-items: center; gap: 24px;
-  color: #fff; position: relative; overflow: hidden;
+  color: #fff; overflow: hidden;
+  /* Pedido del cliente (17/09/2026): la banda se queda fija al desplazarse,
+     igual que la barra superior. Se pega justo debajo de ella, y por debajo de
+     su z-index para que la barra siga ganando. */
+  position: sticky; top: var(--topbar-alto); z-index: 20;
 }
 .hero::after {
   content: ""; position: absolute; top: 0; right: 0; bottom: 0;

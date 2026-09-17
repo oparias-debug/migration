@@ -46,6 +46,10 @@
           que vuelve al azul. Es lo más reciente, así que es lo que se aplica.
      Si alguien se pregunta por qué no es gris: se revirtió, no se perdió. */
   --menu:        #003078;
+  /* Fondo del menú lateral. Pedido del cliente (17/09/2026): bajarlo al mismo
+     tono de azul de la banda de inicio. --menu se queda como color de texto
+     (títulos, cifras, migas), que no cambia. */
+  --menu-fondo:  #2F5F9E;
   --menu-2:      #002a6b;
   --arena:       #c9a892;   /* acento del manual */
 
