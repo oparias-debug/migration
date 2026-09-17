@@ -13,7 +13,11 @@ import { IconoColor } from '../components/Icono';
  * implementados: buscador global, favoritos, notificaciones, configuración y el
  * idioma inglés (sólo existe el diccionario en español).
  */
-export function Topbar({ titulo, alAbrirMenu }: Readonly<{ titulo: string; alAbrirMenu: () => void }>) {
+export function Topbar({
+  titulo,
+  alPulsarMenu,
+  menuDesplegado,
+}: Readonly<{ titulo: string; alPulsarMenu: () => void; menuDesplegado: boolean }>) {
   const { t } = useTranslation();
   const { logout, username, roles } = useAuth();
   const navigate = useNavigate();
@@ -39,11 +43,14 @@ export function Topbar({ titulo, alAbrirMenu }: Readonly<{ titulo: string; alAbr
 
   return (
     <header className="topbar">
+      {/* Dice lo que va a hacer, que depende del ancho: contraer el menú fijo o
+          abrir el cajón. */}
       <button
         type="button"
         className="hamburguesa"
-        onClick={alAbrirMenu}
-        aria-label={t('topbar.abrirMenu')}
+        onClick={alPulsarMenu}
+        aria-label={menuDesplegado ? t('menu.contraer') : t('menu.expandir')}
+        aria-expanded={menuDesplegado}
         aria-controls="menu-lateral"
       >
         ☰

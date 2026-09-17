@@ -6,6 +6,21 @@ import { Topbar } from './Topbar';
 import { BandaRuta, type Tramo } from './BandaRuta';
 import { ubicarEnMenu } from './navegacion';
 
+/* Mismo punto de corte que la media query de base.css: por encima el menú está
+   siempre a la vista; por debajo es un cajón. */
+const ANCHO_MENU_FIJO = 1000;
+
+/** Si el menú está fijo a la izquierda (pantalla ancha) o es un cajón. */
+function usarMenuFijo() {
+  const [fijo, setFijo] = useState(() => window.innerWidth > ANCHO_MENU_FIJO);
+  useEffect(() => {
+    const alCambiar = () => setFijo(window.innerWidth > ANCHO_MENU_FIJO);
+    window.addEventListener('resize', alCambiar);
+    return () => window.removeEventListener('resize', alCambiar);
+  }, []);
+  return fijo;
+}
+
 /** Armazón del diseño: menú lateral + barra superior + banda de ruta + contenido. */
 export function AppLayout() {
   const { t } = useTranslation();
@@ -18,6 +33,12 @@ export function AppLayout() {
   // "Contraer menú" del diseño: se recuerda entre pantallas, pero no entre
   // sesiones, porque es una preferencia de la vista y no un dato del usuario.
   const [menuContraido, setMenuContraido] = useState(false);
+  const menuFijo = usarMenuFijo();
+
+  // El botón ☰ hace lo que toca según el ancho: con el menú fijo lo contrae o lo
+  // despliega (antes no hacía nada visible en pantalla ancha); con el menú en
+  // cajón lo abre.
+  const alPulsarMenu = () => (menuFijo ? setMenuContraido((v) => !v) : setMenuAbierto((v) => !v));
   useEffect(() => {
     setMenuAbierto(false);
     window.scrollTo(0, 0);
@@ -36,7 +57,11 @@ export function AppLayout() {
       )}
 
       <div className="principal">
-        <Topbar titulo={titulo} alAbrirMenu={() => setMenuAbierto(true)} />
+        <Topbar
+          titulo={titulo}
+          alPulsarMenu={alPulsarMenu}
+          menuDesplegado={menuFijo ? !menuContraido : menuAbierto}
+        />
         {/* El diseño no pinta banda de ruta en Inicio: sería "Inicio > Inicio". */}
         {pathname !== '/' && <BandaRuta tramos={tramos} />}
         <main className="contenido">
