@@ -108,7 +108,7 @@ public class Pre04CargarArchivosArboles {
 
         Proyecto proyecto = ProyectoFixtures.nuevoProyecto("Proyecto arboles BDD", EstadoProyecto.CUP_ASIGNADO,
                 unidadEjecutora, institucion, sector, ejeTematico);
-        proyecto.setCup(ProyectoFixtures.nuevoCup());
+        proyecto.setCup(ProyectoFixtures.nuevoCup(proyectoRepository));
         proyecto = proyectoRepository.save(proyecto);
         contextoProyecto.setProyectoActual(proyecto);
 

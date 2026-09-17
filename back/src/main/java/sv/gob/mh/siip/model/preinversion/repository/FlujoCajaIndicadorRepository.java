@@ -4,4 +4,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import sv.gob.mh.siip.model.preinversion.domain.FlujoCajaIndicador;
 
 public interface FlujoCajaIndicadorRepository extends JpaRepository<FlujoCajaIndicador, Long> {
+    java.util.List<FlujoCajaIndicador> findByProyectoIdOrderByAnioAsc(Long idProyecto);
 }

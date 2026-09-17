@@ -113,7 +113,7 @@ public class Pre04ConsultarDescargar {
 
         Proyecto nuevoProyecto = ProyectoFixtures.nuevoProyecto("Proyecto consulta BDD",
                 EstadoProyecto.CUP_ASIGNADO, unidadEjecutoraProyecto, institucion, sector, ejeTematico);
-        nuevoProyecto.setCup(ProyectoFixtures.nuevoCup());
+        nuevoProyecto.setCup(ProyectoFixtures.nuevoCup(proyectoRepository));
         proyecto = proyectoRepository.save(nuevoProyecto);
 
         autenticarComo(nombreUsuarioUrp);

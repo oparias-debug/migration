@@ -131,7 +131,7 @@ public class Pre04RegistrarGuardar {
                 EstadoProyecto.CUP_ASIGNADO, unidadEjecutora, institucion, sector, ejeTematico);
         // CU-PRE-04 opera sobre proyectos que ya tienen CUP (M-02, posterior a CU-PRE-01.5); el
         // valor exacto no importa aqui, solo que exista (campo no editable "CUP" de esta pantalla).
-        proyecto.setCup(ProyectoFixtures.nuevoCup());
+        proyecto.setCup(ProyectoFixtures.nuevoCup(proyectoRepository));
         proyecto = proyectoRepository.save(proyecto);
         contextoProyecto.setProyectoActual(proyecto);
 

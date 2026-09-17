@@ -1,7 +1,6 @@
 package sv.gob.mh.siip.bdd.support;
 
 import java.time.LocalDateTime;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
@@ -9,6 +8,7 @@ import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.IniciativaInversion;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
+import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 
@@ -20,21 +20,25 @@ import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
  */
 public final class ProyectoFixtures {
 
-    // CUP real es un consecutivo de 5 dígitos desde 10000 (RN 2.8.c, ver
-    // ProyectoServiceImpl.siguienteCup()); acá solo se necesita un valor único por
-    // proyecto de prueba dentro de la misma ejecución de la suite, no el consecutivo real.
-    // Arranca en 50000 (lejos del rango que siguienteCup() genera de verdad) para no
-    // colisionar con el CUP real que asigna el escenario de CU-PRE-01.5-emitir-cup.feature
-    // si ese insert no queda revertido al terminar su escenario. Un contador atómico evita,
-    // además, las colisiones que un hash truncado del sufijo aleatorio sí produce (ver
-    // incidente de "Unique index or primary key violation" en PROYECTO.CUP).
-    private static final AtomicInteger CUP_SEQ = new AtomicInteger(50000);
-
     private ProyectoFixtures() {
     }
 
-    public static String nuevoCup() {
-        return String.valueOf(CUP_SEQ.getAndIncrement());
+    // Antes, un AtomicInteger estático generaba el CUP de prueba, independiente
+    // del CUP real que ProyectoServiceImpl.siguienteCup() calcula como MAX(cup)+1.
+    // Esos dos generadores comparten la misma columna única y, cuando un escenario
+    // que siembra un Proyecto con este fixture también ejercita el flujo real de
+    // emitir CUP (CU-PRE-01.5-emitir-cup.feature) en la misma transacción, el
+    // contador estático no se revierte con el rollback de @Transactional entre
+    // escenarios aunque los inserts sí, y ambos generadores terminan calculando el
+    // mismo próximo número (incidente real: "Unique index or primary key violation"
+    // en PROYECTO.CUP). Recalcular aquí el mismo MAX(cup)+1 que usa el código real
+    // los mantiene en la misma secuencia monótona sin importar el orden de
+    // ejecución ni los rollbacks entre escenarios.
+    public static String nuevoCup(ProyectoRepository proyectos) {
+        int siguiente = proyectos.findFirstByCupIsNotNullOrderByCupDesc()
+                .map(p -> Integer.parseInt(p.getCup()) + 1)
+                .orElse(10000);
+        return String.format("%05d", siguiente);
     }
 
     public static Institucion nuevaInstitucion(String codigo, String nombre) {
