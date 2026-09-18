@@ -149,6 +149,10 @@ export const MODULOS: readonly Modulo[] = [
       { clave: 'seguridad', texto: 'menu.seguridad', ruta: '/administracion/seguridad' },
       // Sólo para el rol que el back del CU-ADM-01 acepta; a cualquier otro le respondería 403.
       { clave: 'catalogos', texto: 'menu.catalogos', ruta: '/catalogos-generales', rolesRequeridos: ['ADMINISTRADOR_DE_CATALOGOS'] },
+      // CU-ADM-04. El back exige ADMINISTRADOR o ADMINISTRADOR_CALENDARIO; en
+      // Keycloak ese rol todavía no existe, y el usuario admin llega con
+      // ADMINISTRADOR_DEL_SISTEMA, que es el que el back reconoce como ADMINISTRADOR.
+      { clave: 'calendario', texto: 'menu.calendario', ruta: '/administracion/calendario', rolesRequeridos: ['ADMINISTRADOR_DEL_SISTEMA', 'ADMINISTRADOR_CALENDARIO'] },
     ],
   },
 ];

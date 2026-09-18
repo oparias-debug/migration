@@ -555,7 +555,8 @@
     "seguimientoPaip": "Seguimiento cuatrimestral PAIP",
     "gestionConvenios": "Gestión de convenios",
     "seguridad": "Seguridad",
-    "catalogos": "Catálogos"
+    "catalogos": "Catálogos",
+    "calendario": "Calendario"
   },
   "ruta": {
     "migas": "Ruta de navegación",
@@ -624,6 +625,95 @@
       "sinRespaldoListar": "Ver la lista de catálogos existentes",
       "sinRespaldoAbrir": "Abrir un catálogo para editarlo o gestionar sus registros",
       "sinRespaldoNota": "El contrato del CU-ADM-01 no expone GET /catalogos ni GET /catalogos/{codigo}. Sin la definición de un catálogo no se pueden dibujar su ficha ni el formulario de sus registros, porque los campos los define el propio catálogo."
+    },
+    "calendario": {
+      "titulo": "Calendario",
+      "intro": "Registre aquí los días festivos y las fechas especiales (cierres de período y demás). El sistema los usa para contar los días hábiles entre dos fechas.",
+      "pestanas": "Secciones del calendario",
+      "pestana": {
+        "calendario": "Calendario",
+        "periodos": "Períodos",
+        "excepciones": "Excepciones",
+        "consultas": "Comprobar"
+      },
+      "codigoActivo": "Código del calendario sobre el que se trabaja",
+      "codigoActivoAyuda": "Por ejemplo: CAL-2026",
+      "codigo": "Código",
+      "nombre": "Nombre",
+      "descripcion": "Descripción",
+      "fechaInicio": "Fecha de inicio",
+      "fechaFin": "Fecha de fin",
+      "estado": "Estado",
+      "estados": {
+        "ACTIVO": "Activo",
+        "INACTIVO": "Inactivo"
+      },
+      "crear": "Crear calendario",
+      "editar": "Guardar cambios",
+      "inactivar": "Inactivar",
+      "eliminar": "Eliminar",
+      "creado": "El calendario se creó correctamente.",
+      "editado": "El calendario se actualizó correctamente.",
+      "eliminado": "El calendario se eliminó.",
+      "estadoCambiado": "El estado del calendario cambió.",
+      "confirmarEliminar": "¿Eliminar el calendario {{codigo}}? No se puede deshacer.",
+      "tipoPeriodo": "Tipo de período",
+      "tiposPeriodo": {
+        "LABORAL": "Laboral",
+        "NO_LABORAL": "No laboral"
+      },
+      "codigoPeriodo": "Código del período",
+      "nombrePeriodo": "Nombre del período",
+      "repeticion": "Se repite",
+      "repeticiones": {
+        "UNA_VEZ": "Una sola vez",
+        "SEMANAL": "Cada semana",
+        "MENSUAL": "Cada mes"
+      },
+      "diasDeLaSemana": "Días de la semana",
+      "diasDelMes": "Días del mes (separados por coma)",
+      "meses": "Meses",
+      "dias": {
+        "MONDAY": "Lunes",
+        "TUESDAY": "Martes",
+        "WEDNESDAY": "Miércoles",
+        "THURSDAY": "Jueves",
+        "FRIDAY": "Viernes",
+        "SATURDAY": "Sábado",
+        "SUNDAY": "Domingo"
+      },
+      "mesesNombre": {
+        "JANUARY": "Enero",
+        "FEBRUARY": "Febrero",
+        "MARCH": "Marzo",
+        "APRIL": "Abril",
+        "MAY": "Mayo",
+        "JUNE": "Junio",
+        "JULY": "Julio",
+        "AUGUST": "Agosto",
+        "SEPTEMBER": "Septiembre",
+        "OCTOBER": "Octubre",
+        "NOVEMBER": "Noviembre",
+        "DECEMBER": "Diciembre"
+      },
+      "agregarPeriodo": "Agregar período",
+      "periodoAgregado": "El período se agregó al calendario.",
+      "fecha": "Fecha",
+      "tipoExcepcion": "Tipo de excepción",
+      "tiposExcepcion": {
+        "DIA_LABORAL": "Día laboral",
+        "DIA_NO_LABORAL": "Día no laboral"
+      },
+      "descripcionExcepcion": "Descripción",
+      "registrarExcepcion": "Registrar excepción",
+      "excepcionRegistrada": "La excepción quedó registrada.",
+      "desde": "Desde",
+      "hasta": "Hasta",
+      "consultarTipoDia": "¿Qué tipo de día es?",
+      "consultarDiasLaborales": "¿Cuántos días hábiles hay?",
+      "respuestaTipoDia": "Ese día es: {{tipo}}",
+      "respuestaDiasLaborales": "Días hábiles: {{dias}}",
+      "sinConsultaDeCalendarios": "Lo que todavía no permite el API: ver la lista de calendarios y abrir uno con sus períodos y excepciones. El contrato del CU-ADM-04 sólo expone altas y cambios, sin ningún GET que devuelva el calendario; por eso se trabaja indicando su código y se comprueba desde la pestaña Comprobar."
     }
   },
   "pasos": {

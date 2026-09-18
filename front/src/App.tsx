@@ -20,6 +20,7 @@ import { IdentificacionPage } from './features/preinversion/identificacion/Ident
 import { PasosProyectoLayout } from './features/preinversion/pasos/PasosProyectoLayout';
 import { PresupuestoPage } from './features/preinversion/presupuesto/PresupuestoPage';
 import { CrearCatalogoPage } from './features/administracion/catalogos/CrearCatalogoPage';
+import { CalendarioPage } from './features/administracion/calendario/CalendarioPage';
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
 import { DiagnosticoPage } from './features/preinversion/diagnostico/DiagnosticoPage';
 import { EstudioTecnicoPage } from './features/preinversion/estudio-tecnico/EstudioTecnicoPage';
@@ -59,6 +60,7 @@ export function App() {
             <Route path="/" element={<HomePage />} />
 
             <Route path="/catalogos-generales" element={<CrearCatalogoPage />} />
+            <Route path="/administracion/calendario" element={<CalendarioPage />} />
             <Route path="/preinversion/bandeja" element={<BandejaPage />} />
             <Route path="/preinversion/captura" element={<CapturaPage />} />
             {/* Procesos 1.2 a 1.5 del árbol: eligen un proyecto con CUP y entran a sus
