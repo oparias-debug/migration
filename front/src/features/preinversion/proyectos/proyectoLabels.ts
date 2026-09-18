@@ -32,13 +32,3 @@ export const ESTADOS_EDITABLES: string[] = [EstadoProyecto.EnRegistro, EstadoPro
 // Roles de Keycloak (realm_access.roles del JWT, ver keycloak/realm-export.json) habilitados
 // para "Registro de Proyecto", según los x-roles documentados para GET /proyectos en
 // CU-01.openapi.yaml (Técnico URP, Técnico PRE, Administrador del Sistema, Usuarios
-// Internos/Externos). Se usa para ocultar el enlace del sidebar a quien no tiene acceso —
-// listar() en back no restringe por rol, pero un actor sin fila en USUARIO (ver
-// DevDataSeeder) igual recibiría 401 al entrar, así que ocultarlo evita ese callejón sin
-// salida en la UI.
-export const ROLES_CON_ACCESO_REGISTRO_PROYECTO = [
-  'TECNICO_URP',
-  'TECNICO_PRE',
-  'ADMINISTRADOR_DEL_SISTEMA',
-  'USUARIOS_INTERNOS',
-];

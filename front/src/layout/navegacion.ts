@@ -43,6 +43,14 @@ export interface Modulo {
   readonly submenu?: readonly SubModulo[];
 }
 
+/**
+ * Quién ve Preinversión. Medido contra el back el 18/09/2026: sólo estos roles
+ * reciben 200 en /proyectos, /captura-proyectos y /solicitudes; el resto de los
+ * usuarios del realm reciben 401, así que la opción sólo les llevaría a un
+ * error. El back es quien manda: esto únicamente evita el callejón sin salida.
+ */
+const ROLES_PREINVERSION = ['TECNICO_URP', 'TECNICO_PRE', 'COORDINADOR_PRE', 'ADMINISTRADOR_DEL_SISTEMA'];
+
 export const MODULOS: readonly Modulo[] = [
   { clave: 'inicio', icono: 'menu-inicio', texto: 'menu.inicio', ruta: '/' },
   // 0. BANCO DE PROYECTOS (CU-PRE-29)
@@ -63,6 +71,7 @@ export const MODULOS: readonly Modulo[] = [
           { ruta: '/preinversion/proyectos', texto: 'menu.registroProyecto', rolesPreferentes: ['TECNICO_URP'] },
           { ruta: '/preinversion/bandeja', texto: 'menu.bandeja', rolesPreferentes: ['COORDINADOR_PRE', 'TECNICO_PRE'] },
         ],
+        rolesRequeridos: ROLES_PREINVERSION,
       },
       // 1.2 a 1.5 trabajan sobre un proyecto: cada opción abre la lista de
       // proyectos con CUP y, al elegir uno, se entra a sus pasos.
@@ -75,9 +84,10 @@ export const MODULOS: readonly Modulo[] = [
           { ruta: '/preinversion/creacion-ruta', texto: 'menu.creacionRuta' },
           { ruta: '/preinversion/captura', texto: 'menu.captura' },
         ],
+        rolesRequeridos: ROLES_PREINVERSION,
       },
-      { clave: 'formulacion', texto: 'menu.formulacionEvaluacion', ruta: '/preinversion/formulacion' },
-      { clave: 'programacion-proyecto', texto: 'menu.programacionProyecto', ruta: '/preinversion/programacion-proyecto' },
+      { clave: 'formulacion', texto: 'menu.formulacionEvaluacion', ruta: '/preinversion/formulacion', rolesRequeridos: ROLES_PREINVERSION },
+      { clave: 'programacion-proyecto', texto: 'menu.programacionProyecto', ruta: '/preinversion/programacion-proyecto', rolesRequeridos: ROLES_PREINVERSION },
       {
         clave: 'gestion-proyecto',
         texto: 'menu.gestionProyecto',
@@ -87,6 +97,7 @@ export const MODULOS: readonly Modulo[] = [
           { ruta: '/preinversion/gestion-proyecto', texto: 'menu.gestionProyecto' },
           { ruta: '/preinversion/opinion-tecnica', texto: 'pasos.opinionTecnica' },
         ],
+        rolesRequeridos: ROLES_PREINVERSION,
       },
     ],
   },

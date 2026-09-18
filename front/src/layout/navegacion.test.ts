@@ -24,6 +24,28 @@ describe('menú según el árbol del sistema', () => {
   });
 });
 
+// Medido contra el back el 18/09/2026: el resto de los roles del realm recibe 401
+// en los endpoints de preinversión, así que verían opciones que no llevan a nada.
+describe('quién ve Preinversión', () => {
+  const preinversion = MODULOS.find((m) => m.clave === 'preinversion')!;
+
+  it('todas sus opciones exigen rol', () => {
+    expect(preinversion.submenu?.every((s) => s.rolesRequeridos?.length)).toBe(true);
+  });
+
+  it('la abren los roles que el back acepta', () => {
+    for (const rol of ['TECNICO_URP', 'TECNICO_PRE', 'COORDINADOR_PRE', 'ADMINISTRADOR_DEL_SISTEMA']) {
+      expect(preinversion.submenu?.every((s) => s.rolesRequeridos?.includes(rol))).toBe(true);
+    }
+  });
+
+  it('no la ven los roles a los que el back responde 401', () => {
+    for (const rol of ['VIABILIZADOR', 'TECNICO_UAL', 'TECNICO_PRO', 'TECNICO_SYMP', 'JEFE_DGI', 'SUBJEFE_DGI', 'USUARIOS_INTERNOS']) {
+      expect(preinversion.submenu?.some((s) => s.rolesRequeridos?.includes(rol))).toBe(false);
+    }
+  });
+});
+
 describe('destinoDe', () => {
   it('Asignación CUP lleva al Técnico URP a Registro de Proyecto', () => {
     expect(destinoDe(sub('asignacion-cup'), conRoles('TECNICO_URP'))).toBe('/preinversion/proyectos');

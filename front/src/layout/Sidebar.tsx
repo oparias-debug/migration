@@ -90,6 +90,9 @@ export function Sidebar({
       <nav className="menu-nav" aria-label={t('app.nombre')}>
         {MODULOS.map((modulo) => {
           const subs = submenuDe(modulo);
+          // Un módulo al que el rol no le deja ninguna opción no se pinta: el
+          // botón no llevaría a ninguna parte.
+          if (modulo.submenu && subs.length === 0) return null;
           const activo = claveActiva === modulo.clave;
           const abiertoAqui = subs.length > 0 && desplegado === modulo.clave;
           return (
