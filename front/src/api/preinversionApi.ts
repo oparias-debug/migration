@@ -11,6 +11,7 @@ import { PreinversinPoblacinObjetivoApi } from './generated/preinversion-poblaci
 import { PreinversionAreaDeInfluenciaApi } from './generated/preinversion-area-influencia';
 import { PreinversinAnlisisDeMercadoApi } from './generated/preinversion-mercado';
 import { PreinversinDescripcinTcnicaApi } from './generated/preinversion-descripcion-tecnica';
+import { PreinversinLocalizacinApi } from './generated/preinversion-localizacion';
 import {
   CatlogosRegistroDeProyectosApi,
   CatlogosPresupuestoApi,
@@ -76,6 +77,8 @@ export const analisisMercadoApi = new PreinversinAnlisisDeMercadoApi(undefined, 
 export const descripcionTecnicaApi = new PreinversinDescripcinTcnicaApi(undefined, undefined, preinversionAxios);
 // El catálogo de unidades de medida quedó con tag propio en CU-ADM-02.
 export const catalogoUnidadesApi = new CatlogosDescripcinTcnicaApi(undefined, undefined, preinversionAxios);
+// CU-PRE-12 (Localización), segunda pestaña del capítulo 1.3.2.2.
+export const localizacionApi = new PreinversinLocalizacinApi(undefined, undefined, preinversionAxios);
 
 export type {
   Proyecto,

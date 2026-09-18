@@ -63,11 +63,10 @@ describe('EstudioTecnicoPage · CU-PRE-11', () => {
     swalFire.mockResolvedValue({ isConfirmed: true });
   });
 
-  it('muestra las dos pestañas del capítulo, con Localización en construcción', async () => {
+  it('muestra las dos pestañas del capítulo', async () => {
     montar();
     expect(await screen.findByRole('tab', { name: 'Descripción técnica' })).toHaveAttribute('aria-selected', 'true');
-    fireEvent.click(screen.getByRole('tab', { name: 'Localización' }));
-    expect(screen.getByText('En construcción')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Localización' })).toBeInTheDocument();
   });
 
   it('trae la descripción que ya venía y los catálogos', async () => {

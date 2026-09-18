@@ -487,6 +487,38 @@
       "agregar": "Agregar producto",
       "sinCatalogos": "Estos catálogos no están disponibles: {{catalogos}}. No se puede elegir en esas columnas hasta que respondan.",
       "componenteObligatorio": "Cada fila necesita un componente. Elíjalo antes de guardar."
+    },
+    "localizacion": {
+      "departamento": "Departamento",
+      "distrito": "Distrito",
+      "direccion": "Dirección específica",
+      "latitud": "Latitud",
+      "longitud": "Longitud",
+      "requiereTerreno": "¿Requiere terreno?",
+      "propietario": "Propietario",
+      "especifique": "Especifique",
+      "departamentoFila": "Departamento de la fila {{numero}}",
+      "distritoFila": "Distrito de la fila {{numero}}",
+      "direccionFila": "Dirección específica de la fila {{numero}}",
+      "latitudFila": "Latitud de la fila {{numero}}",
+      "longitudFila": "Longitud de la fila {{numero}}",
+      "requiereTerrenoFila": "¿La ubicación {{numero}} requiere adquirir terreno?",
+      "propietarioFila": "Propietario del terreno de la fila {{numero}}",
+      "especifiqueFila": "Especifique el propietario de la fila {{numero}}",
+      "eliminarFila": "Eliminar la ubicación {{numero}}",
+      "agregar": "Agregar ubicación",
+      "autocompletar": "Autocompletar desde área de influencia",
+      "autocompletado": "Se trajeron las ubicaciones del área de influencia. Revise y guarde.",
+      "sinAreaInfluencia": "El área de influencia todavía no tiene ubicaciones registradas.",
+      "sinCatalogo": "El catálogo de ubicaciones no está disponible: no se puede elegir departamento ni distrito hasta que responda.",
+      "propietarios": {
+        "INSTITUCION_PROPIETARIA_DEL_PROYECTO": "Institución propietaria del proyecto",
+        "OTRA_INSTITUCION_PUBLICA": "Otra institución pública",
+        "LA_MUNICIPALIDAD": "La municipalidad",
+        "COMODATO": "Comodato",
+        "OTROS": "Otros"
+      },
+      "distritoODesconocido": "No se encontró el proyecto o alguno de los distritos elegidos. Revise los distritos de la tabla."
     }
   },
   "app": {

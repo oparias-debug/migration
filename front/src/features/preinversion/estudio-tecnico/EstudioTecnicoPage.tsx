@@ -5,13 +5,13 @@ import { preinversionApi } from '../../../api/preinversionApi';
 import { useAuth } from '../../../auth/useAuth';
 import { Pestanas } from '../../../components/Pestanas';
 import { DescripcionTecnicaTab } from './DescripcionTecnicaTab';
+import { LocalizacionTab } from './LocalizacionTab';
 
 /**
  * Capítulo 1.3.2.2 del árbol del sistema, "Estudio técnico": dos pestañas.
  *
- * Descripción técnica es CU-PRE-11, que ya tiene contrato y back. Localización
- * es CU-PRE-12, que todavía no tiene contrato publicado: se deja en su sitio,
- * en construcción, para que se vea el capítulo completo.
+ * Descripción técnica es CU-PRE-11 y Localización es CU-PRE-12; las dos con
+ * contrato y back propios, cada una con su guardado.
  */
 const PESTANAS = [
   { clave: 'descripcion', texto: 'preinversion.estudioTecnico.pestana.descripcion' },
@@ -59,7 +59,7 @@ export function EstudioTecnicoPage() {
 
       <div role="tabpanel" id={`panel-${pestana}`}>
         {pestana === 'descripcion' && <DescripcionTecnicaTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
-        {pestana === 'localizacion' && <p className="lead">{t('placeholder.title')}</p>}
+        {pestana === 'localizacion' && <LocalizacionTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
       </div>
 
       <div className="acciones-form">
