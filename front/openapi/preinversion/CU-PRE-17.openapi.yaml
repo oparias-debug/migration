@@ -1,9 +1,3 @@
-# NOTA: el fragmento original referencia './CU-PRE-3.5.openapi.yaml', que no
-# existe — el fichero real se llama CU-PRE-03.5.openapi.yaml — y por eso no
-# generaba cliente. Aquí van corregidas las dos referencias reales; las demás
-# menciones a "CU-PRE-3.5" son prosa y se dejan como están. Mismo defecto que
-# tenía CU-PRE-03 con './CU-01.openapi.yaml'. Reportado para corregirlo también
-# en el repositorio de especificaciones.
 openapi: 3.0.3
 info:
   title: SIIP - Preinversión - CU-PRE-17 Presupuesto de Inversión
@@ -398,7 +392,7 @@ components:
         '
       properties:
         tipoInsumo:
-          $ref: '../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/InsumoTipoResumen'
+          $ref: '../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/InsumoTipoResumen'
         costosPorPeriodo:
           type: array
           items:
@@ -521,7 +515,7 @@ components:
       - costo
       properties:
         componente:
-          $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/TipoCostoResumen
+          $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/TipoCostoResumen
         costo:
           type: number
           format: double

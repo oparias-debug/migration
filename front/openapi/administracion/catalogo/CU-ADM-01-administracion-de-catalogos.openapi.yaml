@@ -20,7 +20,7 @@ tags:
     description: Operaciones sobre registros pertenecientes a un catálogo.
 
 paths:
-  /catalogos:
+  /administracion/catalogos:
     post:
       operationId: crearCatalogo
       summary: Crear un nuevo catálogo maestro
@@ -64,7 +64,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /catalogos/existencia:
+  /administracion/catalogos/existencia:
     get:
       operationId: buscarCatalogoPorNombre
       summary: Verificar si existe un catálogo con un nombre dado (catalogMaster)
@@ -91,7 +91,7 @@ paths:
         '403':
           $ref: '#/components/responses/NoAutorizado'
 
-  /catalogos/{codigoCatalogo}/hijos:
+  /administracion/catalogos/{codigoCatalogo}/hijos:
     get:
       operationId: buscarCatalogosHijos
       summary: Consultar la lista de catálogos hijos de un catálogo padre
@@ -118,7 +118,7 @@ paths:
         '403':
           $ref: '#/components/responses/NoAutorizado'
 
-  /catalogos/{codigoCatalogo}:
+  /administracion/catalogos/{codigoCatalogo}:
     patch:
       operationId: actualizarCatalogo
       summary: Actualizar nombre, catálogo padre, estado, vigencia y/o campos de un catálogo
@@ -170,7 +170,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /catalogos/{codigoCatalogo}/inactivacion:
+  /administracion/catalogos/{codigoCatalogo}/inactivacion:
     post:
       operationId: inactivarCatalogo
       summary: Inactivar un catálogo (transición de estado ACTIVE → INACTIVE)
@@ -216,7 +216,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /catalogos/{codigoCatalogo}/registros:
+  /administracion/catalogos/{codigoCatalogo}/registros:
     post:
       operationId: crearRegistro
       summary: Crear un registro dentro de un catálogo existente
@@ -292,7 +292,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /catalogos/{codigoCatalogo}/registros/{key}:
+  /administracion/catalogos/{codigoCatalogo}/registros/{key}:
     get:
       operationId: buscarRegistroPorClave
       summary: Buscar un registro de un catálogo por su clave (KEY)
@@ -374,7 +374,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /catalogos/{codigoCatalogo}/registros/{key}/inactivacion:
+  /administracion/catalogos/{codigoCatalogo}/registros/{key}/inactivacion:
     post:
       operationId: inactivarRegistro
       summary: Inactivar un registro (transición de estado ACTIVE → INACTIVE)
