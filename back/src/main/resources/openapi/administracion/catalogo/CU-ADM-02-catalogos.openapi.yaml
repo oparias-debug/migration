@@ -103,7 +103,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/criterios-elegibilidad:
     get:
       operationId: listarCriteriosElegibilidad
@@ -131,7 +131,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/criterios-priorizacion:
     get:
       operationId: listarCriteriosPriorizacion
@@ -160,7 +160,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/ejes-plan-gobierno:
     get:
       operationId: listarEjesPlanGobierno
@@ -190,7 +190,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/ejes-tematicos:
     get:
       operationId: listarEjesTematicos
@@ -220,7 +220,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/escala-calificacion-subcriterio:
     get:
       operationId: listarEscalaCalificacionSubcriterio
@@ -259,13 +259,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
         '404':
           description: El subcriterio indicado no existe.
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/especificar-elegibilidad:
     get:
       operationId: listarCatalogoEspecificarElegibilidad
@@ -299,7 +299,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/indicadores-resultado:
     get:
       operationId: listarIndicadoresResultado
@@ -333,7 +333,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/insumos-tipo:
     get:
       operationId: listarInsumosTipo
@@ -361,7 +361,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/medidas:
     get:
       operationId: listarMedidasCatalogo
@@ -401,7 +401,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/parametros-beneficio:
     get:
       operationId: listarParametrosBeneficio
@@ -429,7 +429,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/planes-sectoriales:
     get:
       operationId: listarPlanesSectoriales
@@ -459,7 +459,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/productos-indicadores:
     get:
       operationId: listarProductosIndicadores
@@ -484,7 +484,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/rangos-interpretacion-priorizacion:
     get:
       operationId: listarRangosInterpretacionPriorizacion
@@ -517,7 +517,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/sectores:
     get:
       operationId: listarSectores
@@ -550,7 +550,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/tecnicos-pre:
     get:
       operationId: listarTecnicosPre
@@ -572,13 +572,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: ../preinversion/CU-PRE-01.openapi.yaml#/components/schemas/UsuarioResumen
+                  $ref: ../../preinversion/CU-PRE-01.openapi.yaml#/components/schemas/UsuarioResumen
         '401':
           description: No autenticado.
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/tipos-costo:
     get:
       operationId: listarTiposCosto
@@ -606,7 +606,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/ubicaciones-geograficas:
     get:
       operationId: listarUbicacionesGeograficas
@@ -645,7 +645,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
   /catalogos/unidades-medida:
     get:
       operationId: listarUnidadesMedida
@@ -673,7 +673,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+                $ref: ../CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
 components:
   securitySchemes:
     bearerAuth:

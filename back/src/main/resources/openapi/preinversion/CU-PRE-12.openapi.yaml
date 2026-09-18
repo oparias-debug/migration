@@ -1,0 +1,321 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-12 Localización
+  version: "1.3.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-12 "Localización"
+    (UC-PRE-12-Localizacion.md, versión 1.3) y sus 3 historias BDD. Actor
+    principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE.
+    Mismo criterio que CU-PRE-06/07/08/09/11 para RN01: `x-roles` no
+    incluye "Usuarios Internos/Externos". Introduce el recurso
+    `Localizacion`, hijo de `Proyecto`. El Anexo C.2 (catálogo de
+    ubicaciones geográficas) es el mismo ya definido en CU-PRE-03.5
+    (`GET /catalogos/ubicaciones-geograficas`) y ya reutilizado por
+    referencia textual en CU-PRE-07/08; aquí se aplica el mismo criterio
+    (campos `string` simples, sin `$ref` real). A diferencia de CU-PRE-08,
+    "Departamento" **sí** es independientemente seleccionable en filas
+    adicionadas (no derivado de "Distrito") — ver contrato-CU-PRE-12.md
+    para la comparación explícita con ese fragmento.
+
+    ⚠️ **Actualización (10/09/2026, a solicitud explícita): el documento
+    fuente pasó de v1.0 a v1.3**, con tres cambios funcionales explícitos
+    del equipo de negocio (no correcciones de extracción del PDF):
+    (1) el autocompletado (RN03, FA-03) y la restricción de distritos en
+    filas adicionadas (RN04) cambian de fuente — de CU-PRE-07 "Población
+    Objetivo" a **CU-PRE-08 "Área de Influencia"**; el botón se renombra
+    de "Traer ubicación de Población Objetivo" a "Traer ubicación de Área
+    de Influencia"; (2) "¿El proyecto requiere de la adquisición de un
+    terreno o inmueble?"/"¿Quién es el propietario...?"/"Especifique"
+    dejan de ser una sección única por proyecto y pasan a ser 3 columnas
+    más de cada fila de la tabla "LOCALIZACIÓN" — se registran **por
+    ubicación**, no una sola vez por proyecto. Se actualizó
+    `autocompletarLocalizacionDesdePoblacionObjetivo` →
+    `autocompletarLocalizacionDesdeAreaInfluencia` (mismo patrón de nombre
+    que `autocompletarAreaInfluenciaDesdePoblacionObjetivo` en CU-PRE-08),
+    y se aplanaron los 3 campos de propiedad del terreno dentro de
+    `FilaLocalizacionRequest`/`Localizacion`, eliminando
+    `PropiedadTerrenoRequest`/`propiedadTerreno` como sección aparte del
+    proyecto. Ver contrato-CU-PRE-12.md, sección "Actualización".
+
+paths:
+
+  /proyectos/{idProyecto}/localizacion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerLocalizacion
+      summary: Consultar la pantalla "Localización" (Anexo A.1)
+      description: >
+        Igual que CU-PRE-06/07/08/09/11: ninguna regla de este CU condiciona
+        el acceso de Técnico PRE a que la información ya se haya guardado al
+        menos una vez; no se modeló ese 404 condicional.
+      tags: [Preinversión - Localización]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        "200":
+          description: Localización del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Localizacion'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP ni Técnico PRE, o
+            (Técnico URP/Técnico PRE) el proyecto no está dentro de su
+            alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarLocalizacion
+      summary: Registrar y guardar la localización (botón "Guardar", FA-01)
+      description: >
+        RN08 (bordes rojos) es puramente visual, mismo criterio que
+        CU-PRE-04/05/06/08/11 — no genera 400. RN04 (distritos de filas
+        adicionadas dentro de los departamentos de CU-PRE-08 "Área de
+        Influencia" — fuente actualizada por cambio funcional v1.2, antes
+        CU-PRE-07) tampoco genera 400: la propia historia BDD solo modela
+        el caso válido y señala explícitamente que no se especifica el
+        mensaje para el caso inválido — se documenta como expectativa, no
+        se fuerza. El bloqueo de "Coordenadas" cuando Distrito = "Nivel
+        nacional" (por fila) y la habilitación condicional de "¿Quién es
+        el propietario...?"/"Especifique" (ahora también por fila, cambio
+        funcional v1.1) tampoco se enforced estructuralmente: son reglas
+        que dependen del valor de otro campo en tiempo de ejecución, no
+        hechos fijos como el bloqueo de Departamento/Región en CU-PRE-08 —
+        se documentan en la descripción de cada campo.
+      tags: [Preinversión - Localización]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocalizacionRequest'
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "¡Guardado! Sus datos han sido
+            guardados exitosamente.", Anexo A.2); el modal y su "Aceptar"
+            son de cliente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Localizacion'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP, o el proyecto no está en
+            su alcance de Unidad Ejecutora (RN01). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/localizacion/autocompletado:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: autocompletarLocalizacionDesdeAreaInfluencia
+      summary: Traer ubicación de Área de Influencia (botón "Traer ubicación de Área de Influencia", RN03, FA-03)
+      description: >
+        ⚠️ Renombrado por cambio funcional v1.1/v1.3 (nombre del PDF
+        original: "Traer ubicación de Población Objetivo", fuente
+        CU-PRE-07 "Población Objetivo"): la fuente activa ahora es
+        CU-PRE-08 "Área de Influencia", con el nombre de botón actualizado
+        para reflejarlo — mismo patrón de nomenclatura ya usado en
+        `autocompletarAreaInfluenciaDesdePoblacionObjetivo` de CU-PRE-08
+        (`autocompletar{Destino}Desde{Origen}`). Reemplaza por completo
+        las filas actuales con una fila por cada distrito ya registrado en
+        CU-PRE-08 "Área de Influencia", completando Departamento y
+        Distrito siempre, y Dirección Específica/Coordenadas solo "cuando
+        sea necesario" (RN03) — es decir, pueden quedar nulos si CU-PRE-08
+        no tiene esa información. No recibe cuerpo.
+      tags: [Preinversión - Localización]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: Localización autocompletada desde Área de Influencia (CU-PRE-08).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Localizacion'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TipoPropietario:
+      type: string
+      description: Catálogo de propietarios (Anexo C.1), listado fijo.
+      enum:
+        - INSTITUCION_PROPIETARIA_DEL_PROYECTO
+        - OTRA_INSTITUCION_PUBLICA
+        - LA_MUNICIPALIDAD
+        - COMODATO
+        - OTROS
+
+    Coordenadas:
+      type: object
+      description: >
+        Formato DD (Grados Decimales). Bloqueado en el cliente cuando
+        `distrito` de la misma fila es "Nivel nacional" (Anexo B.1); no
+        forzado como restricción de servidor, ver descripción de
+        `guardarLocalizacion`.
+      required: [latitud, longitud]
+      properties:
+        latitud:
+          type: number
+          format: double
+        longitud:
+          type: number
+          format: double
+
+    FilaLocalizacionRequest:
+      type: object
+      description: >
+        Fila de la tabla "LOCALIZACIÓN". Se reutiliza también como forma
+        de lectura (mismo criterio que `AlternativaSolucionRequest` en
+        CU-PRE-05/`InteresadoRequest` en CU-PRE-06: no hay campos
+        calculados por el servidor a nivel de fila). A diferencia de
+        CU-PRE-08 (donde `departamento`/`region` son siempre derivados de
+        `distrito` y no existen en el request), aquí "Departamento" es
+        directamente seleccionable en filas adicionadas (RN04: "los
+        campos serán editables para que seleccione el respectivo
+        departamento"), no derivado — por eso ambos campos conviven en
+        este mismo schema de escritura. Agregar/eliminar una fila
+        (RN04/RN05) ocurre en el cliente antes de este `PUT` — reemplazo
+        completo del array.
+
+        ⚠️ Cambio funcional v1.1 (no proviene del PDF original, decisión
+        de negocio explícita): `requiereAdquisicionTerreno`/`propietario`/
+        `especifique` (columnas 5ª, 6ª y 7ª de la tabla, inmediatamente
+        después de "Coordenadas") se registran **por cada fila/ubicación**
+        — antes de esta actualización, este fragmento los modelaba como
+        una sección única por proyecto (`PropiedadTerrenoRequest`,
+        eliminada). Se aplanaron directamente en esta fila.
+      properties:
+        departamento:
+          type: string
+          description: Tomado de GET /catalogos/ubicaciones-geograficas (CU-PRE-03.5).
+        distrito:
+          type: string
+          description: >
+            Tomado del mismo catálogo. RN04: en filas adicionadas, se
+            espera que pertenezca a uno de los departamentos ya
+            registrados en CU-PRE-08 "Área de Influencia" (fuente
+            actualizada por cambio funcional v1.2, antes CU-PRE-07) — no
+            forzado como error de servidor (ver descripción de
+            `guardarLocalizacion`).
+        direccionEspecifica:
+          type: string
+          nullable: true
+        coordenadas:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/Coordenadas'
+          nullable: true
+        requiereAdquisicionTerreno:
+          type: boolean
+          nullable: true
+          description: >
+            "¿El proyecto requiere de la adquisición de un terreno o
+            inmueble?" (Sí/No), por fila desde el cambio funcional v1.1
+            (antes, una sola vez por proyecto).
+        propietario:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/TipoPropietario'
+          description: >
+            RN06 — solo aplica si `requiereAdquisicionTerreno = true` de
+            esta misma fila. Por fila desde el cambio funcional v1.1.
+        especifique:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: >
+            RN07 — solo aplica si `propietario` de esta misma fila es
+            OTRA_INSTITUCION_PUBLICA, LA_MUNICIPALIDAD, COMODATO u OTROS.
+            Por fila desde el cambio funcional v1.1.
+
+    LocalizacionRequest:
+      type: object
+      properties:
+        filas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaLocalizacionRequest'
+
+    Localizacion:
+      type: object
+      description: Localización del proyecto (lectura).
+      required: [idProyecto, filas]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        filas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaLocalizacionRequest'

@@ -636,21 +636,21 @@ components:
         unidadEjecutora:
           $ref: '#/components/schemas/UnidadEjecutoraResumen'
         sector:
-          $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/SectorResumen
+          $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/SectorResumen
         ejeTematico:
-          $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/EjeTematicoResumen
+          $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/EjeTematicoResumen
         medidasGrd:
           type: array
           items:
-            $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/MedidaCatalogo
+            $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/MedidaCatalogo
         medidasGrc:
           type: array
           items:
-            $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/MedidaCatalogo
+            $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/MedidaCatalogo
         medidasAcc:
           type: array
           items:
-            $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/MedidaCatalogo
+            $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/MedidaCatalogo
         esProyectoEmergencia:
           type: boolean
         tipoEvento:
@@ -663,12 +663,12 @@ components:
           type: object
           nullable: true
           allOf:
-          - $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/EjePlanGobiernoResumen
+          - $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/EjePlanGobiernoResumen
         planSectorialRegional:
           type: object
           nullable: true
           allOf:
-          - $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/PlanSectorialRegionalResumen
+          - $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/PlanSectorialRegionalResumen
         descripcionProyecto:
           type: string
           maxLength: 1000

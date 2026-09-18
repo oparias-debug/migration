@@ -48,4 +48,14 @@ public class Localizacion {
 
     @Column(name = "LONGITUD", precision = 10, scale = 7)
     private BigDecimal longitud;
+
+    @Column(name = "REQUIERE_ADQUISICION_TERRENO")
+    private Boolean requiereAdquisicionTerreno;
+
+    @Column(name = "PROPIETARIO", length = 150)
+    private String propietario;
+
+    @Column(name = "ESPECIFIQUE", length = 500)
+    private String especifique;
 }
+

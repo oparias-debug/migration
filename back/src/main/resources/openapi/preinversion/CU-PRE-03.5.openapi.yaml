@@ -776,10 +776,10 @@ components:
           description: RN17 — solo no nulo cuando el proyecto está en etapa de Ejecución. RN18 — se alimenta automáticamente.
         sector:
           allOf:
-          - $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/SectorResumen
+          - $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/SectorResumen
           description: RN14 lista "Macrosector" como campo propio; se expone anidado en `sector.macrosector` (mismo objeto ya definido en CU-PRE-01), no como campo separado.
         ejeTematico:
-          $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/EjeTematicoResumen
+          $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/EjeTematicoResumen
         esProyectoGrdGrcAcc:
           type: boolean
           description: 'RN14 lo describe como un único campo booleano ("Es Proyecto GRD/GRC/ACC"), pero CU-PRE-01 modela GRD/GRC/ACC como 3 arrays de categorías independientes (medidasGrd/medidasGrc/medidasAcc). Se modela aquí como un valor derivado (true si alguno de esos 3 arrays no está vacío en `Proyecto`), no como un campo propio almacenado — ver contrato-CU-PRE-03.5.md. Nomenclatura: se usó el nombre de RN14 ("GRD/GRC/ACC"), no el del mockup del Anexo A.3 ("GRD/ACC", sin "GRC") — discrepancia ya señalada por el propio CU.
@@ -796,12 +796,12 @@ components:
         ejePlanGobierno:
           type: object
           allOf:
-          - $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/EjePlanGobiernoResumen
+          - $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/EjePlanGobiernoResumen
           nullable: true
         planSectorialRegional:
           type: object
           allOf:
-          - $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/PlanSectorialRegionalResumen
+          - $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/PlanSectorialRegionalResumen
           nullable: true
         objetivoProyecto:
           type: string

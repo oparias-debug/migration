@@ -144,7 +144,7 @@ components:
           type: object
           nullable: true
           allOf:
-          - $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/TipoCostoResumen
+          - $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/TipoCostoResumen
         descripcionProducto:
           type: string
           nullable: true
@@ -157,7 +157,7 @@ components:
           type: object
           nullable: true
           allOf:
-          - $ref: '../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/UnidadMedidaResumen'
+          - $ref: '../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/UnidadMedidaResumen'
     DescripcionTecnicaRequest:
       type: object
       properties:

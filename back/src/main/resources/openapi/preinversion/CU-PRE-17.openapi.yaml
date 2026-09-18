@@ -392,7 +392,7 @@ components:
         '
       properties:
         tipoInsumo:
-          $ref: '../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/InsumoTipoResumen'
+          $ref: '../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/InsumoTipoResumen'
         costosPorPeriodo:
           type: array
           items:
@@ -515,7 +515,7 @@ components:
       - costo
       properties:
         componente:
-          $ref: ../administracion/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/TipoCostoResumen
+          $ref: ../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/TipoCostoResumen
         costo:
           type: number
           format: double

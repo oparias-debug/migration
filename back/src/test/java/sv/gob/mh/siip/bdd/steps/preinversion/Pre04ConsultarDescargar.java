@@ -97,7 +97,7 @@ public class Pre04ConsultarDescargar {
         usuarioRepository.save(Usuario.builder()
                 .nombreUsuario(nombreUsuarioUrp)
                 .nombreCompleto("Tecnico URP (BDD)")
-                .correo(nombreUsuarioUrp + "@example.com")
+                .correo(nombreUsuarioUrp + EXAMPLECOM)
                 .rol(RolUsuario.TECNICO_URP)
                 .unidadEjecutora(unidadEjecutoraProyecto)
                 .institucion(institucion)
@@ -144,7 +144,7 @@ public class Pre04ConsultarDescargar {
         usuarioRepository.save(Usuario.builder()
                 .nombreUsuario(nombreUsuarioUrp)
                 .nombreCompleto("Tecnico URP (BDD)")
-                .correo(nombreUsuarioUrp + "@example.com")
+                .correo(nombreUsuarioUrp + EXAMPLECOM)
                 .rol(RolUsuario.TECNICO_URP)
                 .unidadEjecutora(unidadEjecutoraProyecto)
                 .institucion(institucion)
@@ -157,6 +157,7 @@ public class Pre04ConsultarDescargar {
                 contenidoCargado);
         identificacionService.cargarArbolProblemas(proyecto.getId(), archivo);
     }
+    private static final String EXAMPLECOM = "@example.com";
 
     @Cuando("el actor hace clic en la opción de descarga del archivo")
     public void el_actor_hace_clic_en_la_opcion_de_descarga_del_archivo() throws IOException {
@@ -204,7 +205,7 @@ public class Pre04ConsultarDescargar {
         usuarioRepository.save(Usuario.builder()
                 .nombreUsuario(nombreUsuarioPre)
                 .nombreCompleto("Tecnico PRE (BDD)")
-                .correo(nombreUsuarioPre + "@example.com")
+                .correo(nombreUsuarioPre + EXAMPLECOM)
                 .rol(RolUsuario.TECNICO_PRE)
                 .activo(true)
                 .build());
@@ -222,7 +223,7 @@ public class Pre04ConsultarDescargar {
         usuarioRepository.save(Usuario.builder()
                 .nombreUsuario(nombreUsuario)
                 .nombreCompleto("Usuario Interno/Externo (BDD)")
-                .correo(nombreUsuario + "@example.com")
+                .correo(nombreUsuario + EXAMPLECOM)
                 .rol(RolUsuario.TECNICO_PRE)
                 .unidadEjecutora(otraUnidadEjecutora)
                 .institucion(otraInstitucion)

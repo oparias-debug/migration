@@ -12,7 +12,7 @@
 	<artifactId>back</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Back</name>
-	<description>Backend unico: catalogos, usuarios, proyectos, workflow y preinversion</description>
+	<description>Backend unico: catalogos, calendario, usuarios, proyectos, workflow y preinversion</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -199,19 +199,6 @@
 				</configuration>
 				<executions>
 					<execution>
-						<id>generate-administracion-cu01-api</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-						<configuration>
-							<inputSpec>
-								${project.basedir}/src/main/resources/openapi/administracion/CU-ADM-01-administracion-de-catalogos.openapi.yaml</inputSpec>
-							<apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
-							<modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
-						</configuration>
-					</execution>
-					<execution>
 						<id>generate-administracion-cu02-api</id>
 						<phase>generate-sources</phase>
 						<goals>
@@ -219,7 +206,7 @@
 						</goals>
 						<configuration>
 							<inputSpec>
-								${project.basedir}/src/main/resources/openapi/administracion/CU-ADM-02-catalogos.openapi.yaml</inputSpec>
+								${project.basedir}/src/main/resources/openapi/administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml</inputSpec>
 							<apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
 							<modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
 						</configuration>
@@ -393,19 +380,57 @@
 							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
 						</configuration>
 					</execution>
-                    <execution>
-                        <id>generate-preinversion-cu11-api</id>
+					<execution>
+						<id>generate-preinversion-cu11-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-11.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu12-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-12.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+                   <execution>
+                        <id>generate-administracion-cu01-api</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-11.openapi.yaml</inputSpec>
-                            <apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
-                            <modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/administracion/catalogo/CU-ADM-01-administracion-de-catalogos.openapi.yaml</inputSpec>
+                            <apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
+                            <modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
                         </configuration>
                     </execution>
-                </executions>
+                   <execution>
+                        <id>generate-administracion-cu04-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/administracion/calendario/CU-ADM-04-gestion-calendario.openapi.yaml</inputSpec>
+                            <apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
+                            <modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
+                        </configuration>
+                    </execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

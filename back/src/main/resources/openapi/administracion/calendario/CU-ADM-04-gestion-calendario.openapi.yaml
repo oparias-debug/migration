@@ -1,0 +1,1057 @@
+openapi: 3.0.3
+info:
+  title: SIIP v2 — CU-ADM-04 Gestión de Calendarios
+  description: >
+    Contrato consolidado del caso de uso CU-ADM-04 (Gestión de calendarios).
+    Agrupa los fragmentos generados a partir de las historias HU-ADM-04-01 a
+    HU-ADM-04-11 y sus respectivas historias BDD (.feature). Fuente de verdad
+    para el codegen de interfaces Java (Spring, contrato-primero) y del
+    cliente TypeScript/React.
+  version: "1.0.0"
+tags:
+  - name: Gestión de Calendarios
+    description: >
+      Operaciones de administración (crear, configurar ítems, cambiar estado)
+      reservadas a ADMINISTRADOR y ADMINISTRADOR_CALENDARIO (RN12).
+  - name: Consultas de Calendario
+    description: >
+      Consultas de solo lectura abiertas a cualquier usuario autenticado del
+      sistema, sin requerir rol administrativo (RN18).
+
+security:
+  - bearerAuth: []
+
+paths:
+  /calendarios:
+    post:
+      operationId: crearCalendario
+      summary: Crear un calendario
+      description: >
+        Crea un calendario indicando código, nombre, descripción, fecha de
+        inicio, fecha de fin y estado. El actor autenticado queda
+        registrado como administrador responsable del calendario (RN12).
+        HU-ADM-04-01 / RN08 / RN12 / RN14.
+      tags: [Gestión de Calendarios]
+      x-roles: [ADMINISTRADOR, ADMINISTRADOR_CALENDARIO]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearCalendarioRequest'
+      responses:
+        '201':
+          description: Calendario creado; el actor queda registrado como su administrador responsable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calendario'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >
+            El actor autenticado no tiene el rol ADMINISTRADOR ni
+            ADMINISTRADOR_CALENDARIO (RN12).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Ya existe un calendario con el código indicado (RN14).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: >
+            La fecha de inicio del calendario es posterior a la fecha de fin
+            (RN08).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/periodos-laborales:
+    post:
+      operationId: agregarPeriodoLaboral
+      summary: Agregar un período LABORAL a un calendario
+      description: >
+        Agrega un período LABORAL con código, nombre y recurrencia
+        (UNA_VEZ, SEMANAL o MENSUAL). Dos períodos LABORAL pueden
+        intersectarse entre sí sin generar conflicto (RN02).
+        HU-ADM-04-02 / RN02 / RN08 / RN10 / RN12 / RN15.
+      tags: [Gestión de Calendarios]
+      x-roles: [ADMINISTRADOR, ADMINISTRADOR_CALENDARIO]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodoLaboralRequest'
+      responses:
+        '201':
+          description: Período LABORAL registrado en el calendario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Periodo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >
+            El actor autenticado no tiene el rol ADMINISTRADOR ni
+            ADMINISTRADOR_CALENDARIO (RN12), o es ADMINISTRADOR_CALENDARIO
+            pero no es el administrador responsable de este calendario
+            (RN12, campo administrador del modelo de dominio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No existe ningún calendario con el código indicado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: >
+            Ya existe un período con ese código dentro del calendario
+            (RN15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: >
+            La fecha de inicio del período es posterior a la fecha de fin
+            (RN08), o el período no está enmarcado dentro del rango del
+            calendario (RN10).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/periodos-no-laborales:
+    post:
+      operationId: agregarPeriodoNoLaboral
+      summary: Agregar un período NO_LABORAL a un calendario
+      description: >
+        Agrega un período NO_LABORAL con código, nombre y recurrencia
+        (UNA_VEZ, SEMANAL o MENSUAL). Dos períodos NO_LABORAL pueden
+        intersectarse entre sí sin generar conflicto (RN02).
+        HU-ADM-04-03 / RN02 / RN08 / RN10 / RN12 / RN15.
+      tags: [Gestión de Calendarios]
+      x-roles: [ADMINISTRADOR, ADMINISTRADOR_CALENDARIO]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodoNoLaboralRequest'
+      responses:
+        '201':
+          description: Período NO_LABORAL registrado en el calendario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Periodo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >
+            El actor autenticado no tiene el rol ADMINISTRADOR ni
+            ADMINISTRADOR_CALENDARIO (RN12), o es ADMINISTRADOR_CALENDARIO
+            pero no es el administrador responsable de este calendario
+            (RN12, campo administrador del modelo de dominio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No existe ningún calendario con el código indicado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: >
+            Ya existe un período con ese código dentro del calendario
+            (RN15).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: >
+            La fecha de inicio del período es posterior a la fecha de fin
+            (RN08), o el período no está enmarcado dentro del rango del
+            calendario (RN10).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/excepciones:
+    post:
+      operationId: registrarExcepcion
+      summary: Registrar una excepción puntual sobre una fecha
+      description: >
+        Registra una excepción sobre una fecha puntual con tipo
+        (DIA_LABORAL o DIA_NO_LABORAL) y descripción. La excepción tiene
+        prioridad sobre la clasificación derivada de los períodos
+        LABORAL/NO_LABORAL definidos para esa misma fecha. Solo puede
+        existir una excepción por fecha dentro de un mismo calendario.
+        HU-ADM-04-04 / RN12.
+      tags: [Gestión de Calendarios]
+      x-roles: [ADMINISTRADOR, ADMINISTRADOR_CALENDARIO]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExcepcionRequest'
+      responses:
+        '201':
+          description: Excepción registrada en el calendario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Excepcion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >
+            El actor autenticado no tiene el rol ADMINISTRADOR ni
+            ADMINISTRADOR_CALENDARIO (RN12), o es ADMINISTRADOR_CALENDARIO
+            pero no es el administrador responsable de este calendario
+            (RN12, campo administrador del modelo de dominio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No existe ningún calendario con el código indicado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: >
+            Ya existe una excepción registrada en esa misma fecha dentro
+            de este calendario (restricción de unicidad
+            calendario + fecha del modelo de dominio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/tipo-dia:
+    get:
+      operationId: consultarTipoDia
+      summary: Consultar si una fecha es LABORAL o NO_LABORAL
+      description: >
+        Determina el tipo de una fecha dada. La intersección LABORAL +
+        NO_LABORAL se clasifica como NO_LABORAL (RN02); la intersección
+        entre dos períodos del mismo tipo no genera conflicto. Una
+        EXCEPCION registrada sobre la fecha prevalece sobre la
+        clasificación derivada de los períodos.
+        HU-ADM-04-05 / RN01 / RN02 / RN16 / RN17 / RN18.
+      tags: [Consultas de Calendario]
+      x-roles: []
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+        - $ref: '#/components/parameters/FechaQuery'
+      responses:
+        '200':
+          description: Tipo de día calculado para la fecha indicada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TipoDiaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No existe ningún calendario con el código indicado (RN17).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: >
+            La fecha dada no cae en ningún período ni excepción definidos
+            del calendario (RN16).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/periodos/{codigoPeriodo}/pertenencia:
+    get:
+      operationId: consultarPertenenciaPeriodo
+      summary: Consultar si una fecha pertenece a un período específico
+      description: >
+        Indica si una fecha dada pertenece al período LABORAL o NO_LABORAL
+        identificado por su código, dentro del calendario indicado.
+        HU-ADM-04-06 / RN03 / RN17 / RN18.
+      tags: [Consultas de Calendario]
+      x-roles: []
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+        - $ref: '#/components/parameters/CodigoPeriodoPath'
+        - $ref: '#/components/parameters/FechaQuery'
+      responses:
+        '200':
+          description: Resultado de la evaluación de pertenencia.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PertenenciaPeriodoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: >
+            No existe ningún calendario con el código indicado, o no existe
+            ningún período con el código indicado dentro de ese calendario
+            (RN17).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/periodos/{codigoPeriodo}/duracion:
+    get:
+      operationId: consultarDuracionPeriodo
+      summary: Consultar la duración en días de un período
+      description: >
+        Calcula la duración en días de un período LABORAL o NO_LABORAL
+        identificado por su código. Para UNA_VEZ/SEMANAL considera la
+        duración tradicional de los meses (RN09); para MENSUAL agrega los
+        días declarados por cada mes del período, sin sumar días fuera de
+        esa declaración (RN11).
+        HU-ADM-04-07 / RN04 / RN09 / RN11 / RN17 / RN18.
+      tags: [Consultas de Calendario]
+      x-roles: []
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+        - $ref: '#/components/parameters/CodigoPeriodoPath'
+      responses:
+        '200':
+          description: Duración en días del período consultado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuracionPeriodoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: >
+            No existe ningún calendario con el código indicado, o no existe
+            ningún período con el código indicado dentro de ese calendario
+            (RN17).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/periodos/{codigoPeriodo}/dias-restantes:
+    get:
+      operationId: consultarDiasRestantesPeriodo
+      summary: Consultar días restantes hasta el fin de un período LABORAL
+      description: >
+        Calcula cuántos días faltan desde una fecha dada hasta el fin de un
+        período LABORAL específico. HU-ADM-04-08 / RN05 / RN17 / RN18.
+      tags: [Consultas de Calendario]
+      x-roles: []
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+        - $ref: '#/components/parameters/CodigoPeriodoPath'
+        - $ref: '#/components/parameters/FechaQuery'
+      responses:
+        '200':
+          description: Número de días restantes hasta el fin del período.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiasRestantesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: >
+            No existe ningún calendario con el código indicado, o no existe
+            ningún período LABORAL con el código indicado dentro de ese
+            calendario (RN17).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: >
+            La fecha dada no está dentro del período LABORAL indicado
+            (RN05).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/dias-laborales:
+    get:
+      operationId: consultarDiasLaboralesEntreFechas
+      summary: Consultar días LABORAL entre dos fechas
+      description: >
+        Calcula cuántos días LABORAL existen entre dos fechas dadas,
+        considerando todos los períodos que caen en el rango. Los días de
+        intersección entre un período LABORAL y uno NO_LABORAL no se
+        cuentan como LABORAL (RN19).
+        HU-ADM-04-09 / RN06 / RN17 / RN18 / RN19.
+      tags: [Consultas de Calendario]
+      x-roles: []
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+        - $ref: '#/components/parameters/FechaInicialQuery'
+        - $ref: '#/components/parameters/FechaFinalQuery'
+      responses:
+        '200':
+          description: Cantidad de días LABORAL en el rango indicado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiasLaboralesEntreFechasResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No existe ningún calendario con el código indicado (RN17).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: >
+            La fecha inicial o la fecha final no están dentro del rango del
+            calendario, o las fechas dadas son inconsistentes entre sí
+            (RN06).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/fecha-resultante:
+    get:
+      operationId: calcularFechaResultante
+      summary: Calcular la fecha LABORAL resultante al sumar días hábiles
+      description: >
+        Dada una fecha inicial y un número de días hábiles a adicionar,
+        calcula la fecha LABORAL resultante, ignorando los días que caen en
+        períodos NO_LABORAL. HU-ADM-04-10 / RN07 / RN16 / RN17 / RN18.
+      tags: [Consultas de Calendario]
+      x-roles: []
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+        - $ref: '#/components/parameters/FechaInicialQuery'
+        - $ref: '#/components/parameters/DiasHabilesQuery'
+      responses:
+        '200':
+          description: Fecha LABORAL resultante calculada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FechaResultanteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No existe ningún calendario con el código indicado (RN17).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: >
+            La fecha resultante no cae en un período LABORAL, o no cae en
+            ningún período definido del calendario (RN07, RN16).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}/transiciones:
+    post:
+      operationId: cambiarEstadoCalendario
+      summary: Cambiar el estado de un calendario (ACTIVO ⇄ INACTIVO)
+      description: >
+        Transiciona el estado de un calendario entre ACTIVO e INACTIVO. El
+        nuevo estado es heredado inmediatamente por todos los
+        `CalendarItems` (períodos y excepciones) del calendario.
+        HU-ADM-04-11 / RN12 / RN20.
+      tags: [Gestión de Calendarios]
+      x-roles: [ADMINISTRADOR, ADMINISTRADOR_CALENDARIO]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambiarEstadoCalendarioRequest'
+      responses:
+        '200':
+          description: >
+            Calendario con el nuevo estado aplicado, ya heredado por sus
+            períodos y excepciones.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calendario'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >
+            El actor autenticado no tiene el rol ADMINISTRADOR ni
+            ADMINISTRADOR_CALENDARIO (RN12), o es ADMINISTRADOR_CALENDARIO
+            pero no es el administrador responsable de este calendario
+            (RN12, campo administrador del modelo de dominio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No existe ningún calendario con el código indicado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /calendarios/{codigoCalendario}:
+    put:
+      operationId: editarCalendario
+      summary: Editar los datos generales de un calendario existente
+      description: >
+        Edita nombre, descripción, fecha de inicio y fecha de fin de un
+        calendario ya existente. El código del calendario (RN14) no es
+        editable por esta operación, y el estado (ACTIVO/INACTIVO) se
+        cambia exclusivamente mediante `cambiarEstadoCalendario`.
+        HU-ADM-04-12 / RN08 / RN12.
+      tags: [Gestión de Calendarios]
+      x-roles: [ADMINISTRADOR, ADMINISTRADOR_CALENDARIO]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditarCalendarioRequest'
+      responses:
+        '200':
+          description: Calendario actualizado con los nuevos datos generales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calendario'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >
+            El actor autenticado no tiene el rol ADMINISTRADOR ni
+            ADMINISTRADOR_CALENDARIO (RN12), o es ADMINISTRADOR_CALENDARIO
+            pero no es el administrador responsable de este calendario
+            (RN12, campo administrador del modelo de dominio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No existe ningún calendario con el código indicado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: >
+            La nueva fecha de inicio del calendario es posterior a la
+            nueva fecha de fin (RN08, por analogía con la creación).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: eliminarCalendario
+      summary: (Rechazado) Eliminar un calendario
+      description: >
+        Un calendario nunca puede eliminarse del sistema; únicamente puede
+        inactivarse mediante `cambiarEstadoCalendario` (RN20). Esta
+        operación existe en el contrato para documentar y hacer explícito
+        el rechazo, en vez de dejar el intento de borrado sin especificar.
+        HU-ADM-04-11 / RN20.
+      tags: [Gestión de Calendarios]
+      x-roles: [ADMINISTRADOR, ADMINISTRADOR_CALENDARIO]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CodigoCalendarioPath'
+      responses:
+        '405':
+          description: >
+            Un calendario no puede eliminarse; use la transición a
+            INACTIVO en su lugar (RN20).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: >
+            El actor autenticado no tiene el rol ADMINISTRADOR ni
+            ADMINISTRADOR_CALENDARIO (RN12).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CodigoCalendarioPath:
+      name: codigoCalendario
+      in: path
+      required: true
+      description: Código único del calendario (RN14).
+      schema:
+        type: string
+    CodigoPeriodoPath:
+      name: codigoPeriodo
+      in: path
+      required: true
+      description: Código del período, único dentro del calendario (RN15).
+      schema:
+        type: string
+    FechaQuery:
+      name: fecha
+      in: query
+      required: true
+      description: Fecha a evaluar.
+      schema:
+        type: string
+        format: date
+    FechaInicialQuery:
+      name: fechaInicial
+      in: query
+      required: true
+      description: Fecha inicial del rango a evaluar.
+      schema:
+        type: string
+        format: date
+    FechaFinalQuery:
+      name: fechaFinal
+      in: query
+      required: true
+      description: Fecha final del rango a evaluar.
+      schema:
+        type: string
+        format: date
+    DiasHabilesQuery:
+      name: diasHabiles
+      in: query
+      required: true
+      description: Número de días hábiles (LABORAL) a adicionar a la fecha inicial.
+      schema:
+        type: integer
+        minimum: 1
+
+  responses:
+    BadRequest:
+      description: La solicitud está mal formada (campos faltantes o con formato inválido).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: El actor no está autenticado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      description: Esquema estándar de error para todo el proyecto.
+      required: [codigo, mensaje, timestamp]
+      properties:
+        codigo:
+          type: string
+          description: Código simbólico del error (p. ej. CALENDARIO_CODIGO_DUPLICADO).
+          example: CALENDARIO_CODIGO_DUPLICADO
+        mensaje:
+          type: string
+          description: Mensaje legible describiendo el error.
+        timestamp:
+          type: string
+          format: date-time
+        detalles:
+          type: array
+          items:
+            type: string
+          description: Detalles adicionales opcionales (p. ej. campos inválidos).
+
+    EstadoCalendario:
+      type: string
+      enum: [ACTIVO, INACTIVO]
+
+    TipoPeriodo:
+      type: string
+      enum: [LABORAL, NO_LABORAL]
+
+    TipoExcepcion:
+      type: string
+      enum: [DIA_LABORAL, DIA_NO_LABORAL]
+
+    TipoRecurrencia:
+      type: string
+      enum: [UNA_VEZ, SEMANAL, MENSUAL]
+
+    DiaSemana:
+      type: string
+      enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
+
+    Mes:
+      type: string
+      enum: [JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER]
+
+    CrearCalendarioRequest:
+      type: object
+      description: >
+        Datos de entrada para crear un calendario (HU-ADM-04-01). El
+        administrador responsable del calendario no se solicita en el
+        payload: se asigna en el servidor a partir del actor autenticado.
+      required: [codigo, nombre, fechaInicio, fechaFin, estado]
+      properties:
+        codigo:
+          type: string
+          description: Código único del calendario (RN14).
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        estado:
+          $ref: '#/components/schemas/EstadoCalendario'
+
+    EditarCalendarioRequest:
+      type: object
+      description: >
+        Datos generales editables de un calendario existente
+        (HU-ADM-04-12). No incluye `codigo` (RN14, inmutable por esta
+        operación) ni `estado` (se cambia exclusivamente mediante
+        `cambiarEstadoCalendario`, HU-ADM-04-11).
+      required: [nombre, fechaInicio, fechaFin]
+      properties:
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+
+    Calendario:
+      type: object
+      required: [codigo, nombre, fechaInicio, fechaFin, estado]
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        estado:
+          $ref: '#/components/schemas/EstadoCalendario'
+
+    RecurrenciaUnaVez:
+      type: object
+      required: [tipoRecurrencia, fechaInicio, fechaFin]
+      properties:
+        tipoRecurrencia:
+          type: string
+          example: UNA_VEZ
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+
+    RecurrenciaSemanal:
+      type: object
+      required: [tipoRecurrencia, fechaInicio, fechaFin, diasDeLaSemana]
+      properties:
+        tipoRecurrencia:
+          type: string
+          example: SEMANAL
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        diasDeLaSemana:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DiaSemana'
+
+    RecurrenciaMensual:
+      type: object
+      required: [tipoRecurrencia, diasDelMes, meses]
+      properties:
+        tipoRecurrencia:
+          type: string
+          example: MENSUAL
+        diasDelMes:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            minimum: 1
+            maximum: 31
+        meses:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Mes'
+
+    Recurrencia:
+      description: >
+        Recurrencia que define el rango efectivo de un período (RN08,
+        RN09, RN10, RN11). El campo `tipoRecurrencia` discrimina la forma
+        concreta.
+      oneOf:
+        - $ref: '#/components/schemas/RecurrenciaUnaVez'
+        - $ref: '#/components/schemas/RecurrenciaSemanal'
+        - $ref: '#/components/schemas/RecurrenciaMensual'
+      discriminator:
+        propertyName: tipoRecurrencia
+        mapping:
+          UNA_VEZ: '#/components/schemas/RecurrenciaUnaVez'
+          SEMANAL: '#/components/schemas/RecurrenciaSemanal'
+          MENSUAL: '#/components/schemas/RecurrenciaMensual'
+
+    PeriodoLaboralRequest:
+      type: object
+      description: >
+        Datos de entrada para agregar un período LABORAL (HU-ADM-04-02). El
+        campo `tipo` no se solicita en el payload porque el propio endpoint
+        lo determina (LABORAL).
+      required: [codigo, nombre, recurrencia]
+      properties:
+        codigo:
+          type: string
+          description: Código único dentro del calendario (RN15).
+        nombre:
+          type: string
+        recurrencia:
+          $ref: '#/components/schemas/Recurrencia'
+
+    PeriodoNoLaboralRequest:
+      type: object
+      description: >
+        Datos de entrada para agregar un período NO_LABORAL (HU-ADM-04-03).
+        El campo `tipo` no se solicita en el payload porque el propio
+        endpoint lo determina (NO_LABORAL).
+      required: [codigo, nombre, recurrencia]
+      properties:
+        codigo:
+          type: string
+          description: Código único dentro del calendario (RN15).
+        nombre:
+          type: string
+        recurrencia:
+          $ref: '#/components/schemas/Recurrencia'
+
+    Periodo:
+      type: object
+      required: [codigo, nombre, tipo, recurrencia]
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        tipo:
+          $ref: '#/components/schemas/TipoPeriodo'
+        recurrencia:
+          $ref: '#/components/schemas/Recurrencia'
+
+    ExcepcionRequest:
+      type: object
+      required: [fecha, tipo, descripcion]
+      properties:
+        fecha:
+          type: string
+          format: date
+        tipo:
+          $ref: '#/components/schemas/TipoExcepcion'
+        descripcion:
+          type: string
+
+    Excepcion:
+      type: object
+      required: [fecha, tipo]
+      properties:
+        fecha:
+          type: string
+          format: date
+        tipo:
+          $ref: '#/components/schemas/TipoExcepcion'
+        descripcion:
+          type: string
+
+    TipoDiaResponse:
+      type: object
+      required: [fecha, tipoDia]
+      properties:
+        fecha:
+          type: string
+          format: date
+        tipoDia:
+          $ref: '#/components/schemas/TipoPeriodo'
+
+    PertenenciaPeriodoResponse:
+      type: object
+      required: [fecha, codigoPeriodo, pertenece]
+      properties:
+        fecha:
+          type: string
+          format: date
+        codigoPeriodo:
+          type: string
+        pertenece:
+          type: boolean
+
+    DuracionPeriodoResponse:
+      type: object
+      required: [codigoPeriodo, duracionDias]
+      properties:
+        codigoPeriodo:
+          type: string
+        duracionDias:
+          type: integer
+          minimum: 0
+
+    DiasRestantesResponse:
+      type: object
+      required: [codigoPeriodo, fecha, diasRestantes]
+      properties:
+        codigoPeriodo:
+          type: string
+        fecha:
+          type: string
+          format: date
+        diasRestantes:
+          type: integer
+          minimum: 0
+
+    DiasLaboralesEntreFechasResponse:
+      type: object
+      required: [fechaInicial, fechaFinal, diasLaborales]
+      properties:
+        fechaInicial:
+          type: string
+          format: date
+        fechaFinal:
+          type: string
+          format: date
+        diasLaborales:
+          type: integer
+          minimum: 0
+
+    FechaResultanteResponse:
+      type: object
+      required: [fechaInicial, diasHabiles, fechaResultante]
+      properties:
+        fechaInicial:
+          type: string
+          format: date
+        diasHabiles:
+          type: integer
+        fechaResultante:
+          type: string
+          format: date
+
+    CambiarEstadoCalendarioRequest:
+      type: object
+      required: [estado]
+      properties:
+        estado:
+          $ref: '#/components/schemas/EstadoCalendario'

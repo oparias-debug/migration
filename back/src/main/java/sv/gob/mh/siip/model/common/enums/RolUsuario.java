@@ -19,6 +19,8 @@ public enum RolUsuario {
     COORDINADOR_SYMP,
     /** Administra catalogos maestros y sus registros (CU-ADM-01). Actor aun no incorporado a catalogo-actores.md. */
     ADMINISTRADOR_DE_CATALOGOS,
+    /** Administra los calendarios bajo su responsabilidad (CU-ADM-04, RN12). */
+    ADMINISTRADOR_CALENDARIO,
     /** Priorizacion de proyectos (CU-PRE-26.5). Actores aun no incorporados a catalogo-actores.md;
      *  ya existen como rol de Keycloak (realm-export.json) con estos mismos nombres. */
     TECNICO_SYMP,
