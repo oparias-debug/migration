@@ -44,7 +44,7 @@ export const revisionCupApi = new PreinversinRevisinYEmisinDeCUPApi(undefined, u
 // en el OpenAPI -> fragmento y módulo generado propios (generated/preinversion-identificacion);
 // comparte la instancia de axios de arriba.
 export const identificacionApi = new PreinversinIdentificacinApi(undefined, undefined, preinversionAxios);
-// CU-PRE-3.5 (Selección y Registro de Etapas): mismo recurso Proyecto y mismo basePath /back,
+// CU-PRE-03.5 (Selección y Registro de Etapas): mismo recurso Proyecto y mismo basePath /back,
 // fragmento y módulo generado propios (generated/preinversion-etapas). Sus 4 endpoints de
 // catálogo tienen tag propio y viven ahora en CU-ADM-02-catalogos.openapi.yaml (dominio
 // "administracion"), junto con los del resto de CUs — ver catalogoEtapasApi más abajo.
@@ -116,7 +116,7 @@ export type { DevolucionSolicitudRequest } from './generated/preinversion-revisi
 // (mismo schema que CU-PRE-01, ya exportado arriba desde generated/preinversion).
 export type { Identificacion, IdentificacionRequest, ArchivoAdjuntoResumen } from './generated/preinversion-identificacion';
 
-// CU-PRE-3.5: tipos propios de este fragmento. IniciativaInversion/InstitucionResumen/
+// CU-PRE-03.5: tipos propios de este fragmento. IniciativaInversion/InstitucionResumen/
 // UnidadEjecutoraResumen/SectorResumen/EjeTematicoResumen/etc. también quedaron duplicados en
 // este módulo (mismo criterio que revisionCupApi) pero no hace falta re-exportarlos aparte: las
 // páginas de este CU reciben esos objetos ya anidados dentro de FichaInformacionGeneral.
@@ -159,7 +159,7 @@ export type { ProyectoCapturaItem, ProyectosCapturaResponse } from './generated/
 // insumo va aparte porque el contrato le da su propio tag.
 export const presupuestoApi = new PreinversinPresupuestoDeInversinApi(undefined, undefined, preinversionAxios);
 export const catalogoInsumosApi = new CatlogosPresupuestoApi(undefined, undefined, preinversionAxios);
-// FuenteFinanciamiento no se reexporta desde aquí: CU-PRE-3.5 y CU-PRE-17
+// FuenteFinanciamiento no se reexporta desde aquí: CU-PRE-03.5 y CU-PRE-17
 // declaran el mismo enum con los mismos siete valores (comprobado), así que se
 // reutiliza el que ya salía de preinversion-etapas y se evita un alias que
 // haría pensar que son cosas distintas.

@@ -117,7 +117,7 @@ function permisosDelRegistro(
     // Bandeja Preinversión (CU-PRE-02) mientras está en ENVIADO_DGICP_REGISTRO;
     // nunca edita los campos.
     puedeRevisarPre: hasRole('TECNICO_PRE') && !esNuevo && estadoActual === 'ENVIADO_DGICP_REGISTRO',
-    // CU-PRE-3.5 (Selección y Registro de Etapas): aplica una vez asignado el CUP.
+    // CU-PRE-03.5 (Selección y Registro de Etapas): aplica una vez asignado el CUP.
     // El punto de entrada que describe el propio CU es "Captura de Proyectos"
     // (UC-PRE-03); mientras tanto se entra desde aquí.
     puedeIrARegistroEtapas: (hasRole('TECNICO_URP') || hasRole('COORDINADOR_SYMP')) && !esNuevo && conCup,

@@ -35,7 +35,7 @@ paths:
         Técnico URP puede acceder siempre, incluso antes del primer guardado.
       tags: [Preinversión - Alternativas de Solución]
       security: [{ bearerAuth: [] }]
-      x-roles: [Técnico URP, Técnico PRE, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      x-roles: [Técnico URP, Técnico PRE]
       responses:
         "200":
           description: Registro de alternativas de solución del proyecto.

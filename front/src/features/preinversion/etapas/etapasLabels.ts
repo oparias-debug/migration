@@ -6,7 +6,7 @@ import {
   TipoCapital,
 } from '../../../api/preinversionApi';
 
-// Traducción de los enums fijos de CU-PRE-3.5 (Anexos B.2, C.1, C.3, C.4) a las etiquetas de
+// Traducción de los enums fijos de CU-PRE-03.5 (Anexos B.2, C.1, C.3, C.4) a las etiquetas de
 // pantalla, mismo criterio que proyectoLabels.ts::formatEstado/formatIniciativa.
 
 const NOMBRE_ETAPA_LABELS: Record<string, string> = {
@@ -105,6 +105,6 @@ export const FUENTE_FINANCIAMIENTO_OPCIONES = [
 ] as const;
 
 // Estados de CU-PRE-01 desde los cuales el CUP ya fue asignado y, por lo tanto, el proyecto
-// puede continuar hacia CU-PRE-3.5 (Selección y Registro de Etapas). Los estados anteriores
+// puede continuar hacia CU-PRE-03.5 (Selección y Registro de Etapas). Los estados anteriores
 // (EN_REGISTRO, ENVIADO_DGICP_REGISTRO, OBSERVADO_DGICP_REGISTRO) todavía no tiene CUP.
 export const ESTADOS_SIN_CUP = ['EN_REGISTRO', 'ENVIADO_DGICP_REGISTRO', 'OBSERVADO_DGICP_REGISTRO'];

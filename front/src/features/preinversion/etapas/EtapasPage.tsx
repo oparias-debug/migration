@@ -22,7 +22,7 @@ function etapasToFormValues(etapas: Etapa[]): ActualizarEtapasFormValues {
   };
 }
 
-// Pantalla "Registro de Etapas" (Anexo A.1, CU-PRE-3.5-registrar-etapas.feature). Un solo botón
+// Pantalla "Registro de Etapas" (Anexo A.1, CU-PRE-03.5-registrar-etapas.feature). Un solo botón
 // "Guardar" para toda la tabla (RN04): el PUT actualizarEtapas recibe todas las filas a la vez.
 export function EtapasPage() {
   const { t } = useTranslation();

@@ -17,8 +17,8 @@ const SIN_RESPALDO_CO_EJECUTOR =
   '(seleccionarCoEjecutor solo recibe un ID numérico). Mientras ese catálogo no se defina, ' +
   'ingrese el ID directamente.';
 
-// Pantalla "Ficha de información general" (Anexo A.3, CU-PRE-3.5-ver-ficha-informacion-general.feature
-// y CU-PRE-3.5-boton-coejecutor.feature). RN14: no editable, salvo la sección Co-ejecutor (RN16).
+// Pantalla "Ficha de información general" (Anexo A.3, CU-PRE-03.5-ver-ficha-informacion-general.feature
+// y CU-PRE-03.5-boton-coejecutor.feature). RN14: no editable, salvo la sección Co-ejecutor (RN16).
 export function FichaInformacionGeneralPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();

@@ -175,7 +175,6 @@ paths:
       - Técnico URP
       - Técnico PRE
       - Administrador del Sistema
-      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
       responses:
         '200':
           description: Listado de ejes del Plan de Gobierno.
@@ -205,7 +204,6 @@ paths:
       - Técnico URP
       - Técnico PRE
       - Administrador del Sistema
-      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
       responses:
         '200':
           description: Listado de ejes temáticos.
@@ -379,7 +377,6 @@ paths:
       - Técnico URP
       - Técnico PRE
       - Administrador del Sistema
-      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
       parameters:
       - name: tipo
         in: query
@@ -444,7 +441,6 @@ paths:
       - Técnico URP
       - Técnico PRE
       - Administrador del Sistema
-      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
       responses:
         '200':
           description: Listado de planes sectoriales/regionales.
@@ -535,7 +531,6 @@ paths:
       - Técnico URP
       - Técnico PRE
       - Administrador del Sistema
-      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
       responses:
         '200':
           description: Listado de sectores.

@@ -64,7 +64,6 @@ paths:
       - Técnico URP
       - Técnico PRE
       - Administrador del Sistema
-      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
       parameters:
       - name: pagina
         in: query
@@ -119,7 +118,6 @@ paths:
       - Técnico URP
       - Técnico PRE
       - Administrador del Sistema
-      - Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)
       responses:
         '200':
           description: Información del proyecto.

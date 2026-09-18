@@ -169,7 +169,7 @@ describe('CrearCatalogoPage · CU-ADM-01 flujo principal', () => {
   });
 
   it('el administrador del sistema tampoco lo ve: el back del CU-ADM-01 sólo acepta ADMINISTRADOR_DE_CATALOGOS', async () => {
-    rolesActivos = ['ADMINISTRADOR_DEL_SISTEMA'];
+    rolesActivos = ['ADMINISTRADOR'];
     montar();
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Crear catálogo' })).not.toBeInTheDocument();

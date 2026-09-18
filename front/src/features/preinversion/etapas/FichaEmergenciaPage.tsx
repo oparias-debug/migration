@@ -39,7 +39,7 @@ function fichaToFormValues(ficha: FichaEmergencia): FichaEmergenciaFormValues {
   };
 }
 
-// Pantalla "Ficha de proyectos de emergencia" (Anexo A.4, CU-PRE-3.5-registrar-ficha-emergencia.feature).
+// Pantalla "Ficha de proyectos de emergencia" (Anexo A.4, CU-PRE-03.5-registrar-ficha-emergencia.feature).
 export function FichaEmergenciaPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();

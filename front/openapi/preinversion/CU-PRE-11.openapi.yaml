@@ -18,7 +18,7 @@ paths:
     get:
       operationId: obtenerDescripcionTecnica
       summary: Consultar la pantalla "Descripción Técnica" (Anexo A.1)
-      description: 'A diferencia de CU-PRE-08 (donde el autocompletado requiere un botón explícito, "Traer ubicación de Población Objetivo"), aquí RN03/RN04 describen el autocompletado como automático, sin un botón propio en el mockup (solo "+", "x", "Guardar", "Siguiente"): mientras `DescripcionTecnica` no se haya guardado, este `GET` ya refleja `descripcionProyecto` desde CU-PRE-01 (o desde la última Orden de Trabajo/O.T. emitida, si existe, RN03) y `filas` desde los productos de CU-PRE-09 (RN04), sin necesidad de un endpoint de autocompletado separado. Igual que CU-PRE-06/07/08/09: ninguna regla condiciona el acceso de Técnico PRE a que ya se haya guardado.
+      description: 'A diferencia de CU-PRE-08 (donde el autocompletado requiere un botón explícito, "Traer ubicación de Población Objetivo"), aquí RN03/RN04 describen el autocompletado como automático, sin un botón propio en el mockup (solo "+", "x", "Guardar", "Siguiente"): mientras `DescripcionTecnica` no se haya guardado, este `GET` ya refleja `descripcionProyecto` desde CU-PRE-01 (o desde la última Opinion Tecnica/O.T. emitida, si existe, RN03) y `filas` desde los productos de CU-PRE-09 (RN04), sin necesidad de un endpoint de autocompletado separado. Igual que CU-PRE-06/07/08/09: ninguna regla condiciona el acceso de Técnico PRE a que ya se haya guardado.
 
         '
       tags:

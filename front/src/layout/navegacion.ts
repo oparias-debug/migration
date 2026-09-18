@@ -49,7 +49,7 @@ export interface Modulo {
  * usuarios del realm reciben 401, así que la opción sólo les llevaría a un
  * error. El back es quien manda: esto únicamente evita el callejón sin salida.
  */
-const ROLES_PREINVERSION = ['TECNICO_URP', 'TECNICO_PRE', 'COORDINADOR_PRE', 'ADMINISTRADOR_DEL_SISTEMA'];
+const ROLES_PREINVERSION = ['TECNICO_URP', 'TECNICO_PRE', 'COORDINADOR_PRE', 'ADMINISTRADOR'];
 
 export const MODULOS: readonly Modulo[] = [
   { clave: 'inicio', icono: 'menu-inicio', texto: 'menu.inicio', ruta: '/' },
@@ -149,10 +149,9 @@ export const MODULOS: readonly Modulo[] = [
       { clave: 'seguridad', texto: 'menu.seguridad', ruta: '/administracion/seguridad' },
       // Sólo para el rol que el back del CU-ADM-01 acepta; a cualquier otro le respondería 403.
       { clave: 'catalogos', texto: 'menu.catalogos', ruta: '/catalogos-generales', rolesRequeridos: ['ADMINISTRADOR_DE_CATALOGOS'] },
-      // CU-ADM-04. El back exige ADMINISTRADOR o ADMINISTRADOR_CALENDARIO; en
-      // Keycloak ese rol todavía no existe, y el usuario admin llega con
-      // ADMINISTRADOR_DEL_SISTEMA, que es el que el back reconoce como ADMINISTRADOR.
-      { clave: 'calendario', texto: 'menu.calendario', ruta: '/administracion/calendario', rolesRequeridos: ['ADMINISTRADOR_DEL_SISTEMA', 'ADMINISTRADOR_CALENDARIO'] },
+      // CU-ADM-04. El back exige ADMINISTRADOR o ADMINISTRADOR_CALENDARIO, y
+      // desde la sincronización de roles del 18/09 los dos existen en Keycloak.
+      { clave: 'calendario', texto: 'menu.calendario', ruta: '/administracion/calendario', rolesRequeridos: ['ADMINISTRADOR', 'ADMINISTRADOR_CALENDARIO'] },
     ],
   },
 ];

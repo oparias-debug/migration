@@ -49,7 +49,7 @@ export type ModificarRutaFormValues = z.infer<typeof modificarRutaSchema>;
 // RN19 (confirmado v1.3): costo/fechaInicio/fechaFin ya NO son obligatorios a nivel de guardado
 // — es puramente visual (borde rojo), el servidor no rechaza el PUT por campos faltantes. RN04
 // (confirmado v1.3): si se completa una fecha, sí debe cumplir el formato dd/mm/aaaa; a diferencia
-// de RN19, este formato sí bloquea el guardado (ver CU-PRE-3.5.openapi.yaml).
+// de RN19, este formato sí bloquea el guardado (ver CU-PRE-03.5.openapi.yaml).
 export const FORMATO_FECHA_INVALIDO = 'Formato inválido, use dd/mm/aaaa';
 const FECHA_DDMMAAAA = /^\d{2}\/\d{2}\/\d{4}$/;
 
@@ -71,7 +71,7 @@ export { conSeparadorDeMiles, sinSeparadorDeMiles } from '../proyectos/proyectoF
 
 // FA-05: planteamientoProblema, productos, distrito y poblacionObjetivo son obligatorios.
 // "Departamento" no es un campo propio del request: se valida de forma transitiva a través de
-// distrito (ver CU-PRE-3.5.openapi.yaml, FichaEmergenciaRequest.distrito).
+// distrito (ver CU-PRE-03.5.openapi.yaml, FichaEmergenciaRequest.distrito).
 export const fichaEmergenciaSchema = z.object({
   planteamientoProblema: z.string().trim().min(1, CAMPO_OBLIGATORIO),
   objetivoGeneral: z.string().trim().default(''),

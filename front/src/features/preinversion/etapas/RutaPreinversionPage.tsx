@@ -25,8 +25,8 @@ import {
   type CriteriosCalificacionFormValues,
 } from './etapasFormSchemas';
 
-// Pantalla "Ruta de Preinversión" (Anexo A.2, CU-PRE-3.5-generar-aceptar-ruta.feature /
-// CU-PRE-3.5-modificar-ruta.feature).
+// Pantalla "Ruta de Preinversión" (Anexo A.2, CU-PRE-03.5-generar-aceptar-ruta.feature /
+// CU-PRE-03.5-modificar-ruta.feature).
 export function RutaPreinversionPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();

@@ -36,7 +36,7 @@ paths:
         servidor según el actor autenticado, igual que en fragmentos previos.
       tags: [Preinversión - Identificación]
       security: [{ bearerAuth: [] }]
-      x-roles: [Técnico URP, Técnico PRE, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      x-roles: [Técnico URP, Técnico PRE]
       responses:
         "200":
           description: Información de identificación del proyecto.
@@ -201,7 +201,7 @@ paths:
       summary: Descargar el archivo del árbol de problemas
       tags: [Preinversión - Identificación]
       security: [{ bearerAuth: [] }]
-      x-roles: [Técnico URP, Técnico PRE, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      x-roles: [Técnico URP, Técnico PRE]
       responses:
         "200":
           description: Archivo PDF/A del árbol de problemas.
@@ -320,7 +320,7 @@ paths:
       summary: Descargar el archivo del árbol de objetivos
       tags: [Preinversión - Identificación]
       security: [{ bearerAuth: [] }]
-      x-roles: [Técnico URP, Técnico PRE, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+      x-roles: [Técnico URP, Técnico PRE]
       responses:
         "200":
           description: Archivo PDF/A del árbol de objetivos.
@@ -472,7 +472,6 @@ components:
           format: date-time
           nullable: true
           description: >
-            Nulo si nunca se ha guardado. Determina, para Técnico PRE y
-            Usuarios Internos/Externos (RNA-2/RNA-3), si el recurso es
+            Nulo si nunca se ha guardado. Determina, para Técnico PRE (RNA-2/RNA-3), si el recurso es
             visible en absoluto ("desde que se guarden cambios por primera
             vez") — ver 404 de `obtenerIdentificacion`.

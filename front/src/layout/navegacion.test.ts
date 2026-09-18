@@ -34,13 +34,13 @@ describe('quién ve Preinversión', () => {
   });
 
   it('la abren los roles que el back acepta', () => {
-    for (const rol of ['TECNICO_URP', 'TECNICO_PRE', 'COORDINADOR_PRE', 'ADMINISTRADOR_DEL_SISTEMA']) {
+    for (const rol of ['TECNICO_URP', 'TECNICO_PRE', 'COORDINADOR_PRE', 'ADMINISTRADOR']) {
       expect(preinversion.submenu?.every((s) => s.rolesRequeridos?.includes(rol))).toBe(true);
     }
   });
 
   it('no la ven los roles a los que el back responde 401', () => {
-    for (const rol of ['VIABILIZADOR', 'TECNICO_UAL', 'TECNICO_PRO', 'TECNICO_SYMP', 'JEFE_DGI', 'SUBJEFE_DGI', 'USUARIOS_INTERNOS']) {
+    for (const rol of ['VIABILIZADOR', 'TECNICO_LEGAL', 'TECNICO_PROG', 'TECNICO_SYMP', 'JEFE_DGI', 'SUBJEFE_DGI']) {
       expect(preinversion.submenu?.some((s) => s.rolesRequeridos?.includes(rol))).toBe(false);
     }
   });
@@ -57,7 +57,7 @@ describe('destinoDe', () => {
   });
 
   it('sin rol preferente, lleva al destino por defecto', () => {
-    expect(destinoDe(sub('asignacion-cup'), conRoles('ADMINISTRADOR_DEL_SISTEMA'))).toBe('/preinversion/proyectos');
+    expect(destinoDe(sub('asignacion-cup'), conRoles('ADMINISTRADOR'))).toBe('/preinversion/proyectos');
     expect(destinoDe(sub('formulacion'), conRoles('TECNICO_URP'))).toBe('/preinversion/formulacion');
   });
 });

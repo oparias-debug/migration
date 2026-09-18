@@ -74,7 +74,7 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
             clave: 'seleccion-etapa',
             codigo: arbol(1, 2, 1, 1),
             texto: 'pasos.seleccionEtapa',
-            cu: 'CU-PRE-3.5',
+            cu: 'CU-PRE-03.5',
             pestanas: ['pasos.pestana.criteriosRuta', 'pasos.pestana.fichaInformacion'],
             rutas: ['etapas', 'ruta-preinversion', 'ficha-informacion-general', 'ficha-emergencia'],
           },

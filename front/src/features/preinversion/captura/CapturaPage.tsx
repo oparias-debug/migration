@@ -186,7 +186,7 @@ export function CapturaPage({ proceso = 'creacion-ruta' }: { readonly proceso?: 
                 <tr key={p.idProyecto}>
                   <td>
                     {/* FA-01: el CUP abre los pasos del proyecto, en el proceso desde el que
-                          se entró. Desde Creación ruta, Registro de Etapas (CU-PRE-3.5). */}
+                          se entró. Desde Creación ruta, Registro de Etapas (CU-PRE-03.5). */}
                     <button type="button" className="enlace-fila mono"
                       onClick={() => navigate(entradaDeGrupo(p.idProyecto, proceso))}>
                       {p.cup}
