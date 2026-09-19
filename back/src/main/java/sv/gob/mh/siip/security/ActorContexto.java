@@ -70,7 +70,7 @@ public class ActorContexto {
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
                     .getRequest();
             return request.getHeader(HEADER_USUARIO);
-        } catch (IllegalStateException _) {
+        } catch (IllegalStateException ex) {
             return null;
         }
     }

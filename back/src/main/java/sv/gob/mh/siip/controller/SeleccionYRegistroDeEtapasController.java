@@ -18,7 +18,7 @@ import sv.gob.mh.siip.model.preinversion.dto.RutaPreinversionSugeridaDto;
 import sv.gob.mh.siip.model.preinversion.dto.SeleccionCoEjecutorRequestDto;
 import sv.gob.mh.siip.model.preinversion.service.SeleccionYRegistroDeEtapasService;
 
-/** CU-PRE-3.5 (Selección y Registro de Etapas): delega 1:1 en {@link SeleccionYRegistroDeEtapasService}. */
+/** CU-PRE-03.5 (Selección y Registro de Etapas): delega 1:1 en {@link SeleccionYRegistroDeEtapasService}. */
 @RestController
 public class SeleccionYRegistroDeEtapasController implements PreinversinSeleccinYRegistroDeEtapasApi {
 

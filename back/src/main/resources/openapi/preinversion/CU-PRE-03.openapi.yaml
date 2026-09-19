@@ -9,9 +9,7 @@ info:
     su propia Unidad Ejecutora (RN01); Viabilizador, Técnico PRE y Coordinador
     PRE lo ven sin restricción (RN02) — decisión funcional del usuario
     (11/09/2026), no proveniente del PDF fuente, ver contrato-CU-PRE-03.md.
-    "Usuarios Internos/Externos" no aplica a este CU (nunca fue un rol formal
-    — ver nota en Actores Secundarios del UC — y el usuario confirmó que no
-    corresponde incluirlo aquí). Es enteramente de solo consulta: la única
+    Es enteramente de solo consulta: la única
     acción de escritura del
     CU es la navegación al hacer clic en el CUP (FA-01), que no requiere un
     endpoint propio (ver contrato-CU-PRE-03.md). Reutiliza `EstadoProyecto`,
@@ -45,9 +43,7 @@ paths:
         acotado a su propia Unidad Ejecutora (RN01); el resto de los roles ve
         todos los proyectos sin restricción (RN02) — decisión funcional del
         usuario (11/09/2026), no proveniente del PDF fuente; ver
-        contrato-CU-PRE-03.md. "Usuarios Internos/Externos" no aplica a este CU
-        (nunca fue un rol formal — ver nota en Actores Secundarios del UC — y
-        el propio usuario confirmó que no corresponde incluirlo aquí).
+        contrato-CU-PRE-03.md.
       tags: [Preinversión - Captura de Proyectos]
       security: [{ bearerAuth: [] }]
       x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador]

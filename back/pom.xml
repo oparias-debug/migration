@@ -406,7 +406,7 @@
 							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
 						</configuration>
 					</execution>
-                   <execution>
+					<execution>
                         <id>generate-administracion-cu01-api</id>
                         <phase>generate-sources</phase>
                         <goals>
@@ -434,6 +434,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-
 </project>

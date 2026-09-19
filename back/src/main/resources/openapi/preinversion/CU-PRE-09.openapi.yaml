@@ -5,10 +5,7 @@ info:
   description: >
     Fragmento OpenAPI derivado de CU-PRE-09 "Análisis de Mercado"
     (UC-PRE-09-Analisis_de_Mercado.md) y sus 3 historias BDD. Actor
-    principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE.
-    Mismo criterio que CU-PRE-06/07/08 para RN01 ("Todos los demás
-    actores"/"Otros actores" sin identificar): `x-roles` no incluye
-    "Usuarios Internos/Externos". Introduce el recurso `AnalisisMercado`,
+    principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE. Introduce el recurso `AnalisisMercado`,
     hijo de `Proyecto` (CU-PRE-01.openapi.yaml). RN07 confirma que "Producto"
     proviene del mismo "Catálogo de Productos e Indicadores" ya definido en
     CU-PRE-03.5 (`GET /catalogos/productos-indicadores`); a diferencia de

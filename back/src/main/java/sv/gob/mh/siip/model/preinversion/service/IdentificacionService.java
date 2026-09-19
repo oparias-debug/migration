@@ -23,7 +23,7 @@ public interface IdentificacionService {
      *
      * @throws NoAutenticadoException si no hay actor autenticado.
      * @throws AccesoDenegadoException si el proyecto no está dentro del alcance de Unidad Ejecutora
-     *         del actor (RNA-1 para Técnico URP, RNA-3 para Usuarios Internos/Externos).
+     *         del actor (RNA-1 para Técnico URP).
      * @throws RecursoNoEncontradoException si el proyecto no existe, o (para actores distintos de
      *         Técnico URP) la información todavía no se ha guardado ni una sola vez.
      */

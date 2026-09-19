@@ -1,37 +1,26 @@
 # language: es
-@CU-ADM-01 @rol:ADMINISTRADOR_DE_CATALOGOS
-Característica: Crear Registro de Catálogo
+@CU-ADM-01 @rol:ADMINISTRADOR
+Característica: Crear un registro de un catálogo
 
-  Como Administrador de Catálogos
-  Quiero crear un registro dentro de un catálogo existente, proveyendo un valor para cada campo definido
+  Como Administrador del Sistema
+  Quiero crear un nuevo registro de un catálogo indicando el valor de todos sus campos
+  Para incorporar datos maestros al catálogo
 
-  Escenario: Crear un registro con un valor de clave (KEY) que no existe aún en el catálogo
-    Dado que el Administrador de Catálogos está autenticado y autorizado para administrar catálogos
-    Y selecciona un catálogo existente
-    Y provee un valor para cada campo definido en el catálogo
-    Y el valor del campo KEY no existe aún en el catálogo
-    Cuando solicita crear el registro
-    Entonces el sistema almacena el nuevo registro
+  Escenario: Crear un registro proveyendo el valor de todos los campos, incluido el KEY
+    Dado un catálogo existente
+    Cuando proveo el valor de cada uno de sus campos, incluido el campo KEY
+    Entonces el registro se crea correctamente conforme a las Reglas 1 y 8
 
-  Escenario: Rechazar la creación de un registro cuyo valor de KEY ya existe en el catálogo
-    Dado que el Administrador de Catálogos está autenticado y autorizado para administrar catálogos
-    Y selecciona un catálogo existente
-    Y provee un valor de campo KEY que ya existe en el catálogo
-    Cuando solicita crear el registro
-    Entonces el sistema rechaza la creación del registro
+  Escenario: Rechazar la creación de un registro al que le falta el valor de algún campo
+    Dado un catálogo existente
+    Cuando intento crear un registro sin proveer el valor de alguno de los campos definidos
+    Entonces el sistema rechaza la operación
 
-  Esquema del escenario: Vigencia por defecto del registro al crearlo
-    Dado que el Administrador de Catálogos está autenticado y autorizado para administrar catálogos
-    Y crea un registro válido con un valor de KEY no existente en el catálogo
-    Cuando "<condicion_vigencia>"
-    Entonces el registro queda en estado "<estado_resultante>"
+  Escenario: Fijar el registro como ACTIVE cuando no se indican fechas de vigencia
+    Dado un catálogo existente
+    Cuando creo un registro sin indicar fechas de vigencia
+    Entonces su estado queda ACTIVE conforme a la Regla 13
 
-    Ejemplos:
-      | condicion_vigencia                          | estado_resultante |
-      | no se indican fechas de vigencia            | ACTIVE             |
-      | la fecha "hasta" (TO DATE) es anterior a la fecha actual | INACTIVE  |
-
-  Escenario: Rechazar la creación de un registro por un actor no autorizado
-    Dado que el actor no está autenticado o no está autorizado para administrar catálogos
-    Cuando intenta crear un registro en un catálogo
-    Entonces el sistema rechaza la operación por falta de autorización
+  # ⚠️ Pendiente: no se genera escenario de rechazo por falta de permisos de administración
+  # de catálogos porque el CU-ADM-01 no especifica el mensaje ni el flujo de error para ese caso.
+  # Ver historias-CU-ADM-01.md.

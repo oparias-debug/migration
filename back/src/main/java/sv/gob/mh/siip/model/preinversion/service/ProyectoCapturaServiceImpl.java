@@ -15,12 +15,6 @@ import sv.gob.mh.siip.model.common.domain.Usuario;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
-import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
-import sv.gob.mh.siip.model.preinversion.repository.ProyectoCapturaRepository;
-import sv.gob.mh.siip.model.preinversion.repository.ProyectoCapturaRepository.Specs;
-import sv.gob.mh.siip.security.ActorContexto;
-
-// DTOs generados por el plugin de OpenAPI
 import sv.gob.mh.siip.model.preinversion.dto.EstadoProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.IniciativaInversionDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
@@ -28,6 +22,10 @@ import sv.gob.mh.siip.model.preinversion.dto.PaginacionMetadataDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectoCapturaItemDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectosCapturaResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.UnidadEjecutoraResumenDto;
+import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
+import sv.gob.mh.siip.model.preinversion.repository.ProyectoCapturaRepository;
+import sv.gob.mh.siip.model.preinversion.repository.ProyectoCapturaRepository.Specs;
+import sv.gob.mh.siip.security.ActorContexto;
 
 /**
  * Implementación de la interfaz de servicios {@link ProyectoCapturaService}.
@@ -43,7 +41,7 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
     /** Repositorio de acceso a datos para proyectos en captura. */
     private final ProyectoCapturaRepository proyectoCapturaRepository;
 
-    /** Etapas aceptadas de la Ruta de Preinversión (CU-PRE-3.5), para resolver {@code etapaActual}. */
+    /** Etapas aceptadas de la Ruta de Preinversión (CU-PRE-03.5), para resolver {@code etapaActual}. */
     private final EtapaPreinversionRepository etapaPreinversionRepository;
 
     /** Resuelve el actor autenticado, para aplicar RN01/RN02 (alcance de visibilidad por rol). */
@@ -67,7 +65,7 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
     /**
      * Ejecuta la consulta de proyectos delegando las especificaciones a {@link Specs} y gestionando el objeto {@link Pageable}.
      * RN01/RN02: el Técnico URP solo ve los proyectos de su propia Unidad Ejecutora; el resto de
-     * los roles (Viabilizador, Usuarios Internos/Externos, Técnico PRE, Coordinador PRE) ve todos
+     * los roles (Viabilizador, Técnico PRE, Coordinador PRE) ve todos
      * los proyectos sin restricción de Unidad Ejecutora.
      *
      * @see ProyectoCapturaService#listarProyectosCaptura(ProyectoCapturaFiltro, Integer, Integer)
@@ -169,7 +167,7 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
 
     /**
      * Resuelve, para cada proyecto de la página, la etapa aceptada más avanzada de su Ruta de
-     * Preinversión (CU-PRE-3.5) — {@code null} si el proyecto todavía no tiene ninguna etapa
+     * Preinversión (CU-PRE-03.5) — {@code null} si el proyecto todavía no tiene ninguna etapa
      * aceptada. Una sola consulta para toda la página (ver contrato-CU-PRE-03.md, v1.1.0).
      */
     private Map<Long, NombreEtapaDto> etapaActualPorProyecto(List<Proyecto> proyectos) {

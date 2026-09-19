@@ -13,7 +13,7 @@ public interface CatalogoRepository extends JpaRepository<Catalogo, Long> {
 
     boolean existsByCodigo(String codigo);
 
-    boolean existsByNombre(String nombre);
+    boolean existsByNombreIgnoreCase(String nombre);
 
     List<Catalogo> findByCatalogoPadreCodigo(String catalogoPadreCodigo);
 }

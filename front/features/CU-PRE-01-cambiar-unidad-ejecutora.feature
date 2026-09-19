@@ -1,5 +1,5 @@
 # language: es
-@CU-PRE-01 @rol:ADMINISTRADOR_DEL_SISTEMA
+@CU-PRE-01 @rol:ADMINISTRADOR
 Característica: Cambiar la Unidad Ejecutora de un proyecto
 
   Como Administrador del Sistema

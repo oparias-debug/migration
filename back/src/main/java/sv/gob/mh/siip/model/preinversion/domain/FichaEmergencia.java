@@ -12,7 +12,7 @@ import sv.gob.mh.siip.model.preinversion.enums.FuenteFinanciamiento;
 
 /**
  * Ficha de proyectos de emergencia (Anexo A.4), 1:1 con {@link Proyecto}. Solo aplica a proyectos
- * con {@code esProyectoEmergencia = true} (CU-PRE-01). CU-PRE-3.5.
+ * con {@code esProyectoEmergencia = true} (CU-PRE-01). CU-PRE-03.5.
  */
 @Entity
 @Table(name = "FICHA_EMERGENCIA")

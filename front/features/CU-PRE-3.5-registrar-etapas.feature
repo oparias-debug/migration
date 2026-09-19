@@ -1,5 +1,5 @@
 # language: es
-@CU-PRE-3.5 @rol:TECNICO_URP
+@CU-PRE-03.5 @rol:TECNICO_URP
 Característica: Registrar el costo y las fechas de las etapas de la Ruta de Preinversión
 
   Como Técnico URP

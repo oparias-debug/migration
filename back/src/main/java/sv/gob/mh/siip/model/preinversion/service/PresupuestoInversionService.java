@@ -152,7 +152,7 @@ public class PresupuestoInversionService {
     for (MacroactividadPresupuesto m : ms)
       porProducto.computeIfAbsent(m.getNumeroProducto(), k -> new ArrayList<>()).add(macroDto(m));
     // Productos desde CU-PRE-11 (Descripción Técnica, RN16, solo lectura aquí) — no desde
-    // FichaEmergencia, que solo existe para proyectos de emergencia (CU-PRE-3.5).
+    // FichaEmergencia, que solo existe para proyectos de emergencia (CU-PRE-03.5).
     List<Componente> filas = componentes.findByProyectoIdOrderByIdAsc(proyecto.getId());
     List<ProductoPresupuestoDto> ps = new ArrayList<>();
     for (int i = 0; i < filas.size(); i++) {

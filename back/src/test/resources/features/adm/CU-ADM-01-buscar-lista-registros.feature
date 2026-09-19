@@ -1,20 +1,27 @@
 # language: es
-@CU-ADM-01 @rol:ADMINISTRADOR_DE_CATALOGOS
-Característica: Buscar Lista de Registros
+@CU-ADM-01 @rol:ADMINISTRADOR
+Característica: Buscar una lista de registros de un catálogo
 
-  Como Administrador de Catálogos
-  Quiero buscar la lista completa de registros de un catálogo, obteniendo todos los campos o solo los que indique
+  Como Administrador del Sistema (o un sistema consumidor)
+  Quiero buscar la lista de registros de un catálogo, indicando opcionalmente una lista de nombres de campos
+  Para obtener los valores requeridos de todos los registros
 
-  Escenario: Buscar la lista de registros sin especificar lista de campos
-    Dado que un catálogo tiene registros almacenados
-    Cuando se solicita la lista de registros del catálogo sin especificar clave ni lista de campos
-    Entonces el sistema retorna el valor del primer campo no-KEY de todos los registros
+  Escenario: Retornar los campos solicitados para todos los registros de un catálogo
+    Dado un catálogo con registros y una lista de nombres de campos
+    Cuando realizo la búsqueda sin indicar KEY
+    Entonces el sistema retorna los valores de cada campo solicitado para cada registro conforme a la Regla 5
 
-  Escenario: Buscar la lista de registros especificando una lista de campos
-    Dado que un catálogo tiene registros almacenados
-    Cuando se solicita la lista de registros del catálogo indicando una lista de nombres de campos
-    Entonces el sistema retorna la lista de valores de los campos solicitados para todos los registros encontrados
+  Escenario: Retornar el primer campo no KEY de todos los registros cuando no se indica lista de campos
+    Dado un catálogo con registros sin lista de campos
+    Cuando realizo la búsqueda
+    Entonces el sistema retorna el valor del primer campo no KEY de todos los registros conforme a la Regla 5
 
-  # ⚠️ Nota: el CU no especifica qué ocurre si se solicita un campo que no existe en el catálogo
-  # en este flujo (a diferencia de la búsqueda por clave, sección 7.2). No se generó escenario
-  # de error para ese caso para no inventar comportamiento no descrito.
+  Escenario: Retornar INACTIVE para todos los registros cuando el catálogo está inactivo
+    Dado que el catálogo está INACTIVE
+    Cuando realizo la búsqueda
+    Entonces el sistema retorna INACTIVE para todos los registros conforme a la Regla 12
+
+  # ⚠️ Pendiente: no se genera escenario de rechazo por falta de permisos de administración
+  # de catálogos porque el CU-ADM-01 no especifica el mensaje ni el flujo de error para ese caso.
+  # Tampoco se modela un mecanismo de autenticación/rol distinto para el "sistema consumidor"
+  # mencionado como actor alternativo, por no estar detallado en el CU. Ver historias-CU-ADM-01.md.

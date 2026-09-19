@@ -6,7 +6,7 @@
   "roles": {
     "realm": [
       {
-        "name": "ADMINISTRADOR_DEL_SISTEMA",
+        "name": "ADMINISTRADOR",
         "description": "Administrador del Sistema (SIIP). Gestión de solicitudes de CUP y programación cuatrimestral de Preinversión (3 CU)."
       },
       {
@@ -14,7 +14,7 @@
         "description": "Coordinador de Preinversión (SIIP). Revisión/emisión de CUP, priorización, opinión técnica, banco de proyectos y programación/avance cuatrimestral de Preinversión (10 CU)."
       },
       {
-        "name": "COORDINADOR_PRO",
+        "name": "COORDINADOR_PROGRAMACION",
         "description": "Coordinador de Programación y Análisis (SIIP). Monitoreo de programación del PAIP/PAP y presupuesto de inversión (9 CU)."
       },
       {
@@ -34,24 +34,20 @@
         "description": "Técnico de Preinversión (SIIP). Registro y análisis del ciclo de proyectos en fase de Preinversión: área de influencia, mercado, técnica, ambiental, riesgo, legal, presupuesto, indicadores y elegibilidad (25 CU)."
       },
       {
-        "name": "TECNICO_PRO",
-        "description": "Técnico de Programación y Análisis (SIIP). Agrupa Coordinador/Técnico de Seguimiento y Monitoreo de Proyectos y Coordinador/Técnico de Programación y Análisis. Monitoreo de programación del PAIP/PAP y presupuesto de inversión (9 CU)."
+        "name": "TECNICO_PROG",
+        "description": "Técnico de Programación y Análisis (SIIP). Monitoreo de programación del PAIP/PAP y presupuesto de inversión (9 CU)."
       },
       {
         "name": "TECNICO_SYMP",
         "description": "Técnico de Seguimiento y Monitoreo de Proyectos (SIIP). Escenarios de programación, consolidado de techos, monitoreo mensual del PAIP y visitas de campo (11 CU)."
       },
       {
-        "name": "TECNICO_UAL",
+        "name": "TECNICO_LEGAL",
         "description": "Técnico de la Unidad de Asesoría Legal (SIIP). Registro, modificación y ficha de convenios (4 CU)."
       },
       {
         "name": "TECNICO_URP",
         "description": "Técnico de la Unidad Responsable de Proyecto (SIIP). Identificación, análisis y programación/avance financiero y físico del proyecto a lo largo de todo el ciclo (41 CU)."
-      },
-      {
-        "name": "USUARIOS_INTERNOS",
-        "description": "Usuarios Internos (SIIP). Consulta del presupuesto de inversión y del banco de proyectos (2 CU)."
       },
       {
         "name": "VIABILIZADOR",
@@ -60,6 +56,26 @@
       {
         "name": "ADMINISTRADOR_DE_CATALOGOS",
         "description": "Administrador de Catálogos (SIIP). Administra catálogos maestros y sus registros (CU-ADM-01). Actor aún no incorporado formalmente a catalogo-actores.md."
+      },
+      {
+        "name": "ADMINISTRADOR_CALENDARIO",
+        "description": "Administrador de Calendarios (SIIP). Administra los calendarios bajo su responsabilidad (CU-ADM-04, RN12)."
+      },
+      {
+        "name": "TECNICO_SEG",
+        "description": "[SUPUESTO] Técnico de Seguimiento (SIIP). Rol identificado en Anexo C sin casos de uso implementados aún; no incorporado formalmente a catalogo-actores.md."
+      },
+      {
+        "name": "TECNICO_OPE",
+        "description": "[SUPUESTO] Técnico Operativo (SIIP). Rol identificado en Anexo C sin casos de uso implementados aún; no incorporado formalmente a catalogo-actores.md."
+      },
+      {
+        "name": "TECNICO_SIAF",
+        "description": "[SUPUESTO] Técnico de interfaz con SIAF (SIIP). Rol identificado en Anexo C, relacionado con la integración a un sistema externo (ver SistemaExterno/CU-ITF-01); sin casos de uso implementados aún."
+      },
+      {
+        "name": "INGENIERO_DINAFI",
+        "description": "[SUPUESTO] Ingeniero DINAFI (SIIP). Rol identificado en Anexo C sin casos de uso implementados aún; no incorporado formalmente a catalogo-actores.md."
       }
     ]
   },
@@ -149,25 +165,7 @@
         }
       ],
       "realmRoles": [
-        "ADMINISTRADOR_DEL_SISTEMA"
-      ]
-    },
-    {
-      "username": "user",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "user@example.com",
-      "firstName": "User",
-      "lastName": "User",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "user123",
-          "temporary": false
-        }
-      ],
-      "realmRoles": [
-        "USUARIOS_INTERNOS"
+        "ADMINISTRADOR"
       ]
     },
     {
@@ -203,17 +201,17 @@
       ]
     },
     {
-      "username": "coordinador.pro",
+      "username": "coordinador.programacion",
       "enabled": true,
       "emailVerified": true,
-      "email": "coordinador.pro@example.com",
+      "email": "coordinador.programacion@example.com",
       "firstName": "Coordinador",
-      "lastName": "PRO",
+      "lastName": "Programación",
       "credentials": [
-        { "type": "password", "value": "coordinadorPro123", "temporary": false }
+        { "type": "password", "value": "coordinadorProgramacion123", "temporary": false }
       ],
       "realmRoles": [
-        "COORDINADOR_PRO"
+        "COORDINADOR_PROGRAMACION"
       ]
     },
     {
@@ -287,17 +285,17 @@
       ]
     },
     {
-      "username": "tecnico.pro",
+      "username": "tecnico.prog",
       "enabled": true,
       "emailVerified": true,
-      "email": "tecnico.pro@example.com",
+      "email": "tecnico.prog@example.com",
       "firstName": "Tecnico",
-      "lastName": "PRO",
+      "lastName": "Programación",
       "credentials": [
-        { "type": "password", "value": "tecnicoPro123", "temporary": false }
+        { "type": "password", "value": "tecnicoProg123", "temporary": false }
       ],
       "realmRoles": [
-        "TECNICO_PRO"
+        "TECNICO_PROG"
       ]
     },
     {
@@ -315,17 +313,17 @@
       ]
     },
     {
-      "username": "tecnico.ual",
+      "username": "tecnico.legal",
       "enabled": true,
       "emailVerified": true,
-      "email": "tecnico.ual@example.com",
+      "email": "tecnico.legal@example.com",
       "firstName": "Tecnico",
-      "lastName": "UAL",
+      "lastName": "Legal",
       "credentials": [
-        { "type": "password", "value": "tecnicoUal123", "temporary": false }
+        { "type": "password", "value": "tecnicoLegal123", "temporary": false }
       ],
       "realmRoles": [
-        "TECNICO_UAL"
+        "TECNICO_LEGAL"
       ]
     },
     {
@@ -368,6 +366,76 @@
       ],
       "realmRoles": [
         "VIABILIZADOR"
+      ]
+    },
+    {
+      "username": "admin.calendario",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin.calendario@example.com",
+      "firstName": "Administrador",
+      "lastName": "de Calendarios",
+      "credentials": [
+        { "type": "password", "value": "adminCalendario123", "temporary": false }
+      ],
+      "realmRoles": [
+        "ADMINISTRADOR_CALENDARIO"
+      ]
+    },
+    {
+      "username": "tecnico.seg",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.seg@example.com",
+      "firstName": "Tecnico",
+      "lastName": "Seguimiento",
+      "credentials": [
+        { "type": "password", "value": "tecnicoSeg123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_SEG"
+      ]
+    },
+    {
+      "username": "tecnico.ope",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.ope@example.com",
+      "firstName": "Tecnico",
+      "lastName": "Operativo",
+      "credentials": [
+        { "type": "password", "value": "tecnicoOpe123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_OPE"
+      ]
+    },
+    {
+      "username": "tecnico.siaf",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "tecnico.siaf@example.com",
+      "firstName": "Tecnico",
+      "lastName": "SIAF",
+      "credentials": [
+        { "type": "password", "value": "tecnicoSiaf123", "temporary": false }
+      ],
+      "realmRoles": [
+        "TECNICO_SIAF"
+      ]
+    },
+    {
+      "username": "ingeniero.dinafi",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "ingeniero.dinafi@example.com",
+      "firstName": "Ingeniero",
+      "lastName": "DINAFI",
+      "credentials": [
+        { "type": "password", "value": "ingenieroDinafi123", "temporary": false }
+      ],
+      "realmRoles": [
+        "INGENIERO_DINAFI"
       ]
     }
   ]

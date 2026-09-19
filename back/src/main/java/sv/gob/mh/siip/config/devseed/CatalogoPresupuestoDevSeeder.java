@@ -20,7 +20,7 @@ import sv.gob.mh.siip.model.preinversion.repository.UnidadMedidaRepository;
  * {@link CatalogoProyectoDevSeeder}, el documento fuente de CU-PRE-17
  * (UC-PRE-17-Presupuesto_de_Inversion.md) referencia ambos catálogos por nombre pero nunca
  * transcribe su contenido real (ninguna fila detectada en "Catálogos Detectados", a diferencia
- * del Anexo F de CU-PRE-3.5): los valores de aquí son datos de prueba razonables, no el catálogo
+ * del Anexo F de CU-PRE-03.5): los valores de aquí son datos de prueba razonables, no el catálogo
  * oficial de la DGICP.
  */
 @Component

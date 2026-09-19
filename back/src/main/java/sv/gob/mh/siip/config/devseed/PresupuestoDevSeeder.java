@@ -27,11 +27,11 @@ import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
- * Proyecto de emergencia con Ficha de emergencia (CU-PRE-3.5, Anexo A.4) ya registrada, y con dos
+ * Proyecto de emergencia con Ficha de emergencia (CU-PRE-03.5, Anexo A.4) ya registrada, y con dos
  * filas de Descripción Técnica (CU-PRE-11, {@link Componente}) para tener "productos" con los que
  * probar CU-PRE-17 (Presupuesto de Inversión) sin registrar ambas pantallas a mano.
  * {@code fuentesFinanciamiento}/{@code fuenteRecursos} de {@code FichaEmergencia} son datos propios
- * de CU-PRE-3.5: CU-PRE-17 tiene sus propios campos homónimos en {@code PresupuestoProyecto}, que
+ * de CU-PRE-03.5: CU-PRE-17 tiene sus propios campos homónimos en {@code PresupuestoProyecto}, que
  * cualquier proyecto puede completar sin necesitar una Ficha de emergencia.
  */
 @Component

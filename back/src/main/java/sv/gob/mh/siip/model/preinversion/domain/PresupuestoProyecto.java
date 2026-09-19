@@ -22,7 +22,7 @@ public class PresupuestoProyecto extends Auditable {
 
     /**
      * "Fuente de financiamiento y de recursos" (Anexo A.5, RN14) — propias de CU-PRE-17, para
-     * cualquier proyecto. No reutiliza los campos homónimos de {@link FichaEmergencia} (CU-PRE-3.5):
+     * cualquier proyecto. No reutiliza los campos homónimos de {@link FichaEmergencia} (CU-PRE-03.5):
      * esa entidad solo existe para proyectos de emergencia, y acoplar ambos CUs dejaba
      * "/presupuesto/fuentes-financiamiento" en 404 para el resto de los proyectos.
      */

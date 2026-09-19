@@ -1,6 +1,6 @@
 ---
-id: CU-PRE-3.5
-codigo: CU-PRE-3.5
+id: CU-PRE-03.5
+codigo: CU-PRE-03.5
 nombre: Selección y Registro de Etapas
 modulo: Preinversión
 submodulo: Formulación del Proyecto
@@ -254,7 +254,7 @@ trazabilidad:
 | Campo | Valor |
 |--------|-------|
 | Nombre | Selección y Registro de Etapas |
-| Código | CU-PRE-3.5 |
+| Código | CU-PRE-03.5 |
 | Módulo | Preinversión |
 | Fuente | UC-PRE-03_5_Selección_y_Registro_de_Etapas_SEP_2025_V1_F.pdf |
 | Versión | 1.0 |
@@ -354,7 +354,7 @@ Técnico URP
 
 1.1.1 Técnico URP, en la tabla del Anexo A.1, registra las fechas de inicio y fin, y da clic en el botón "Guardar".
 1.1.2 Sistema guarda la información registrada y se mantiene en la pantalla del Anexo A.1, y habilita los botones de las etapas para visualización o registro de la información (Anexo A.1).
-1.1.3 Sistema habilita para la etapa que se debe diligenciar los campos de las pantallas de identificación, formulación, evaluación y programación conforme al Anexo CU-PRE-3.5 "Selección y registro de etapas".
+1.1.3 Sistema habilita para la etapa que se debe diligenciar los campos de las pantallas de identificación, formulación, evaluación y programación conforme al Anexo CU-PRE-03.5 "Selección y registro de etapas".
 
 **Resultado**
 
@@ -386,7 +386,7 @@ Técnico URP
 
 3.1 Técnico URP registra para cada etapa las fechas de inicio y fin, y da clic en el botón "Guardar".
 3.2 Sistema guarda la información registrada y se mantiene en la pantalla del Anexo A.1, y habilita los botones de las etapas para visualización o registro de la información (Anexo A.1).
-3.3 Sistema habilita para la etapa que se debe diligenciar los campos de las pantallas de identificación, formulación, evaluación y programación conforme al Anexo CU-PRE-3.5 "Selección y registro de etapas" en Excel.
+3.3 Sistema habilita para la etapa que se debe diligenciar los campos de las pantallas de identificación, formulación, evaluación y programación conforme al Anexo CU-PRE-03.5 "Selección y registro de etapas" en Excel.
 
 **Resultado**
 
@@ -591,7 +591,7 @@ Cada uno de estos botones será el enlace al registro de la información en la I
 
 ### RN20
 
-**Descripción:** Luego de haber guardado la información, el sistema internamente debe habilitar los campos de las pantallas en identificación, formulación, evaluación y programación, conforme a la etapa que se esté diligenciando (perfil, prefactibilidad, factibilidad y diseño) y al tipo de iniciativa (proyecto, programa o estudio general). Ver Anexo CU-PRE-3.5 "Selección y registro de etapas".
+**Descripción:** Luego de haber guardado la información, el sistema internamente debe habilitar los campos de las pantallas en identificación, formulación, evaluación y programación, conforme a la etapa que se esté diligenciando (perfil, prefactibilidad, factibilidad y diseño) y al tipo de iniciativa (proyecto, programa o estudio general). Ver Anexo CU-PRE-03.5 "Selección y registro de etapas".
 
 **Origen:** Documento, sección "Reglas del Negocio".
 
@@ -716,7 +716,7 @@ Cada uno de estos botones será el enlace al registro de la información en la I
 - CU-PRE-26 "Opinión Técnica"
 - CU-PRE-30 "Programación Cuatrimestral Financiera de la Preinversión"
 
-**Casos de uso adicionales identificados mediante el Anexo F** (columna "Ubicación en caso de uso"; no mencionados en el cuerpo del PDF original de CU-PRE-3.5, ver "Anexo F – Contenido de Iniciativas de Proyecto" en Catálogos Detectados):
+**Casos de uso adicionales identificados mediante el Anexo F** (columna "Ubicación en caso de uso"; no mencionados en el cuerpo del PDF original de CU-PRE-03.5, ver "Anexo F – Contenido de Iniciativas de Proyecto" en Catálogos Detectados):
 - CU-PRE-05 (Análisis de Alternativas de Solución)
 - CU-PRE-06 (Análisis de Interesados)
 - CU-PRE-07 (Análisis de la Población)
@@ -885,7 +885,7 @@ Cada uno de estos botones será el enlace al registro de la información en la I
 - El campo "Producto" también se describe como "No" editable en la tabla de formatos, a pesar de indicar que "el Técnico URP seleccione los productos del proyecto... El Sistema permitirá que pueda agregarse más de un producto"; no se aclara si "no editable" se refiere a que el texto del producto en sí no puede modificarse una vez seleccionado del catálogo, o si es una inconsistencia de la tabla.
 - El texto de RN14 llama al Anexo A.3 "Ficha de información general" y describe que incluye "Nombre de la Institución" como primer campo; sin embargo, en el mockup del Anexo A.3 no aparece un campo rotulado explícitamente "Nombre de la Institución" como encabezado separado (solo "Unidad Ejecutora" e "Iniciativa de Inversión" antes de la sección IDENTIFICACIÓN). El documento no aclara si "Nombre de la Institución" corresponde a otro campo visible bajo un nombre distinto.
 - El texto del mensaje mostrado en FA-05 paso 5.5 ("Existen campos sin diligenciar") es el único mensaje de error explícito documentado; no se especifican mensajes de validación individuales para cada campo obligatorio del formulario A.4.
-- ✅ **Anexo F — correspondencia con RN20 resuelta (a solicitud del usuario, 04/09/2026, no proveniente del PDF):** el archivo `CU-PRE-3_5_ANEXO_F.xlsx`, aportado posteriormente como anexo Excel independiente, contiene una matriz de habilitación de campos por etapa de preinversión (Perfil/Prefactibilidad/Factibilidad/Diseño) y por tipo de iniciativa (Programa/Estudio General), con referencia cruzada a otros casos de uso ("Ubicación en caso de uso"). Se confirma que este Anexo F **sí corresponde** al anexo referenciado en **RN20** ("Ver Anexo CU-PRE-3.5 'Selección y registro de etapas'"), pese a la discrepancia de nomenclatura entre ambos nombres ya señalada en versiones anteriores de este documento.
+- ✅ **Anexo F — correspondencia con RN20 resuelta (a solicitud del usuario, 04/09/2026, no proveniente del PDF):** el archivo `CU-PRE-3_5_ANEXO_F.xlsx`, aportado posteriormente como anexo Excel independiente, contiene una matriz de habilitación de campos por etapa de preinversión (Perfil/Prefactibilidad/Factibilidad/Diseño) y por tipo de iniciativa (Programa/Estudio General), con referencia cruzada a otros casos de uso ("Ubicación en caso de uso"). Se confirma que este Anexo F **sí corresponde** al anexo referenciado en **RN20** ("Ver Anexo CU-PRE-03.5 'Selección y registro de etapas'"), pese a la discrepancia de nomenclatura entre ambos nombres ya señalada en versiones anteriores de este documento.
 - ✅ **Anexo F — significado del símbolo "-" resuelto (a solicitud del usuario, 04/09/2026, no proveniente del PDF):** en la columna "Campos a habilitar para Actualización de O.T." del Anexo F, el guion "-" (filas 2.5, 2.8, 4.1, 4.2 y 4.4) significa que **el campo no aplica al Caso de Uso** (es decir, no aplica al proceso de Actualización de Opinión Técnica), a diferencia de una celda vacía, que indica ausencia de dato/no completado. "X" sigue indicando que el campo sí se habilita.
 - **Anexo F — celdas combinadas en "Ubicación en caso de uso":** las filas 1.1 a 1.4 (Antecedentes, Problema Central, Objetivo General, Objetivos Específicos) comparten una sola celda combinada con el valor "CUPRE-04"; las filas 2.12 (Presupuesto de Inversión) y 2.13 (Fuentes de Financiamiento) comparten una sola celda combinada con el valor "CUPRE-17". Esto significa que "Fuentes de Financiamiento" no tiene una ubicación propia distinta en el caso de uso CU-PRE-17, sino que comparte la misma referencia que "Presupuesto de Inversión"; el documento no aclara si esto es intencional o si "Fuentes de Financiamiento" debería tener su propia referencia de caso de uso.
 - Los casos de uso CU-PRE-05, 06, 07, 08, 09, 10, 12, 13, 14, 15, 16, 18, 20, 21, 22.2, 22.3, 22.4 y 23, identificados a través de la columna "Ubicación en caso de uso" del Anexo F, no estaban listados en "Dependencias"/"casos_relacionados" en la versión 1.0 de este documento (basada únicamente en el PDF); se incorporaron en la versión 1.1 a partir de esta única fuente (el propio Anexo F), sin más contexto sobre la naturaleza exacta de cada relación.
@@ -1268,7 +1268,7 @@ Cada uno de estos botones será el enlace al registro de la información en la I
 
 > **Origen:** este catálogo no formaba parte del PDF fuente `UC-PRE-03_5_Selección_y_Registro_de_Etapas_SEP_2025_V1_F.pdf` tal como fue procesado inicialmente; fue aportado posteriormente como archivo Excel anexo independiente: `CU-PRE-3_5_ANEXO_F.xlsx` (hoja única "Hoja1"). Se transcribe íntegro a continuación, preservando el orden, la agrupación y las celdas combinadas de la hoja original.
 >
-> ✅ **Referencia cruzada confirmada (a solicitud del usuario, 04/09/2026, no proveniente del PDF):** RN20 (ver sección "Reglas de Negocio") establece que, luego de guardar la información, "el sistema internamente debe habilitar los campos de las pantallas en identificación, formulación, evaluación y programación, conforme a la etapa que se esté diligenciando (perfil, prefactibilidad, factibilidad y diseño) y al tipo de iniciativa (proyecto, programa o estudio general)", y remite a "Ver Anexo CU-PRE-3.5 'Selección y registro de etapas'". Se confirma que este Anexo F es efectivamente el anexo referenciado por RN20, a pesar de la discrepancia de nomenclatura entre "Anexo CU-PRE-3.5 'Selección y registro de etapas'" (nombre usado en RN20) y "Anexo F" (nombre del archivo aportado), que no aparece con ese nombre en ninguna otra parte del documento fuente.
+> ✅ **Referencia cruzada confirmada (a solicitud del usuario, 04/09/2026, no proveniente del PDF):** RN20 (ver sección "Reglas de Negocio") establece que, luego de guardar la información, "el sistema internamente debe habilitar los campos de las pantallas en identificación, formulación, evaluación y programación, conforme a la etapa que se esté diligenciando (perfil, prefactibilidad, factibilidad y diseño) y al tipo de iniciativa (proyecto, programa o estudio general)", y remite a "Ver Anexo CU-PRE-03.5 'Selección y registro de etapas'". Se confirma que este Anexo F es efectivamente el anexo referenciado por RN20, a pesar de la discrepancia de nomenclatura entre "Anexo CU-PRE-03.5 'Selección y registro de etapas'" (nombre usado en RN20) y "Anexo F" (nombre del archivo aportado), que no aparece con ese nombre en ninguna otra parte del documento fuente.
 >
 > Título de la hoja (fila 1, celda combinada B1:I1): **"CONTENIDO DE INICIATIVAS DE PROYECTO"**.
 >
@@ -1359,9 +1359,9 @@ Cada uno de estos botones será el enlace al registro de la información en la I
 - Discrepancia no resuelta en la nomenclatura del campo "Es Proyecto GRD/GRC/ACC" (RN14) frente a "Es Proyecto GRD/ACC" (mockup Anexo A.3).
 - No se aclara si "Nombre de la Institución", mencionado en RN14 como parte de la Ficha de información general, corresponde a un campo visible bajo otro nombre en el mockup del Anexo A.3, dado que no aparece con ese rótulo exacto.
 - Contradicción no resuelta: los campos "Componente" y "Producto" se describen en su detalle funcional como campos de selección activa por parte del Técnico URP, pero la tabla de formatos los marca como "No" editables.
-- ✅ **Resuelto (04/09/2026):** el "Anexo F – Contenido de Iniciativas de Proyecto" (archivo `CU-PRE-3_5_ANEXO_F.xlsx`) corresponde efectivamente al anexo referenciado en RN20 como "Anexo CU-PRE-3.5 'Selección y registro de etapas'", pese a la discrepancia de nomenclatura entre ambos nombres (ver Observaciones).
+- ✅ **Resuelto (04/09/2026):** el "Anexo F – Contenido de Iniciativas de Proyecto" (archivo `CU-PRE-3_5_ANEXO_F.xlsx`) corresponde efectivamente al anexo referenciado en RN20 como "Anexo CU-PRE-03.5 'Selección y registro de etapas'", pese a la discrepancia de nomenclatura entre ambos nombres (ver Observaciones).
 - ✅ **Resuelto (04/09/2026):** el símbolo "-" (guion) en la columna "Campos a habilitar para Actualización de O.T." de las filas 2.5, 2.8, 4.1, 4.2 y 4.4 significa que el campo no aplica al Caso de Uso (no aplica al proceso de Actualización de Opinión Técnica), a diferencia de una celda vacía (ausencia de dato).
 - ✅ **Resuelto (04/09/2026):** el botón de selección radial "Co-ejecutor" (RN16) está **oculto** (no solo deshabilitado) para cualquier actor distinto del Coordinador SYMP.
 - Sigue pendiente: si "Fuentes de Financiamiento" debería tener su propia referencia de "Ubicación en caso de uso" en el Anexo F, distinta de "Presupuesto de Inversión" (con quien comparte actualmente una celda combinada con valor "CUPRE-17").
 - **Anexo F:** aclaración de si "Fuentes de Financiamiento" (fila 2.13) debería tener su propia referencia de "Ubicación en caso de uso" distinta de "Presupuesto de Inversión" (fila 2.12), dado que ambas comparten la misma celda combinada con el valor "CUPRE-17" en el archivo original.
-- **Anexo F:** naturaleza exacta de la relación de este caso de uso (CU-PRE-3.5) con los casos de uso CU-PRE-05, 06, 07, 08, 09, 10, 12, 13, 14, 15, 16, 18, 20, 21, 22.2, 22.3, 22.4 y 23, identificados únicamente a través de la columna "Ubicación en caso de uso" del Anexo F y no descritos en ninguna otra sección del documento fuente.
+- **Anexo F:** naturaleza exacta de la relación de este caso de uso (CU-PRE-03.5) con los casos de uso CU-PRE-05, 06, 07, 08, 09, 10, 12, 13, 14, 15, 16, 18, 20, 21, 22.2, 22.3, 22.4 y 23, identificados únicamente a través de la columna "Ubicación en caso de uso" del Anexo F y no descritos en ninguna otra sección del documento fuente.

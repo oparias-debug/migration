@@ -148,7 +148,7 @@ public interface ProyectoCapturaRepository
                 try {
                     IniciativaInversion enumValue = IniciativaInversion.valueOf(iniciativaValue);
                     return cb.equal(root.get(FIELD_INICIATIVA), enumValue);
-                } catch (IllegalArgumentException _) {
+                } catch (IllegalArgumentException ex) {
                     return cb.disjunction(); // Si el String no coincide con ningún Enum válido, fuerza resultado vacío seguro
                 }
             };
@@ -168,7 +168,7 @@ public interface ProyectoCapturaRepository
                 try {
                     EstadoProyecto enumValue = EstadoProyecto.valueOf(estadoValue);
                     return cb.equal(root.get(FIELD_ESTADO), enumValue);
-                } catch (IllegalArgumentException _) {
+                } catch (IllegalArgumentException ex) {
                     return cb.disjunction(); // Si el String no coincide con ningún Enum válido, fuerza resultado vacío seguro
                 }
             };

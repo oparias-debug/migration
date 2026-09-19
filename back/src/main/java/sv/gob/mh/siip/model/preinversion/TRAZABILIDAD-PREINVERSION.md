@@ -13,7 +13,7 @@ Módulo procesado: **Preinversión (WBS M-01 a M-08, 32 casos de uso, prefijo `P
 | `Departamento` / `Municipio` | `DEPARTAMENTO` / `MUNICIPIO` | M-00 (catálogo transversal) | CU-PRE-08, CU-PRE-12 |
 | `FuenteFinanciamiento` | `FUENTE_FINANCIAMIENTO` | M-00 (catálogo transversal) | CU-PRE-17 |
 | `Proyecto` | `PROYECTO` | M-01, M-02 | CU-PRE-01, CU-PRE-01.5, CU-PRE-02, CU-PRE-03 |
-| `EtapaPreinversion` | `ETAPA_PREINVERSION` | M-02 | CU-PRE-3.5 |
+| `EtapaPreinversion` | `ETAPA_PREINVERSION` | M-02 | CU-PRE-03.5 |
 | `SolicitudPreinversion` | `SOLICITUD_PREINVERSION` | M-01 | CU-PRE-01, CU-PRE-01.5, CU-PRE-02 |
 | `ComentarioSolicitud` | `COMENTARIO_SOLICITUD` | M-01 | CU-PRE-01, CU-PRE-01.5 |
 | `Identificacion` + `ObjetivoEspecifico` | `IDENTIFICACION` / `OBJETIVO_ESPECIFICO` | M-02 | CU-PRE-04 |

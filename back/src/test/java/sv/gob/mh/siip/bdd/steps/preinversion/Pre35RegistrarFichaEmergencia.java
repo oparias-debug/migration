@@ -41,7 +41,7 @@ import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
- * CU-PRE-3.5-registrar-ficha-emergencia.feature. El clic en "Perfil"/"Guardar" comparte texto con
+ * CU-PRE-03.5-registrar-ficha-emergencia.feature. El clic en "Perfil"/"Guardar" comparte texto con
  * pasos ya definidos en Pre01RegistrarNuevoProyecto/Pre01ResponderObservaciones (no-op allí); la
  * acción real se dispara en el primer paso propio que sigue. "el sistema muestra el mensaje
  * {string}" también es compartido (definido en Pre01RegistrarNuevoProyecto): la excepción que
@@ -229,7 +229,7 @@ public class Pre35RegistrarFichaEmergencia {
 
         autenticarComo(nombreUsuario);
 
-        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto de emergencia CU-PRE-3.5 BDD",
+        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto de emergencia CU-PRE-03.5 BDD",
                 EstadoProyecto.CUP_ASIGNADO, unidadEjecutora, institucion, sector, ejeTematico));
         proyecto.setIniciativaInversion(IniciativaInversion.PROYECTO);
         proyecto.setEsProyectoEmergencia(true);

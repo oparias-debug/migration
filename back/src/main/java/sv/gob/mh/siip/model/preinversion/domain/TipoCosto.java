@@ -7,7 +7,7 @@ import lombok.*;
 /**
  * Entrada del catálogo "Tipo de Costos" (Anexo C.2). El propio CU aclara: "Este catálogo estará
  * sujeto a actualización por parte de la DGICP" — administrado, sin datos oficiales en el
- * repositorio (tabla vacía; ver {@code schema_preinversion.sql}). CU-PRE-3.5.
+ * repositorio (tabla vacía; ver {@code schema_preinversion.sql}). CU-PRE-03.5.
  */
 @Entity
 @Table(name = "TIPO_COSTO")

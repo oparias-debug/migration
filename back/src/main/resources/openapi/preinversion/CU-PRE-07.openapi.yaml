@@ -6,9 +6,7 @@ info:
     Fragmento OpenAPI derivado de CU-PRE-07 "Población Objetivo"
     (UC-PRE-07-Poblacion-Objetivo.md) y sus 4 historias BDD. Actor
     principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE.
-    Mismo criterio que CU-PRE-06 para RN01 ("Todos los demás actores" sin
-    identificar): `x-roles` no incluye "Usuarios Internos/Externos" ni
-    ningún otro rol. Introduce el recurso `AnalisisPoblacion`, hijo de
+    Mismo criterio que CU-PRE-06 para RN01. Introduce el recurso `AnalisisPoblacion`, hijo de
     `Proyecto` (CU-PRE-01.openapi.yaml). El Anexo C.1 de este CU es el mismo
     catálogo de ubicaciones geográficas (Distrito/Departamento/Región, con
     entradas de "Nivel departamental"/"Nivel nacional") ya definido en

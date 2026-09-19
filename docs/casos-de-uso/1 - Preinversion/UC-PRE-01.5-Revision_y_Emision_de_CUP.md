@@ -171,7 +171,7 @@ No especificado en el documento original.
 
 1. CU-PRE-01 Registro y Solicitud de CUP (retorno del proyecto con observaciones, si se ejecutó SF-1 Devolver).
 2. UC-PRE-03 Captura de proyectos (si se ejecutó SF-2 Emitir CUP).
-3. CU-PRE-3.5 Selección y registro de etapas
+3. CU-PRE-03.5 Selección y registro de etapas
 4. CU-PRE-24 Viabilidad
 5. CU-PRE-25 Elegibilidad
 6. CU-PRE-26 Opinión Técnica
@@ -329,7 +329,7 @@ No especificado en el documento original.
 # Observaciones
 
 - Este documento es el resultado de dividir el CU-PRE-01 original (v1.0). Toda la información aquí presentada proviene íntegramente de ese documento fuente; no se agregó ningún requerimiento nuevo, solo se reorganizó y se le dio identidad propia como caso de uso con actor principal "Técnico PRE".
-- La codificación "CU-PRE-01.5" es una propuesta de trabajo (sigue la convención decimal ya usada en "CU-PRE-3.5" dentro del mismo conjunto de documentos) y debe confirmarse/formalizarse con el equipo de negocio o de gestión documental antes de su uso definitivo en matrices de trazabilidad.
+- La codificación "CU-PRE-01.5" es una propuesta de trabajo (sigue la convención decimal ya usada en "CU-PRE-03.5" dentro del mismo conjunto de documentos) y debe confirmarse/formalizarse con el equipo de negocio o de gestión documental antes de su uso definitivo en matrices de trazabilidad.
 - Este caso de uso resuelve la inconsistencia observada originalmente en CU-PRE-02 (FA-01), donde el enlace "Técnico PRE ingresa... Sistema muestra pantalla Nuevo Registro del CU-PRE-01" apuntaba a un caso de uso cuyo actor principal formal (tras esta división) es el Técnico URP. Se recomienda actualizar la referencia de FA-01 en CU-PRE-02 para que apunte a este documento (CU-PRE-01.5) en lugar de CU-PRE-01.
 - Las contradicciones [C-01] y [C-05] señaladas en la sección "Reglas de Negocio – RN 3", heredadas de CU-PRE-01, fueron **resueltas en la Ronda 2** (RQ-C-01, RQ-C-02): la definición de estados y la redacción de sus nombres, tal como están documentadas en este CU-PRE-01.5 (heredadas de CU-PRE-01), quedan confirmadas como vigentes/oficiales. Ver las anotaciones de resolución en RN 3. Las correcciones correspondientes en CU-PRE-02 (RQ-C-01) y en UC-PRE-03 (RQ-C-02) se aplican en esos documentos, no en este.
 - El documento original no aclaraba si, tras un ciclo de "Devolver" → "Enviar" (respuesta del Técnico URP), el Técnico PRE puede volver a devolver la solicitud múltiples veces o si existe un límite de ciclos. Este documento asume, por lectura del flujo, que el ciclo puede repetirse indefinidamente hasta la emisión del CUP; se recomienda confirmar con el negocio.

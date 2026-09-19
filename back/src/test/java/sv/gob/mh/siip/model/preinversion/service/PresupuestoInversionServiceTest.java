@@ -168,7 +168,7 @@ class PresupuestoInversionServiceTest {
 
   @Test
   void fuentesNoRequiereFichaDeEmergenciaYGuardarFuentesRechazaDatosInvalidos() {
-    // Proyecto normal (sin FichaEmergencia, CU-PRE-3.5): antes respondía 404 "No existe ficha de
+    // Proyecto normal (sin FichaEmergencia, CU-PRE-03.5): antes respondía 404 "No existe ficha de
     // proyecto" para cualquier proyecto que no fuera de emergencia; ya no debe fallar.
     assertThat(service.fuentes(1L)).isNotNull();
 

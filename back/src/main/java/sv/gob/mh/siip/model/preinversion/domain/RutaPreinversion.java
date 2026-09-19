@@ -11,7 +11,7 @@ import lombok.*;
 
 /**
  * Estado de la Ruta de Preinversión de un proyecto (Anexo A.2): los 3 criterios calificados y si
- * la ruta vigente proviene de una modificación manual. 1:1 con {@link Proyecto}. CU-PRE-3.5.
+ * la ruta vigente proviene de una modificación manual. 1:1 con {@link Proyecto}. CU-PRE-03.5.
  */
 @Entity
 @Table(name = "RUTA_PREINVERSION")

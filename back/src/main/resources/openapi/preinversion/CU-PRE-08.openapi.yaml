@@ -15,7 +15,7 @@ paths:
       summary: Consultar el area de influencia
       tags: [Preinversion - Area de Influencia]
       security: [{ bearerAuth: [] }]
-      x-roles: [Tecnico URP, Tecnico PRE]
+      x-roles: [Técnico URP, Técnico PRE]
       responses:
         "200":
           description: Area de influencia del proyecto.
@@ -42,7 +42,7 @@ paths:
       summary: Guardar el area de influencia
       tags: [Preinversion - Area de Influencia]
       security: [{ bearerAuth: [] }]
-      x-roles: [Tecnico URP]
+      x-roles: [Técnico URP]
       requestBody:
         required: true
         content:
@@ -85,7 +85,7 @@ paths:
       summary: Autocompletar desde Poblacion Objetivo
       tags: [Preinversion - Area de Influencia]
       security: [{ bearerAuth: [] }]
-      x-roles: [Tecnico URP]
+      x-roles: [Técnico URP]
       responses:
         "200":
           description: Filas derivadas de Poblacion Objetivo.

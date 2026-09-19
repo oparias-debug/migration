@@ -65,11 +65,6 @@ public class Adm04Comun {
                 .isInstanceOfAny(NoAutenticadoException.class, AccesoDenegadoException.class);
     }
 
-    @Entonces("^el sistema rechaza la operación$")
-    public void el_sistema_rechaza_la_operacion() {
-        assertThat(contextoValidacion.getUltimaExcepcion()).isNotNull();
-    }
-
     @Entonces("^el sistema retorna un error$")
     public void el_sistema_retorna_un_error() {
         assertThat(contextoValidacion.getUltimaExcepcion()).isNotNull();

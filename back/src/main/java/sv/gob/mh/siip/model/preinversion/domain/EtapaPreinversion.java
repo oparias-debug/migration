@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 /**
  * Fila de la tabla "Registro de Etapas" (Anexo A.1) de la Ruta de Preinversión de un proyecto.
- * CU-PRE-3.5. Una fila por combinación (proyecto, tipoEtapa) — ver {@code UK_ETAPA_PROYECTO_TIPO}.
+ * CU-PRE-03.5. Una fila por combinación (proyecto, tipoEtapa) — ver {@code UK_ETAPA_PROYECTO_TIPO}.
  */
 @Entity
 @Table(name = "ETAPA_PREINVERSION")

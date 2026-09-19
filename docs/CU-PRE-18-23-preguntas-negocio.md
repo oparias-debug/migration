@@ -29,7 +29,7 @@
 ## CU-PRE-22.1
 
 1. ¿Costo de etapa y total de programación son el mismo concepto?
-2. ¿El costo sincronizado desde CU-PRE-22.1 bloquea la edición en CU-PRE-3.5?
+2. ¿El costo sincronizado desde CU-PRE-22.1 bloquea la edición en CU-PRE-03.5?
 3. ¿Qué representa el campo "Monto" mencionado fuera del Anexo B?
 
 ## CU-PRE-23

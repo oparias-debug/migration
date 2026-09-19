@@ -29,7 +29,7 @@ nota_version: >
 
 actor_principal: Técnico URP
 
-actores_secundarios: [Administrador del Sistema, "Usuarios Internos/Externos (no es un rol/actor formal con credenciales propias; describe el acceso de solo consulta disponible para cualquier usuario del sistema, interno o externo, según sus credenciales de Unidad Ejecutora — ver anotación del especialista de dominio en Actores Secundarios)", Viabilizador, Técnico UAL, Técnico PRE]
+actores_secundarios: [Administrador del Sistema, Viabilizador, Técnico UAL, Técnico PRE]
 
 prioridad: No especificado en el documento original.
 
@@ -37,9 +37,9 @@ estado: Analizado
 
 depende_de: []
 
-casos_relacionados: [CU-PRE-01.5, CU-PRE-02, UC-PRE-03, CU-PRE-3.5, CU-PRE-24, CU-PRE-25, CU-PRE-26, CU-PRE-29, CU-OYM-01, CU-MPD-01]
+casos_relacionados: [CU-PRE-01.5, CU-PRE-02, UC-PRE-03, CU-PRE-03.5, CU-PRE-24, CU-PRE-25, CU-PRE-26, CU-PRE-29, CU-OYM-01, CU-MPD-01]
 
-roles: [Técnico URP, Administrador del Sistema, "Usuarios Internos/Externos (no es un rol formal; ver nota en Actores Secundarios)"]
+roles: [Técnico URP, Administrador del Sistema]
 
 pantallas: [Registro de Proyecto, Nuevo Registro]
 
@@ -131,7 +131,7 @@ Técnico URP
 
 Caso de uso termina.
 
-> Nota: la pantalla "Registro de Proyecto" también es consultada por Técnico PRE, Administrador del Sistema y por cualquier usuario interno o externo del sistema (ver nota sobre "Usuarios Internos/Externos" en Actores Secundarios) únicamente en modo de visualización (ver SF-3 Ver Registro). La actuación operativa del Técnico PRE sobre una solicitud asignada se documenta en CU-PRE-01.5.
+> Nota: la pantalla "Registro de Proyecto" también es consultada por Técnico PRE, Administrador del Sistema y por cualquier usuario interno o externo del sistema únicamente en modo de visualización (ver SF-3 Ver Registro). La actuación operativa del Técnico PRE sobre una solicitud asignada se documenta en CU-PRE-01.5.
 
 ---
 
@@ -199,7 +199,7 @@ Subflujo Termina.
 
 ## SF-3 Ver Registro
 
-1. Todos los actores (Técnico URP, Técnico PRE, Administrador del Sistema) y, en general, cualquier usuario interno o externo del sistema en modo de solo consulta (ver nota sobre "Usuarios Internos/Externos" en Actores Secundarios) dan clic en el nombre del proyecto del listado de la pantalla Registro de Proyecto.
+1. Todos los actores (Técnico URP, Técnico PRE, Administrador del Sistema) y, en general, cualquier usuario interno o externo del sistema en modo de solo consulta dan clic en el nombre del proyecto del listado de la pantalla Registro de Proyecto.
 2. Sistema muestra la pantalla descrita en A.2 Nuevo registro, sin autorización de editar información.
 3. Todos los actores visualizan la pantalla A.2 Nuevo registro, sin autorización de editar información.
 
@@ -236,7 +236,7 @@ No especificado en el documento original.
 1. CU-PRE-01.5 Revisión y Emisión de CUP (nueva postcondición inmediata: toda solicitud de CUP pasa primero por este caso de uso antes de continuar hacia los siguientes).
 2. CU-PRE-02 Bandeja de Preinversión
 3. UC-PRE-03 Captura de proyectos
-4. CU-PRE-3.5 Selección y registro de etapas
+4. CU-PRE-03.5 Selección y registro de etapas
 5. CU-PRE-24 Viabilidad
 6. CU-PRE-25 Elegibilidad
 7. CU-PRE-26 Opinión Técnica
@@ -427,7 +427,7 @@ No especificado en el documento original.
 - CU-PRE-01.5 Revisión y Emisión de CUP (nuevo — desprendido de este documento)
 - CU-PRE-02 Bandeja de Preinversión
 - UC-PRE-03 Captura de proyectos
-- CU-PRE-3.5 Selección y registro de etapas
+- CU-PRE-03.5 Selección y registro de etapas
 - CU-PRE-24 Viabilidad
 - CU-PRE-25 Elegibilidad
 - CU-PRE-26 Opinión Técnica
@@ -1044,7 +1044,7 @@ No especificado en el documento original (más allá de los casos de uso listado
 
 # Datos Pendientes de Definir
 
-- Confirmación con el negocio de que la división propuesta (Técnico URP en este documento / Técnico PRE en CU-PRE-01.5) es la correcta, y de la codificación definitiva a asignar al nuevo caso de uso (se usó "CU-PRE-01.5" siguiendo la convención decimal ya usada en "CU-PRE-3.5" del propio conjunto de documentos).
+- Confirmación con el negocio de que la división propuesta (Técnico URP en este documento / Técnico PRE en CU-PRE-01.5) es la correcta, y de la codificación definitiva a asignar al nuevo caso de uso (se usó "CU-PRE-01.5" siguiendo la convención decimal ya usada en "CU-PRE-03.5" del propio conjunto de documentos).
 - ¿Quién es el "administrador del sistema en la DGICP" y cuáles son sus permisos completos? (mencionado solo en RN 4).
 - Definición exacta de qué constituyen las "credenciales" que determinan qué Unidades Ejecutoras puede ver/editar cada Técnico URP, y qué determinan para el acceso de solo consulta descrito como "Usuarios Internos/Externos" (ver aclaración del especialista en Actores Secundarios: no es un rol formal distinto, sino el nivel de acceso de lectura disponible para cualquier usuario del sistema).
 - Significado de la marca "(X)" en rojo junto a la fila de "ISSS" en la captura del Anexo A.1 (documento original).

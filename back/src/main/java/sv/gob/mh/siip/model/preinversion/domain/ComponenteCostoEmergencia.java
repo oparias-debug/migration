@@ -11,7 +11,7 @@ import lombok.Setter;
 /**
  * Fila de "Resumen de costos" (Componente/Costo) de la Ficha de proyectos de emergencia
  * (Anexo A.4). {@code tipoCosto} es el código tomado de {@code GET /catalogos/tipos-costo}.
- * CU-PRE-3.5.
+ * CU-PRE-03.5.
  */
 @Embeddable
 @Getter

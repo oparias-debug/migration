@@ -20,7 +20,7 @@ public interface AlternativaSolucionService {
      *
      * @throws NoAutenticadoException si no hay actor autenticado.
      * @throws AccesoDenegadoException si el proyecto no está dentro del alcance de Unidad
-     *         Ejecutora del actor (RN1-1 para Técnico URP, RN1-3 para Usuarios Internos/Externos).
+     *         Ejecutora del actor (RN1-1 para Técnico URP).
      * @throws RecursoNoEncontradoException si el proyecto no existe, o (para actores distintos de
      *         Técnico URP) la información todavía no se ha guardado ni una sola vez.
      */

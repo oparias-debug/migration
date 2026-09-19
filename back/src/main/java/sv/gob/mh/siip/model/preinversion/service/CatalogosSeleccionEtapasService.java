@@ -9,7 +9,7 @@ import sv.gob.mh.siip.model.administracion.dto.TipoCostoResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.UbicacionGeograficaDto;
 
 /**
- * Catálogos de apoyo de CU-PRE-3.5: Tipo de Costos, ubicaciones geográficas, Productos e
+ * Catálogos de apoyo de CU-PRE-03.5: Tipo de Costos, ubicaciones geográficas, Productos e
  * Indicadores, y Contenido de Iniciativas de Proyecto (Anexo F, RN20).
  */
 public interface CatalogosSeleccionEtapasService {

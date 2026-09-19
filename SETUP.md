@@ -16,7 +16,7 @@ Cómo levantar el stack completo o un módulo puntual. Para entender qué es cad
 
 Versión corta para tener el sistema andando y confirmar que todo quedó bien conectado. El detalle de cada paso está más abajo.
 
-1. Instalá los [requisitos](#requisitos) (Java 25, Docker y Docker Compose alcanzan para esta parte — Node solo hace falta si vas a tocar `front` fuera de Docker).
+1. Instalá los [requisitos](#requisitos) (Java 21, Docker y Docker Compose alcanzan para esta parte — Node solo hace falta si vas a tocar `front` fuera de Docker).
 2. Copiá el bloque de [variables de entorno](#variables-de-entorno) a un archivo `.env` en la raíz del proyecto y completá los valores vacíos (`DB_USER`, `DB_PASSWORD`, `DB_DATABASE`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`) — para desarrollo local podés poner cualquier valor propio, no necesitan ser reales.
 3. Compilá y levantá todo:
    ```
@@ -34,7 +34,7 @@ Si algo de esto falla, revisá `docker-compose logs -f <servicio>` antes que nad
 
 ## Requisitos
 
-1. Java 25 (OpenJDK) https://download.oracle.com/java/25/latest/jdk-25_windows-x64_bin.exe 
+1. Java 21 (OpenJDK) https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.exe 
 2. Maven (o usar el wrapper `mvnw` incluido en cada módulo) https://maven.apache.org/download.cgi
 3. Node.js 22+ y npm (solo para trabajar en `front` fuera de Docker) — instalar vía [nvm](https://github.com/nvm-sh/nvm) ([nvm-windows](https://github.com/coreybutler/nvm-windows) en Windows) y correr `nvm install 22 && nvm use 22`
 4. Docker y Docker Compose https://www.docker.com/products/docker-desktop/

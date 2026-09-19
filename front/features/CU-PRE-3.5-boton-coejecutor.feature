@@ -1,5 +1,5 @@
 # language: es
-@CU-PRE-3.5 @rol:COORDINADOR_SYMP
+@CU-PRE-03.5 @rol:COORDINADOR_SYMP
 Característica: Usar el botón de selección radial "Co-ejecutor"
 
   Como Coordinador SYMP

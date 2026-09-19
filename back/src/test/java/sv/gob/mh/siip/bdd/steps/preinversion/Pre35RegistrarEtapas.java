@@ -50,7 +50,7 @@ import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
- * CU-PRE-3.5-registrar-etapas.feature. El clic en "Guardar" comparte texto con
+ * CU-PRE-03.5-registrar-etapas.feature. El clic en "Guardar" comparte texto con
  * Pre01ResponderObservaciones (no-op allí); la acción real se dispara aquí, en el primer paso
  * propio de esta clase que sigue al clic. Los escenarios sobre integraciones con CU-PRE-17/22.1/26
  * (Opinión Técnica, Programación Financiera de la Preinversión) no están implementadas en el
@@ -203,9 +203,9 @@ public class Pre35RegistrarEtapas {
         if (Boolean.TRUE.equals(proyecto.getEsProyectoEmergencia())) {
             // Discrepancia sin resolver del propio CU: esta tabla del Anexo B.1 lista "Perfil,
             // Ejecución" tambien para "Proyecto de emergencia", pero RN09 y el Anexo A.4 (ver
-            // CU-PRE-3.5-registrar-ficha-emergencia.feature, "Solo la etapa Perfil está disponible
+            // CU-PRE-03.5-registrar-ficha-emergencia.feature, "Solo la etapa Perfil está disponible
             // para proyectos de emergencia") son mas especificos y restringen a unicamente Perfil.
-            // Se prioriza la regla mas especifica, documentada tambien en contrato-CU-PRE-3.5.md.
+            // Se prioriza la regla mas especifica, documentada tambien en contrato-CU-PRE-03.5.md.
             assertThat(etapas).extracting(EtapaDto::getNombreEtapa).containsExactly(NombreEtapaDto.PERFIL);
             assertThat(etapas.get(0).getHabilitadoParaRegistro()).isTrue();
         } else {
@@ -279,7 +279,7 @@ public class Pre35RegistrarEtapas {
             String cuOrigen) {
         // CU-PRE-22.1 (Programacion financiera de la preinversion) no esta implementado en el
         // repositorio: sin una fuente real que verificar, se documenta el hecho sin invocar
-        // ninguna accion (ver contrato-CU-PRE-3.5.md/contrato-CU-PRE-22.1.md).
+        // ninguna accion (ver contrato-CU-PRE-03.5.md/contrato-CU-PRE-22.1.md).
     }
 
     @Entonces("el monto se actualiza según la suma de los totales por etapa registrados en la columna {string} de CU-PRE-22.1 \\(RN12)")
@@ -389,7 +389,7 @@ public class Pre35RegistrarEtapas {
 
         autenticarComo(nombreUsuario);
 
-        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-3.5 BDD etapas",
+        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-03.5 BDD etapas",
                 EstadoProyecto.CUP_ASIGNADO, unidadEjecutora, institucion, sector, ejeTematico));
         proyecto.setIniciativaInversion(iniciativa);
         proyecto.setEsProyectoEmergencia(emergencia);

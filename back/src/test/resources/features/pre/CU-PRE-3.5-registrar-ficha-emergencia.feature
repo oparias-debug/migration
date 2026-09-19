@@ -1,5 +1,5 @@
 # language: es
-@CU-PRE-3.5 @rol:TECNICO_URP
+@CU-PRE-03.5 @rol:TECNICO_URP
 Característica: Registrar la Ficha de proyectos de emergencia
 
   Como Técnico URP

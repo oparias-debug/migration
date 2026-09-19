@@ -12,7 +12,7 @@ import sv.gob.mh.siip.model.preinversion.dto.EtapaDto;
 import sv.gob.mh.siip.model.administracion.dto.ProductoIndicadorDto;
 import sv.gob.mh.siip.model.administracion.dto.TipoCostoResumenDto;
 
-/** Traduce las entidades de dominio de CU-PRE-3.5 a los DTOs generados desde CU-PRE-03.5.openapi.yaml. */
+/** Traduce las entidades de dominio de CU-PRE-03.5 a los DTOs generados desde CU-PRE-03.5.openapi.yaml. */
 @Mapper(componentModel = "spring")
 public interface SeleccionYRegistroDeEtapasMapper {
 

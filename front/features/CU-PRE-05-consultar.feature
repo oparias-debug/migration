@@ -1,8 +1,8 @@
 # language: es
-@CU-PRE-05 @rol:TECNICO_PRE @rol:USUARIOS_INTERNOS_EXTERNOS
+@CU-PRE-05 @rol:TECNICO_PRE
 Característica: Consultar la información de alternativas de solución
 
-  Como Técnico PRE o Usuarios Internos/Externos
+  Como Técnico PRE
   Quiero consultar la información de alternativas de solución, sin poder editarla
 
   Antecedentes:
@@ -19,4 +19,3 @@ Característica: Consultar la información de alternativas de solución
     Ejemplos:
       | actor                       | alcance                                           |
       | Técnico PRE                 | la información de todas las Unidades Ejecutoras  |
-      | Usuarios Internos/Externos  | únicamente la información según sus credenciales |

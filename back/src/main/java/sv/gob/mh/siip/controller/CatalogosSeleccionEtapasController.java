@@ -14,7 +14,7 @@ import sv.gob.mh.siip.model.administracion.dto.UbicacionGeograficaDto;
 import sv.gob.mh.siip.model.preinversion.service.CatalogosSeleccionEtapasService;
 
 /**
- * Catálogos de apoyo de CU-PRE-3.5 (Tipo de Costos, ubicaciones geográficas, Productos e
+ * Catálogos de apoyo de CU-PRE-03.5 (Tipo de Costos, ubicaciones geográficas, Productos e
  * Indicadores). Tag propio distinto de {@code CatlogosPreinversinApi} (CU-PRE-01) — ver nota en
  * CU-PRE-03.5.openapi.yaml sobre el choque de nombres de interfaz generada.
  */

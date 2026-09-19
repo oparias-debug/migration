@@ -39,8 +39,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
  * CU-PRE-04-consultar-descargar.feature. Igual que Pre01VerRegistro para CU-PRE-01-ver-registro.feature:
- * "Usuarios Internos/Externos" no es un rol formal del catálogo (RolUsuario), así que se modela con
- * el rol más cercano ya definido (Técnico PRE) pero, a diferencia del actor "Técnico PRE" de este
+ * Técnico PRE) pero, a diferencia del actor "Técnico PRE" de este
  * mismo fragmento (sin Unidad Ejecutora propia, RNA-2 sin restricción), con una Unidad Ejecutora
  * propia asignada, para poder ejercer la restricción "según sus credenciales" (RNA-3) con el mismo
  * mecanismo genérico de alcance que ya usa Técnico URP (RNA-1).
@@ -179,9 +178,6 @@ public class Pre04ConsultarDescargar {
             autenticarComoTecnicoPreSinRestriccion();
             accionConsulta = () -> consultado = identificacionService.obtener(proyecto.getId());
         } else {
-            // "Usuarios Internos/Externos" (RNA-3): acotado por Unidad Ejecutora igual que
-            // Técnico URP, con una UE ajena a la del proyecto para demostrar la restriccion
-            // "unicamente segun sus credenciales".
             autenticarComoUsuarioInternoExternoFueraDeCredenciales();
             accionConsulta = () -> identificacionService.obtener(proyecto.getId());
         }

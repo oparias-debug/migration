@@ -34,7 +34,7 @@ public class Componente {
     @Column(name = "DESCRIPCION", length = 1000)
     private String descripcion;
 
-    /** Código de producto (catálogo C.6, CU-PRE-09/CU-PRE-3.5). CU-PRE-11, fila de Descripción Técnica. */
+    /** Código de producto (catálogo C.6, CU-PRE-09/CU-PRE-03.5). CU-PRE-11, fila de Descripción Técnica. */
     @Column(name = "CODIGO_PRODUCTO", length = 30)
     private String codigoProducto;
 

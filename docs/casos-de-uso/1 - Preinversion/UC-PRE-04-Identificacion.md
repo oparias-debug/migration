@@ -21,11 +21,11 @@ estado: Analizado
 
 depende_de:
   - CU-PRE-01 Registro de Proyectos
-  - CU-PRE-3.5 Selección y registro de etapas
+  - CU-PRE-03.5 Selección y registro de etapas
 
 casos_relacionados:
   - CU-PRE-01 Registro de Proyectos
-  - CU-PRE-3.5 Selección y registro de etapas
+  - CU-PRE-03.5 Selección y registro de etapas
   - CU-PRE-05 Alternativas de Solución
 
 roles:
@@ -152,7 +152,7 @@ Técnico URP
 # Precondiciones
 
 1. Que el proyecto cuente con CUP (CU-PRE-01 "Registro de Proyectos").
-2. Que el técnico URP haya calificado el proyecto y generado una Ruta de Preinversión (CU-PRE-3.5 "Selección y registro de etapas").
+2. Que el técnico URP haya calificado el proyecto y generado una Ruta de Preinversión (CU-PRE-03.5 "Selección y registro de etapas").
 
 ---
 
@@ -336,7 +336,7 @@ Subflujo termina.
 
 **Casos de uso relacionados:**
 - CU-PRE-01 "Registro de Proyectos"
-- CU-PRE-3.5 "Selección y registro de etapas"
+- CU-PRE-03.5 "Selección y registro de etapas"
 - CU-PRE-05 "Alternativas de Solución"
 
 **Procesos relacionados:**

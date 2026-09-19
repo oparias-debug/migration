@@ -32,7 +32,7 @@ import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
- * CU-PRE-3.5-ver-ficha-informacion-general.feature. El clic en "Ficha de información general"/
+ * CU-PRE-03.5-ver-ficha-informacion-general.feature. El clic en "Ficha de información general"/
  * "Regresar" comparte texto con Pre01RegistrarNuevoProyecto (no-op allí); la acción real se
  * dispara aquí, en el primer paso propio que sigue a cada clic. Los escenarios de actualización de
  * campos según la última Opinión Técnica (RN15) dependen de CU-PRE-04/11/17, no implementados en
@@ -85,7 +85,7 @@ public class Pre35VerFichaInformacionGeneral {
     public void la_ficha_no_permite_edicion() {
         // RN14: no hay ningun endpoint de escritura sobre FichaInformacionGeneral salvo
         // seleccionarCoEjecutor (RN16, verificado en
-        // CU-PRE-3.5-boton-coejecutor.feature).
+        // CU-PRE-03.5-boton-coejecutor.feature).
         assertThat(ficha).isNotNull();
     }
 
@@ -121,7 +121,7 @@ public class Pre35VerFichaInformacionGeneral {
     public void se_realiza_un_ajuste_al_monto_de_la_ejecucion() {
         // RN18 ("se alimenta automáticamente"): sin una fuente propia todavía (ningún
         // otro CU la
-        // implementa aún, ver contrato-CU-PRE-3.5.md); se usa un proyecto en etapa de
+        // implementa aún, ver contrato-CU-PRE-03.5.md); se usa un proyecto en etapa de
         // Ejecución,
         // unica condicion que este CU si puede verificar (RN17).
         crearProyectoYAutenticar(EstadoProyecto.EN_EJECUCION);
@@ -190,7 +190,7 @@ public class Pre35VerFichaInformacionGeneral {
 
         autenticarComo(nombreUsuario);
 
-        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-3.5 BDD ficha general",
+        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-03.5 BDD ficha general",
                 estado, unidadEjecutora, institucion, sector, ejeTematico));
         proyecto.setIniciativaInversion(IniciativaInversion.PROYECTO);
         proyecto = proyectoRepository.save(proyecto);

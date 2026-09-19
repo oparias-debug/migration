@@ -54,7 +54,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  * pura, sin equivalente verificable en el backend), definido alli.
  * <p>
  * "el sistema muestra el mensaje {string}" tambien es compartido con
- * CU-PRE-3.5-registrar-ficha-emergencia.feature ("Existen campos sin diligenciar"); esa rama lee
+ * CU-PRE-03.5-registrar-ficha-emergencia.feature ("Existen campos sin diligenciar"); esa rama lee
  * la excepcion que Pre35RegistrarFichaEmergencia guarda en {@link ContextoValidacionBdd}.
  */
 public class Pre01RegistrarNuevoProyecto {
@@ -178,7 +178,7 @@ public class Pre01RegistrarNuevoProyecto {
             return;
         }
         if ("Existen campos sin diligenciar".equals(mensaje)) {
-            // CU-PRE-3.5 (Ficha de proyectos de emergencia): la excepcion la captura y guarda
+            // CU-PRE-03.5 (Ficha de proyectos de emergencia): la excepcion la captura y guarda
             // Pre35RegistrarFichaEmergencia via ContextoValidacionBdd, ya que este texto es
             // identico al de esa historia y Cucumber exige una unica definicion por texto.
             assertThat(contextoValidacion.getUltimaExcepcion()).isNotNull().hasMessageContaining(mensaje);

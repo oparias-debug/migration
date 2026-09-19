@@ -11,8 +11,7 @@ Característica: Consultar, buscar y filtrar el listado de proyectos con CUP
   # RN01/RN02 (decisión funcional del usuario, 11/09/2026, no proveniente del PDF fuente):
   # únicamente el Técnico URP queda acotado a su propia Unidad Ejecutora; el resto de los
   # actores (Viabilizador, Técnico PRE, Coordinador PRE) ve todos los proyectos sin
-  # restricción. "Usuarios Internos/Externos" no aplica a este CU — nunca fue un rol formal
-  # (ver nota en Actores Secundarios del UC) y el usuario confirmó que sobra aquí.
+  # restricción. 
   Esquema del escenario: Consultar el listado de proyectos según el alcance de visibilidad del actor
     Cuando "<actor>" accede a la pantalla "Captura de Proyectos" (Anexo A.1)
     Entonces el sistema muestra el listado de proyectos con CUP con el siguiente alcance: "<alcance>"

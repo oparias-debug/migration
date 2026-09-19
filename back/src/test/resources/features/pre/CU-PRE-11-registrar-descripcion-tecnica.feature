@@ -25,7 +25,7 @@ Característica: Registrar la descripción técnica del proyecto
     Cuando el Técnico URP ajusta o complementa el texto de ese campo
     Entonces el sistema permite la edición (RN03)
 
-  Escenario: La descripción general se autocompleta desde la última Orden de Trabajo (O.T.) emitida, si existe
+  Escenario: La descripción general se autocompleta desde la última Opinion Tecnica (O.T.) emitida, si existe
     Dado que el proyecto ya cuenta con una O.T. emitida
     Entonces el campo "Descripción del proyecto" se autocompleta con la descripción contenida en la última O.T. emitida, en lugar de la de CU-PRE-01 (RN03)
 

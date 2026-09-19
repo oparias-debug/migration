@@ -45,7 +45,7 @@ import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
- * CU-PRE-3.5-generar-aceptar-ruta.feature. Los clics en botones genéricos ("Generar Ruta de
+ * CU-PRE-03.5-generar-aceptar-ruta.feature. Los clics en botones genéricos ("Generar Ruta de
  * Preinversión", "Aceptar") comparten texto con pasos ya definidos en Pre01ResponderObservaciones/
  * Pre01RegistrarNuevoProyecto (Cucumber exige una única definición por texto) y son no-op allí; la
  * acción real de negocio se dispara aquí, en el primer paso propio de esta clase que sigue a cada
@@ -231,7 +231,7 @@ public class Pre35GenerarAceptarRuta {
 
         autenticarComo(nombreUsuario);
 
-        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-3.5 BDD",
+        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-03.5 BDD",
                 EstadoProyecto.CUP_ASIGNADO, unidadEjecutora, institucion, sector, ejeTematico));
         proyecto.setIniciativaInversion(iniciativa);
         proyecto = proyectoRepository.save(proyecto);

@@ -57,16 +57,18 @@ estás probando:
 |---|---|---|
 | tecnico.urp | tecnicoUrp123 | Técnico URP |
 | tecnico.pre | tecnicoPre123 | Técnico PRE |
-| tecnico.pro | tecnicoPro123 | Técnico PRO |
+| tecnico.prog | tecnicoProg123 | Técnico Programación |
 | tecnico.symp | tecnicoSymp123 | Técnico SYMP |
-| tecnico.ual | tecnicoUal123 | Técnico UAL |
+| tecnico.legal | tecnicoLegal123 | Técnico Legal |
 | coordinador.pre | coordinadorPre123 | Coordinador PRE |
-| coordinador.pro | coordinadorPro123 | Coordinador PRO |
+| coordinador.programacion | coordinadorProgramacion123 | Coordinador Programación |
 | coordinador.symp | coordinadorSymp123 | Coordinador SYMP |
 | jefe.dgi | jefeDgi123 | Jefe DGI |
 | subjefe.dgi | subjefeDgi123 | Subjefe DGI |
 | viabilizador | viabilizador123 | Viabilizador |
 | admin | admin123 | Administrador del sistema |
+| admin.catalogos | adminCatalogos123 | Administrador de Catálogos |
+| admin.calendario | adminCalendario123 | Administrador de Calendarios |
 | user | user123 | Usuario interno (sin rol de negocio) |
 
 Ver [GLOSSARY.md](https://github.com/david-magnaperita/siip/blob/main/GLOSSARY.md) del repo

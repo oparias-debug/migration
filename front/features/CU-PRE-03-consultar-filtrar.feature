@@ -1,5 +1,5 @@
 # language: es
-@UC-PRE-03 @rol:TECNICO_URP @rol:TECNICO_PRE @rol:COORDINADOR_PRE @rol:VIABILIZADOR @rol:USUARIOS_INTERNOS_EXTERNOS @rol:SISTEMA
+@UC-PRE-03 @rol:TECNICO_URP @rol:TECNICO_PRE @rol:COORDINADOR_PRE @rol:VIABILIZADOR
 Característica: Consultar, buscar y filtrar el listado de proyectos con CUP
 
   Como Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador o Usuarios Internos/Externos
@@ -16,7 +16,6 @@ Característica: Consultar, buscar y filtrar el listado de proyectos con CUP
       | actor                        | alcance                                                    |
       | Técnico URP                  | únicamente los proyectos según sus credenciales (RN01)     |
       | Viabilizador                 | únicamente los proyectos según sus credenciales (RN01)     |
-      | Usuarios Internos/Externos   | únicamente los proyectos según sus credenciales (RN01)     |
       | Técnico PRE                  | los proyectos de todas las Unidades Ejecutoras (RN02)      |
       | Coordinador PRE              | los proyectos de todas las Unidades Ejecutoras (RN02)      |
 

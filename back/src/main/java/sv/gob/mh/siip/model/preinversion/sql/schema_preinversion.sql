@@ -62,7 +62,7 @@ CREATE TABLE USUARIO (
     CONSTRAINT FK_USUARIO_UE FOREIGN KEY (ID_UNIDAD_EJECUTORA) REFERENCES UNIDAD_EJECUTORA (ID_UNIDAD_EJECUTORA),
     CONSTRAINT FK_USUARIO_INSTITUCION FOREIGN KEY (ID_INSTITUCION) REFERENCES INSTITUCION (ID_INSTITUCION),
     CONSTRAINT CK_USUARIO_ROL CHECK (ROL IN ('TECNICO_URP','TECNICO_PRE','COORDINADOR_PRE','VIABILIZADOR',
-        'TECNICO_ASYMP','TECNICO_PROG','TECNICO_SEG','TECNICO_LEGAL','TECNICO_OPE','TECNICO_SIAF',
+        'TECNICO_PROG','TECNICO_SEG','TECNICO_LEGAL','TECNICO_OPE','TECNICO_SIAF',
         'INGENIERO_DINAFI','COORDINADOR_PROGRAMACION','ADMINISTRADOR','COORDINADOR_SYMP'))
 );
 COMMENT ON TABLE USUARIO IS 'Usuarios del sistema y su rol funcional (ver Anexo C de casos de uso)';
@@ -76,7 +76,7 @@ CREATE TABLE DEPARTAMENTO (
     CONSTRAINT PK_DEPARTAMENTO PRIMARY KEY (ID_DEPARTAMENTO),
     CONSTRAINT UK_DEPARTAMENTO_CODIGO UNIQUE (CODIGO)
 );
-COMMENT ON COLUMN DEPARTAMENTO.REGION IS 'Region territorial del departamento. Agregado para CU-PRE-3.5 (Anexo C.5, catalogo de ubicaciones geograficas); sin datos oficiales de regionalizacion en el repositorio, columna nullable.';
+COMMENT ON COLUMN DEPARTAMENTO.REGION IS 'Region territorial del departamento. Agregado para CU-PRE-03.5 (Anexo C.5, catalogo de ubicaciones geograficas); sin datos oficiales de regionalizacion en el repositorio, columna nullable.';
 
 CREATE SEQUENCE MUNICIPIO_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE MUNICIPIO (
@@ -225,7 +225,7 @@ CREATE TABLE ETAPA_PREINVERSION (
     CONSTRAINT UK_ETAPA_PROYECTO_TIPO UNIQUE (ID_PROYECTO, TIPO_ETAPA),
     CONSTRAINT CK_ETAPA_TIPO CHECK (TIPO_ETAPA IN ('PERFIL','PREFACTIBILIDAD','FACTIBILIDAD','DISENO','EJECUCION'))
 );
-COMMENT ON TABLE ETAPA_PREINVERSION IS 'Etapa de preinversión seleccionada para el proyecto. CU-PRE-3.5';
+COMMENT ON TABLE ETAPA_PREINVERSION IS 'Etapa de preinversión seleccionada para el proyecto. CU-PRE-03.5';
 
 -- Fechas "estimada de inicio/fin" como texto libre (no DATE): RN04, Anexo B.1 y el mockup de
 -- pantalla proponen 3 formatos distintos sin resolver (dd/mm/aaaa, MM/AA, mm/aaaa) - ver
@@ -252,7 +252,7 @@ CREATE TABLE RUTA_PREINVERSION (
     CONSTRAINT CK_RUTA_PREINV_TAMANIO CHECK (TAMANIO_PROYECTO IN ('PEQUENIO','MEDIANO','GRANDE')),
     CONSTRAINT CK_RUTA_PREINV_COMPLEJIDAD CHECK (COMPLEJIDAD IN ('BAJA','MEDIA','ALTA','TODAS_LAS_COMPLEJIDADES'))
 );
-COMMENT ON TABLE RUTA_PREINVERSION IS 'Criterios calificados y estado (generada/aceptada/modificada) de la Ruta de Preinversion del proyecto. CU-PRE-3.5';
+COMMENT ON TABLE RUTA_PREINVERSION IS 'Criterios calificados y estado (generada/aceptada/modificada) de la Ruta de Preinversion del proyecto. CU-PRE-03.5';
 
 CREATE SEQUENCE TIPO_COSTO_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE TIPO_COSTO (
@@ -262,7 +262,7 @@ CREATE TABLE TIPO_COSTO (
     CONSTRAINT PK_TIPO_COSTO PRIMARY KEY (ID_TIPO_COSTO),
     CONSTRAINT UK_TIPO_COSTO_CODIGO UNIQUE (CODIGO)
 );
-COMMENT ON TABLE TIPO_COSTO IS 'Catalogo "Tipo de Costos" (Anexo C.2), administrado por DGICP. CU-PRE-3.5. Sin datos oficiales en el repositorio: tabla vacia, sembrada solo con filas de prueba en BDD.';
+COMMENT ON TABLE TIPO_COSTO IS 'Catalogo "Tipo de Costos" (Anexo C.2), administrado por DGICP. CU-PRE-03.5. Sin datos oficiales en el repositorio: tabla vacia, sembrada solo con filas de prueba en BDD.';
 
 CREATE SEQUENCE PRODUCTO_INDICADOR_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE PRODUCTO_INDICADOR (
@@ -276,7 +276,7 @@ CREATE TABLE PRODUCTO_INDICADOR (
     ES_INDICADOR_PRINCIPAL NUMBER(1)    DEFAULT 0 NOT NULL,
     CONSTRAINT PK_PRODUCTO_INDICADOR PRIMARY KEY (ID_PRODUCTO_INDICADOR)
 );
-COMMENT ON TABLE PRODUCTO_INDICADOR IS 'Catalogo de Productos e Indicadores (Anexo C.6). CU-PRE-3.5. Sin datos oficiales en el repositorio: tabla vacia, sembrada solo con filas de prueba en BDD.';
+COMMENT ON TABLE PRODUCTO_INDICADOR IS 'Catalogo de Productos e Indicadores (Anexo C.6). CU-PRE-03.5. Sin datos oficiales en el repositorio: tabla vacia, sembrada solo con filas de prueba en BDD.';
 
 CREATE SEQUENCE FICHA_EMERGENCIA_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE FICHA_EMERGENCIA (
@@ -304,14 +304,14 @@ CREATE TABLE FICHA_EMERGENCIA (
     CONSTRAINT UK_FICHA_EMERGENCIA_PROYECTO UNIQUE (ID_PROYECTO),
     CONSTRAINT FK_FICHA_EMERGENCIA_PROYECTO FOREIGN KEY (ID_PROYECTO) REFERENCES PROYECTO (ID_PROYECTO)
 );
-COMMENT ON TABLE FICHA_EMERGENCIA IS 'Ficha de proyectos de emergencia (Anexo A.4). CU-PRE-3.5';
+COMMENT ON TABLE FICHA_EMERGENCIA IS 'Ficha de proyectos de emergencia (Anexo A.4). CU-PRE-03.5';
 
 CREATE TABLE FICHA_EMERGENCIA_PRODUCTO (
     ID_FICHA_EMERGENCIA NUMBER(19)      NOT NULL,
     CODIGO_PRODUCTO     VARCHAR2(30)    NOT NULL,
     CONSTRAINT FK_FICHA_EMERG_PRODUCTO FOREIGN KEY (ID_FICHA_EMERGENCIA) REFERENCES FICHA_EMERGENCIA (ID_FICHA_EMERGENCIA)
 );
-COMMENT ON TABLE FICHA_EMERGENCIA_PRODUCTO IS 'Productos del catalogo C.6 seleccionados en la Ficha de emergencia. CU-PRE-3.5';
+COMMENT ON TABLE FICHA_EMERGENCIA_PRODUCTO IS 'Productos del catalogo C.6 seleccionados en la Ficha de emergencia. CU-PRE-03.5';
 
 CREATE TABLE FICHA_EMERGENCIA_COMPONENTE_COSTO (
     ID_FICHA_EMERGENCIA NUMBER(19)      NOT NULL,
@@ -319,14 +319,14 @@ CREATE TABLE FICHA_EMERGENCIA_COMPONENTE_COSTO (
     COSTO               NUMBER(18,2)    NOT NULL,
     CONSTRAINT FK_FICHA_EMERG_COMP_COSTO FOREIGN KEY (ID_FICHA_EMERGENCIA) REFERENCES FICHA_EMERGENCIA (ID_FICHA_EMERGENCIA)
 );
-COMMENT ON TABLE FICHA_EMERGENCIA_COMPONENTE_COSTO IS 'Filas de "Resumen de costos" (Componente/Costo) de la Ficha de emergencia. CU-PRE-3.5';
+COMMENT ON TABLE FICHA_EMERGENCIA_COMPONENTE_COSTO IS 'Filas de "Resumen de costos" (Componente/Costo) de la Ficha de emergencia. CU-PRE-03.5';
 
 CREATE TABLE FICHA_EMERGENCIA_FUENTE_FINANC (
     ID_FICHA_EMERGENCIA NUMBER(19)      NOT NULL,
     CODIGO_FUENTE       VARCHAR2(20)    NOT NULL,
     CONSTRAINT FK_FICHA_EMERG_FUENTE_FIN FOREIGN KEY (ID_FICHA_EMERGENCIA) REFERENCES FICHA_EMERGENCIA (ID_FICHA_EMERGENCIA)
 );
-COMMENT ON TABLE FICHA_EMERGENCIA_FUENTE_FINANC IS 'Valores del catalogo cerrado "Fuentes de Financiamiento" (7 valores, CU-PRE-17.openapi.yaml) seleccionados en la Ficha de emergencia. CU-PRE-3.5';
+COMMENT ON TABLE FICHA_EMERGENCIA_FUENTE_FINANC IS 'Valores del catalogo cerrado "Fuentes de Financiamiento" (7 valores, CU-PRE-17.openapi.yaml) seleccionados en la Ficha de emergencia. CU-PRE-03.5';
 
 CREATE SEQUENCE SOLICITUD_PREINV_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE SOLICITUD_PREINVERSION (
@@ -600,7 +600,7 @@ COMMENT ON TABLE ANALISIS_LEGAL IS 'Análisis legal del proyecto. CU-PRE-16';
 -- columna, el código de "Componente" (tipo de costo, catálogo de CU-ADM-02) y la descripción del
 -- producto. CU-PRE-17 los lee de aquí (RN16, solo lectura ahí) para "productos" de
 -- GET /proyectos/{id}/presupuesto — no desde FICHA_EMERGENCIA, que solo existe para proyectos de
--- emergencia (CU-PRE-3.5).
+-- emergencia (CU-PRE-03.5).
 CREATE SEQUENCE COMPONENTE_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE COMPONENTE (
     ID_COMPONENTE       NUMBER(19)      NOT NULL,

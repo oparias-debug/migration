@@ -19,7 +19,7 @@ import sv.gob.mh.siip.model.preinversion.dto.RutaPreinversionSugeridaDto;
 import sv.gob.mh.siip.model.preinversion.dto.SeleccionCoEjecutorRequestDto;
 
 /**
- * Reglas de negocio de CU-PRE-3.5 (Selección y Registro de Etapas). Un método por operación del
+ * Reglas de negocio de CU-PRE-03.5 (Selección y Registro de Etapas). Un método por operación del
  * contrato (CU-PRE-03.5.openapi.yaml).
  */
 public interface SeleccionYRegistroDeEtapasService {

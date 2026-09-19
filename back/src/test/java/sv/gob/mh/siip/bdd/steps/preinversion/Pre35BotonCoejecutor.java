@@ -35,7 +35,7 @@ import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
- * CU-PRE-3.5-boton-coejecutor.feature. El propio CU aclara (ver CU-PRE-03.5.openapi.yaml,
+ * CU-PRE-03.5-boton-coejecutor.feature. El propio CU aclara (ver CU-PRE-03.5.openapi.yaml,
  * {@code seleccionarCoEjecutor}) que la activación del botón radial "Co-ejecutor" no dispara una
  * llamada propia: el {@code PUT} representa la acción completa de activar+seleccionar+guardar, y
  * esta historia BDD solo cubre el clic (habilitación del listado), no el envío. Por eso el único
@@ -117,7 +117,7 @@ public class Pre35BotonCoejecutor {
         EjeTematico ejeTematico = ejeTematicoRepository
                 .save(ProyectoFixtures.nuevoEjeTematico("EJE-35C-" + sufijo, "Eje temático de prueba"));
 
-        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-3.5 BDD co-ejecutor",
+        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-03.5 BDD co-ejecutor",
                 EstadoProyecto.CUP_ASIGNADO, unidadEjecutora, institucion, sector, ejeTematico));
         proyecto.setIniciativaInversion(IniciativaInversion.PROYECTO);
         proyecto = proyectoRepository.save(proyecto);

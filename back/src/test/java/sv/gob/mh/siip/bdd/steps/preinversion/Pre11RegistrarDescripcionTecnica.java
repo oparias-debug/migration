@@ -2,14 +2,20 @@ package sv.gob.mh.siip.bdd.steps.preinversion;
 
 
 
-import io.cucumber.java.es.Cuando;
-import io.cucumber.java.es.Dado;
-import io.cucumber.java.es.Entonces;
-import io.cucumber.java.es.Y;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import io.cucumber.java.es.Cuando;
+import io.cucumber.java.es.Dado;
+import io.cucumber.java.es.Entonces;
+import io.cucumber.java.es.Y;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
@@ -36,13 +42,6 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
-
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
 
 /**
  * @author Luis Medrano
@@ -436,7 +435,7 @@ public class Pre11RegistrarDescripcionTecnica {
 
     @Dado("que el proyecto ya cuenta con una O.T. emitida")
     public void queElProyectoYaCuentaConUnaOTEmitida() {
-        RolUsuario rolEnum = resolverRolDesdeActor("TÉCNICO URP");
+        RolUsuario rolEnum = RolUsuario.TECNICO_URP;
         autenticarUsuarioSegunRol(rolEnum);
         // 1. Asegurar que tenés un proyecto registrado
         Proyecto proyecto = proyectoRepository.findById(this.idProyectoPrueba)
@@ -808,20 +807,6 @@ public class Pre11RegistrarDescripcionTecnica {
         proyecto.setDescripcionProyecto("Descripcion de prueba CU-11");
         proyecto.setFechaCupAsignado(java.time.LocalDateTime.now());
         return proyectoRepository.save(proyecto);
-    }
-
-    private RolUsuario resolverRolDesdeActor(String actor) {
-        return switch (actor.trim().toUpperCase()) {
-            case "TÉCNICO URP", "TECNICO URP", "TECNICO_URP" -> RolUsuario.TECNICO_URP;
-            case "VIABILIZADOR" -> RolUsuario.VIABILIZADOR;
-            case "TÉCNICO PRE", "TECNICO PRE", "TECNICO_PRE" -> RolUsuario.TECNICO_PRE;
-            case "COORDINADOR PRE", "COORDINADOR_PRE" -> RolUsuario.COORDINADOR_PRE;
-
-            // Mapeo explícito para la etiqueta de la tabla del Feature
-            case "USUARIOS INTERNOS/EXTERNOS", "USUARIOS_INTERNOS_EXTERNOS" -> RolUsuario.TECNICO_URP;
-
-            default -> throw new IllegalArgumentException("Actor no soportado para el test: " + actor);
-        };
     }
 
     public DescripcionTecnicaDto guardarFilaDescripcionTecnicaRequestDTO() {

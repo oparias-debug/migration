@@ -5,17 +5,7 @@ info:
   description: >
     Fragmento OpenAPI derivado de CU-PRE-06 "Análisis de Interesados"
     (UC-PRE-06-Analisis_de_Interesados.md) y sus 3 historias BDD. Actor
-    principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE.
-    RN01 menciona genéricamente "Todos los demás actores" con permiso de
-    solo visualización, sin identificarlos individualmente; siguiendo el
-    mismo criterio del propio CU (no inventar un nombre de rol para ese
-    grupo genérico), `x-roles` de este fragmento **no** incluye
-    "Usuarios Internos/Externos" ni ningún otro rol además de Técnico URP y
-    Técnico PRE — a diferencia de CU-PRE-04/05, donde sí se resolvió
-    explícitamente una variante textual a esa entrada del catálogo. Queda
-    como insumo pendiente para el Gestor de Requisitos, tal como señala el
-    propio CU-PRE-06.md. Introduce el recurso `MatrizInteresados`, hijo de
-    `Proyecto` (CU-PRE-01.openapi.yaml, reutilizado vía `$ref` externo).
+    principal: Técnico URP.
 
 paths:
 

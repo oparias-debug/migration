@@ -8,7 +8,7 @@ import lombok.*;
 /**
  * Entrada del catálogo de Productos e Indicadores (Anexo C.6), fuente del listado seleccionable
  * de "Producto" en la Ficha de proyectos de emergencia. Sin datos oficiales en el repositorio
- * (tabla vacía; ver {@code schema_preinversion.sql}). CU-PRE-3.5.
+ * (tabla vacía; ver {@code schema_preinversion.sql}). CU-PRE-03.5.
  */
 @Entity
 @Table(name = "PRODUCTO_INDICADOR")

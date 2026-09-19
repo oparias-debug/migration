@@ -61,6 +61,12 @@ public class CampoDefinicion {
     @Column(name = "ES_KEY", nullable = false)
     private boolean esKey;
 
+    /** Orden de despliegue (CatalogField.position del contrato); determina el "primer campo no
+     *  KEY" de las Reglas 4 y 5. Nullable: los catalogos creados antes de que el contrato lo
+     *  exigiera no lo tienen. */
+    @Column(name = "POSICION")
+    private Integer posicion;
+
     @Builder.Default
     @ElementCollection
     @CollectionTable(name = "CAMPO_DEFINICION_VALOR_ENUM", joinColumns = @JoinColumn(name = "ID_CAMPO_DEFINICION"))

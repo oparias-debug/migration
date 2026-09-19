@@ -46,7 +46,7 @@ import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
- * CU-PRE-3.5-modificar-ruta.feature. El clic en "Modificar"/"Guardar" comparte texto con pasos ya
+ * CU-PRE-03.5-modificar-ruta.feature. El clic en "Modificar"/"Guardar" comparte texto con pasos ya
  * definidos en Pre01RegistrarNuevoProyecto/Pre01ResponderObservaciones (no-op allí); la acción real
  * se dispara en el primer paso propio de esta clase que sigue a cada clic.
  */
@@ -228,7 +228,7 @@ public class Pre35ModificarRuta {
 
         autenticarComo(nombreUsuario);
 
-        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-3.5 BDD modificar ruta",
+        proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto CU-PRE-03.5 BDD modificar ruta",
                 EstadoProyecto.CUP_ASIGNADO, unidadEjecutora, institucion, sector, ejeTematico));
         proyecto.setIniciativaInversion(IniciativaInversion.PROYECTO);
         proyecto = proyectoRepository.save(proyecto);
