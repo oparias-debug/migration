@@ -6,11 +6,7 @@ info:
     Fragmento OpenAPI derivado de CU-PRE-04 "Identificación"
     (UC-PRE-04-Identificacion.md) y sus 4 historias BDD. Actor principal:
     Técnico URP (lectura/escritura). Actores secundarios de solo lectura:
-    Técnico PRE, "Usuarios Internos/Externos" (nombre no coincide
-    textualmente con el catálogo — se usa la entrada más cercana, mismo
-    criterio que el propio CU-PRE-04.md documenta para UC-PRE-03 y CU-EJE-03).
-    Introduce el recurso `Identificacion`, hijo de `Proyecto`
-    (CU-PRE-01.openapi.yaml, reutilizado vía `$ref` externo).
+    Técnico PRE.
 
 paths:
 
@@ -25,14 +21,13 @@ paths:
       operationId: obtenerIdentificacion
       summary: Consultar la pestaña "Identificación del proyecto" (Anexo A.1)
       description: >
-        RNA-2/RNA-3: Técnico PRE y "Usuarios Internos/Externos" solo pueden
+        RNA-2/RNA-3: Técnico PRE solo pueden
         acceder "desde que se guarden cambios por primera vez" — para ellos,
         si `Identificacion` nunca fue guardada, este endpoint responde 404 en
         vez de un objeto vacío. Para Técnico URP no aplica esa restricción
         (puede consultar/editar desde el primer ingreso, incluso sin guardar
         todavía). El alcance de Unidades Ejecutoras visibles (RNA-1 para
-        Técnico URP, RNA-2 sin restricción para Técnico PRE, RNA-3 según
-        credenciales para Usuarios Internos/Externos) lo resuelve el
+        Técnico URP, RNA-2 sin restricción para Técnico PRE) lo resuelve el
         servidor según el actor autenticado, igual que en fragmentos previos.
       tags: [Preinversión - Identificación]
       security: [{ bearerAuth: [] }]
@@ -472,6 +467,6 @@ components:
           format: date-time
           nullable: true
           description: >
-            Nulo si nunca se ha guardado. Determina, para Técnico PRE (RNA-2/RNA-3), si el recurso es
+            Nulo si nunca se ha guardado. Determina, para Técnico PRE, si el recurso es
             visible en absoluto ("desde que se guarden cambios por primera
             vez") — ver 404 de `obtenerIdentificacion`.

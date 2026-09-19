@@ -19,7 +19,8 @@ import { FichaEmergenciaPage } from './features/preinversion/etapas/FichaEmergen
 import { IdentificacionPage } from './features/preinversion/identificacion/IdentificacionPage';
 import { PasosProyectoLayout } from './features/preinversion/pasos/PasosProyectoLayout';
 import { PresupuestoPage } from './features/preinversion/presupuesto/PresupuestoPage';
-import { CrearCatalogoPage } from './features/administracion/catalogos/CrearCatalogoPage';
+import { CatalogosPage } from './features/administracion/catalogos/CatalogosPage';
+import { CatalogoDetallePage } from './features/administracion/catalogos/CatalogoDetallePage';
 import { CalendarioPage } from './features/administracion/calendario/CalendarioPage';
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
 import { DiagnosticoPage } from './features/preinversion/diagnostico/DiagnosticoPage';
@@ -59,7 +60,8 @@ export function App() {
           >
             <Route path="/" element={<HomePage />} />
 
-            <Route path="/catalogos-generales" element={<CrearCatalogoPage />} />
+            <Route path="/catalogos-generales" element={<CatalogosPage />} />
+            <Route path="/catalogos-generales/:codigo" element={<CatalogoDetallePage />} />
             <Route path="/administracion/calendario" element={<CalendarioPage />} />
             <Route path="/preinversion/bandeja" element={<BandejaPage />} />
             <Route path="/preinversion/captura" element={<CapturaPage />} />

@@ -7,8 +7,7 @@ info:
     (UC-PRE-05-Alternativas_de_Solucion.md) y sus 3 historias BDD. Actor
     principal: Técnico URP. Actores secundarios de solo lectura: Técnico PRE
     ("Técnico preinversión" en el CU original, nombre no coincidente —
-    se usa el canónico) y "Usuarios Internos/Externos" ("Usuario Interno /
-    Externo" en el CU original, mismo criterio). Introduce el recurso
+    se usa el canónico). Introduce el recurso
     `RegistroAlternativas`, hijo de `Proyecto` (CU-PRE-01.openapi.yaml,
     reutilizado vía `$ref` externo). A diferencia de CU-PRE-04, la acción
     "Siguiente" (SF-2) sí tiene validaciones de servidor documentadas con
@@ -28,7 +27,7 @@ paths:
       operationId: obtenerAlternativasSolucion
       summary: Consultar la sección "Registro de Alternativas" (Anexo A.1)
       description: >
-        RN1-2/RN1-3: Técnico PRE y Usuarios Internos/Externos solo pueden
+        RN1-2/RN1-3: Técnico PRE solo pueden
         acceder "desde que se guarden cambios por primera vez" — para ellos,
         si `RegistroAlternativas` nunca fue guardado, este endpoint responde
         404 (mismo criterio ya aplicado en CU-PRE-04 para `obtenerIdentificacion`).
@@ -274,6 +273,5 @@ components:
           format: date-time
           nullable: true
           description: >
-            Nulo si nunca se ha guardado. Determina, para Técnico PRE y
-            Usuarios Internos/Externos (RN1-2/RN1-3), si el recurso es
+            Nulo si nunca se ha guardado. Determina, para Técnico PRE, si el recurso es
             visible en absoluto — ver 404 de `obtenerAlternativasSolucion`.
