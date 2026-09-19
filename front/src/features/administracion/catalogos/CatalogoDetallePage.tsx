@@ -113,58 +113,60 @@ export function CatalogoDetallePage() {
 
 
   return (
-    <div className="tarjeta">
-      <h2>
-        {catalogo.name} <span className="mono">· {catalogo.code}</span>
-      </h2>
+    <div className="formcard">
+      <div className="formhead">
+        <span>{catalogo.name} <span className="mono">· {catalogo.code}</span></span>
+      </div>
+      <div className="formbody">
 
-      <section>
-        <h3>{t(`${CLAVE}.datos`)}</h3>
-        <div className="fr">
-          <FormRow label={t(`${CLAVE}.nombre`)} controlId="det-nombre" required>
-            <input id="det-nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
-          </FormRow>
-          <FormRow label={t(`${CLAVE}.catalogoPadre`)} controlId="det-padre">
-            <input id="det-padre" type="text" value={padre} onChange={(e) => setPadre(e.target.value)} />
-          </FormRow>
-          <FormRow label={t(`${CLAVE}.estado`)} controlId="det-estado">
-            <select id="det-estado" value={activo} onChange={(e) => setActivo(e.target.value as 'ACTIVE' | 'INACTIVE')}>
-              <option value="ACTIVE">{t(`${CLAVE}.estados.ACTIVE`)}</option>
-              <option value="INACTIVE">{t(`${CLAVE}.estados.INACTIVE`)}</option>
-            </select>
-          </FormRow>
-          <FormRow label={t(`${CLAVE}.vigenciaDesde`)} controlId="det-desde">
-            <input id="det-desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-          </FormRow>
-          <FormRow label={t(`${CLAVE}.vigenciaHasta`)} controlId="det-hasta">
-            <input id="det-hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
-          </FormRow>
-        </div>
+        <section>
+          <h2 className="seccion">{t(`${CLAVE}.datos`)}</h2>
+          <div className="fr">
+            <FormRow label={t(`${CLAVE}.nombre`)} controlId="det-nombre" required>
+              <input id="det-nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+            </FormRow>
+            <FormRow label={t(`${CLAVE}.catalogoPadre`)} controlId="det-padre">
+              <input id="det-padre" type="text" value={padre} onChange={(e) => setPadre(e.target.value)} />
+            </FormRow>
+            <FormRow label={t(`${CLAVE}.estado`)} controlId="det-estado">
+              <select id="det-estado" value={activo} onChange={(e) => setActivo(e.target.value as 'ACTIVE' | 'INACTIVE')}>
+                <option value="ACTIVE">{t(`${CLAVE}.estados.ACTIVE`)}</option>
+                <option value="INACTIVE">{t(`${CLAVE}.estados.INACTIVE`)}</option>
+              </select>
+            </FormRow>
+            <FormRow label={t(`${CLAVE}.vigenciaDesde`)} controlId="det-desde">
+              <input id="det-desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+            </FormRow>
+            <FormRow label={t(`${CLAVE}.vigenciaHasta`)} controlId="det-hasta">
+              <input id="det-hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+            </FormRow>
+          </div>
+          <div className="acciones-form">
+            <button type="button" className="btn primario" onClick={guardarDatos}>
+              {t(`${CLAVE}.guardarDatos`)}
+            </button>
+            <button type="button" className="btn secundario" onClick={inactivar} disabled={catalogo.active === 'INACTIVE'}>
+              {t(`${CLAVE}.inactivar`)}
+            </button>
+          </div>
+        </section>
+
+        <section>
+          <CamposEditor campos={campos} alCambiar={setCampos} />
+          <div className="acciones-form">
+            <button type="button" className="btn primario" onClick={guardarCampos}>
+              {t(`${CLAVE}.guardarCampos`)}
+            </button>
+          </div>
+        </section>
+
+        <RegistrosCatalogo codigo={codigo} campos={aCamposEditables(catalogo)} />
+
         <div className="acciones-form">
-          <button type="button" className="btn primario" onClick={guardarDatos}>
-            {t(`${CLAVE}.guardarDatos`)}
-          </button>
-          <button type="button" className="btn secundario" onClick={inactivar} disabled={catalogo.active === 'INACTIVE'}>
-            {t(`${CLAVE}.inactivar`)}
+          <button type="button" className="btn neutro" onClick={() => navigate('/catalogos-generales')}>
+            {t('common.regresar')}
           </button>
         </div>
-      </section>
-
-      <section>
-        <CamposEditor campos={campos} alCambiar={setCampos} />
-        <div className="acciones-form">
-          <button type="button" className="btn primario" onClick={guardarCampos}>
-            {t(`${CLAVE}.guardarCampos`)}
-          </button>
-        </div>
-      </section>
-
-      <RegistrosCatalogo codigo={codigo} campos={aCamposEditables(catalogo)} />
-
-      <div className="acciones-form">
-        <button type="button" className="btn neutro" onClick={() => navigate('/catalogos-generales')}>
-          {t('common.regresar')}
-        </button>
       </div>
     </div>
   );

@@ -49,37 +49,41 @@ export function DiagnosticoPage() {
   }, [idProyecto]);
 
   return (
-    <div className="tarjeta">
-      <h2>{t('preinversion.diagnostico.titulo')}</h2>
-      {cabecera && (
-        <p className="nota">
-          <b>{cabecera.nombre}</b>
-          {cabecera.cup && <span className="mono"> · CUP {cabecera.cup}</span>}
-        </p>
-      )}
-
-      <Pestanas
-        pestanas={PESTANAS}
-        activa={pestana}
-        onCambiar={setPestana}
-        etiqueta="preinversion.diagnostico.pestanas"
-      />
-
-      <div role="tabpanel" id={`panel-${pestana}`}>
-        {pestana === 'interesados' && <InteresadosTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
-        {pestana === 'poblacion' && <PoblacionTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
-        {pestana === 'areaInfluencia' && <AreaInfluenciaTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
-        {pestana === 'mercado' && <MercadoTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+    <div className="formcard">
+      <div className="formhead">
+        <span>{t('preinversion.diagnostico.titulo')}</span>
       </div>
+      <div className="formbody">
+        {cabecera && (
+          <p className="nota">
+            <b>{cabecera.nombre}</b>
+            {cabecera.cup && <span className="mono"> · CUP {cabecera.cup}</span>}
+          </p>
+        )}
 
-      <div className="acciones-form">
-        <button
-          type="button"
-          className="btn neutro"
-          onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/alternativas-solucion`)}
-        >
-          {t('common.regresar')}
-        </button>
+        <Pestanas
+          pestanas={PESTANAS}
+          activa={pestana}
+          onCambiar={setPestana}
+          etiqueta="preinversion.diagnostico.pestanas"
+        />
+
+        <div role="tabpanel" id={`panel-${pestana}`}>
+          {pestana === 'interesados' && <InteresadosTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+          {pestana === 'poblacion' && <PoblacionTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+          {pestana === 'areaInfluencia' && <AreaInfluenciaTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+          {pestana === 'mercado' && <MercadoTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+        </div>
+
+        <div className="acciones-form">
+          <button
+            type="button"
+            className="btn neutro"
+            onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/alternativas-solucion`)}
+          >
+            {t('common.regresar')}
+          </button>
+        </div>
       </div>
     </div>
   );

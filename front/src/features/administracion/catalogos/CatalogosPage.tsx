@@ -56,78 +56,82 @@ export function CatalogosPage() {
   }
 
   return (
-    <div className="tarjeta">
-      <h2>{t(`${CLAVE}.titulo`)}</h2>
+    <div className="formcard">
+      <div className="formhead">
+        <span>{t(`${CLAVE}.titulo`)}</span>
+      </div>
+      <div className="formbody">
 
-      {creando ? (
-        <NuevoCatalogo
-          alCancelar={() => setCreando(false)}
-          alCrear={(codigo) => navigate(`/catalogos-generales/${encodeURIComponent(codigo)}`)}
-        />
-      ) : (
-        <div className="acciones-form">
-          <button type="button" className="btn primario" onClick={() => setCreando(true)}>
-            {t(`${CLAVE}.nuevo`)}
-          </button>
-        </div>
-      )}
+        {creando ? (
+          <NuevoCatalogo
+            alCancelar={() => setCreando(false)}
+            alCrear={(codigo) => navigate(`/catalogos-generales/${encodeURIComponent(codigo)}`)}
+          />
+        ) : (
+          <div className="acciones-form">
+            <button type="button" className="btn primario" onClick={() => setCreando(true)}>
+              {t(`${CLAVE}.nuevo`)}
+            </button>
+          </div>
+        )}
 
-      {cargando && <p className="nota">{t('common.cargando')}</p>}
-      {errorCarga && <p className="aviso-error">{errorCarga}</p>}
-      {!cargando && !errorCarga && catalogos.length === 0 && <p className="nota">{t(`${CLAVE}.sinCatalogos`)}</p>}
+        {cargando && <p className="nota">{t('common.cargando')}</p>}
+        {errorCarga && <p className="aviso-error">{errorCarga}</p>}
+        {!cargando && !errorCarga && catalogos.length === 0 && <p className="nota">{t(`${CLAVE}.sinCatalogos`)}</p>}
 
-      {catalogos.length > 0 && (
-        <div className="tabla-cont">
-          <table>
-            <thead>
-              <tr>
-                <th>{t(`${CLAVE}.codigo`)}</th>
-                <th>{t(`${CLAVE}.nombre`)}</th>
-                <th>{t(`${CLAVE}.estado`)}</th>
-                <th>{t(`${CLAVE}.campos`)}</th>
-                <th>{t('common.acciones')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {catalogos.map((c) => (
-                <tr key={c.code}>
-                  <td className="mono">{c.code}</td>
-                  <td>{c.name}</td>
-                  <td>{t(`${CLAVE}.estados.${c.active}`)}</td>
-                  <td>{(c.fields ?? []).length}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn secundario"
-                      aria-label={t(`${CLAVE}.abrirCatalogo`, { nombre: c.name })}
-                      onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(c.code ?? '')}`)}
-                    >
-                      {t(`${CLAVE}.abrir`)}
-                    </button>
-                  </td>
+        {catalogos.length > 0 && (
+          <div className="tabla-cont">
+            <table>
+              <thead>
+                <tr>
+                  <th>{t(`${CLAVE}.codigo`)}</th>
+                  <th>{t(`${CLAVE}.nombre`)}</th>
+                  <th>{t(`${CLAVE}.estado`)}</th>
+                  <th>{t(`${CLAVE}.campos`)}</th>
+                  <th>{t('common.acciones')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {catalogos.map((c) => (
+                  <tr key={c.code}>
+                    <td className="mono">{c.code}</td>
+                    <td>{c.name}</td>
+                    <td>{t(`${CLAVE}.estados.${c.active}`)}</td>
+                    <td>{(c.fields ?? []).length}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn secundario"
+                        aria-label={t(`${CLAVE}.abrirCatalogo`, { nombre: c.name })}
+                        onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(c.code ?? '')}`)}
+                      >
+                        {t(`${CLAVE}.abrir`)}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      {totalPaginas > 1 && (
-        <div className="acciones-form">
-          <button type="button" className="btn neutro" disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)}>
-            {t('common.previous')}
-          </button>
-          <span className="nota">{t(`${CLAVE}.pagina`, { actual: pagina + 1, total: totalPaginas })}</span>
-          <button
-            type="button"
-            className="btn neutro"
-            disabled={pagina + 1 >= totalPaginas}
-            onClick={() => setPagina((p) => p + 1)}
-          >
-            {t('common.next')}
-          </button>
-        </div>
-      )}
+        {totalPaginas > 1 && (
+          <div className="acciones-form">
+            <button type="button" className="btn neutro" disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)}>
+              {t('common.previous')}
+            </button>
+            <span className="nota">{t(`${CLAVE}.pagina`, { actual: pagina + 1, total: totalPaginas })}</span>
+            <button
+              type="button"
+              className="btn neutro"
+              disabled={pagina + 1 >= totalPaginas}
+              onClick={() => setPagina((p) => p + 1)}
+            >
+              {t('common.next')}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -184,7 +188,7 @@ function NuevoCatalogo({ alCancelar, alCrear }: { readonly alCancelar: () => voi
 
   return (
     <section className="nuevo-catalogo">
-      <h3>{t(`${CLAVE}.tituloCrear`)}</h3>
+      <h2 className="seccion">{t(`${CLAVE}.tituloCrear`)}</h2>
       <div className="fr">
         <FormRow label={t(`${CLAVE}.codigo`)} controlId="cat-codigo" required>
           <input id="cat-codigo" type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} />

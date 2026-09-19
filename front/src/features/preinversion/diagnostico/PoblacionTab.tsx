@@ -146,7 +146,7 @@ export function PoblacionTab({ idProyecto, puedeEditar }: { readonly idProyecto:
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       {errorCatalogo && <p className="nota">{t(`${base}.sinCatalogo`)}</p>}
 
-      <div className="tabla-cont">
+      <div className="tabla-cont tabla-editable">
         <table>
           <thead>
             <tr>

@@ -82,7 +82,9 @@ export function Sidebar({
         <div className="avatar" aria-hidden="true">{iniciales(username)}</div>
         <div className="quien">
           <div className="nom">{(username ?? '').toUpperCase()}</div>
-          <div className="rol">{roles[0] ?? ''}</div>
+          <div className="rol" title={roles[0] ?? ''}>
+            {roles[0] ?? ''}
+          </div>
         </div>
         <IconoMascara nombre="ui-chevron" tam={8} className="chevron-usuario" />
       </div>

@@ -180,7 +180,7 @@ export function DescripcionTecnicaTab({
         <p className="nota">{t(`${clave}.sinCatalogos`, { catalogos: catalogosCaidos.join(', ') })}</p>
       )}
 
-      <div className="fr">
+      <div className="f w">
         <label htmlFor="id-descripcion-proyecto">{t(`${clave}.descripcionProyecto`)}</label>
         <textarea
           id="id-descripcion-proyecto"
@@ -190,7 +190,7 @@ export function DescripcionTecnicaTab({
         />
       </div>
 
-      <div className="tabla-cont">
+      <div className="tabla-cont tabla-editable">
         <table>
           <thead>
             <tr>

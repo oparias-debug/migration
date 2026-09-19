@@ -58,31 +58,35 @@ export function CalendarioPage() {
   };
 
   return (
-    <div className="tarjeta">
-      <h2>{t(`${CLAVE}.titulo`)}</h2>
-      <p className="nota">{t(`${CLAVE}.intro`)}</p>
-
-      <div className="fr">
-        <label htmlFor="cal-codigo-activo">{t(`${CLAVE}.codigoActivo`)}</label>
-        <input
-          id="cal-codigo-activo"
-          type="text"
-          value={codigo}
-          onChange={(e) => setCodigo(e.target.value)}
-          placeholder={t(`${CLAVE}.codigoActivoAyuda`)}
-        />
+    <div className="formcard">
+      <div className="formhead">
+        <span>{t(`${CLAVE}.titulo`)}</span>
       </div>
+      <div className="formbody">
+        <p className="nota">{t(`${CLAVE}.intro`)}</p>
 
-      <Pestanas pestanas={PESTANAS} activa={pestana} onCambiar={setPestana} etiqueta={`${CLAVE}.pestanas`} />
+        <div className="f w">
+          <label htmlFor="cal-codigo-activo">{t(`${CLAVE}.codigoActivo`)}</label>
+          <input
+            id="cal-codigo-activo"
+            type="text"
+            value={codigo}
+            onChange={(e) => setCodigo(e.target.value)}
+            placeholder={t(`${CLAVE}.codigoActivoAyuda`)}
+          />
+        </div>
 
-      <div role="tabpanel" id={`panel-${pestana}`}>
-        {pestana === 'calendario' && <FormularioCalendario alCrear={setCodigo} aviso={aviso} codigo={codigo} />}
-        {pestana === 'periodos' && <FormularioPeriodo codigo={codigo} aviso={aviso} />}
-        {pestana === 'excepciones' && <FormularioExcepcion codigo={codigo} aviso={aviso} />}
-        {pestana === 'consultas' && <PanelConsultas codigo={codigo} />}
+        <Pestanas pestanas={PESTANAS} activa={pestana} onCambiar={setPestana} etiqueta={`${CLAVE}.pestanas`} />
+
+        <div role="tabpanel" id={`panel-${pestana}`}>
+          {pestana === 'calendario' && <FormularioCalendario alCrear={setCodigo} aviso={aviso} codigo={codigo} />}
+          {pestana === 'periodos' && <FormularioPeriodo codigo={codigo} aviso={aviso} />}
+          {pestana === 'excepciones' && <FormularioExcepcion codigo={codigo} aviso={aviso} />}
+          {pestana === 'consultas' && <PanelConsultas codigo={codigo} />}
+        </div>
+
+        <p className="nota-form">{t(`${CLAVE}.sinConsultaDeCalendarios`)}</p>
       </div>
-
-      <p className="nota-form">{t(`${CLAVE}.sinConsultaDeCalendarios`)}</p>
     </div>
   );
 }

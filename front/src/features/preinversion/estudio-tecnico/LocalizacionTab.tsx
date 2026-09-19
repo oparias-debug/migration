@@ -190,7 +190,7 @@ export function LocalizacionTab({
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       {errorCatalogo && <p className="nota">{t(`${clave}.sinCatalogo`)}</p>}
 
-      <div className="tabla-cont">
+      <div className="tabla-cont tabla-editable">
         <table>
           <thead>
             <tr>

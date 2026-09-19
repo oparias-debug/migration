@@ -41,35 +41,39 @@ export function EstudioTecnicoPage() {
   }, [idProyecto]);
 
   return (
-    <div className="tarjeta">
-      <h2>{t('preinversion.estudioTecnico.titulo')}</h2>
-      {cabecera && (
-        <p className="nota">
-          <b>{cabecera.nombre}</b>
-          {cabecera.cup && <span className="mono"> · CUP {cabecera.cup}</span>}
-        </p>
-      )}
-
-      <Pestanas
-        pestanas={PESTANAS}
-        activa={pestana}
-        onCambiar={setPestana}
-        etiqueta="preinversion.estudioTecnico.pestanas"
-      />
-
-      <div role="tabpanel" id={`panel-${pestana}`}>
-        {pestana === 'descripcion' && <DescripcionTecnicaTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
-        {pestana === 'localizacion' && <LocalizacionTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+    <div className="formcard">
+      <div className="formhead">
+        <span>{t('preinversion.estudioTecnico.titulo')}</span>
       </div>
+      <div className="formbody">
+        {cabecera && (
+          <p className="nota">
+            <b>{cabecera.nombre}</b>
+            {cabecera.cup && <span className="mono"> · CUP {cabecera.cup}</span>}
+          </p>
+        )}
 
-      <div className="acciones-form">
-        <button
-          type="button"
-          className="btn neutro"
-          onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/diagnostico`)}
-        >
-          {t('common.regresar')}
-        </button>
+        <Pestanas
+          pestanas={PESTANAS}
+          activa={pestana}
+          onCambiar={setPestana}
+          etiqueta="preinversion.estudioTecnico.pestanas"
+        />
+
+        <div role="tabpanel" id={`panel-${pestana}`}>
+          {pestana === 'descripcion' && <DescripcionTecnicaTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+          {pestana === 'localizacion' && <LocalizacionTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+        </div>
+
+        <div className="acciones-form">
+          <button
+            type="button"
+            className="btn neutro"
+            onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/diagnostico`)}
+          >
+            {t('common.regresar')}
+          </button>
+        </div>
       </div>
     </div>
   );

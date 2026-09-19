@@ -88,12 +88,12 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
 
   return (
     <section>
-      <h3>{t(`${CLAVE}.registros`)}</h3>
+      <h2 className="seccion">{t(`${CLAVE}.registros`)}</h2>
       {error && <p className="aviso-error">{error}</p>}
       {!error && registros.length === 0 && <p className="nota">{t(`${CLAVE}.sinRegistros`)}</p>}
 
       {registros.length > 0 && (
-        <div className="tabla-cont">
+        <div className="tabla-cont tabla-editable">
           <table>
             <thead>
               <tr>

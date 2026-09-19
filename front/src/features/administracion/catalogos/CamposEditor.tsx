@@ -43,7 +43,7 @@ export function CamposEditor({
   return (
     <fieldset className="campos-catalogo">
       <legend>{t(`${clave}.campos`)}</legend>
-      <div className="tabla-cont">
+      <div className="tabla-cont tabla-editable">
         <table>
           <thead>
             <tr>

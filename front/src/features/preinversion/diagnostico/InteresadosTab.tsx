@@ -131,7 +131,7 @@ export function InteresadosTab({ idProyecto, puedeEditar }: { readonly idProyect
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      <div className="tabla-cont">
+      <div className="tabla-cont tabla-editable">
         <table>
           <thead>
             <tr>
