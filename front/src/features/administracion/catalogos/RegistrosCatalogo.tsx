@@ -12,6 +12,7 @@ const TAMANO_PAGINA = 20;
  * Registros de un catálogo: los datos que después se eligen en las pantallas del
  * sistema. Las columnas y el formulario salen de los campos del propio catálogo;
  * al editar, los campos de la clave quedan fijos porque identifican el registro.
+ * Como los catálogos, un registro no se elimina: sólo se inactiva.
  */
 export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string; readonly campos: readonly CampoEditable[] }) {
   const { t } = useTranslation();
@@ -84,16 +85,6 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
     }
   };
 
-  const eliminar = async (clave: string) => {
-    const { isConfirmed } = await Swal.fire({
-      icon: 'warning',
-      text: t(`${CLAVE}.confirmarEliminarRegistro`, { clave }),
-      showCancelButton: true,
-      confirmButtonText: t('common.eliminar'),
-      cancelButtonText: t('common.cancelar'),
-    });
-    if (isConfirmed) await accion(registrosCatalogoApi.eliminarRegistroCatalogo({ code: codigo, key: clave }), `${CLAVE}.registroEliminado`);
-  };
 
   return (
     <section>
@@ -127,7 +118,7 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
                       aria-label={t(`${CLAVE}.editarRegistro`, { clave: r.key })}
                       onClick={() => {
                         setEditando(r.key);
-                        setValores({ ...(r.values ?? {}) });
+                        setValores({ ...r.values });
                       }}
                     >
                       {t('common.editar')}
@@ -149,14 +140,6 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
                       }
                     >
                       {t(`${CLAVE}.inactivar`)}
-                    </button>{' '}
-                    <button
-                      type="button"
-                      className="btn neutro"
-                      aria-label={t(`${CLAVE}.eliminarRegistro`, { clave: r.key })}
-                      onClick={() => eliminar(r.key)}
-                    >
-                      {t('common.eliminar')}
                     </button>
                   </td>
                 </tr>

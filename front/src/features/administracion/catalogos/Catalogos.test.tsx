@@ -11,7 +11,6 @@ const crearCatalogo = vi.fn();
 const verificarExistenciaCatalogo = vi.fn();
 const consultarCatalogo = vi.fn();
 const actualizarDescriptoresCatalogo = vi.fn();
-const eliminarCatalogo = vi.fn();
 const buscarListaRegistros = vi.fn();
 const crearRegistroCatalogo = vi.fn();
 const actualizarRegistro = vi.fn();
@@ -28,7 +27,6 @@ vi.mock('../../../api/administracionApi', async (importOriginal) => {
       verificarExistenciaCatalogo: (...a: unknown[]) => verificarExistenciaCatalogo(...a),
       consultarCatalogo: (...a: unknown[]) => consultarCatalogo(...a),
       actualizarDescriptoresCatalogo: (...a: unknown[]) => actualizarDescriptoresCatalogo(...a),
-      eliminarCatalogo: (...a: unknown[]) => eliminarCatalogo(...a),
     },
     registrosCatalogoApi: {
       buscarListaRegistros: (...a: unknown[]) => buscarListaRegistros(...a),
@@ -170,6 +168,15 @@ describe('CU-ADM-01 · catálogos', () => {
         catalogRecordUpdateRequest: { values: { descripcion: 'Documento Único de Identidad' } },
       }),
     );
+  });
+
+  // El back no permite eliminar ni catálogos ni registros: sólo inactivarlos.
+  it('no ofrece eliminar, sólo inactivar', async () => {
+    montarFicha();
+    await screen.findByText('Documento Único');
+    expect(screen.queryByRole('button', { name: /Eliminar catálogo/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Eliminar el registro/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Inactivar el registro DUI' })).toBeInTheDocument();
   });
 
   it('no deja guardar un registro sin la clave', async () => {

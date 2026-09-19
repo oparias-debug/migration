@@ -16,7 +16,7 @@ export const CAMPO_VACIO: CampoEditable = { nombre: '', clave: false };
 export function problemaDeCampos(campos: readonly CampoEditable[]): string | null {
   const nombres = campos.map((c) => c.nombre.trim());
   if (nombres.length === 0) return 'sinCampos';
-  if (nombres.some((n) => n === '')) return 'campoSinNombre';
+  if (nombres.includes('')) return 'campoSinNombre';
   if (new Set(nombres.map((n) => n.toLowerCase())).size !== nombres.length) return 'camposRepetidos';
   if (!campos.some((c) => c.clave)) return 'sinClave';
   return null;

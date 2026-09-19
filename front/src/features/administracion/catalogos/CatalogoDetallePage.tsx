@@ -20,6 +20,9 @@ const aCamposEditables = (catalogo: Catalog): CampoEditable[] =>
 /**
  * Ficha de un catálogo (flujos alternativos del CU-ADM-01): sus datos, sus
  * campos y sus registros. Se llega desde la lista, al pulsar "Abrir".
+ *
+ * No hay botón de eliminar: el back sólo permite inactivar ("Un catálogo no
+ * puede eliminarse, solo inactivarse"), aunque el contrato exponga el DELETE.
  */
 export function CatalogoDetallePage() {
   const { t } = useTranslation();
@@ -108,23 +111,6 @@ export function CatalogoDetallePage() {
   const inactivar = () =>
     avisar(catalogosApi.inactivarCatalogo({ code: codigo, inactivationRequest: { active: 'INACTIVE' } }), `${CLAVE}.inactivado`);
 
-  const eliminar = async () => {
-    const { isConfirmed } = await Swal.fire({
-      icon: 'warning',
-      text: t(`${CLAVE}.confirmarEliminar`, { nombre: catalogo.name }),
-      showCancelButton: true,
-      confirmButtonText: t('common.eliminar'),
-      cancelButtonText: t('common.cancelar'),
-    });
-    if (!isConfirmed) return;
-    try {
-      await catalogosApi.eliminarCatalogo({ code: codigo });
-      await Swal.fire({ icon: 'success', text: t(`${CLAVE}.eliminado`) });
-      navigate('/catalogos-generales');
-    } catch (error_) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
-    }
-  };
 
   return (
     <div className="tarjeta">
@@ -160,9 +146,6 @@ export function CatalogoDetallePage() {
           </button>
           <button type="button" className="btn secundario" onClick={inactivar} disabled={catalogo.active === 'INACTIVE'}>
             {t(`${CLAVE}.inactivar`)}
-          </button>
-          <button type="button" className="btn neutro" onClick={eliminar}>
-            {t(`${CLAVE}.eliminar`)}
           </button>
         </div>
       </section>

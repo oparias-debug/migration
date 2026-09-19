@@ -643,9 +643,6 @@
       "camposGuardados": "Los campos del catálogo se guardaron.",
       "inactivar": "Inactivar",
       "inactivado": "El catálogo quedó inactivo.",
-      "eliminar": "Eliminar catálogo",
-      "eliminado": "El catálogo se eliminó.",
-      "confirmarEliminar": "¿Eliminar el catálogo {{nombre}}? No se puede deshacer.",
       "registros": "Registros",
       "sinRegistros": "Este catálogo todavía no tiene registros.",
       "nuevoRegistro": "Nuevo registro",
@@ -655,10 +652,7 @@
       "claveObligatoria": "Complete los campos de la clave: identifican el registro.",
       "editarRegistro": "Editar el registro {{clave}}",
       "inactivarRegistro": "Inactivar el registro {{clave}}",
-      "eliminarRegistro": "Eliminar el registro {{clave}}",
-      "registroInactivado": "El registro quedó inactivo.",
-      "registroEliminado": "El registro se eliminó.",
-      "confirmarEliminarRegistro": "¿Eliminar el registro {{clave}}? No se puede deshacer."
+      "registroInactivado": "El registro quedó inactivo."
     },
     "calendario": {
       "titulo": "Calendario",
