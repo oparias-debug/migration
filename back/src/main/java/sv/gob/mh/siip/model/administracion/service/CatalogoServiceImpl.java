@@ -58,9 +58,6 @@ public class CatalogoServiceImpl implements CatalogoService {
         actorContexto.exigirRol(RolUsuario.ADMINISTRADOR_DE_CATALOGOS);
 
         List<CatalogFieldDto> camposSolicitados = request.getFields();
-        if (camposSolicitados == null || camposSolicitados.isEmpty()) {
-            throw new ValidacionNegocioException("CAMPOS_REQUERIDOS", "Debe existir al menos un campo definido.", null);
-        }
         validarCampoKeyYNombresUnicos(camposSolicitados);
         exigirCatalogoPadreExistente(request.getParent());
 
@@ -118,8 +115,9 @@ public class CatalogoServiceImpl implements CatalogoService {
             exigirCatalogoPadreExistente(request.getParent());
             catalogo.setCatalogoPadreCodigo(request.getParent());
         }
-        if (request.getActive() != null) {
-            catalogo.setEstado(EstadoVigencia.valueOf(request.getActive().getValue()));
+        ActiveStatusDto active = request.getActive(); 
+        if (active != null) {
+            catalogo.setEstado(EstadoVigencia.valueOf(active.getValue()));
         }
         if (request.getFromDate() != null) {
             catalogo.setFechaDesde(request.getFromDate());

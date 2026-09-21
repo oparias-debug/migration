@@ -494,4 +494,23 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<!-- Perfil activado automáticamente cuando existe la variable de entorno
+	     SONAR_HOST_URL (ver .env en la raíz del repo + CONTRIBUTING.md): permite
+	     apuntar el análisis a un SonarQube local (docker-compose) sin tocar el
+	     valor institucional de arriba, que sigue siendo el default para el
+	     pipeline de Tekton/Developer Hub (donde esa env var no está definida). -->
+	<profiles>
+		<profile>
+			<id>sonar-host-desde-env</id>
+			<activation>
+				<property>
+					<name>env.SONAR_HOST_URL</name>
+				</property>
+			</activation>
+			<properties>
+				<sonar.host.url>${env.SONAR_HOST_URL}</sonar.host.url>
+			</properties>
+		</profile>
+	</profiles>
 </project>

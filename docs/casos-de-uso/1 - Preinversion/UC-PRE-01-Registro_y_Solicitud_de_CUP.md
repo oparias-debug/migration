@@ -29,7 +29,7 @@ nota_version: >
 
 actor_principal: Técnico URP
 
-actores_secundarios: [Administrador del Sistema, Viabilizador, Técnico UAL, Técnico PRE]
+actores_secundarios: [Administrador, Viabilizador, Técnico UAL, Técnico PRE]
 
 prioridad: No especificado en el documento original.
 
@@ -39,7 +39,7 @@ depende_de: []
 
 casos_relacionados: [CU-PRE-01.5, CU-PRE-02, UC-PRE-03, CU-PRE-03.5, CU-PRE-24, CU-PRE-25, CU-PRE-26, CU-PRE-29, CU-OYM-01, CU-MPD-01]
 
-roles: [Técnico URP, Administrador del Sistema]
+roles: [Técnico URP, Administrador]
 
 pantallas: [Registro de Proyecto, Nuevo Registro]
 

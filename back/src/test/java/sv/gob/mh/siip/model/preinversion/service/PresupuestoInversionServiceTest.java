@@ -10,12 +10,16 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.domain.Componente;
 import sv.gob.mh.siip.model.preinversion.domain.MacroactividadPresupuesto;
@@ -93,14 +97,18 @@ class PresupuestoInversionServiceTest {
   }
 
   @Test
-  void periodosRechazaValorNuloONegativo() {
+  void periodosExigeValorNoNuloYNoNegativo() {
+    Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
     ConfigurarPeriodosEjecucionRequestDto periodosNulos = new ConfigurarPeriodosEjecucionRequestDto(null);
     ConfigurarPeriodosEjecucionRequestDto periodosNegativos = new ConfigurarPeriodosEjecucionRequestDto(-1);
 
-    assertThatThrownBy(() -> service.periodos(1L, periodosNulos))
-        .isInstanceOf(ValidacionNegocioException.class);
-    assertThatThrownBy(() -> service.periodos(1L, periodosNegativos))
-        .isInstanceOf(ValidacionNegocioException.class);
+    Set<ConstraintViolation<ConfigurarPeriodosEjecucionRequestDto>> violacionesNulo =
+        validator.validate(periodosNulos);
+    Set<ConstraintViolation<ConfigurarPeriodosEjecucionRequestDto>> violacionesNegativo =
+        validator.validate(periodosNegativos);
+
+    assertThat(violacionesNulo).isNotEmpty();
+    assertThat(violacionesNegativo).isNotEmpty();
   }
 
   @Test

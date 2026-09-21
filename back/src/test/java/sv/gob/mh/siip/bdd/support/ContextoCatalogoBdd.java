@@ -15,7 +15,7 @@ import sv.gob.mh.siip.model.administracion.dto.CatalogRecordDto;
 /**
  * Estado compartido entre step classes de CU-ADM-01 dentro de un mismo escenario BDD, necesario
  * porque varias .feature reutilizan el mismo texto de Dado/Cuando (Cucumber exige una unica
- * definicion por texto en todo el classpath de test) y esa definicion unica vive en
+ * definicion por texto en el classpath de test) y esa definicion unica vive en
  * {@code AdmComun}, no en la clase de steps propia de cada .feature:
  * <ul>
  * <li>{@code catalogoActual}/{@code registroActual}: el catalogo/registro que "un catálogo

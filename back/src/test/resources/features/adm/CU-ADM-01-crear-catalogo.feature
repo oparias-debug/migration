@@ -23,7 +23,7 @@ Característica: Crear un catálogo
 
   Escenario: Rechazar la creación de un catálogo sin ningún campo
     Dado que no indico ningún campo para el catálogo
-    Cuando intento crear el catálogo
+    Cuando intento crear el catálogo sin ningún campo definido
     Entonces el sistema rechaza la operación conforme a la Regla 18
 
   Escenario: Fijar el catálogo como ACTIVE cuando no se indican fechas de vigencia

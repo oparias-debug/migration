@@ -65,11 +65,8 @@ public class PresupuestoInversionService {
 
   public PresupuestoDto periodos(Long id, ConfigurarPeriodosEjecucionRequestDto req) {
     actor.exigirRol(RolUsuario.TECNICO_URP);
-    Integer peridosEstimados = req.getPeriodosEstimados(); 
-    if (peridosEstimados == null || peridosEstimados < 0)
-      throw invalido("periodosEstimados");
     PresupuestoProyecto p = obtenerOCrear(buscar(id));
-    p.setPeriodosEstimados(peridosEstimados);
+    p.setPeriodosEstimados(req.getPeriodosEstimados());
     return dto(buscar(id), p);
   }
 

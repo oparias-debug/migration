@@ -75,7 +75,7 @@ public final class CalendarioFixtures {
     private static final Pattern PATRON_SEMANAL = Pattern
             .compile("^SEMANAL \\((\\d{4}-\\d{2}-\\d{2}) a (\\d{4}-\\d{2}-\\d{2}), (.+)\\)$");
     private static final Pattern PATRON_MENSUAL = Pattern
-            .compile("^MENSUAL \\((?:día|días) (.+), (?:mes|meses) (.+)\\)$");
+            .compile("^MENSUAL \\((?:día|días) ([^,]+), (?:mes|meses) ([^)]+)\\)$");
 
     private CalendarioFixtures() {
     }

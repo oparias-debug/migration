@@ -257,26 +257,19 @@ public class CalendarioServiceImpl implements CalendarioService {
 
     /** RN23: `id` presente edita ese CalendarItem; `id` ausente da de alta uno nuevo (RN08, RN10, RN15). */
     private Periodo aplicarPeriodoInput(Calendario calendario, CalendarItemInputDto itemInput) {
-        Long id;
-        String codigo;
-        String nombre;
-        RecurrenciaDto recurrenciaDto;
-        TipoPeriodo tipo;
-        if (itemInput instanceof PeriodoLaboralInputDto laboral) {
-            id = laboral.getId();
-            codigo = laboral.getCodigo();
-            nombre = laboral.getNombre();
-            recurrenciaDto = laboral.getRecurrencia();
-            tipo = TipoPeriodo.LABORAL;
-        } else if (itemInput instanceof PeriodoNoLaboralInputDto noLaboral) {
-            id = noLaboral.getId();
-            codigo = noLaboral.getCodigo();
-            nombre = noLaboral.getNombre();
-            recurrenciaDto = noLaboral.getRecurrencia();
-            tipo = TipoPeriodo.NO_LABORAL;
-        } else {
-            throw new IllegalArgumentException("Tipo de CalendarItem no soportado: " + itemInput.getClass());
-        }
+        DatosPeriodo datos = switch (itemInput) {
+            case PeriodoLaboralInputDto laboral -> new DatosPeriodo(laboral.getId(), laboral.getCodigo(),
+                    laboral.getNombre(), laboral.getRecurrencia(), TipoPeriodo.LABORAL);
+            case PeriodoNoLaboralInputDto noLaboral -> new DatosPeriodo(noLaboral.getId(), noLaboral.getCodigo(),
+                    noLaboral.getNombre(), noLaboral.getRecurrencia(), TipoPeriodo.NO_LABORAL);
+            default -> throw new IllegalArgumentException(
+                    "Tipo de CalendarItem no soportado: " + itemInput.getClass());
+        };
+        Long id = datos.id();
+        String codigo = datos.codigo();
+        String nombre = datos.nombre();
+        RecurrenciaDto recurrenciaDto = datos.recurrencia();
+        TipoPeriodo tipo = datos.tipo();
 
         Periodo periodo;
         if (id != null) {
@@ -301,6 +294,11 @@ public class CalendarioServiceImpl implements CalendarioService {
         periodo.setTipo(tipo);
         periodo.setRecurrencia(recurrencia);
         return periodo;
+    }
+
+    /** Datos comunes de un {@link CalendarItemInputDto} de tipo período, sea laboral o no laboral. */
+    private record DatosPeriodo(Long id, String codigo, String nombre, RecurrenciaDto recurrencia,
+            TipoPeriodo tipo) {
     }
 
     /** RN23: `id` presente edita esa excepción; `id` ausente da de alta una nueva (RN10). */
@@ -512,30 +510,27 @@ public class CalendarioServiceImpl implements CalendarioService {
      */
     private int calcularDuracionDias(Periodo periodo, Calendario calendario) {
         Recurrencia recurrencia = periodo.getRecurrencia();
-        LocalDate desde;
-        LocalDate hasta;
-        if (recurrencia instanceof RecurrenciaUnaVez unaVez) {
-            desde = unaVez.getFechaInicio();
-            hasta = unaVez.getFechaFin();
-        } else if (recurrencia instanceof RecurrenciaSemanal semanal) {
-            desde = semanal.getFechaInicio();
-            hasta = semanal.getFechaFin();
-        } else {
-            desde = calendario.getFechaInicio();
-            hasta = calendario.getFechaFin();
-        }
+        RangoFechas rango = switch (recurrencia) {
+            case RecurrenciaUnaVez unaVez -> new RangoFechas(unaVez.getFechaInicio(), unaVez.getFechaFin());
+            case RecurrenciaSemanal semanal -> new RangoFechas(semanal.getFechaInicio(), semanal.getFechaFin());
+            default -> new RangoFechas(calendario.getFechaInicio(), calendario.getFechaFin());
+        };
+        LocalDate desde = rango.desde();
+        LocalDate hasta = rango.hasta();
 
         int total = 0;
         for (LocalDate fecha = desde; !fecha.isAfter(hasta); fecha = fecha.plusDays(1)) {
-            if (!perteneceARecurrencia(recurrencia, fecha)) {
-                continue;
+            boolean excluidaPorNoLaboral = periodo.getTipo() == TipoPeriodo.LABORAL
+                    && enAlgunPeriodoDeTipo(calendario, TipoPeriodo.NO_LABORAL, fecha);
+            if (perteneceARecurrencia(recurrencia, fecha) && !excluidaPorNoLaboral) {
+                total++;
             }
-            if (periodo.getTipo() == TipoPeriodo.LABORAL && enAlgunPeriodoDeTipo(calendario, TipoPeriodo.NO_LABORAL, fecha)) {
-                continue;
-            }
-            total++;
         }
         return total;
+    }
+
+    /** Rango de fechas sobre el que se recorre una recurrencia al calcular su duración. */
+    private record RangoFechas(LocalDate desde, LocalDate hasta) {
     }
 
     private boolean enAlgunPeriodoDeTipo(Calendario calendario, TipoPeriodo tipo, LocalDate fecha) {

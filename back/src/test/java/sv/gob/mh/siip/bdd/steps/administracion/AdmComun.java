@@ -25,7 +25,7 @@ import org.springframework.data.domain.PageRequest;
 
 /**
  * Steps de CU-ADM-01 (administracion de catalogos) cuyo texto es literalmente identico en varios
- * .feature del caso de uso (Cucumber exige una unica definicion por texto en todo el classpath de
+ * .feature del caso de uso (Cucumber exige una unica definicion por texto en el classpath de
  * test):
  * <ul>
  * <li>"un catálogo existente": actualizar-descriptores-catalogo, inactivar-catalogo,

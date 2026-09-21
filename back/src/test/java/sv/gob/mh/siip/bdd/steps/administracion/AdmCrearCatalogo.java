@@ -3,13 +3,17 @@ package sv.gob.mh.siip.bdd.steps.administracion;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Set;
 
 import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import sv.gob.mh.siip.bdd.support.CatalogoFixtures;
 import sv.gob.mh.siip.bdd.support.ContextoCatalogoBdd;
 import sv.gob.mh.siip.bdd.support.ContextoValidacionBdd;
+import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.administracion.dto.CatalogCreateRequestDto;
 import sv.gob.mh.siip.model.administracion.dto.CatalogDto;
 import sv.gob.mh.siip.model.administracion.dto.CatalogFieldDto;
@@ -26,18 +30,20 @@ public class AdmCrearCatalogo {
     private final CatalogoService catalogoService;
     private final ContextoCatalogoBdd contextoCatalogo;
     private final ContextoValidacionBdd contextoValidacion;
+    private final Validator validator;
 
     private CatalogCreateRequestDto ultimaSolicitud;
     private CatalogDto ultimoResultado;
 
     public AdmCrearCatalogo(UsuarioRepository usuarioRepository, CatalogoRepository catalogoRepository,
             CatalogoService catalogoService, ContextoCatalogoBdd contextoCatalogo,
-            ContextoValidacionBdd contextoValidacion) {
+            ContextoValidacionBdd contextoValidacion, Validator validator) {
         this.usuarioRepository = usuarioRepository;
         this.catalogoRepository = catalogoRepository;
         this.catalogoService = catalogoService;
         this.contextoCatalogo = contextoCatalogo;
         this.contextoValidacion = contextoValidacion;
+        this.validator = validator;
     }
 
     @Dado("^que indico código, nombre y al menos un campo con calificador KEY$")
@@ -81,6 +87,19 @@ public class AdmCrearCatalogo {
                 List.of());
     }
 
+    /**
+     * A diferencia de {@link #intento_crear_el_catalogo()}, no invoca el servicio: la Regla 18
+     * (al menos un campo) la exige {@code @Size(min = 1)} en {@code CatalogCreateRequestDto}, así
+     * que en producción el request nunca llega a {@code CatalogoServiceImpl} sin campos — lo
+     * rechaza el {@code @Valid} del controlador. Este step reproduce esa validación de borde.
+     */
+    @Cuando("^intento crear el catálogo sin ningún campo definido$")
+    public void intento_crear_el_catalogo_sin_ningun_campo_definido() {
+        Set<ConstraintViolation<CatalogCreateRequestDto>> violaciones = validator.validate(ultimaSolicitud);
+        contextoValidacion.setUltimaExcepcion(violaciones.isEmpty() ? null
+                : new ValidacionNegocioException("CAMPOS_REQUERIDOS", "Debe existir al menos un campo definido.", null));
+    }
+
     @Cuando("^intento crear el catálogo$")
     public void intento_crear_el_catalogo() {
         try {
@@ -96,6 +115,8 @@ public class AdmCrearCatalogo {
         CatalogoFixtures.autenticarNuevoAdministrador(usuarioRepository);
         ultimaSolicitud = new CatalogCreateRequestDto("CAT-" + CatalogoFixtures.nuevoSufijo(), "Catálogo de prueba BDD",
                 List.of(new CatalogFieldDto("codigoInterno", FieldQualifierDto.KEY)));
+        ultimaSolicitud.setFromDate(null);
+        ultimaSolicitud.setToDate(null);
     }
 
     @Cuando("^el catálogo se crea$")

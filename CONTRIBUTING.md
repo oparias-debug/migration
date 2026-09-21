@@ -130,6 +130,8 @@ El servidor de SonarQube (servicio `sonarqube` en `docker-compose.yml`) debe est
 ```
 
 # back + api-gateway (un solo proyecto Sonar, siip-back), desde la raíz:
+$env:SONAR_HOST_URL = "http://localhost:9000"
+
 $env:SONAR_TOKEN = "$((Get-Content .env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
 
 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
@@ -142,3 +144,18 @@ npm run sonar
 ```
 
 Entrá a http://localhost:9000 y revisá el dashboard del proyecto correspondiente (`siip-back`/`siip-front`): si el Quality Gate queda en rojo o aparecen issues **New Code** (bugs, vulnerabilidades, code smells bloqueantes) en las líneas que agregaste, resolvelos antes de pedir revisión — no hace falta salir a cero en deuda técnica preexistente, solo en lo que tu PR introduce. Ver [REFERENCE.md](./REFERENCE.md#análisis-estático-sonarqube) para detalles de configuración (exclusiones, cobertura, troubleshooting).
+
+#### ⚠️ No confundir con el proyecto Sonar institucional (`dgicp-siip2-backend-srv`)
+
+`back/pom.xml` define su **propio** `sonar.projectKey` (`dgicp-siip2-backend-srv`) y su propio `sonar.host.url` (el servidor institucional `alcm.mh.gob.sv`), independiente del `siip-back` de arriba — ese es el project key registrado para el pipeline de Tekton/Developer Hub, no el del flujo de desarrollo local. **Los dos no comparten resultados entre sí**: correr el escaneo desde la raíz actualiza `siip-back`; correr el mismo comando parado **dentro de `back/`** actualiza `dgicp-siip2-backend-srv`.
+
+Si necesitás actualizar específicamente `dgicp-siip2-backend-srv` en tu SonarQube local (por ejemplo porque ya tenías ese dashboard en favoritos de antes), corré:
+
+```
+cd back
+$env:SONAR_HOST_URL = "http://localhost:9000"
+$env:SONAR_TOKEN = "$((Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
+mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
+```
+
+El `$env:SONAR_HOST_URL` acá es obligatorio (a diferencia del bloque de arriba, donde es redundante): sin él, `back/pom.xml` manda el análisis al servidor institucional en vez de tu SonarQube local. Antes de revisar resultados, fijate bien en la URL `id=...` que imprime el comando al final (`ANALYSIS SUCCESSFUL, you can find the results at: ...`) — te dice a cuál de los dos proyectos subió, sin necesidad de adivinar por el dashboard que tengas abierto.

@@ -88,9 +88,9 @@ public class AdmActualizarCamposCatalogo {
 
     @Dado("^un catálogo sin registros cuya modificación de campos elimina todos los campos KEY$")
     public void un_catalogo_sin_registros_cuya_modificacion_elimina_todos_los_key() {
-        CatalogoFixtures.autenticarNuevoAdministrador(usuarioRepository);
-        catalogoActual = catalogoRepository.save(
-                CatalogoFixtures.nuevoCatalogo("CAT-" + CatalogoFixtures.nuevoSufijo(), "Catálogo de prueba BDD"));
+        // Misma precondición que "un catálogo que no contiene registros" (línea 46): el "Cuando"
+        // de este escenario es lo que la distingue, no el estado inicial del catálogo.
+        un_catalogo_que_no_contiene_registros();
     }
 
     @Cuando("^intento guardar esa modificación$")

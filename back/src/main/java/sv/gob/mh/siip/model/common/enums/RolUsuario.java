@@ -46,7 +46,7 @@ public enum RolUsuario {
      *  ya existen como rol de Keycloak (realm-export.json) con estos mismos nombres. */
     TECNICO_SYMP,
     /** Tecnico de la Unidad Responsable de Proyecto. Identificacion, analisis y
-     *  programacion/avance financiero y fisico del proyecto a lo largo de todo el ciclo. */
+     *  programacion/avance financiero y fisico del proyecto a lo largo del ciclo. */
     TECNICO_URP,
     /** Evaluacion de viabilidad, elegibilidad y opinion tecnica de proyectos. */
     VIABILIZADOR
