@@ -63,7 +63,7 @@ paths:
       x-roles:
       - Técnico URP
       - Técnico PRE
-      - Administrador del Sistema
+      - Administrador
       parameters:
       - name: pagina
         in: query
@@ -117,7 +117,7 @@ paths:
       x-roles:
       - Técnico URP
       - Técnico PRE
-      - Administrador del Sistema
+      - Administrador
       responses:
         '200':
           description: Información del proyecto.
@@ -382,7 +382,7 @@ paths:
       security:
       - bearerAuth: []
       x-roles:
-      - Administrador del Sistema
+      - Administrador
       requestBody:
         required: true
         content:

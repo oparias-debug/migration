@@ -174,7 +174,7 @@ paths:
       x-roles:
       - Técnico URP
       - Técnico PRE
-      - Administrador del Sistema
+      - Administrador
       responses:
         '200':
           description: Listado de ejes del Plan de Gobierno.
@@ -203,7 +203,7 @@ paths:
       x-roles:
       - Técnico URP
       - Técnico PRE
-      - Administrador del Sistema
+      - Administrador
       responses:
         '200':
           description: Listado de ejes temáticos.
@@ -376,7 +376,7 @@ paths:
       x-roles:
       - Técnico URP
       - Técnico PRE
-      - Administrador del Sistema
+      - Administrador
       parameters:
       - name: tipo
         in: query
@@ -440,7 +440,7 @@ paths:
       x-roles:
       - Técnico URP
       - Técnico PRE
-      - Administrador del Sistema
+      - Administrador
       responses:
         '200':
           description: Listado de planes sectoriales/regionales.
@@ -530,7 +530,7 @@ paths:
       x-roles:
       - Técnico URP
       - Técnico PRE
-      - Administrador del Sistema
+      - Administrador
       responses:
         '200':
           description: Listado de sectores.
