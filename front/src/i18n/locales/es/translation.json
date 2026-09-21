@@ -778,7 +778,25 @@
         "NO_LABORAL": "Día no laboral",
         "SIN_DEFINIR": "Sin definir"
       },
-      "paneles": "Definición del calendario"
+      "paneles": "Definición del calendario",
+      "periodo": "Período",
+      "diasHabiles": "Días hábiles a sumar",
+      "consultarPertenencia": "¿La fecha está en ese período?",
+      "consultarDuracion": "¿Cuánto dura el período?",
+      "consultarDiasRestantes": "¿Cuántos días le quedan al período?",
+      "consultarFechaResultante": "¿En qué fecha cae?",
+      "consultarRango": "¿Qué rango cubre el calendario?",
+      "respuestaPerteneceSi": "Sí: la fecha está dentro del período {{periodo}}.",
+      "respuestaPerteneceNo": "No: la fecha no está dentro del período {{periodo}}.",
+      "respuestaDuracion": "El período dura {{dias}} días.",
+      "respuestaDiasRestantes": "Quedan {{dias}} días hasta el fin del período.",
+      "respuestaFechaResultante": "La fecha resultante es {{fecha}}.",
+      "respuestaRango": "El calendario va del {{desde}} al {{hasta}}.",
+      "editar": "Editar",
+      "editarItem": "Editar {{codigo}}",
+      "editarPeriodo": "Editar período",
+      "editarExcepcion": "Editar excepción",
+      "guardarCambios": "Guardar cambios"
     }
   },
   "pasos": {

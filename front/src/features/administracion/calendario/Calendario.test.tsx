@@ -14,6 +14,8 @@ const registrarExcepcion = vi.fn();
 const cambiarEstadoCalendario = vi.fn();
 const editarDefinicionCalendario = vi.fn();
 const consultarTipoDia = vi.fn();
+const consultarDuracionPeriodo = vi.fn();
+const consultarPertenenciaPeriodo = vi.fn();
 const swalFire = vi.fn();
 const navigate = vi.fn();
 
@@ -33,6 +35,8 @@ vi.mock('../../../api/administracionApi', async (importOriginal) => {
       listarCalendarios: (...a: unknown[]) => listarCalendarios(...a),
       recuperarDefinicionCalendario: (...a: unknown[]) => recuperarDefinicionCalendario(...a),
       consultarTipoDia: (...a: unknown[]) => consultarTipoDia(...a),
+      consultarDuracionPeriodo: (...a: unknown[]) => consultarDuracionPeriodo(...a),
+      consultarPertenenciaPeriodo: (...a: unknown[]) => consultarPertenenciaPeriodo(...a),
     },
   };
 });
@@ -81,11 +85,14 @@ describe('CU-ADM-04 · calendario', () => {
     recuperarDefinicionCalendario.mockResolvedValue({ data: CALENDARIO });
   });
 
-  it('sin rol de administración no muestra nada', () => {
+  // RN22/RN18: la lista y las consultas están abiertas a cualquier usuario;
+  // crear un calendario sigue siendo de los dos roles de administración (RN12).
+  it('sin rol de administración lista los calendarios pero no ofrece crear', async () => {
     rolesActivos = ['TECNICO_URP'];
     montarLista();
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(listarCalendarios).not.toHaveBeenCalled();
+    expect(await screen.findByText('Calendario 2026')).toBeInTheDocument();
+    expect(listarCalendarios).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Nuevo calendario' })).not.toBeInTheDocument();
   });
 
   it('lista los calendarios y abre uno', async () => {
@@ -191,5 +198,71 @@ describe('CU-ADM-04 · calendario', () => {
     fireEvent.change(screen.getByLabelText('Fecha', { selector: '#con-fecha' }), { target: { value: '2026-12-25' } });
     fireEvent.click(screen.getByRole('button', { name: '¿Qué tipo de día es?' }));
     expect(await screen.findByText('Ese día es: no laboral')).toBeInTheDocument();
+  });
+
+  // HU-ADM-04-22: editar un CalendarItem es mandar la definición entera con ese
+  // ítem cambiado; el `id` es lo que distingue una edición de un alta.
+  it('editar un período manda la definición completa conservando su id', async () => {
+    editarDefinicionCalendario.mockResolvedValue({ data: {} });
+    montarFicha();
+    await screen.findByText('Fines de semana');
+    fireEvent.click(screen.getByRole('button', { name: 'Editar FINDE' }));
+    fireEvent.change(screen.getByLabelText('Nombre del período*'), { target: { value: 'Sábados y domingos' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    await waitFor(() => expect(editarDefinicionCalendario).toHaveBeenCalled());
+    const enviado = editarDefinicionCalendario.mock.calls[0][0].editarDefinicionCalendarioRequest.items;
+    expect(enviado).toHaveLength(2);
+    expect(enviado[0]).toMatchObject({ id: 10, codigo: 'FINDE', nombre: 'Sábados y domingos' });
+    // El resto de la definición viaja igual, y sin `estado`: lo hereda del calendario (RN20).
+    expect(enviado[1]).toMatchObject({ id: 11, tipoItem: 'EXCEPCION' });
+    expect(enviado[1].estado).toBeUndefined();
+  });
+
+  it('editar una excepción conserva su id y cambia sus datos', async () => {
+    editarDefinicionCalendario.mockResolvedValue({ data: {} });
+    montarFicha();
+    await screen.findByText('Navidad');
+    fireEvent.click(screen.getByRole('button', { name: 'Editar 2026-12-25' }));
+    fireEvent.change(screen.getByLabelText('Descripción', { selector: '#exc-descripcion' }), {
+      target: { value: 'Navidad (feriado nacional)' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    await waitFor(() => expect(editarDefinicionCalendario).toHaveBeenCalled());
+    const enviado = editarDefinicionCalendario.mock.calls[0][0].editarDefinicionCalendarioRequest.items;
+    expect(enviado.find((i: { id: number }) => i.id === 11)).toMatchObject({
+      tipoItem: 'EXCEPCION',
+      fecha: '2026-12-25',
+      descripcion: 'Navidad (feriado nacional)',
+    });
+  });
+
+  // Las consultas de los flujos 7.2 y 7.3 del CU.
+  it('consulta la duración de un período elegido de la lista', async () => {
+    consultarDuracionPeriodo.mockResolvedValue({ data: { duracionDias: 104 } });
+    montarFicha();
+    await screen.findByText('Fines de semana');
+    fireEvent.click(screen.getByRole('tab', { name: 'Comprobar' }));
+    fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'FINDE' } });
+    fireEvent.click(screen.getByRole('button', { name: '¿Cuánto dura el período?' }));
+
+    await waitFor(() =>
+      expect(consultarDuracionPeriodo).toHaveBeenCalledWith({ codigoCalendario: 'CAL-2026', codigoPeriodo: 'FINDE' }),
+    );
+    expect(await screen.findByText('El período dura 104 días.')).toBeInTheDocument();
+  });
+
+  it('una consulta que el back rechaza muestra su error, no un resultado', async () => {
+    consultarPertenenciaPeriodo.mockRejectedValue(new Error('falla'));
+    montarFicha();
+    await screen.findByText('Fines de semana');
+    fireEvent.click(screen.getByRole('tab', { name: 'Comprobar' }));
+    fireEvent.change(screen.getByLabelText('Fecha', { selector: '#con-fecha' }), { target: { value: '2026-12-25' } });
+    fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'FINDE' } });
+    fireEvent.click(screen.getByRole('button', { name: '¿La fecha está en ese período?' }));
+
+    const aviso = await screen.findByText(/.+/, { selector: '.aviso-error' });
+    expect(aviso).toBeInTheDocument();
   });
 });

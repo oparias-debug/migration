@@ -8,7 +8,7 @@ import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 
 export const CLAVE_CALENDARIO = 'administracion.calendario';
-/** El back del CU-ADM-04 exige uno de estos dos roles. */
+/** Gestionar un calendario exige uno de estos dos roles (RN12); consultarlo, ninguno (RN18/RN22). */
 export const ROLES_CALENDARIO = ['ADMINISTRADOR', 'ADMINISTRADOR_CALENDARIO'];
 
 /**
@@ -41,16 +41,8 @@ export function CalendarioPage() {
   }, [t]);
 
   useEffect(() => {
-    if (puedeAdministrar) cargar();
-  }, [cargar, puedeAdministrar]);
-
-  if (!puedeAdministrar) {
-    return (
-      <p className="aviso-error" role="alert">
-        {t(`${CLAVE_CALENDARIO}.sinPermiso`)}
-      </p>
-    );
-  }
+    cargar();
+  }, [cargar]);
 
   return (
     <div className="formcard">
@@ -60,12 +52,15 @@ export function CalendarioPage() {
       <div className="formbody">
         <p className="nota">{t(`${CLAVE_CALENDARIO}.intro`)}</p>
 
-        {creando ? (
+        {/* Cualquier usuario ve la lista (RN22); crear es de ADMINISTRADOR y
+            ADMINISTRADOR_CALENDARIO (RN12). */}
+        {puedeAdministrar && creando && (
           <NuevoCalendario
             alCancelar={() => setCreando(false)}
             alCrear={(codigo) => navigate(`/administracion/calendario/${encodeURIComponent(codigo)}`)}
           />
-        ) : (
+        )}
+        {puedeAdministrar && !creando && (
           <div className="acciones-form">
             <button type="button" className="btn primario" onClick={() => setCreando(true)}>
               {t(`${CLAVE_CALENDARIO}.nuevo`)}

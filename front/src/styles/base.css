@@ -877,6 +877,11 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 .cal-der .pestanas { margin-top: 14px; }
 /* Una semana entera fuera del mes no se dibuja: sobra una fila vacía. */
 .cal-rejilla tr.fuera-del-mes { display: none; }
+/* Editar y quitar, uno al lado del otro y sin partirse en dos renglones. */
+.acciones-fila { white-space: nowrap; }
+.acciones-fila .btn + .btn { margin-left: 8px; }
+/* Las consultas son siete botones: se dejan fluir en varias líneas. */
+.acciones-consultas { flex-wrap: wrap; }
 
 .cal-barra { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px; }
 .cal-barra .btn { padding: 4px 12px; font-size: 16px; line-height: 1; }
