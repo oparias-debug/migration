@@ -113,7 +113,7 @@ public class Pre01ResponderObservaciones {
                 .activo(true)
                 .build());
 
-        EstadoProyecto estado = mapearEstado(estadoEtiqueta);
+        EstadoProyecto estado = EstadoProyecto.fromEtiquetaUi(estadoEtiqueta);
         autenticarComo(nombreUsuarioTecnico);
 
         // MacroSector/SectorActividad.codigo son VARCHAR(10) (esquema del modulo programacion):
@@ -210,15 +210,6 @@ public class Pre01ResponderObservaciones {
     @Entonces("se pasa a la pantalla {string}")
     public void se_pasa_a_la_pantalla(String pantalla) {
         RequestContextHolder.resetRequestAttributes();
-    }
-
-    private EstadoProyecto mapearEstado(String etiqueta) {
-        return switch (etiqueta) {
-            case "Observado DGICP (Registro)" -> EstadoProyecto.OBSERVADO_DGICP_REGISTRO;
-            case "Enviado a DGICP (Registro)" -> EstadoProyecto.ENVIADO_DGICP_REGISTRO;
-            case "En Elaboración" -> EstadoProyecto.EN_REGISTRO;
-            default -> throw new IllegalArgumentException("Estado no reconocido: " + etiqueta);
-        };
     }
 
     private void autenticarComo(String nombreUsuario) {

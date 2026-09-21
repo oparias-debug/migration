@@ -3,10 +3,11 @@ package sv.gob.mh.siip.model.administracion.service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
-import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,10 +15,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import sv.gob.mh.siip.exception.AccesoDenegadoException;
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.InconsistenciaFechaException;
-import sv.gob.mh.siip.exception.OperacionNoPermitidaException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.model.administracion.domain.Calendario;
 import sv.gob.mh.siip.model.administracion.domain.Excepcion;
@@ -26,30 +25,37 @@ import sv.gob.mh.siip.model.administracion.domain.Recurrencia;
 import sv.gob.mh.siip.model.administracion.domain.RecurrenciaMensual;
 import sv.gob.mh.siip.model.administracion.domain.RecurrenciaSemanal;
 import sv.gob.mh.siip.model.administracion.domain.RecurrenciaUnaVez;
+import sv.gob.mh.siip.model.administracion.dto.CalendarItemDto;
+import sv.gob.mh.siip.model.administracion.dto.CalendarItemInputDto;
 import sv.gob.mh.siip.model.administracion.dto.CalendarioDto;
+import sv.gob.mh.siip.model.administracion.dto.CalendarioResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.CambiarEstadoCalendarioRequestDto;
 import sv.gob.mh.siip.model.administracion.dto.CrearCalendarioRequestDto;
-import sv.gob.mh.siip.model.administracion.dto.DiaSemanaDto;
+import sv.gob.mh.siip.model.administracion.dto.DayOfWeekDto;
 import sv.gob.mh.siip.model.administracion.dto.DiasLaboralesEntreFechasResponseDto;
 import sv.gob.mh.siip.model.administracion.dto.DiasRestantesResponseDto;
 import sv.gob.mh.siip.model.administracion.dto.DuracionPeriodoResponseDto;
-import sv.gob.mh.siip.model.administracion.dto.EditarCalendarioRequestDto;
+import sv.gob.mh.siip.model.administracion.dto.EditarDefinicionCalendarioRequestDto;
 import sv.gob.mh.siip.model.administracion.dto.EstadoCalendarioDto;
 import sv.gob.mh.siip.model.administracion.dto.ExcepcionDto;
-import sv.gob.mh.siip.model.administracion.dto.ExcepcionRequestDto;
-import sv.gob.mh.siip.model.administracion.dto.FechaResultanteResponseDto;
-import sv.gob.mh.siip.model.administracion.dto.MesDto;
-import sv.gob.mh.siip.model.administracion.dto.PeriodoDto;
-import sv.gob.mh.siip.model.administracion.dto.PeriodoLaboralRequestDto;
-import sv.gob.mh.siip.model.administracion.dto.PeriodoNoLaboralRequestDto;
+import sv.gob.mh.siip.model.administracion.dto.ExcepcionInputDto;
+import sv.gob.mh.siip.model.administracion.dto.FechaLaboralResultanteResponseDto;
+import sv.gob.mh.siip.model.administracion.dto.MonthDto;
+import sv.gob.mh.siip.model.administracion.dto.PeriodoInputDto;
+import sv.gob.mh.siip.model.administracion.dto.PeriodoLaboralDto;
+import sv.gob.mh.siip.model.administracion.dto.PeriodoLaboralInputDto;
+import sv.gob.mh.siip.model.administracion.dto.PeriodoNoLaboralDto;
+import sv.gob.mh.siip.model.administracion.dto.PeriodoNoLaboralInputDto;
 import sv.gob.mh.siip.model.administracion.dto.PertenenciaPeriodoResponseDto;
+import sv.gob.mh.siip.model.administracion.dto.RangoFechasCalendarioResponseDto;
 import sv.gob.mh.siip.model.administracion.dto.RecurrenciaDto;
 import sv.gob.mh.siip.model.administracion.dto.RecurrenciaMensualDto;
 import sv.gob.mh.siip.model.administracion.dto.RecurrenciaSemanalDto;
 import sv.gob.mh.siip.model.administracion.dto.RecurrenciaUnaVezDto;
+import sv.gob.mh.siip.model.administracion.dto.RegistrarExcepcionRequestDto;
+import sv.gob.mh.siip.model.administracion.dto.TipoDiaDto;
 import sv.gob.mh.siip.model.administracion.dto.TipoDiaResponseDto;
 import sv.gob.mh.siip.model.administracion.dto.TipoExcepcionDto;
-import sv.gob.mh.siip.model.administracion.dto.TipoPeriodoDto;
 import sv.gob.mh.siip.model.administracion.enums.EstadoCalendario;
 import sv.gob.mh.siip.model.administracion.enums.TipoExcepcion;
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
@@ -103,37 +109,43 @@ public class CalendarioServiceImpl implements CalendarioService {
     }
 
     @Override
-    public PeriodoDto agregarPeriodoLaboral(String codigoCalendario, PeriodoLaboralRequestDto request) {
+    public PeriodoLaboralDto agregarPeriodoLaboral(String codigoCalendario, PeriodoInputDto request) {
         actorContexto.exigirRol(RolUsuario.ADMINISTRADOR, RolUsuario.ADMINISTRADOR_CALENDARIO);
-        return aPeriodoDto(agregarPeriodo(codigoCalendario, request.getCodigo(), request.getNombre(),
-                TipoPeriodo.LABORAL, request.getRecurrencia()));
+        Periodo periodo = agregarPeriodo(codigoCalendario, request, TipoPeriodo.LABORAL);
+        return aPeriodoLaboralDto(periodo, obtenerCalendario(codigoCalendario).getEstado());
     }
 
     @Override
-    public PeriodoDto agregarPeriodoNoLaboral(String codigoCalendario, PeriodoNoLaboralRequestDto request) {
+    public PeriodoNoLaboralDto agregarPeriodoNoLaboral(String codigoCalendario, PeriodoInputDto request) {
         actorContexto.exigirRol(RolUsuario.ADMINISTRADOR, RolUsuario.ADMINISTRADOR_CALENDARIO);
-        return aPeriodoDto(agregarPeriodo(codigoCalendario, request.getCodigo(), request.getNombre(),
-                TipoPeriodo.NO_LABORAL, request.getRecurrencia()));
+        Periodo periodo = agregarPeriodo(codigoCalendario, request, TipoPeriodo.NO_LABORAL);
+        return aPeriodoNoLaboralDto(periodo, obtenerCalendario(codigoCalendario).getEstado());
     }
 
-    private Periodo agregarPeriodo(String codigoCalendario, String codigo, String nombre, TipoPeriodo tipo,
-            RecurrenciaDto recurrenciaDto) {
+    private Periodo agregarPeriodo(String codigoCalendario, PeriodoInputDto request, TipoPeriodo tipo) {
         Calendario calendario = obtenerCalendario(codigoCalendario);
-        if (periodoRepository.existsByCalendario_CodigoAndCodigo(codigoCalendario, codigo)) {
+        if (periodoRepository.existsByCalendario_CodigoAndCodigo(codigoCalendario, request.getCodigo())) {
             throw new ConflictoEstadoException("Ya existe un período con ese código dentro del calendario.");
         }
 
-        Recurrencia recurrencia = aRecurrencia(recurrenciaDto, calendario);
+        Recurrencia recurrencia = aRecurrencia(request.getRecurrencia(), calendario);
         Periodo periodo = Periodo.builder()
-                .codigo(codigo)
-                .nombre(nombre)
+                .codigo(request.getCodigo())
+                .nombre(request.getNombre())
                 .tipo(tipo)
                 .calendario(calendario)
                 .recurrencia(recurrencia)
                 .build();
         calendario.getPeriodos().add(periodo);
-        calendarioRepository.save(calendario);
-        return periodo;
+        // Igual que en registrarExcepcion: save() cascada un merge, que crea una copia gestionada
+        // nueva para el periodo recien agregado (id se asigna a esa copia, no a esta variable
+        // local); se recupera del resultado de save() por codigo, unico dentro del calendario
+        // (ver existsByCalendario_CodigoAndCodigo arriba).
+        Calendario calendarioGuardado = calendarioRepository.save(calendario);
+        return calendarioGuardado.getPeriodos().stream()
+                .filter(p -> p.getCodigo().equals(request.getCodigo()))
+                .findFirst()
+                .orElseThrow();
     }
 
     private Recurrencia aRecurrencia(RecurrenciaDto dto, Calendario calendario) {
@@ -149,7 +161,7 @@ public class CalendarioServiceImpl implements CalendarioService {
             LocalDate fechaFin = semanal.getFechaFin();
             exigirRangoValido(fechaInicio, fechaFin);
             exigirEnmarcadoEnCalendario(fechaInicio, fechaFin, calendario);
-            Set<DayOfWeek> dias = semanal.getDiasDeLaSemana().stream()
+            Set<DayOfWeek> dias = semanal.getDiasSemana().stream()
                     .map(dia -> DayOfWeek.valueOf(dia.name()))
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(DayOfWeek.class)));
             return RecurrenciaSemanal.builder().fechaInicio(fechaInicio).fechaFin(fechaFin).diasDeLaSemana(dias)
@@ -181,10 +193,19 @@ public class CalendarioServiceImpl implements CalendarioService {
         }
     }
 
+    /** RN10: una excepción debe caer dentro del rango del calendario. */
+    private void exigirFechaEnmarcadaEnCalendario(LocalDate fecha, Calendario calendario) {
+        if (fecha.isBefore(calendario.getFechaInicio()) || fecha.isAfter(calendario.getFechaFin())) {
+            throw new InconsistenciaFechaException("EXCEPCION_FUERA_DE_RANGO",
+                    "La fecha de la excepción no está enmarcada dentro del rango del calendario.");
+        }
+    }
+
     @Override
-    public ExcepcionDto registrarExcepcion(String codigoCalendario, ExcepcionRequestDto request) {
+    public ExcepcionDto registrarExcepcion(String codigoCalendario, RegistrarExcepcionRequestDto request) {
         actorContexto.exigirRol(RolUsuario.ADMINISTRADOR, RolUsuario.ADMINISTRADOR_CALENDARIO);
         Calendario calendario = obtenerCalendario(codigoCalendario);
+        exigirFechaEnmarcadaEnCalendario(request.getFecha(), calendario);
 
         Excepcion excepcion = Excepcion.builder()
                 .calendario(calendario)
@@ -193,8 +214,17 @@ public class CalendarioServiceImpl implements CalendarioService {
                 .descripcion(request.getDescripcion())
                 .build();
         calendario.getExcepciones().add(excepcion);
-        calendarioRepository.save(calendario);
-        return aExcepcionDto(excepcion);
+        // save() invoca EntityManager.merge() (calendario ya tiene id): al cascadear, merge crea
+        // una copia gestionada nueva para cada hijo recien agregado y es esa copia -no la
+        // variable local 'excepcion'- la que recibe el id generado. Se recupera del resultado de
+        // save() por fecha (UK_EXCEPCION_CALENDARIO_FECHA garantiza que es unica dentro del
+        // calendario).
+        Calendario calendarioGuardado = calendarioRepository.save(calendario);
+        Excepcion excepcionGuardada = calendarioGuardado.getExcepciones().stream()
+                .filter(e -> e.getFecha().equals(request.getFecha()))
+                .findFirst()
+                .orElseThrow();
+        return aExcepcionDto(excepcionGuardada, calendarioGuardado.getEstado());
     }
 
     @Override
@@ -206,37 +236,116 @@ public class CalendarioServiceImpl implements CalendarioService {
     }
 
     @Override
-    public CalendarioDto editar(String codigoCalendario, EditarCalendarioRequestDto request) {
-        Usuario actor = actorContexto.exigirRol(RolUsuario.ADMINISTRADOR, RolUsuario.ADMINISTRADOR_CALENDARIO);
+    public CalendarioDto editarDefinicion(String codigoCalendario, EditarDefinicionCalendarioRequestDto request) {
+        actorContexto.exigirRol(RolUsuario.ADMINISTRADOR, RolUsuario.ADMINISTRADOR_CALENDARIO);
         Calendario calendario = obtenerCalendario(codigoCalendario);
-        exigirResponsableOAdministrador(actor, calendario);
 
-        if (request.getFechaInicio().isAfter(request.getFechaFin())) {
-            throw new InconsistenciaFechaException("CALENDARIO_RANGO_INVALIDO",
-                    "La nueva fecha de inicio del calendario es posterior a la nueva fecha de fin.");
+        Set<Long> periodosConservados = new HashSet<>();
+        Set<Long> excepcionesConservadas = new HashSet<>();
+        for (CalendarItemInputDto item : request.getItems()) {
+            if (item instanceof ExcepcionInputDto excepcionInput) {
+                excepcionesConservadas.add(aplicarExcepcionInput(calendario, excepcionInput).getId());
+            } else {
+                periodosConservados.add(aplicarPeriodoInput(calendario, item).getId());
+            }
         }
+        calendario.getPeriodos().removeIf(periodo -> !periodosConservados.contains(periodo.getId()));
+        calendario.getExcepciones().removeIf(excepcion -> !excepcionesConservadas.contains(excepcion.getId()));
 
-        calendario.setNombre(request.getNombre());
-        calendario.setDescripcion(request.getDescripcion());
-        calendario.setFechaInicio(request.getFechaInicio());
-        calendario.setFechaFin(request.getFechaFin());
         return aCalendarioDto(calendarioRepository.save(calendario));
     }
 
-    /** RN12: un ADMINISTRADOR_CALENDARIO solo puede operar sobre calendarios de los que es responsable. */
-    private void exigirResponsableOAdministrador(Usuario actor, Calendario calendario) {
-        if (actor.getRol() == RolUsuario.ADMINISTRADOR_CALENDARIO
-                && !calendario.getAdministrador().getId().equals(actor.getId())) {
-            throw new AccesoDenegadoException(
-                    "El actor no es el administrador responsable de este calendario.");
+    /** RN23: `id` presente edita ese CalendarItem; `id` ausente da de alta uno nuevo (RN08, RN10, RN15). */
+    private Periodo aplicarPeriodoInput(Calendario calendario, CalendarItemInputDto itemInput) {
+        Long id;
+        String codigo;
+        String nombre;
+        RecurrenciaDto recurrenciaDto;
+        TipoPeriodo tipo;
+        if (itemInput instanceof PeriodoLaboralInputDto laboral) {
+            id = laboral.getId();
+            codigo = laboral.getCodigo();
+            nombre = laboral.getNombre();
+            recurrenciaDto = laboral.getRecurrencia();
+            tipo = TipoPeriodo.LABORAL;
+        } else if (itemInput instanceof PeriodoNoLaboralInputDto noLaboral) {
+            id = noLaboral.getId();
+            codigo = noLaboral.getCodigo();
+            nombre = noLaboral.getNombre();
+            recurrenciaDto = noLaboral.getRecurrencia();
+            tipo = TipoPeriodo.NO_LABORAL;
+        } else {
+            throw new IllegalArgumentException("Tipo de CalendarItem no soportado: " + itemInput.getClass());
         }
+
+        Periodo periodo;
+        if (id != null) {
+            periodo = calendario.getPeriodos().stream().filter(p -> id.equals(p.getId())).findFirst()
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "No existe ningún período con el id indicado dentro de ese calendario."));
+        } else {
+            periodo = Periodo.builder().calendario(calendario).build();
+            calendario.getPeriodos().add(periodo);
+        }
+
+        Periodo periodoEditado = periodo;
+        boolean codigoDuplicado = calendario.getPeriodos().stream()
+                .anyMatch(otro -> otro != periodoEditado && otro.getCodigo().equals(codigo));
+        if (codigoDuplicado) {
+            throw new ConflictoEstadoException("Ya existe un período con ese código dentro del calendario.");
+        }
+
+        Recurrencia recurrencia = aRecurrencia(recurrenciaDto, calendario);
+        periodo.setCodigo(codigo);
+        periodo.setNombre(nombre);
+        periodo.setTipo(tipo);
+        periodo.setRecurrencia(recurrencia);
+        return periodo;
+    }
+
+    /** RN23: `id` presente edita esa excepción; `id` ausente da de alta una nueva (RN10). */
+    private Excepcion aplicarExcepcionInput(Calendario calendario, ExcepcionInputDto input) {
+        Excepcion excepcion;
+        Long id = input.getId();
+        if (id != null) {
+            excepcion = calendario.getExcepciones().stream().filter(e -> id.equals(e.getId())).findFirst()
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "No existe ninguna excepción con el id indicado dentro de ese calendario."));
+        } else {
+            excepcion = Excepcion.builder().calendario(calendario).build();
+            calendario.getExcepciones().add(excepcion);
+        }
+
+        exigirFechaEnmarcadaEnCalendario(input.getFecha(), calendario);
+        excepcion.setFecha(input.getFecha());
+        excepcion.setTipo(TipoExcepcion.valueOf(input.getTipo().name()));
+        excepcion.setDescripcion(input.getDescripcion());
+        return excepcion;
     }
 
     @Override
-    public void eliminar(String codigoCalendario) {
-        actorContexto.exigirRol(RolUsuario.ADMINISTRADOR, RolUsuario.ADMINISTRADOR_CALENDARIO);
-        throw new OperacionNoPermitidaException(
-                "Un calendario no puede eliminarse; use la transición a INACTIVO en su lugar (RN20).");
+    @Transactional(readOnly = true)
+    public List<CalendarioResumenDto> listar() {
+        return calendarioRepository.findAll().stream()
+                .map(calendario -> new CalendarioResumenDto()
+                        .codigo(calendario.getCodigo())
+                        .nombre(calendario.getNombre())
+                        .estado(EstadoCalendarioDto.valueOf(calendario.getEstado().name())))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CalendarioDto recuperarDefinicion(String codigoCalendario) {
+        return aCalendarioDto(obtenerCalendario(codigoCalendario));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RangoFechasCalendarioResponseDto consultarRangoFechasCalendario(String codigoCalendario) {
+        Calendario calendario = obtenerCalendario(codigoCalendario);
+        return new RangoFechasCalendarioResponseDto().fechaDesde(calendario.getFechaInicio())
+                .fechaHasta(calendario.getFechaFin());
     }
 
     @Override
@@ -246,7 +355,7 @@ public class CalendarioServiceImpl implements CalendarioService {
         TipoPeriodo tipo = clasificarFecha(calendario, fecha)
                 .orElseThrow(() -> new InconsistenciaFechaException("FECHA_SIN_PERIODO",
                         "La fecha dada no cae en ningún período ni excepción definidos del calendario."));
-        return new TipoDiaResponseDto().fecha(fecha).tipoDia(TipoPeriodoDto.valueOf(tipo.name()));
+        return new TipoDiaResponseDto().fecha(fecha).tipo(TipoDiaDto.valueOf(tipo.name()));
     }
 
     @Override
@@ -255,62 +364,64 @@ public class CalendarioServiceImpl implements CalendarioService {
             LocalDate fecha) {
         Periodo periodo = obtenerPeriodo(codigoCalendario, codigoPeriodo);
         boolean pertenece = perteneceARecurrencia(periodo.getRecurrencia(), fecha);
-        return new PertenenciaPeriodoResponseDto().fecha(fecha).codigoPeriodo(codigoPeriodo).pertenece(pertenece);
+        return new PertenenciaPeriodoResponseDto().pertenece(pertenece);
     }
 
     @Override
     @Transactional(readOnly = true)
     public DuracionPeriodoResponseDto consultarDuracionPeriodo(String codigoCalendario, String codigoPeriodo) {
+        Calendario calendario = obtenerCalendario(codigoCalendario);
         Periodo periodo = obtenerPeriodo(codigoCalendario, codigoPeriodo);
-        int duracion = calcularDuracionDias(periodo.getRecurrencia(), periodo.getCalendario());
-        return new DuracionPeriodoResponseDto().codigoPeriodo(codigoPeriodo).duracionDias(duracion);
+        int duracion = calcularDuracionDias(periodo, calendario);
+        return new DuracionPeriodoResponseDto().duracionDias(duracion);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public DiasRestantesResponseDto consultarDiasRestantesPeriodo(String codigoCalendario, String codigoPeriodo,
-            LocalDate fecha) {
+    public DiasRestantesResponseDto consultarDiasRestantesPeriodoLaboral(String codigoCalendario,
+            String codigoPeriodo, LocalDate fecha) {
+        Calendario calendario = obtenerCalendario(codigoCalendario);
         Periodo periodo = obtenerPeriodoLaboral(codigoCalendario, codigoPeriodo);
         if (!perteneceARecurrencia(periodo.getRecurrencia(), fecha)) {
             throw new InconsistenciaFechaException("FECHA_FUERA_DE_PERIODO",
                     "La fecha dada no está dentro del período LABORAL indicado.");
         }
-        LocalDate finDelPeriodo = finDelPeriodo(periodo);
+        LocalDate finDelPeriodo = finDelPeriodo(periodo, calendario);
         int diasRestantes = (int) ChronoUnit.DAYS.between(fecha, finDelPeriodo);
-        return new DiasRestantesResponseDto().codigoPeriodo(codigoPeriodo).fecha(fecha).diasRestantes(diasRestantes);
+        return new DiasRestantesResponseDto().diasRestantes(diasRestantes);
     }
 
     @Override
     @Transactional(readOnly = true)
     public DiasLaboralesEntreFechasResponseDto consultarDiasLaboralesEntreFechas(String codigoCalendario,
-            LocalDate fechaInicial, LocalDate fechaFinal) {
+            LocalDate fechaInicio, LocalDate fechaFin) {
         Calendario calendario = obtenerCalendario(codigoCalendario);
-        if (fechaInicial.isAfter(fechaFinal)) {
+        if (fechaInicio.isAfter(fechaFin)) {
             throw new InconsistenciaFechaException("FECHAS_INCONSISTENTES",
                     "La fecha inicial es posterior a la fecha final.");
         }
-        if (!dentroDelCalendario(calendario, fechaInicial) || !dentroDelCalendario(calendario, fechaFinal)) {
+        if (!dentroDelCalendario(calendario, fechaInicio) || !dentroDelCalendario(calendario, fechaFin)) {
             throw new InconsistenciaFechaException("FECHAS_FUERA_DE_RANGO",
                     "La fecha inicial o la fecha final no están dentro del rango del calendario.");
         }
 
         int diasLaborales = 0;
-        for (LocalDate fecha = fechaInicial; !fecha.isAfter(fechaFinal); fecha = fecha.plusDays(1)) {
+        for (LocalDate fecha = fechaInicio; !fecha.isAfter(fechaFin); fecha = fecha.plusDays(1)) {
             if (esDiaLaboral(calendario, fecha)) {
                 diasLaborales++;
             }
         }
-        return new DiasLaboralesEntreFechasResponseDto().fechaInicial(fechaInicial).fechaFinal(fechaFinal)
-                .diasLaborales(diasLaborales);
+        // RN06 (seccion 14): la convencion de conteo excluye uno de los extremos del rango.
+        return new DiasLaboralesEntreFechasResponseDto().diasLaborales(Math.max(diasLaborales - 1, 0));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public FechaResultanteResponseDto calcularFechaResultante(String codigoCalendario, LocalDate fechaInicial,
+    public FechaLaboralResultanteResponseDto calcularFechaLaboralResultante(String codigoCalendario, LocalDate fecha,
             Integer diasHabiles) {
         Calendario calendario = obtenerCalendario(codigoCalendario);
 
-        LocalDate fechaResultante = fechaInicial;
+        LocalDate fechaResultante = fecha;
         int diasContados = 0;
         int diasExplorados = 0;
         while (diasContados < diasHabiles) {
@@ -333,8 +444,7 @@ public class CalendarioServiceImpl implements CalendarioService {
                     "La fecha resultante no cae en un período LABORAL.");
         }
 
-        return new FechaResultanteResponseDto().fechaInicial(fechaInicial).diasHabiles(diasHabiles)
-                .fechaResultante(fechaResultante);
+        return new FechaLaboralResultanteResponseDto().fecha(fechaResultante);
     }
 
     // ==========================================================================================
@@ -394,39 +504,47 @@ public class CalendarioServiceImpl implements CalendarioService {
     }
 
     /**
-     * RN04/RN09/RN11: duracion en dias de un periodo. UNA_VEZ/SEMANAL cuentan dias calendario
-     * reales (RN09); MENSUAL agrega, por cada mes declarado, los dias declarados que existen
-     * realmente en ese mes (RN11), usando el año de inicio del calendario como referencia para
-     * resolver la duracion real de cada mes (p.ej. febrero en año bisiesto).
+     * RN04/RN09/RN11: duracion en dias de un periodo, contando dias calendario reales (RN09) para
+     * que MENSUAL resuelva la duracion real de cada mes involucrado (RN11, p.ej. febrero en año
+     * bisiesto) sin extrapolar a meses no declarados. Si el periodo es LABORAL, excluye los dias
+     * que tambien caen en algun periodo NO_LABORAL del mismo calendario (RN04); MENSUAL no declara
+     * un rango propio, por lo que se acota al rango del calendario.
      */
-    private int calcularDuracionDias(Recurrencia recurrencia, Calendario calendario) {
+    private int calcularDuracionDias(Periodo periodo, Calendario calendario) {
+        Recurrencia recurrencia = periodo.getRecurrencia();
+        LocalDate desde;
+        LocalDate hasta;
         if (recurrencia instanceof RecurrenciaUnaVez unaVez) {
-            return (int) ChronoUnit.DAYS.between(unaVez.getFechaInicio(), unaVez.getFechaFin()) + 1;
+            desde = unaVez.getFechaInicio();
+            hasta = unaVez.getFechaFin();
+        } else if (recurrencia instanceof RecurrenciaSemanal semanal) {
+            desde = semanal.getFechaInicio();
+            hasta = semanal.getFechaFin();
+        } else {
+            desde = calendario.getFechaInicio();
+            hasta = calendario.getFechaFin();
         }
-        if (recurrencia instanceof RecurrenciaSemanal semanal) {
-            int total = 0;
-            for (LocalDate fecha = semanal.getFechaInicio(); !fecha.isAfter(semanal.getFechaFin()); fecha = fecha
-                    .plusDays(1)) {
-                if (semanal.getDiasDeLaSemana().contains(fecha.getDayOfWeek())) {
-                    total++;
-                }
+
+        int total = 0;
+        for (LocalDate fecha = desde; !fecha.isAfter(hasta); fecha = fecha.plusDays(1)) {
+            if (!perteneceARecurrencia(recurrencia, fecha)) {
+                continue;
             }
-            return total;
-        }
-        if (recurrencia instanceof RecurrenciaMensual mensual) {
-            int anioReferencia = calendario.getFechaInicio().getYear();
-            int total = 0;
-            for (Month mes : mensual.getMeses()) {
-                int longitudMes = YearMonth.of(anioReferencia, mes).lengthOfMonth();
-                total += (int) mensual.getDiasDelMes().stream().filter(dia -> dia <= longitudMes).count();
+            if (periodo.getTipo() == TipoPeriodo.LABORAL && enAlgunPeriodoDeTipo(calendario, TipoPeriodo.NO_LABORAL, fecha)) {
+                continue;
             }
-            return total;
+            total++;
         }
-        return 0;
+        return total;
+    }
+
+    private boolean enAlgunPeriodoDeTipo(Calendario calendario, TipoPeriodo tipo, LocalDate fecha) {
+        return calendario.getPeriodos().stream().filter(otro -> otro.getTipo() == tipo)
+                .anyMatch(otro -> perteneceARecurrencia(otro.getRecurrencia(), fecha));
     }
 
     /** RN05: fin del periodo LABORAL contra el que se calculan los dias restantes. */
-    private LocalDate finDelPeriodo(Periodo periodo) {
+    private LocalDate finDelPeriodo(Periodo periodo, Calendario calendario) {
         Recurrencia recurrencia = periodo.getRecurrencia();
         if (recurrencia instanceof RecurrenciaUnaVez unaVez) {
             return unaVez.getFechaFin();
@@ -435,7 +553,7 @@ public class CalendarioServiceImpl implements CalendarioService {
             return semanal.getFechaFin();
         }
         // MENSUAL no declara un rango de fechas propio: se usa el fin del calendario como limite.
-        return periodo.getCalendario().getFechaFin();
+        return calendario.getFechaFin();
     }
 
     // ==========================================================================================
@@ -467,50 +585,75 @@ public class CalendarioServiceImpl implements CalendarioService {
     // ==========================================================================================
 
     private CalendarioDto aCalendarioDto(Calendario calendario) {
-        return new CalendarioDto()
+        CalendarioDto dto = new CalendarioDto()
+                .id(calendario.getId())
                 .codigo(calendario.getCodigo())
                 .nombre(calendario.getNombre())
                 .descripcion(calendario.getDescripcion())
                 .fechaInicio(calendario.getFechaInicio())
                 .fechaFin(calendario.getFechaFin())
                 .estado(EstadoCalendarioDto.valueOf(calendario.getEstado().name()));
+        EstadoCalendario estado = calendario.getEstado();
+        calendario.getPeriodos().forEach(periodo -> dto.addItemsItem(aPeriodoItemDto(periodo, estado)));
+        calendario.getExcepciones().forEach(excepcion -> dto.addItemsItem(aExcepcionDto(excepcion, estado)));
+        return dto;
     }
 
-    private PeriodoDto aPeriodoDto(Periodo periodo) {
-        return new PeriodoDto()
+    private CalendarItemDto aPeriodoItemDto(Periodo periodo, EstadoCalendario estado) {
+        return periodo.getTipo() == TipoPeriodo.LABORAL ? aPeriodoLaboralDto(periodo, estado)
+                : aPeriodoNoLaboralDto(periodo, estado);
+    }
+
+    private PeriodoLaboralDto aPeriodoLaboralDto(Periodo periodo, EstadoCalendario estado) {
+        return new PeriodoLaboralDto()
+                .id(periodo.getId())
+                .tipoItem("LABORAL")
                 .codigo(periodo.getCodigo())
                 .nombre(periodo.getNombre())
-                .tipo(TipoPeriodoDto.valueOf(periodo.getTipo().name()))
-                .recurrencia(aRecurrenciaDto(periodo.getRecurrencia()));
+                .recurrencia(aRecurrenciaDto(periodo.getRecurrencia()))
+                .estado(EstadoCalendarioDto.valueOf(estado.name()));
     }
 
-    private ExcepcionDto aExcepcionDto(Excepcion excepcion) {
+    private PeriodoNoLaboralDto aPeriodoNoLaboralDto(Periodo periodo, EstadoCalendario estado) {
+        return new PeriodoNoLaboralDto()
+                .id(periodo.getId())
+                .tipoItem("NO_LABORAL")
+                .codigo(periodo.getCodigo())
+                .nombre(periodo.getNombre())
+                .recurrencia(aRecurrenciaDto(periodo.getRecurrencia()))
+                .estado(EstadoCalendarioDto.valueOf(estado.name()));
+    }
+
+    private ExcepcionDto aExcepcionDto(Excepcion excepcion, EstadoCalendario estado) {
         return new ExcepcionDto()
+                .id(excepcion.getId())
+                .tipoItem("EXCEPCION")
                 .fecha(excepcion.getFecha())
                 .tipo(TipoExcepcionDto.valueOf(excepcion.getTipo().name()))
-                .descripcion(excepcion.getDescripcion());
+                .descripcion(excepcion.getDescripcion())
+                .estado(EstadoCalendarioDto.valueOf(estado.name()));
     }
 
     private RecurrenciaDto aRecurrenciaDto(Recurrencia recurrencia) {
         if (recurrencia instanceof RecurrenciaUnaVez unaVez) {
             return new RecurrenciaUnaVezDto()
-                    .tipoRecurrencia("UNA_VEZ")
+                    .tipo("UNA_VEZ")
                     .fechaInicio(unaVez.getFechaInicio())
                     .fechaFin(unaVez.getFechaFin());
         }
         if (recurrencia instanceof RecurrenciaSemanal semanal) {
             RecurrenciaSemanalDto dto = new RecurrenciaSemanalDto()
-                    .tipoRecurrencia("SEMANAL")
+                    .tipo("SEMANAL")
                     .fechaInicio(semanal.getFechaInicio())
                     .fechaFin(semanal.getFechaFin());
-            semanal.getDiasDeLaSemana().stream().sorted().forEach(dia -> dto.addDiasDeLaSemanaItem(DiaSemanaDto.valueOf(dia.name())));
+            semanal.getDiasDeLaSemana().stream().sorted()
+                    .forEach(dia -> dto.addDiasSemanaItem(DayOfWeekDto.valueOf(dia.name())));
             return dto;
         }
         if (recurrencia instanceof RecurrenciaMensual mensual) {
-            RecurrenciaMensualDto dto = new RecurrenciaMensualDto()
-                    .tipoRecurrencia("MENSUAL");
+            RecurrenciaMensualDto dto = new RecurrenciaMensualDto().tipo("MENSUAL");
             mensual.getDiasDelMes().stream().sorted().forEach(dto::addDiasDelMesItem);
-            mensual.getMeses().stream().sorted().forEach(mes -> dto.addMesesItem(MesDto.valueOf(mes.name())));
+            mensual.getMeses().stream().sorted().forEach(mes -> dto.addMesesItem(MonthDto.valueOf(mes.name())));
             return dto;
         }
         throw new IllegalArgumentException("Tipo de recurrencia no soportado: " + recurrencia.getClass());

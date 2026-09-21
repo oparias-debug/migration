@@ -2,12 +2,6 @@ spring:
   application.name: back
   profiles.active: prod
   jackson:
-    # Spring Boot deshabilita este flag por defecto. Sin el, un schema con
-    # additionalProperties: false (ej. CatalogDescriptorsUpdateRequest, Regla 17
-    # de CU-ADM-01) no rechaza el JSON con campos desconocidos: Jackson simplemente
-    # los ignora en silencio en vez de fallar. Ningun schema de openapi/ declara
-    # additionalProperties: true a nivel de modelo raiz, asi que es seguro exigirlo
-    # para toda la API.
     deserialization.fail-on-unknown-properties: true
   datasource:
     url: ${DB_URL}

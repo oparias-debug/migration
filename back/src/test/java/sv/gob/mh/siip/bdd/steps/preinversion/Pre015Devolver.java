@@ -49,7 +49,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 public class Pre015Devolver {
 
     private static final String HEADER_USUARIO = "X-Usuario";
-    private static final String ESTADO_OBSERVADO_UI = "Observado DGICP (Registro)";
 
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
@@ -126,7 +125,7 @@ public class Pre015Devolver {
 
     @Dado("el proyecto se encuentra en estado {string}")
     public void el_proyecto_se_encuentra_en_estado(String estadoUi) {
-        if (!"Enviado a DGICP (Registro)".equals(estadoUi)) {
+        if (!EstadoProyecto.ENVIADO_DGICP_REGISTRO.getEtiquetaUi().equals(estadoUi)) {
             throw new IllegalArgumentException(
                     "Estado no soportado en las Antecedentes de CU-PRE-01.5: " + estadoUi);
         }
@@ -173,7 +172,7 @@ public class Pre015Devolver {
     @Entonces("el sistema cambia el estado del proyecto a {string}")
     public void el_sistema_cambia_el_estado_del_proyecto_a(String estadoUi) {
         Long idProyecto = contextoProyecto.getProyectoActual().getId();
-        if (ESTADO_OBSERVADO_UI.equals(estadoUi)) {
+        if (EstadoProyecto.OBSERVADO_DGICP_REGISTRO.getEtiquetaUi().equals(estadoUi)) {
             // Unico punto donde CU-PRE-01.5-devolver.feature dispara la accion real: el clic en
             // "Devolver" (paso anterior) es el no-op generico compartido con otros botones.
             proyectoService.devolverSolicitudCup(idProyecto,
@@ -181,7 +180,7 @@ public class Pre015Devolver {
         }
 
         Proyecto recargado = proyectoRepository.findById(idProyecto).orElseThrow();
-        EstadoProyecto esperado = ESTADO_OBSERVADO_UI.equals(estadoUi)
+        EstadoProyecto esperado = EstadoProyecto.OBSERVADO_DGICP_REGISTRO.getEtiquetaUi().equals(estadoUi)
                 ? EstadoProyecto.OBSERVADO_DGICP_REGISTRO
                 : EstadoProyecto.CUP_ASIGNADO;
         assertThat(recargado.getEstado()).isEqualTo(esperado);

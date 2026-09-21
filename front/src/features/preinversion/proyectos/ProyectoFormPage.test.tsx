@@ -424,7 +424,7 @@ describe('ProyectoFormPage — formulario', () => {
     renderizar();
 
     // Sin este aviso el usuario sólo ve una pantalla muerta.
-    expect(await screen.findByRole('status')).toHaveTextContent('Enviado DGICP (Registro)');
+    expect(await screen.findByRole('status')).toHaveTextContent('Enviado a DGICP (Registro)');
     expect(screen.getByLabelText('Nombre del proyecto*')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
   });

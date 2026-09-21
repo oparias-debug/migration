@@ -166,7 +166,7 @@ public class Pre01SolicitarCup {
     @Entonces("el proyecto pasa al estado {string}")
     public void el_proyecto_pasa_al_estado(String estadoUi) {
         assertThat(proyectoActualizado.getEstado()).isEqualTo(EstadoProyectoDto.ENVIADO_DGICP_REGISTRO);
-        assertThat(estadoUi).isEqualTo("Enviado a DGICP (Registro)");
+        assertThat(estadoUi).isEqualTo(EstadoProyecto.ENVIADO_DGICP_REGISTRO.getEtiquetaUi());
     }
 
     @Entonces("el sistema envía alerta al Coordinador PRE por correo electrónico según el modelo del Anexo A.{double}")

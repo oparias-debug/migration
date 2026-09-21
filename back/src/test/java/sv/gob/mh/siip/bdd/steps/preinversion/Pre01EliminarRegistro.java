@@ -107,7 +107,7 @@ public class Pre01EliminarRegistro {
         UnidadEjecutora unidadEjecutora = crearUnidadEjecutora("ELI2");
         crearYAutenticarTecnicoUrp("elim2", unidadEjecutora);
         proyecto = proyectoRepository.save(ProyectoFixtures.nuevoProyecto("Proyecto " + estadoEtiqueta,
-                mapearEstado(estadoEtiqueta), unidadEjecutora, unidadEjecutora.getInstitucion(), crearSector("ELI2"),
+                EstadoProyecto.fromEtiquetaUi(estadoEtiqueta), unidadEjecutora, unidadEjecutora.getInstitucion(), crearSector("ELI2"),
                 crearEjeTematico("ELI2")));
     }
 
@@ -240,13 +240,6 @@ public class Pre01EliminarRegistro {
         autenticarComo(nombreUsuario);
     }
 
-    private EstadoProyecto mapearEstado(String etiqueta) {
-        return switch (etiqueta) {
-            case "En Elaboración" -> EstadoProyecto.EN_REGISTRO;
-            case "Observado DGICP (Registro)" -> EstadoProyecto.OBSERVADO_DGICP_REGISTRO;
-            default -> throw new IllegalArgumentException("Estado no reconocido: " + etiqueta);
-        };
-    }
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();

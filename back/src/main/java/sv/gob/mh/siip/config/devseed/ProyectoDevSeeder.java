@@ -32,7 +32,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 /**
  * Proyectos de ejemplo para probar CU-PRE-01/CU-PRE-01.5/CU-PRE-02 sin tener que registrar uno a
  * mano: uno en "En Elaboración" (recién registrado, tarea Flowable UT_EnElaboracion pendiente),
- * otro en "Enviado DGICP (Registro)" sin asignar, otro igual pero ya asignado al Técnico PRE de
+ * otro en "Enviado a DGICP (Registro)" sin asignar, otro igual pero ya asignado al Técnico PRE de
  * prueba, otro con el CUP ya emitido (CUP_ASIGNADO), y uno más en la segunda Unidad Ejecutora de
  * prueba (para verificar el acotamiento por UE de CU-PRE-01 RN1). Arranca y avanza el proceso
  * Flowable igual que {@code ProyectoServiceImpl.registrar}/{@code solicitarCup}, sin pasar por

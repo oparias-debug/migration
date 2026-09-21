@@ -1,5 +1,7 @@
 package sv.gob.mh.siip.bdd.steps.preinversion;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -34,7 +36,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 public class Pre01CambiarUnidadEjecutora {
 
     private static final String HEADER_USUARIO = "X-Usuario";
-    private static final String NOMBRE_USUARIO_ADMIN = "admin.sistema.bdd";
 
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
@@ -48,6 +49,7 @@ public class Pre01CambiarUnidadEjecutora {
     private Proyecto proyecto;
     private UnidadEjecutora unidadEjecutoraNueva;
     private ProyectoDto proyectoActualizado;
+    private String nombreUsuarioAdmin;
 
     public Pre01CambiarUnidadEjecutora(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository,
@@ -69,19 +71,24 @@ public class Pre01CambiarUnidadEjecutora {
 
     @Dado("un proyecto registrado en cualquier etapa")
     public void un_proyecto_registrado_en_cualquier_etapa() {
+        // Sufijo unico por escenario: codigos fijos chocan contra las restricciones UNIQUE
+        // (institucion.codigo, unidad_ejecutora.codigo, usuario.nombre_usuario) si esta clase de
+        // steps corre mas de una vez en la misma base compartida (p.ej. reintento de surefire).
+        String sufijo = UUID.randomUUID().toString().substring(0, 8);
+        nombreUsuarioAdmin = "admin.sistema.bdd." + sufijo;
         autenticarComoAdministradorDelSistema();
 
         Institucion institucion = institucionRepository
-                .save(ProyectoFixtures.nuevaInstitucion("INS-BDD", "Institucion de prueba"));
-        UnidadEjecutora unidadEjecutoraOriginal = unidadEjecutoraRepository
-                .save(ProyectoFixtures.nuevaUnidadEjecutora("UE-ORIGEN", "Unidad Ejecutora origen", institucion));
-        unidadEjecutoraNueva = unidadEjecutoraRepository
-                .save(ProyectoFixtures.nuevaUnidadEjecutora("UE-DESTINO", "Unidad Ejecutora destino", institucion));
+                .save(ProyectoFixtures.nuevaInstitucion("INS-BDD-" + sufijo, "Institucion de prueba"));
+        UnidadEjecutora unidadEjecutoraOriginal = unidadEjecutoraRepository.save(ProyectoFixtures
+                .nuevaUnidadEjecutora("UE-ORIGEN-" + sufijo, "Unidad Ejecutora origen", institucion));
+        unidadEjecutoraNueva = unidadEjecutoraRepository.save(ProyectoFixtures
+                .nuevaUnidadEjecutora("UE-DESTINO-" + sufijo, "Unidad Ejecutora destino", institucion));
 
         usuarioRepository.save(Usuario.builder()
-                .nombreUsuario(NOMBRE_USUARIO_ADMIN)
+                .nombreUsuario(nombreUsuarioAdmin)
                 .nombreCompleto("Administrador del Sistema (BDD)")
-                .correo("admin.sistema.bdd@example.com")
+                .correo(nombreUsuarioAdmin + "@example.com")
                 .rol(RolUsuario.ADMINISTRADOR)
                 .unidadEjecutora(unidadEjecutoraOriginal)
                 .institucion(institucion)
@@ -89,11 +96,11 @@ public class Pre01CambiarUnidadEjecutora {
                 .build());
 
         var macrosector = macroSectorRepository
-                .save(ProyectoFixtures.nuevoMacrosector("MACS-BDD", "Macrosector de prueba"));
+                .save(ProyectoFixtures.nuevoMacrosector("MACS-BDD-" + sufijo, "Macrosector de prueba"));
         var sector = sectorActividadRepository
-                .save(ProyectoFixtures.nuevoSector("SEC-BDD", "Sector de prueba", macrosector));
+                .save(ProyectoFixtures.nuevoSector("SEC-BDD-" + sufijo, "Sector de prueba", macrosector));
         var ejeTematico = ejeTematicoRepository
-                .save(ProyectoFixtures.nuevoEjeTematico("EJE-BDD", "Eje temático de prueba"));
+                .save(ProyectoFixtures.nuevoEjeTematico("EJE-BDD-" + sufijo, "Eje temático de prueba"));
 
         // "en cualquier etapa": un estado avanzado del ciclo de vida, no solo EN_REGISTRO,
         // para reflejar que RN 4 permite este cambio en cualquier momento.
@@ -121,7 +128,7 @@ public class Pre01CambiarUnidadEjecutora {
 
     private void autenticarComoAdministradorDelSistema() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, NOMBRE_USUARIO_ADMIN);
+        request.addHeader(HEADER_USUARIO, nombreUsuarioAdmin);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

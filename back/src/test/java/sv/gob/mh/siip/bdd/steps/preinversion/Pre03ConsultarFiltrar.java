@@ -206,8 +206,14 @@ public class Pre03ConsultarFiltrar {
                 .doesNotContain(this.proyectoDecoy.getId());
     }
 
+    // Tamanio de pagina fijo (p.ej. 20) es fragil aqui: los proyectos de prueba creados por
+    // escenarios previos de esta u otras features BDD se acumulan en la misma base compartida, y
+    // pueden empujar al objetivo/decoy fuera de una pagina de tamanio fijo. Se pide primero el
+    // total real y se vuelve a consultar con una pagina que lo cubra por completo.
     private ProyectosCapturaResponseDto consultar(ProyectoCapturaFiltro filtro) {
-        return proyectoCapturaService.listarProyectosCaptura(filtro, 0, 20);
+        ProyectosCapturaResponseDto sondeo = proyectoCapturaService.listarProyectosCaptura(filtro, 0, 1);
+        long total = sondeo.getPaginacion().getTotalElementos();
+        return proyectoCapturaService.listarProyectosCaptura(filtro, 0, (int) Math.max(total, 1));
     }
 
     /**

@@ -74,7 +74,7 @@ public class Pre015EmitirCup {
                 .stream()
                 .anyMatch(p -> p.getId().equals(recargado.getId()));
         assertThat(visible).isTrue();
-        assertThat(estadoUi).isEqualTo("CUP asignado");
+        assertThat(estadoUi).isEqualTo(EstadoProyecto.CUP_ASIGNADO.getEtiquetaUi());
 
         RequestContextHolder.resetRequestAttributes();
     }

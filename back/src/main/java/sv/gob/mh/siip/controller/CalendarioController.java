@@ -1,33 +1,36 @@
 package sv.gob.mh.siip.controller;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import sv.gob.mh.siip.model.administracion.api.ConsultasDeCalendarioApi;
-import sv.gob.mh.siip.model.administracion.api.GestinDeCalendariosApi;
+import sv.gob.mh.siip.model.administracion.api.CalendariosConsultasApi;
+import sv.gob.mh.siip.model.administracion.api.CalendariosGestinApi;
 import sv.gob.mh.siip.model.administracion.dto.CalendarioDto;
+import sv.gob.mh.siip.model.administracion.dto.CalendarioResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.CambiarEstadoCalendarioRequestDto;
 import sv.gob.mh.siip.model.administracion.dto.CrearCalendarioRequestDto;
 import sv.gob.mh.siip.model.administracion.dto.DiasLaboralesEntreFechasResponseDto;
 import sv.gob.mh.siip.model.administracion.dto.DiasRestantesResponseDto;
 import sv.gob.mh.siip.model.administracion.dto.DuracionPeriodoResponseDto;
-import sv.gob.mh.siip.model.administracion.dto.EditarCalendarioRequestDto;
+import sv.gob.mh.siip.model.administracion.dto.EditarDefinicionCalendarioRequestDto;
 import sv.gob.mh.siip.model.administracion.dto.ExcepcionDto;
-import sv.gob.mh.siip.model.administracion.dto.ExcepcionRequestDto;
-import sv.gob.mh.siip.model.administracion.dto.FechaResultanteResponseDto;
-import sv.gob.mh.siip.model.administracion.dto.PeriodoDto;
-import sv.gob.mh.siip.model.administracion.dto.PeriodoLaboralRequestDto;
-import sv.gob.mh.siip.model.administracion.dto.PeriodoNoLaboralRequestDto;
+import sv.gob.mh.siip.model.administracion.dto.FechaLaboralResultanteResponseDto;
+import sv.gob.mh.siip.model.administracion.dto.PeriodoInputDto;
+import sv.gob.mh.siip.model.administracion.dto.PeriodoLaboralDto;
+import sv.gob.mh.siip.model.administracion.dto.PeriodoNoLaboralDto;
 import sv.gob.mh.siip.model.administracion.dto.PertenenciaPeriodoResponseDto;
+import sv.gob.mh.siip.model.administracion.dto.RangoFechasCalendarioResponseDto;
+import sv.gob.mh.siip.model.administracion.dto.RegistrarExcepcionRequestDto;
 import sv.gob.mh.siip.model.administracion.dto.TipoDiaResponseDto;
 import sv.gob.mh.siip.model.administracion.service.CalendarioService;
 
 /** CU-ADM-04 (Gestion de Calendarios): delega 1:1 en {@link CalendarioService}. */
 @RestController
-public class CalendarioController implements GestinDeCalendariosApi, ConsultasDeCalendarioApi {
+public class CalendarioController implements CalendariosGestinApi, CalendariosConsultasApi {
 
     private final CalendarioService calendarioService;
 
@@ -41,24 +44,24 @@ public class CalendarioController implements GestinDeCalendariosApi, ConsultasDe
     }
 
     @Override
-    public ResponseEntity<PeriodoDto> agregarPeriodoLaboral(String codigoCalendario,
-            PeriodoLaboralRequestDto periodoLaboralRequestDto) {
+    public ResponseEntity<PeriodoLaboralDto> agregarPeriodoLaboral(String codigoCalendario,
+            PeriodoInputDto periodoInputDto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(calendarioService.agregarPeriodoLaboral(codigoCalendario, periodoLaboralRequestDto));
+                .body(calendarioService.agregarPeriodoLaboral(codigoCalendario, periodoInputDto));
     }
 
     @Override
-    public ResponseEntity<PeriodoDto> agregarPeriodoNoLaboral(String codigoCalendario,
-            PeriodoNoLaboralRequestDto periodoNoLaboralRequestDto) {
+    public ResponseEntity<PeriodoNoLaboralDto> agregarPeriodoNoLaboral(String codigoCalendario,
+            PeriodoInputDto periodoInputDto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(calendarioService.agregarPeriodoNoLaboral(codigoCalendario, periodoNoLaboralRequestDto));
+                .body(calendarioService.agregarPeriodoNoLaboral(codigoCalendario, periodoInputDto));
     }
 
     @Override
     public ResponseEntity<ExcepcionDto> registrarExcepcion(String codigoCalendario,
-            ExcepcionRequestDto excepcionRequestDto) {
+            RegistrarExcepcionRequestDto registrarExcepcionRequestDto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(calendarioService.registrarExcepcion(codigoCalendario, excepcionRequestDto));
+                .body(calendarioService.registrarExcepcion(codigoCalendario, registrarExcepcionRequestDto));
     }
 
     @Override
@@ -68,15 +71,20 @@ public class CalendarioController implements GestinDeCalendariosApi, ConsultasDe
     }
 
     @Override
-    public ResponseEntity<CalendarioDto> editarCalendario(String codigoCalendario,
-            EditarCalendarioRequestDto editarCalendarioRequestDto) {
-        return ResponseEntity.ok(calendarioService.editar(codigoCalendario, editarCalendarioRequestDto));
+    public ResponseEntity<CalendarioDto> editarDefinicionCalendario(String codigoCalendario,
+            EditarDefinicionCalendarioRequestDto editarDefinicionCalendarioRequestDto) {
+        return ResponseEntity
+                .ok(calendarioService.editarDefinicion(codigoCalendario, editarDefinicionCalendarioRequestDto));
     }
 
     @Override
-    public ResponseEntity<Void> eliminarCalendario(String codigoCalendario) {
-        calendarioService.eliminar(codigoCalendario);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<List<CalendarioResumenDto>> listarCalendarios() {
+        return ResponseEntity.ok(calendarioService.listar());
+    }
+
+    @Override
+    public ResponseEntity<CalendarioDto> recuperarDefinicionCalendario(String codigoCalendario) {
+        return ResponseEntity.ok(calendarioService.recuperarDefinicion(codigoCalendario));
     }
 
     @Override
@@ -97,23 +105,28 @@ public class CalendarioController implements GestinDeCalendariosApi, ConsultasDe
     }
 
     @Override
-    public ResponseEntity<DiasRestantesResponseDto> consultarDiasRestantesPeriodo(String codigoCalendario,
+    public ResponseEntity<DiasRestantesResponseDto> consultarDiasRestantesPeriodoLaboral(String codigoCalendario,
             String codigoPeriodo, LocalDate fecha) {
         return ResponseEntity
-                .ok(calendarioService.consultarDiasRestantesPeriodo(codigoCalendario, codigoPeriodo, fecha));
+                .ok(calendarioService.consultarDiasRestantesPeriodoLaboral(codigoCalendario, codigoPeriodo, fecha));
     }
 
     @Override
     public ResponseEntity<DiasLaboralesEntreFechasResponseDto> consultarDiasLaboralesEntreFechas(
-            String codigoCalendario, LocalDate fechaInicial, LocalDate fechaFinal) {
+            String codigoCalendario, LocalDate fechaInicio, LocalDate fechaFin) {
         return ResponseEntity
-                .ok(calendarioService.consultarDiasLaboralesEntreFechas(codigoCalendario, fechaInicial, fechaFinal));
+                .ok(calendarioService.consultarDiasLaboralesEntreFechas(codigoCalendario, fechaInicio, fechaFin));
     }
 
     @Override
-    public ResponseEntity<FechaResultanteResponseDto> calcularFechaResultante(String codigoCalendario,
-            LocalDate fechaInicial, Integer diasHabiles) {
+    public ResponseEntity<FechaLaboralResultanteResponseDto> calcularFechaLaboralResultante(String codigoCalendario,
+            LocalDate fecha, Integer diasHabiles) {
         return ResponseEntity
-                .ok(calendarioService.calcularFechaResultante(codigoCalendario, fechaInicial, diasHabiles));
+                .ok(calendarioService.calcularFechaLaboralResultante(codigoCalendario, fecha, diasHabiles));
+    }
+
+    @Override
+    public ResponseEntity<RangoFechasCalendarioResponseDto> consultarRangoFechasCalendario(String codigoCalendario) {
+        return ResponseEntity.ok(calendarioService.consultarRangoFechasCalendario(codigoCalendario));
     }
 }

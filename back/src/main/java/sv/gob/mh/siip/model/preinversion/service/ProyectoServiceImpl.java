@@ -390,7 +390,7 @@ public class ProyectoServiceImpl implements ProyectoService {
         }
         if (tecnicoAsignado == null || !tecnicoAsignado.getId().equals(actor.getId())) {
             throw new AccesoDenegadoException(
-                    "La solicitud de CUP no fue asignada al Técnico PRE autenticado (CU-PRE-02).");
+                    "La solicitud de CUP no fue asignada al Técnico PRE autenticado.");
         }
         return solicitud;
     }

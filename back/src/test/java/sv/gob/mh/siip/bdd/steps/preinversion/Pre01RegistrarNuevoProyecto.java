@@ -200,7 +200,7 @@ public class Pre01RegistrarNuevoProyecto {
     @Entonces("regresa a la pantalla {string} con el proyecto en estado {string}")
     public void regresa_a_la_pantalla_con_el_proyecto_en_estado(String pantalla, String estadoUi) {
         assertThat(proyectoGuardado.getEstado()).isEqualTo(EstadoProyectoDto.EN_REGISTRO);
-        assertThat(estadoUi).isEqualTo("En Elaboración");
+        assertThat(estadoUi).isEqualTo(EstadoProyecto.EN_REGISTRO.getEtiquetaUi());
         RequestContextHolder.resetRequestAttributes();
     }
 

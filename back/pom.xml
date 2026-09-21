@@ -23,6 +23,12 @@
 		<mockito.version>5.18.0</mockito.version>
 		<cucumber.version>7.22.1</cucumber.version>
 		<openapi-generator.version>7.25.0</openapi-generator.version>
+		<sonar.projectKey>dgicp-siip2-backend-srv</sonar.projectKey>
+		<sonar.projectName>dgicp-siip2-backend-srv</sonar.projectName>
+		<sonar.host.url>http://alcm.mh.gob.sv/e/sonar</sonar.host.url>
+		<sonar.exclusions>Dockerfile,**/model/*/api/**,**/model/*/dto/**</sonar.exclusions>
+		<sonar.coverage.exclusions>**/model/*/api/**,**/model/*/dto/**</sonar.coverage.exclusions>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 	<dependencies>
 		<!-- Antes heredada del pom.xml raíz del reactor; ver nota de "POM aplanado" arriba. -->
@@ -479,7 +485,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/administracion/calendario/CU-ADM-04-gestion-calendario.openapi.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/administracion/calendario/CU-ADM-04-gestion-de-calendario.openapi.yaml</inputSpec>
                             <apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
                             <modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
                         </configuration>

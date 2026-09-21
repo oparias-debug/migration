@@ -448,7 +448,6 @@ components:
       - EN_OT
       - PROYECTO_CON_OT
       - PRIORIZADO
-      - EN_BANCO_PROYECTOS
       - EN_EJECUCION
       - FINALIZADO
       - ARCHIVADO
