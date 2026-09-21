@@ -657,15 +657,6 @@
     "calendario": {
       "titulo": "Calendario",
       "intro": "Registre aquí los días festivos y las fechas especiales (cierres de período y demás). El sistema los usa para contar los días hábiles entre dos fechas.",
-      "pestanas": "Secciones del calendario",
-      "pestana": {
-        "calendario": "Calendario",
-        "periodos": "Períodos",
-        "excepciones": "Excepciones",
-        "consultas": "Comprobar"
-      },
-      "codigoActivo": "Código del calendario sobre el que se trabaja",
-      "codigoActivoAyuda": "Por ejemplo: CAL-2026",
       "codigo": "Código",
       "nombre": "Nombre",
       "descripcion": "Descripción",
@@ -677,14 +668,8 @@
         "INACTIVO": "Inactivo"
       },
       "crear": "Crear calendario",
-      "editar": "Guardar cambios",
       "inactivar": "Inactivar",
-      "eliminar": "Eliminar",
       "creado": "El calendario se creó correctamente.",
-      "editado": "El calendario se actualizó correctamente.",
-      "eliminado": "El calendario se eliminó.",
-      "estadoCambiado": "El estado del calendario cambió.",
-      "confirmarEliminar": "¿Eliminar el calendario {{codigo}}? No se puede deshacer.",
       "tipoPeriodo": "Tipo de período",
       "tiposPeriodo": {
         "LABORAL": "Laboral",
@@ -741,7 +726,39 @@
       "consultarDiasLaborales": "¿Cuántos días hábiles hay?",
       "respuestaTipoDia": "Ese día es: {{tipo}}",
       "respuestaDiasLaborales": "Días hábiles: {{dias}}",
-      "sinConsultaDeCalendarios": "Lo que todavía no permite el API: ver la lista de calendarios y abrir uno con sus períodos y excepciones. El contrato del CU-ADM-04 sólo expone altas y cambios, sin ningún GET que devuelva el calendario; por eso se trabaja indicando su código y se comprueba desde la pestaña Comprobar."
+      "sinPermiso": "Esta opción es sólo para el Administrador del Sistema o el Administrador de Calendario.",
+      "nuevo": "Nuevo calendario",
+      "sinCalendarios": "Todavía no hay calendarios registrados.",
+      "abrir": "Abrir",
+      "abrirCalendario": "Abrir el calendario {{nombre}}",
+      "faltanDatos": "Indique el código, el nombre y las fechas del calendario.",
+      "datos": "Datos del calendario",
+      "estadoCambiado": "El estado del calendario cambió.",
+      "activar": "Activar",
+      "definicion": "Definición: períodos y excepciones",
+      "sinDefinicion": "Este calendario todavía no tiene períodos ni excepciones.",
+      "tipoItem": "Tipo",
+      "tiposItem": {
+        "LABORAL": "Período laboral",
+        "NO_LABORAL": "Período no laboral",
+        "EXCEPCION": "Excepción"
+      },
+      "quitar": "Quitar",
+      "quitarItem": "Quitar {{codigo}} de la definición",
+      "confirmarQuitar": "¿Quitar este elemento de la definición del calendario?",
+      "definicionGuardada": "La definición del calendario se guardó.",
+      "resumenUnaVez": "Del {{desde}} al {{hasta}}",
+      "resumenSemanal": "Cada semana: {{dias}}",
+      "resumenMensual": "Cada mes, días {{dias}} de {{meses}}",
+      "nuevoPeriodo": "Agregar período",
+      "nuevaExcepcion": "Registrar excepción",
+      "comprobar": "Comprobar",
+      "faltanDatosPeriodo": "Indique el código y el nombre del período.",
+      "faltaFecha": "Indique la fecha de la excepción.",
+      "tiposDia": {
+        "LABORAL": "laboral",
+        "NO_LABORAL": "no laboral"
+      }
     }
   },
   "pasos": {

@@ -1,430 +1,192 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
-import { calendariosApi, consultasCalendarioApi } from '../../../api/administracionApi';
+import { calendariosApi, consultasCalendarioApi, type CalendarioResumen } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
+import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
-import { Pestanas } from '../../../components/Pestanas';
 
-const CLAVE = 'administracion.calendario';
-const DIAS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const;
-const MESES = [
-  'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
-  'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
-] as const;
-
-const PESTANAS = [
-  { clave: 'calendario', texto: `${CLAVE}.pestana.calendario` },
-  { clave: 'periodos', texto: `${CLAVE}.pestana.periodos` },
-  { clave: 'excepciones', texto: `${CLAVE}.pestana.excepciones` },
-  { clave: 'consultas', texto: `${CLAVE}.pestana.consultas` },
-] as const;
-type Pestana = (typeof PESTANAS)[number]['clave'];
-
-const numeros = (texto: string) =>
-  texto
-    .split(',')
-    .map((n) => Number(n.trim()))
-    .filter((n) => Number.isInteger(n) && n >= 1 && n <= 31);
+export const CLAVE_CALENDARIO = 'administracion.calendario';
+/** El back del CU-ADM-04 exige uno de estos dos roles. */
+export const ROLES_CALENDARIO = ['ADMINISTRADOR', 'ADMINISTRADOR_CALENDARIO'];
 
 /**
- * Pantalla "Calendario" (CU-ADM-04), bajo Administración, junto a Catálogos.
- *
- * Sirve para registrar los días festivos y las fechas especiales (cierres de
- * período y demás) que el back usa después para contar días hábiles entre dos
- * fechas.
- *
- * El contrato sólo expone altas y modificaciones: no hay ningún GET que liste
- * los calendarios ni que devuelva uno con sus períodos y excepciones. Por eso
- * la pantalla trabaja sobre el código de calendario que se indica arriba, y la
- * última pestaña usa las consultas de cálculo para comprobar lo cargado —
- * preguntar qué tipo de día es una fecha es hoy la única forma de verificarlo.
+ * Calendario (CU-ADM-04), bajo Administración junto a Catálogos: la lista de
+ * calendarios y el alta de uno nuevo. Al abrir uno se pasa a su ficha, donde se
+ * registran los días festivos y las fechas especiales que el back usa después
+ * para contar días hábiles entre dos fechas.
  */
 export function CalendarioPage() {
   const { t } = useTranslation();
-  const [pestana, setPestana] = useState<Pestana>('calendario');
-  const [codigo, setCodigo] = useState('');
+  const { hasRole } = useAuth();
+  const navigate = useNavigate();
+  const [calendarios, setCalendarios] = useState<CalendarioResumen[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const [creando, setCreando] = useState(false);
 
-  const aviso = async (promesa: Promise<unknown>, exito: string) => {
-    try {
-      await promesa;
-      await Swal.fire({ icon: 'success', text: t(exito) });
-      return true;
-    } catch (error_) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
-      return false;
-    }
-  };
+  const puedeAdministrar = ROLES_CALENDARIO.some(hasRole);
+
+  const cargar = useCallback(() => {
+    setCargando(true);
+    consultasCalendarioApi
+      .listarCalendarios()
+      .then(({ data }) => {
+        setCalendarios(data ?? []);
+        setErrorCarga(null);
+      })
+      .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
+      .finally(() => setCargando(false));
+  }, [t]);
+
+  useEffect(() => {
+    if (puedeAdministrar) cargar();
+  }, [cargar, puedeAdministrar]);
+
+  if (!puedeAdministrar) {
+    return (
+      <p className="aviso-error" role="alert">
+        {t(`${CLAVE_CALENDARIO}.sinPermiso`)}
+      </p>
+    );
+  }
 
   return (
     <div className="formcard">
       <div className="formhead">
-        <span>{t(`${CLAVE}.titulo`)}</span>
+        <span>{t(`${CLAVE_CALENDARIO}.titulo`)}</span>
       </div>
       <div className="formbody">
-        <p className="nota">{t(`${CLAVE}.intro`)}</p>
+        <p className="nota">{t(`${CLAVE_CALENDARIO}.intro`)}</p>
 
-        <div className="f w">
-          <label htmlFor="cal-codigo-activo">{t(`${CLAVE}.codigoActivo`)}</label>
-          <input
-            id="cal-codigo-activo"
-            type="text"
-            value={codigo}
-            onChange={(e) => setCodigo(e.target.value)}
-            placeholder={t(`${CLAVE}.codigoActivoAyuda`)}
+        {creando ? (
+          <NuevoCalendario
+            alCancelar={() => setCreando(false)}
+            alCrear={(codigo) => navigate(`/administracion/calendario/${encodeURIComponent(codigo)}`)}
           />
-        </div>
+        ) : (
+          <div className="acciones-form">
+            <button type="button" className="btn primario" onClick={() => setCreando(true)}>
+              {t(`${CLAVE_CALENDARIO}.nuevo`)}
+            </button>
+          </div>
+        )}
 
-        <Pestanas pestanas={PESTANAS} activa={pestana} onCambiar={setPestana} etiqueta={`${CLAVE}.pestanas`} />
+        {cargando && <p className="nota">{t('common.cargando')}</p>}
+        {errorCarga && <p className="aviso-error">{errorCarga}</p>}
+        {!cargando && !errorCarga && calendarios.length === 0 && (
+          <p className="nota">{t(`${CLAVE_CALENDARIO}.sinCalendarios`)}</p>
+        )}
 
-        <div role="tabpanel" id={`panel-${pestana}`}>
-          {pestana === 'calendario' && <FormularioCalendario alCrear={setCodigo} aviso={aviso} codigo={codigo} />}
-          {pestana === 'periodos' && <FormularioPeriodo codigo={codigo} aviso={aviso} />}
-          {pestana === 'excepciones' && <FormularioExcepcion codigo={codigo} aviso={aviso} />}
-          {pestana === 'consultas' && <PanelConsultas codigo={codigo} />}
-        </div>
-
-        <p className="nota-form">{t(`${CLAVE}.sinConsultaDeCalendarios`)}</p>
+        {calendarios.length > 0 && (
+          <div className="tabla-cont">
+            <table>
+              <thead>
+                <tr>
+                  <th>{t(`${CLAVE_CALENDARIO}.codigo`)}</th>
+                  <th>{t(`${CLAVE_CALENDARIO}.nombre`)}</th>
+                  <th>{t(`${CLAVE_CALENDARIO}.estado`)}</th>
+                  <th>{t('common.acciones')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {calendarios.map((c) => (
+                  <tr key={c.codigo}>
+                    <td className="mono">{c.codigo}</td>
+                    <td>{c.nombre}</td>
+                    <td>{t(`${CLAVE_CALENDARIO}.estados.${c.estado}`)}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn secundario"
+                        aria-label={t(`${CLAVE_CALENDARIO}.abrirCalendario`, { nombre: c.nombre })}
+                        onClick={() => navigate(`/administracion/calendario/${encodeURIComponent(c.codigo)}`)}
+                      >
+                        {t(`${CLAVE_CALENDARIO}.abrir`)}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-type Aviso = (promesa: Promise<unknown>, exito: string) => Promise<boolean>;
-
-/** Alta y modificación del calendario (HU-ADM-04-01). */
-function FormularioCalendario({
-  codigo,
+/** Alta de un calendario: sólo sus datos; los períodos y excepciones se cargan en su ficha. */
+function NuevoCalendario({
+  alCancelar,
   alCrear,
-  aviso,
 }: {
-  readonly codigo: string;
+  readonly alCancelar: () => void;
   readonly alCrear: (codigo: string) => void;
-  readonly aviso: Aviso;
 }) {
   const { t } = useTranslation();
-  const { register, handleSubmit, watch } = useForm({
-    defaultValues: { codigo: '', nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', estado: 'ACTIVO' },
-  });
-  const valores = watch();
-
-  const crear = handleSubmit(async (v) => {
-    const ok = await aviso(
-      calendariosApi.crearCalendario({
-        crearCalendarioRequest: {
-          codigo: v.codigo,
-          nombre: v.nombre,
-          descripcion: v.descripcion || undefined,
-          fechaInicio: v.fechaInicio,
-          fechaFin: v.fechaFin,
-          estado: v.estado as 'ACTIVO' | 'INACTIVO',
-        },
-      }),
-      `${CLAVE}.creado`,
-    );
-    if (ok) alCrear(v.codigo);
-  });
-
-  const editar = async () => {
-    await aviso(
-      calendariosApi.editarCalendario({
-        codigoCalendario: codigo,
-        editarCalendarioRequest: {
-          nombre: valores.nombre,
-          descripcion: valores.descripcion || undefined,
-          fechaInicio: valores.fechaInicio,
-          fechaFin: valores.fechaFin,
-        },
-      }),
-      `${CLAVE}.editado`,
-    );
-  };
-
-  const eliminar = async () => {
-    const { isConfirmed } = await Swal.fire({
-      icon: 'warning',
-      text: t(`${CLAVE}.confirmarEliminar`, { codigo }),
-      showCancelButton: true,
-      confirmButtonText: t('common.eliminar'),
-      cancelButtonText: t('common.cancelar'),
-    });
-    if (isConfirmed) await aviso(calendariosApi.eliminarCalendario({ codigoCalendario: codigo }), `${CLAVE}.eliminado`);
-  };
-
-  const cambiarEstado = async (estado: 'ACTIVO' | 'INACTIVO') => {
-    await aviso(
-      calendariosApi.cambiarEstadoCalendario({ codigoCalendario: codigo, cambiarEstadoCalendarioRequest: { estado } }),
-      `${CLAVE}.estadoCambiado`,
-    );
-  };
-
-  return (
-    <form onSubmit={crear} noValidate>
-      <div className="fr">
-        <FormRow label={t(`${CLAVE}.codigo`)} controlId="cal-codigo" required>
-          <input id="cal-codigo" type="text" {...register('codigo')} />
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.nombre`)} controlId="cal-nombre" required>
-          <input id="cal-nombre" type="text" {...register('nombre')} />
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.descripcion`)} controlId="cal-descripcion">
-          <input id="cal-descripcion" type="text" {...register('descripcion')} />
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.fechaInicio`)} controlId="cal-inicio" required>
-          <input id="cal-inicio" type="date" {...register('fechaInicio')} />
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.fechaFin`)} controlId="cal-fin" required>
-          <input id="cal-fin" type="date" {...register('fechaFin')} />
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.estado`)} controlId="cal-estado" required>
-          <select id="cal-estado" {...register('estado')}>
-            <option value="ACTIVO">{t(`${CLAVE}.estados.ACTIVO`)}</option>
-            <option value="INACTIVO">{t(`${CLAVE}.estados.INACTIVO`)}</option>
-          </select>
-        </FormRow>
-      </div>
-
-      <div className="acciones-form">
-        <button type="submit" className="btn primario">
-          {t(`${CLAVE}.crear`)}
-        </button>
-        <button type="button" className="btn secundario" onClick={editar} disabled={!codigo}>
-          {t(`${CLAVE}.editar`)}
-        </button>
-        <button type="button" className="btn secundario" onClick={() => cambiarEstado('INACTIVO')} disabled={!codigo}>
-          {t(`${CLAVE}.inactivar`)}
-        </button>
-        <button type="button" className="btn neutro" onClick={eliminar} disabled={!codigo}>
-          {t(`${CLAVE}.eliminar`)}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-/** Períodos laborales y no laborales, con sus tres formas de repetición. */
-function FormularioPeriodo({ codigo, aviso }: { readonly codigo: string; readonly aviso: Aviso }) {
-  const { t } = useTranslation();
-  const { register, handleSubmit, watch } = useForm({
-    defaultValues: {
-      tipo: 'NO_LABORAL',
-      codigo: '',
-      nombre: '',
-      tipoRecurrencia: 'UNA_VEZ',
-      fechaInicio: '',
-      fechaFin: '',
-      diasDeLaSemana: [] as string[],
-      diasDelMes: '',
-      meses: [] as string[],
-    },
-  });
-  const v = watch();
-
-  const recurrenciaDe = () => {
-    if (v.tipoRecurrencia === 'SEMANAL') {
-      return { tipoRecurrencia: 'SEMANAL', fechaInicio: v.fechaInicio, fechaFin: v.fechaFin, diasDeLaSemana: v.diasDeLaSemana };
-    }
-    if (v.tipoRecurrencia === 'MENSUAL') {
-      return { tipoRecurrencia: 'MENSUAL', diasDelMes: numeros(v.diasDelMes), meses: v.meses };
-    }
-    return { tipoRecurrencia: 'UNA_VEZ', fechaInicio: v.fechaInicio, fechaFin: v.fechaFin };
-  };
-
-  const enviar = handleSubmit(async () => {
-    const cuerpo = { codigo: v.codigo, nombre: v.nombre, recurrencia: recurrenciaDe() };
-    const peticion =
-      v.tipo === 'LABORAL'
-        ? calendariosApi.agregarPeriodoLaboral({ codigoCalendario: codigo, periodoLaboralRequest: cuerpo as never })
-        : calendariosApi.agregarPeriodoNoLaboral({ codigoCalendario: codigo, periodoNoLaboralRequest: cuerpo as never });
-    await aviso(peticion, `${CLAVE}.periodoAgregado`);
-  });
-
-  return (
-    <form onSubmit={enviar} noValidate>
-      <div className="fr">
-        <FormRow label={t(`${CLAVE}.tipoPeriodo`)} controlId="per-tipo" required>
-          <select id="per-tipo" {...register('tipo')}>
-            <option value="NO_LABORAL">{t(`${CLAVE}.tiposPeriodo.NO_LABORAL`)}</option>
-            <option value="LABORAL">{t(`${CLAVE}.tiposPeriodo.LABORAL`)}</option>
-          </select>
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.codigoPeriodo`)} controlId="per-codigo" required>
-          <input id="per-codigo" type="text" {...register('codigo')} />
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.nombrePeriodo`)} controlId="per-nombre" required>
-          <input id="per-nombre" type="text" {...register('nombre')} />
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.repeticion`)} controlId="per-recurrencia" required>
-          <select id="per-recurrencia" {...register('tipoRecurrencia')}>
-            <option value="UNA_VEZ">{t(`${CLAVE}.repeticiones.UNA_VEZ`)}</option>
-            <option value="SEMANAL">{t(`${CLAVE}.repeticiones.SEMANAL`)}</option>
-            <option value="MENSUAL">{t(`${CLAVE}.repeticiones.MENSUAL`)}</option>
-          </select>
-        </FormRow>
-      </div>
-
-      {v.tipoRecurrencia !== 'MENSUAL' && (
-        <div className="fr">
-          <FormRow label={t(`${CLAVE}.fechaInicio`)} controlId="per-inicio" required>
-            <input id="per-inicio" type="date" {...register('fechaInicio')} />
-          </FormRow>
-          <FormRow label={t(`${CLAVE}.fechaFin`)} controlId="per-fin" required>
-            <input id="per-fin" type="date" {...register('fechaFin')} />
-          </FormRow>
-        </div>
-      )}
-
-      {v.tipoRecurrencia === 'SEMANAL' && (
-        <fieldset>
-          <legend>{t(`${CLAVE}.diasDeLaSemana`)}</legend>
-          {DIAS.map((d) => (
-            <label key={d} className="casilla">
-              <input type="checkbox" value={d} {...register('diasDeLaSemana')} /> {t(`${CLAVE}.dias.${d}`)}
-            </label>
-          ))}
-        </fieldset>
-      )}
-
-      {v.tipoRecurrencia === 'MENSUAL' && (
-        <>
-          <div className="fr">
-            <FormRow label={t(`${CLAVE}.diasDelMes`)} controlId="per-dias-mes" required>
-              <input id="per-dias-mes" type="text" placeholder="1, 15, 30" {...register('diasDelMes')} />
-            </FormRow>
-          </div>
-          <fieldset>
-            <legend>{t(`${CLAVE}.meses`)}</legend>
-            {MESES.map((m) => (
-              <label key={m} className="casilla">
-                <input type="checkbox" value={m} {...register('meses')} /> {t(`${CLAVE}.mesesNombre.${m}`)}
-              </label>
-            ))}
-          </fieldset>
-        </>
-      )}
-
-      <div className="acciones-form">
-        <button type="submit" className="btn primario" disabled={!codigo}>
-          {t(`${CLAVE}.agregarPeriodo`)}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-/** Excepciones: un día suelto que rompe la regla del período. */
-function FormularioExcepcion({ codigo, aviso }: { readonly codigo: string; readonly aviso: Aviso }) {
-  const { t } = useTranslation();
-  const { register, handleSubmit } = useForm({
-    defaultValues: { fecha: '', tipo: 'DIA_NO_LABORAL', descripcion: '' },
-  });
-
-  const enviar = handleSubmit(async (v) => {
-    await aviso(
-      calendariosApi.registrarExcepcion({
-        codigoCalendario: codigo,
-        excepcionRequest: { fecha: v.fecha, tipo: v.tipo as 'DIA_LABORAL' | 'DIA_NO_LABORAL', descripcion: v.descripcion },
-      }),
-      `${CLAVE}.excepcionRegistrada`,
-    );
-  });
-
-  return (
-    <form onSubmit={enviar} noValidate>
-      <div className="fr">
-        <FormRow label={t(`${CLAVE}.fecha`)} controlId="exc-fecha" required>
-          <input id="exc-fecha" type="date" {...register('fecha')} />
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.tipoExcepcion`)} controlId="exc-tipo" required>
-          <select id="exc-tipo" {...register('tipo')}>
-            <option value="DIA_NO_LABORAL">{t(`${CLAVE}.tiposExcepcion.DIA_NO_LABORAL`)}</option>
-            <option value="DIA_LABORAL">{t(`${CLAVE}.tiposExcepcion.DIA_LABORAL`)}</option>
-          </select>
-        </FormRow>
-        <FormRow label={t(`${CLAVE}.descripcionExcepcion`)} controlId="exc-descripcion" required>
-          <input id="exc-descripcion" type="text" {...register('descripcion')} />
-        </FormRow>
-      </div>
-
-      <div className="acciones-form">
-        <button type="submit" className="btn primario" disabled={!codigo}>
-          {t(`${CLAVE}.registrarExcepcion`)}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-/**
- * Consultas de cálculo. Son las que usa el back para contar días hábiles, y
- * aquí sirven para comprobar que lo cargado se comporta como se espera: sin
- * ningún GET que devuelva el calendario, es la única forma de verificarlo.
- */
-function PanelConsultas({ codigo }: { readonly codigo: string }) {
-  const { t } = useTranslation();
-  const [fecha, setFecha] = useState('');
+  const [codigo, setCodigo] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
-  const [respuesta, setRespuesta] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
 
-  const consultar = async (promesa: Promise<{ data: unknown }>, formato: (d: never) => string) => {
-    setRespuesta(null);
+  const crear = async () => {
+    if (!codigo.trim() || !nombre.trim() || !desde || !hasta) {
+      await Swal.fire({ icon: 'error', text: t(`${CLAVE_CALENDARIO}.faltanDatos`) });
+      return;
+    }
+    setGuardando(true);
     try {
-      const { data } = await promesa;
-      setRespuesta(formato(data as never));
+      await calendariosApi.crearCalendario({
+        crearCalendarioRequest: {
+          codigo: codigo.trim(),
+          nombre: nombre.trim(),
+          descripcion: descripcion.trim() || undefined,
+          fechaInicio: desde,
+          fechaFin: hasta,
+          estado: 'ACTIVO',
+        },
+      });
+      await Swal.fire({ icon: 'success', text: t(`${CLAVE_CALENDARIO}.creado`) });
+      alCrear(codigo.trim());
     } catch (error_) {
-      setRespuesta(mensajeDeError(toErrorApi(error_), t));
+      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
+    } finally {
+      setGuardando(false);
     }
   };
 
   return (
-    <div>
+    <section>
+      <h2 className="seccion">{t(`${CLAVE_CALENDARIO}.tituloCrear`)}</h2>
       <div className="fr">
-        <FormRow label={t(`${CLAVE}.fecha`)} controlId="con-fecha">
-          <input id="con-fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+        <FormRow label={t(`${CLAVE_CALENDARIO}.codigo`)} controlId="cal-codigo" required>
+          <input id="cal-codigo" type="text" value={codigo} onChange={(e) => setCodigo(e.target.value)} />
         </FormRow>
-        <FormRow label={t(`${CLAVE}.desde`)} controlId="con-desde">
-          <input id="con-desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+        <FormRow label={t(`${CLAVE_CALENDARIO}.nombre`)} controlId="cal-nombre" required>
+          <input id="cal-nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
         </FormRow>
-        <FormRow label={t(`${CLAVE}.hasta`)} controlId="con-hasta">
-          <input id="con-hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+        <FormRow label={t(`${CLAVE_CALENDARIO}.descripcion`)} controlId="cal-descripcion">
+          <input id="cal-descripcion" type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+        </FormRow>
+        <FormRow label={t(`${CLAVE_CALENDARIO}.fechaInicio`)} controlId="cal-inicio" required>
+          <input id="cal-inicio" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+        </FormRow>
+        <FormRow label={t(`${CLAVE_CALENDARIO}.fechaFin`)} controlId="cal-fin" required>
+          <input id="cal-fin" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
         </FormRow>
       </div>
-
       <div className="acciones-form">
-        <button
-          type="button"
-          className="btn secundario"
-          disabled={!codigo || !fecha}
-          onClick={() =>
-            consultar(consultasCalendarioApi.consultarTipoDia({ codigoCalendario: codigo, fecha }), (d: { tipoDia?: string }) =>
-              t(`${CLAVE}.respuestaTipoDia`, { tipo: d.tipoDia ?? '—' }),
-            )
-          }
-        >
-          {t(`${CLAVE}.consultarTipoDia`)}
+        <button type="button" className="btn neutro" onClick={alCancelar}>
+          {t('common.cancelar')}
         </button>
-        <button
-          type="button"
-          className="btn secundario"
-          disabled={!codigo || !desde || !hasta}
-          onClick={() =>
-            consultar(
-              consultasCalendarioApi.consultarDiasLaboralesEntreFechas({
-                codigoCalendario: codigo,
-                fechaInicial: desde,
-                fechaFinal: hasta,
-              }),
-              (d: { diasLaborales?: number }) => t(`${CLAVE}.respuestaDiasLaborales`, { dias: d.diasLaborales ?? '—' }),
-            )
-          }
-        >
-          {t(`${CLAVE}.consultarDiasLaborales`)}
+        <button type="button" className="btn primario" onClick={crear} disabled={guardando}>
+          {t(`${CLAVE_CALENDARIO}.crear`)}
         </button>
       </div>
-
-      {respuesta && <p className="aviso-ok">{respuesta}</p>}
-    </div>
+    </section>
   );
 }

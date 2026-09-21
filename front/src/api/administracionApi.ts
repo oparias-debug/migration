@@ -1,5 +1,5 @@
 import { CatalogApi, CatalogRecordApi } from './generated/administracion-catalogos-admin';
-import { ConsultasDeCalendarioApi, GestinDeCalendariosApi } from './generated/administracion-calendario';
+import { CalendariosConsultasApi, CalendariosGestinApi } from './generated/administracion-calendario';
 import { createHttpClient } from './httpClient';
 
 /**
@@ -22,5 +22,7 @@ export type { Catalog, CatalogField, CatalogRecord } from './generated/administr
 // CU-ADM-04 (Gestión de Calendario). El generador lo partió en dos clases, una
 // por tag: el mantenimiento del calendario y las consultas de cálculo, que el
 // back usa para contar días hábiles y que aquí sirven para comprobar lo cargado.
-export const calendariosApi = new GestinDeCalendariosApi(undefined, undefined, administracionAxios);
-export const consultasCalendarioApi = new ConsultasDeCalendarioApi(undefined, undefined, administracionAxios);
+export const calendariosApi = new CalendariosGestinApi(undefined, undefined, administracionAxios);
+export const consultasCalendarioApi = new CalendariosConsultasApi(undefined, undefined, administracionAxios);
+
+export type { Calendario, CalendarioResumen, CalendarItem } from './generated/administracion-calendario';
