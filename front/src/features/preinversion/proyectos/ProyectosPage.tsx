@@ -82,7 +82,11 @@ export function ProyectosPage() {
           tamanio: TAMANIO_PAGINA,
           ...(estado ? { estado } : {}),
         });
-        setProyectos(data.contenido);
+        // El contrato no expone un parámetro de orden, así que se ordena aquí:
+        // lo más reciente primero, por fecha de creación (Rocío, 21/09/2026).
+        setProyectos([...data.contenido].sort(
+          (a, b) => new Date(b.fechaIngreso).getTime() - new Date(a.fechaIngreso).getTime(),
+        ));
         setTotalPaginas(data.paginacion.totalPaginas);
         setTotalElementos(data.paginacion.totalElementos);
         setPagina(data.paginacion.pagina);
@@ -136,6 +140,9 @@ export function ProyectosPage() {
   const columns: Column<ProyectoListItem>[] = [
     {
       header: t('preinversion.registro.columnaNombre'),
+      // El nombre es lo que el usuario busca en la tabla; se lleva el espacio
+      // que se le quita a "Iniciativa de inversión" (Rocío, 21/09/2026).
+      ancho: '40%',
       render: (proyecto) => (
         <button
           type="button"
@@ -146,14 +153,21 @@ export function ProyectosPage() {
         </button>
       ),
     },
-    { header: t('preinversion.registro.columnaUnidadEjecutora'), render: (proyecto) => proyecto.unidadEjecutora.nombre },
-    { header: t('preinversion.registro.columnaIniciativa'), render: (proyecto) => formatIniciativa(proyecto.iniciativaInversion) },
+    {
+      header: t('preinversion.registro.columnaUnidadEjecutora'),
+      ancho: '22%',
+      // Una institución puede no tener Unidad Ejecutora: se marca, no se deja el hueco.
+      render: (proyecto) => proyecto.unidadEjecutora?.nombre ?? 'N/A',
+    },
+    { header: t('preinversion.registro.columnaIniciativa'), ancho: '11%', render: (proyecto) => formatIniciativa(proyecto.iniciativaInversion) },
     {
       header: t('preinversion.registro.columnaFechaIngreso'),
+      ancho: '12%',
       render: (proyecto) => new Date(proyecto.fechaIngreso).toLocaleDateString(),
     },
     {
       header: t('preinversion.registro.columnaEstado'),
+      ancho: '13%',
       render: (proyecto) => (
         <span className={`marca-estado ${TONO_ESTADO[proyecto.estado] ?? ''}`}>{formatEstado(proyecto.estado)}</span>
       ),

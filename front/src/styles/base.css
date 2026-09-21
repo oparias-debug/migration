@@ -394,14 +394,23 @@ tbody tr:hover td { background: var(--azul-suave); }
 .mono { font-family: var(--tipo-mono); font-size: 12px; color: var(--menu); }
 .vacio { text-align: center; color: var(--n500); padding: 34px 14px; }
 
+/* Etiqueta de estado. Sin relleno ni píldora: con fondo de color y esquinas
+   redondeadas se leía como un botón y los usuarios le hacían clic esperando
+   entrar por ahí (Rocío, pruebas del 21/09/2026). El color queda en el texto y
+   en un punto, que basta para distinguir el estado sin robarle peso al nombre
+   de la iniciativa, que es la columna importante. */
 .marca-estado {
-  display: inline-block; font-size: 11px; font-weight: 700;
-  padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; white-space: nowrap; cursor: default;
 }
-.e-neutro { background: var(--neutro-bg); color: var(--n500); }
-.e-info   { background: var(--info-bg);   color: var(--info); }
-.e-aviso  { background: var(--aviso-bg);  color: var(--aviso); }
-.e-ok     { background: var(--ok-bg);     color: var(--ok); }
+.marca-estado::before {
+  content: ''; flex: none; width: 8px; height: 8px;
+  border-radius: 50%; background: currentColor;
+}
+.e-neutro { color: var(--n500); }
+.e-info   { color: var(--info); }
+.e-aviso  { color: var(--aviso); }
+.e-ok     { color: var(--ok); }
 
 /* ----------------------------------------------------------------- FILTROS -- */
 .filtros {
@@ -561,9 +570,15 @@ tbody tr:hover td { background: var(--azul-suave); }
 .f .error { font-size: 12px; font-weight: 700; color: var(--error); }
 .f .ayuda { font-size: 11.5px; font-weight: 400; color: var(--n500); }
 .req { color: var(--error); }
-.radios { display: flex; gap: 18px; flex-wrap: wrap; }
-.radios label { font-weight: 400; font-size: 13.5px; cursor: pointer; }
-.radios input { width: auto; }
+/* Opciones en línea y a la misma distancia entre sí; cada casilla pegada a su
+   texto, para que no se lean como si estuvieran en renglones distintos
+   (Rocío, pruebas del 21/09/2026). */
+.radios { display: flex; gap: 10px 26px; flex-wrap: wrap; align-items: center; }
+.radios label {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-weight: 400; font-size: 13.5px; cursor: pointer;
+}
+.radios input { width: auto; margin: 0; }
 
 .chip-api {
   font-family: var(--tipo-mono); font-size: 10.5px; font-weight: 400;
@@ -818,3 +833,33 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 .tabla-editable input:disabled, .tabla-editable select:disabled, .tabla-editable textarea:disabled,
 .tabla-editable input[readonly] { background: var(--n50); color: var(--n500); }
 .tabla-editable .malo { border-color: var(--error); box-shadow: 0 0 0 2px rgba(198,40,40,.12); }
+
+/* ======================================== REVISIÓN PRE (CU-PRE-01.5) ====== */
+/* Va a lo ancho de las dos columnas de .fr: a media columna se leía como un
+   campo más del formulario y no como la conversación entre PRE y URP
+   (Rocío, pruebas del 21/09/2026). */
+.revision-pre {
+  grid-column: 1 / -1; margin: 6px 0 4px;
+  border: 1px solid var(--n200); border-radius: var(--r2); background: #fff; overflow: hidden;
+}
+.rp-cabecera { background: var(--n100); padding: 10px 16px; border-bottom: 1px solid var(--n200); }
+.rp-cabecera h2 { font-size: 13.5px; font-weight: 700; color: var(--n700); margin: 0; }
+.rp-cuerpo { padding: 14px 16px; }
+.rp-vacio { font-size: 13px; color: var(--n500); margin: 0; }
+.rp-hilo { list-style: none; margin: 0; padding: 0; }
+.rp-mensaje { border-left: 3px solid var(--n300); padding-left: 12px; margin-bottom: 14px; }
+.rp-mensaje:last-child { margin-bottom: 0; }
+.rp-mensaje.de-pre { border-left-color: var(--aviso); }
+.rp-mensaje.de-urp { border-left-color: var(--info); }
+.rp-quien { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rp-quien strong { font-size: 13px; color: var(--n900); }
+.rp-quien small { font-size: 11.5px; color: var(--n500); display: flex; gap: 10px; }
+.rp-texto { margin: 3px 0 0; font-size: 13.5px; white-space: pre-wrap; }
+.rp-pie { padding: 14px 16px; border-top: 1px solid var(--n200); background: var(--n50); }
+.rp-pie label { display: block; font-size: 12.5px; font-weight: 700; color: var(--n700); margin-bottom: 5px; }
+.rp-pie textarea {
+  font: inherit; font-size: 13.5px; width: 100%; padding: 9px 11px;
+  border: 1px solid var(--n300); border-radius: var(--r); background: #fff;
+}
+.rp-acciones { display: flex; gap: 10px; margin-top: 10px; }
+.rp-aviso { display: block; font-size: 12.5px; color: var(--n500); margin-top: 6px; }

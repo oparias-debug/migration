@@ -75,10 +75,15 @@ describe('ubicarEnMenu', () => {
     expect(ubicarEnMenu('/preinversion/bandeja')).toMatchObject({ sub: { clave: 'asignacion-cup' }, titulo: 'menu.bandeja' });
   });
 
-  it('la ficha de un proyecto es un detalle de Registro de Proyecto', () => {
+  // La ficha no añade tramo "Detalle": no le dice nada al usuario (Rocío, 21/09/2026).
+  it('la ficha de un proyecto cuelga de Asignación CUP, sin tramo "Detalle"', () => {
     const u = ubicarEnMenu('/preinversion/proyectos/4');
     expect(u).toMatchObject({ sub: { clave: 'asignacion-cup' }, titulo: 'menu.registroProyecto' });
-    expect(u?.tramos.at(-1)).toEqual({ texto: 'ruta.detalle' });
+    expect(u?.tramos.map((x) => x.texto)).toEqual(['menu.preinversion', 'menu.asignacionCup', 'menu.registroProyecto']);
+  });
+
+  it('el alta sí lo dice', () => {
+    expect(ubicarEnMenu('/preinversion/proyectos/nuevo')?.tramos.at(-1)).toEqual({ texto: 'ruta.nuevo' });
   });
 
   it('un paso cuelga del proceso de su grupo, no de Registro de Proyecto', () => {

@@ -70,7 +70,7 @@ describe('BandejaPage', () => {
     await screen.findByText(UNA.nombreProyecto);
     const cabeceras = [...document.querySelectorAll('table')][0].querySelectorAll('thead th');
     expect([...cabeceras].map((c) => c.textContent).filter(Boolean)).toEqual([
-      'Unidad Ejecutora', 'Tipo de Solicitud', 'CUP', 'Nombre del Proyecto',
+      'CUP', 'Nombre de la iniciativa', 'Tipo de Solicitud', 'Unidad Ejecutora',
       'Fecha de Solicitud', 'Estado', 'Asignado a',
     ]);
     expect(await screen.findByText(UNA.nombreProyecto)).toBeInTheDocument();
@@ -79,7 +79,7 @@ describe('BandejaPage', () => {
   it('filtra por tipo de solicitud contra el back', async () => {
     montar();
     await screen.findByText(UNA.nombreProyecto);
-    fireEvent.change(screen.getByLabelText('Tipo de Solicitud'), { target: { value: 'OPINION_TECNICA' } });
+    fireEvent.change(screen.getByLabelText('Tipo de permiso'), { target: { value: 'OPINION_TECNICA' } });
 
     await waitFor(() =>
       expect(listarSolicitudesActivas).toHaveBeenLastCalledWith(
@@ -109,6 +109,19 @@ describe('BandejaPage', () => {
         asignacionTecnicoPreRequest: { idTecnicoAsignado: 12 },
       }),
     );
+  });
+
+  // RN-03 del CU-PRE-02: la asignación se confirma antes de guardarse
+  // (Rocío, pruebas del 21/09/2026).
+  it('asignar pide confirmación y no llama al back si se cancela', async () => {
+    swalFire.mockResolvedValue({ isConfirmed: false });
+    montar();
+    fireEvent.click(await screen.findByRole('button', { name: 'Asignar' }));
+    fireEvent.change(await screen.findByRole('combobox', { name: '' }), { target: { value: '12' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(swalFire).toHaveBeenCalled());
+    expect(asignarTecnicoPre).not.toHaveBeenCalled();
   });
 
   it('archivar pide confirmación antes de llamar al back', async () => {

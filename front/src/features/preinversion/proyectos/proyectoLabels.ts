@@ -6,8 +6,9 @@ import { EstadoProyecto, IniciativaInversion } from '../../../api/preinversionAp
 // vida posterior del proyecto) cae al fallback del propio código.
 const ESTADO_LABELS: Partial<Record<string, string>> = {
   [EstadoProyecto.EnRegistro]: 'En Elaboración',
-  [EstadoProyecto.EnviadoDgicpRegistro]: 'Enviado a DGICP (Registro)',
-  [EstadoProyecto.ObservadoDgicpRegistro]: 'Observado DGICP (Registro)',
+  // Nombres pedidos por Rocío en las pruebas del 21/09/2026.
+  [EstadoProyecto.EnviadoDgicpRegistro]: 'Enviado_DGICP',
+  [EstadoProyecto.ObservadoDgicpRegistro]: 'Observado',
   [EstadoProyecto.CupAsignado]: 'CUP asignado',
 };
 

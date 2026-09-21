@@ -3,6 +3,8 @@ import type { Key, ReactNode } from 'react';
 export interface Column<T> {
   header: string;
   render: (row: T) => ReactNode;
+  /** Ancho sugerido de la columna, para repartir el espacio entre ellas. */
+  ancho?: string;
 }
 
 interface DataTableProps<T> {
@@ -27,7 +29,7 @@ export function DataTable<T>({ columns, rows, emptyMessage, renderActions, rowKe
         <thead>
           <tr>
             {columns.map((col) => (
-              <th key={col.header} scope="col">
+              <th key={col.header} scope="col" style={col.ancho ? { width: col.ancho } : undefined}>
                 {col.header}
               </th>
             ))}

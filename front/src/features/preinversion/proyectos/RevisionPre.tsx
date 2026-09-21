@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ComentarioSolicitud } from '../../../api/preinversionApi';
 
@@ -17,7 +17,18 @@ interface RevisionPreProps {
   readonly onEnviar: (respuesta: string) => void;
   /** El comentario no es obligatorio (ver CU-PRE-01.5, sección Validaciones): puede llegar vacío. */
   readonly onDevolver?: (comentario: string) => void;
+  /**
+   * Guardar los cambios del formulario sin enviar la respuesta. Es el mismo
+   * "Guardar" del pie de la pantalla, repetido aquí porque es donde está el
+   * usuario cuando responde observaciones (Rocío, pruebas del 21/09/2026).
+   */
+  readonly onGuardar?: () => void;
+  /** Identifica el borrador de la observación del Técnico PRE en este equipo. */
+  readonly idProyecto?: number;
 }
+
+/** Clave del borrador local de la observación (ver `guardarBorrador`). */
+const claveBorrador = (idProyecto?: number) => `siip.observacionPre.${idProyecto ?? 'sin-id'}`;
 
 /**
  * Sección "Revisión PRE" de la pantalla "Nuevo registro"
@@ -40,10 +51,35 @@ export function RevisionPre({
   errorRespuesta,
   onEnviar,
   onDevolver,
+  onGuardar,
+  idProyecto,
 }: RevisionPreProps) {
   const { t } = useTranslation();
   const [respuesta, setRespuesta] = useState('');
   const [comentario, setComentario] = useState('');
+  const [borradorGuardado, setBorradorGuardado] = useState(false);
+
+  // El contrato de CU-PRE-01.5 sólo tiene "devolver": no hay endpoint para
+  // dejar una observación a medias en el servidor. Hasta que lo haya, el
+  // borrador se conserva en este equipo, que es lo que evita perder el texto
+  // al salir de la pantalla; el mensaje dice exactamente eso.
+  useEffect(() => {
+    if (!puedeDevolver) return;
+    try {
+      setComentario(localStorage.getItem(claveBorrador(idProyecto)) ?? '');
+    } catch {
+      /* Sin almacenamiento local (modo privado): se empieza en blanco. */
+    }
+  }, [puedeDevolver, idProyecto]);
+
+  const guardarBorrador = () => {
+    try {
+      localStorage.setItem(claveBorrador(idProyecto), comentario);
+      setBorradorGuardado(true);
+    } catch {
+      setBorradorGuardado(false);
+    }
+  };
 
   const enviar = () => {
     onEnviar(respuesta);
@@ -53,40 +89,42 @@ export function RevisionPre({
   const devolver = () => {
     onDevolver?.(comentario);
     setComentario('');
+    setBorradorGuardado(false);
+    try {
+      localStorage.removeItem(claveBorrador(idProyecto));
+    } catch {
+      /* Nada que limpiar si no hay almacenamiento local. */
+    }
   };
 
   return (
-    <section className="card mb-4" aria-labelledby="revision-pre-titulo">
-      <div className="card-header">
-        <h2 id="revision-pre-titulo" className="h6 mb-0">
-          {t('preinversion.revisionPre.titulo')}
-        </h2>
+    <section className="revision-pre" aria-labelledby="revision-pre-titulo">
+      <div className="rp-cabecera">
+        <h2 id="revision-pre-titulo">{t('preinversion.revisionPre.titulo')}</h2>
       </div>
 
-      <div className="card-body">
+      <div className="rp-cuerpo">
         {comentarios.length === 0 ? (
-          <p className="text-muted mb-0">{t('preinversion.revisionPre.sinComentarios')}</p>
+          <p className="rp-vacio">{t('preinversion.revisionPre.sinComentarios')}</p>
         ) : (
-          <ol className="list-unstyled mb-0">
+          <ol className="rp-hilo">
             {comentarios.map((comentario) => {
               const esRespuestaDeLaUnidad = comentario.autor.rol === 'TECNICO_URP';
               return (
                 <li
                   key={comentario.idComentario}
-                  className={`border-start border-3 ps-3 mb-3 ${
-                    esRespuestaDeLaUnidad ? 'border-secondary' : 'border-warning'
-                  }`}
+                  className={esRespuestaDeLaUnidad ? 'rp-mensaje de-urp' : 'rp-mensaje de-pre'}
                 >
-                  <div className="d-flex justify-content-between align-items-baseline gap-2 flex-wrap">
+                  <div className="rp-quien">
                     <strong>{comentario.autor.nombreCompleto}</strong>
-                    <small className="text-muted">
-                      {comentario.autor.rol && <span className="me-2">{comentario.autor.rol}</span>}
+                    <small>
+                      {comentario.autor.rol && <span>{comentario.autor.rol}</span>}
                       <time dateTime={comentario.fechaComentario}>
                         {new Date(comentario.fechaComentario).toLocaleString()}
                       </time>
                     </small>
                   </div>
-                  <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
+                  <p className="rp-texto">
                     {comentario.texto}
                   </p>
                 </li>
@@ -97,10 +135,8 @@ export function RevisionPre({
       </div>
 
       {puedeResponder && (
-        <div className="card-footer bg-white">
-          <label className="form-label" htmlFor="respuesta">
-            {t('preinversion.revisionPre.campoRespuesta')}*
-          </label>
+        <div className="rp-pie">
+          <label htmlFor="respuesta">{t('preinversion.revisionPre.campoRespuesta')}*</label>
           <textarea
             id="respuesta"
             className={errorRespuesta ? 'malo' : undefined}
@@ -109,29 +145,39 @@ export function RevisionPre({
             onChange={(evento) => setRespuesta(evento.target.value)}
             disabled={enviando}
           />
-          {errorRespuesta && <div className="invalid-feedback d-block">{errorRespuesta}</div>}
-          <button type="button" className="btn primario" onClick={enviar} disabled={enviando}>
-            {t('preinversion.revisionPre.botonEnviar')}
-          </button>
+          {errorRespuesta && <span className="error">{errorRespuesta}</span>}
+          <div className="rp-acciones">
+            {onGuardar && (
+              <button type="button" className="btn neutro" onClick={onGuardar} disabled={enviando}>
+                {t('preinversion.registro.botonGuardar')}
+              </button>
+            )}
+            <button type="button" className="btn primario" onClick={enviar} disabled={enviando}>
+              {t('preinversion.revisionPre.botonEnviar')}
+            </button>
+          </div>
         </div>
       )}
 
       {puedeDevolver && (
-        <div className="card-footer bg-white">
-          <label className="form-label" htmlFor="comentarioPre">
-            {t('preinversion.revisionPre.campoComentarios')}
-          </label>
+        <div className="rp-pie">
+          <label htmlFor="comentarioPre">{t('preinversion.revisionPre.campoComentarios')}</label>
           <textarea
             id="comentarioPre"
-            className={undefined}
             rows={3}
             value={comentario}
-            onChange={(evento) => setComentario(evento.target.value)}
+            onChange={(evento) => { setComentario(evento.target.value); setBorradorGuardado(false); }}
             disabled={enviando}
           />
-          <button type="button" className="btn secundario" onClick={devolver} disabled={enviando}>
-            {t('preinversion.revisionPre.botonDevolver')}
-          </button>
+          {borradorGuardado && <output className="rp-aviso">{t('preinversion.revisionPre.borradorGuardado')}</output>}
+          <div className="rp-acciones">
+            <button type="button" className="btn neutro" onClick={guardarBorrador} disabled={enviando}>
+              {t('preinversion.registro.botonGuardar')}
+            </button>
+            <button type="button" className="btn secundario" onClick={devolver} disabled={enviando}>
+              {t('preinversion.revisionPre.botonDevolver')}
+            </button>
+          </div>
         </div>
       )}
     </section>

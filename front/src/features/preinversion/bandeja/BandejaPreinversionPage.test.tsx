@@ -30,9 +30,9 @@ beforeEach(() => {
 describe('CU-PRE-02 Bandeja Preinversión', () => {
   it('muestra columnas, estados, fecha local y conteos separados', async () => {
     abrir(); await screen.findByText('Puente Lempa');
-    for (const nombre of ['Unidad Ejecutora', 'CUP', 'Nombre del Proyecto', 'Fecha de Solicitud', 'Estado', 'Asignado a'])
+    for (const nombre of ['Unidad Ejecutora', 'CUP', 'Nombre de la iniciativa', 'Fecha de Solicitud', 'Estado', 'Asignado a'])
       expect(screen.getAllByRole('columnheader', { name: nombre }).length).toBeGreaterThan(0);
-    expect(screen.getByText('Enviado a DGICP')).toBeInTheDocument();
+    expect(screen.getByText('Enviado_DGICP')).toBeInTheDocument();
     expect(screen.getByText('6/9/2026')).toBeInTheDocument();
     const tabla = screen.getByRole('table', { name: 'Conteo de casos por Técnico PRE' });
     expect(within(tabla).getByText('3')).toBeInTheDocument(); expect(within(tabla).getByText('2')).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe('CU-PRE-02 Bandeja Preinversión', () => {
   });
   it('reasigna un caso observado', async () => {
     mocks.activas.mockResolvedValue(respuesta([{ ...fila, estado: 'OBSERVADO_DGICP_REGISTRO', asignadoA: { idUsuario: 8, nombreCompleto: 'Otro técnico' } }]));
-    abrir(); await screen.findByRole('option', { name: 'Ana Pérez' }); expect(screen.getByText('Observado DGICP')).toBeInTheDocument();
+    abrir(); await screen.findByRole('option', { name: 'Ana Pérez' }); expect(screen.getByText('Observado')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Asignado a Puente Lempa'), { target: { value: '9' } }); fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() => expect(mocks.asignar).toHaveBeenCalledTimes(1));
   });

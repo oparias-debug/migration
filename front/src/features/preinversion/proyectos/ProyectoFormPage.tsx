@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
@@ -24,9 +24,10 @@ import {
   type ProyectoFormValues,
 } from './proyectoFormSchema';
 
+// El orden es el que pidió Rocío en las pruebas del 21/09/2026.
 const INICIATIVA_OPCIONES = [
-  { valor: IniciativaInversion.Programa, labelKey: 'preinversion.registro.opcionPrograma' },
   { valor: IniciativaInversion.Proyecto, labelKey: 'preinversion.registro.opcionProyecto' },
+  { valor: IniciativaInversion.Programa, labelKey: 'preinversion.registro.opcionPrograma' },
   { valor: IniciativaInversion.EstudioGeneral, labelKey: 'preinversion.registro.opcionEstudioGeneral' },
 ] as const;
 
@@ -165,7 +166,7 @@ function useProyectoCargado(
         setRevisionPre(data.revisionPre ?? []);
         setAsignados({
           institucion: data.institucion?.nombre,
-          unidadEjecutora: data.unidadEjecutora?.nombre,
+          unidadEjecutora: data.unidadEjecutora?.nombre ?? 'N/A',
           macrosector: data.sector?.macrosector?.nombre,
           fechaIngreso: data.fechaIngreso,
         });
@@ -215,10 +216,31 @@ export function ProyectoFormPage() {
   const medidasGrc = watch('medidasGrc');
   const medidasAcc = watch('medidasAcc');
 
-  const sectores = useCatalogo(() => catalogoPreinversionApi.listarSectores());
+  const sectoresCatalogo = useCatalogo(() => catalogoPreinversionApi.listarSectores());
+  // "Multisectorial" no es un sector más: Rocío lo quiere al final de la lista.
+  const sectores = useMemo(
+    () => [...sectoresCatalogo].sort((a, b) => Number(/multisector/i.test(a.nombre)) - Number(/multisector/i.test(b.nombre))),
+    [sectoresCatalogo],
+  );
+  // "Se asignará automáticamente de acuerdo con el Sector": se resuelve en
+  // pantalla desde el propio catálogo, que ya trae el macrosector de cada sector.
+  const idSectorElegido = watch('idSector');
+  const macrosectorDelSector = sectores.find((x) => String(x.idSector) === String(idSectorElegido))?.macrosector?.nombre;
   const ejesTematicos = useCatalogo(() => catalogoPreinversionApi.listarEjesTematicos());
   const ejesPlanGobierno = useCatalogo(() => catalogoPreinversionApi.listarEjesPlanGobierno());
   const planesSectoriales = useCatalogo(() => catalogoPreinversionApi.listarPlanesSectoriales());
+
+  // Los catálogos llegan por su cuenta, y pueden hacerlo después de que el
+  // proyecto ya volcó sus valores en el formulario. Un <select> al que se le
+  // asigna un valor que todavía no tiene <option> se queda en blanco, y así se
+  // veía el Sector vacío al reabrir una solicitud (Rocío, 21/09/2026). Al
+  // llegar cada catálogo se le vuelve a escribir al campo el valor que el
+  // formulario ya tiene.
+  useEffect(() => {
+    for (const campo of ['idSector', 'idEjeTematico', 'idEjePlanGobierno', 'idPlanSectorialRegional'] as const) {
+      setValue(campo, getValues(campo));
+    }
+  }, [sectores, ejesTematicos, ejesPlanGobierno, planesSectoriales, getValues, setValue]);
 
   const { puedeEditar, puedeRevisarPre, puedeIrARegistroEtapas } = permisosDelRegistro(
     hasRole,
@@ -416,12 +438,20 @@ export function ProyectoFormPage() {
     try {
       const payload = formValuesToRequest(valores);
       if (esNuevo) {
-        await preinversionApi.registrarProyecto({ proyectoRequest: payload });
-      } else if (idProyecto !== undefined) {
+        const { data } = await preinversionApi.registrarProyecto({ proyectoRequest: payload });
+        await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
+        // Se sigue en la solicitud recién creada, no en el listado: así se puede
+        // continuar trabajando y aparece "Solicitar CUP", que necesita el id.
+        navigate(`/preinversion/proyectos/${data.idProyecto}`, { replace: true });
+        return;
+      }
+      if (idProyecto !== undefined) {
         await preinversionApi.actualizarProyecto({ idProyecto, proyectoRequest: payload });
       }
+      // Guardar no saca de la pantalla; el formulario queda limpio para que
+      // "Solicitar CUP" se habilite sin tener que salir y volver a entrar.
+      reset(valores);
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
-      navigate('/preinversion/proyectos');
     } catch (error_) {
       await manejarErrorDelBack(error_);
     } finally {
@@ -459,11 +489,6 @@ export function ProyectoFormPage() {
         <div className="formcard">
           <div className="formhead">
             <span>{t(esNuevo ? 'preinversion.registro.tituloNuevo' : 'preinversion.registro.tituloEditar')}</span>
-            {estadoActual && (
-              <span className="marca-estado" aria-label={t('preinversion.registro.estadoActual')}>
-                {formatEstado(estadoActual)}
-              </span>
-            )}
           </div>
           <div className="formbody">
             <div className="fr">
@@ -551,7 +576,7 @@ export function ProyectoFormPage() {
             seleccionado" (§B.2). No se pide: se muestra. */}
         <FormRow label={t('preinversion.registro.campoMacrosector')}>
           <p className="campo-asignado">
-            {asignados.macrosector ?? t('preinversion.registro.segunSector')}
+            {macrosectorDelSector ?? asignados.macrosector ?? t('preinversion.registro.segunSector')}
           </p>
         </FormRow>
 
@@ -707,6 +732,8 @@ export function ProyectoFormPage() {
             errorRespuesta={errorRespuesta}
             onEnviar={enviarRespuesta}
             onDevolver={devolverSolicitud}
+            onGuardar={puedeEditar ? handleSubmit(onSubmit) : undefined}
+            idProyecto={idProyecto}
           />
         )}
 

@@ -14,6 +14,7 @@ const emitirCup = vi.fn();
 const navigate = vi.fn();
 const confirmDialog = vi.fn();
 const swalFire = vi.fn();
+const listarSectores = vi.fn();
 
 // Se conservan los enums reales (proyectoLabels y proyectoFormSchema los importan
 // de este mismo módulo); sólo se sustituyen los clientes que salen a la red.
@@ -30,7 +31,7 @@ vi.mock('../../../api/preinversionApi', async (importOriginal) => {
       registrarProyecto: vi.fn(),
     },
     catalogoPreinversionApi: {
-      listarSectores: listaVacia,
+      listarSectores: () => listarSectores(),
       listarEjesTematicos: listaVacia,
       listarEjesPlanGobierno: listaVacia,
       listarPlanesSectoriales: listaVacia,
@@ -124,6 +125,7 @@ beforeEach(() => {
     confirmDialog,
     swalFire,
   ].forEach((mock) => mock.mockReset());
+  listarSectores.mockReset().mockResolvedValue({ data: [] });
   confirmDialog.mockResolvedValue(true);
   swalFire.mockResolvedValue({ isConfirmed: true });
   rolesActivos = ['TECNICO_URP', 'TECNICO_PRE'];
@@ -263,7 +265,7 @@ describe('ProyectoFormPage — Devolver (CU-PRE-01.5-devolver.feature)', () => {
       }),
     );
     expect(confirmDialog).toHaveBeenCalled();
-    expect(await screen.findByText('Observado DGICP (Registro)')).toBeInTheDocument();
+    expect(await screen.findByText(/Observado/)).toBeInTheDocument();
   });
 
   it('no envía comentario si el campo queda vacío (no es obligatorio)', async () => {
@@ -383,7 +385,7 @@ describe('ProyectoFormPage — formulario', () => {
 
     renderizar();
 
-    fireEvent.change(await screen.findByLabelText('Nombre del proyecto*'), {
+    fireEvent.change(await screen.findByLabelText('Nombre de la iniciativa de inversión*'), {
       target: { value: 'Puente sobre el río Lempa — fase II' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -397,7 +399,7 @@ describe('ProyectoFormPage — formulario', () => {
 
     renderizar();
 
-    fireEvent.change(await screen.findByLabelText('Nombre del proyecto*'), { target: { value: '' } });
+    fireEvent.change(await screen.findByLabelText('Nombre de la iniciativa de inversión*'), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
 
     expect(await screen.findByText('*Campo obligatorio')).toBeInTheDocument();
@@ -424,9 +426,12 @@ describe('ProyectoFormPage — formulario', () => {
     renderizar();
 
     // Sin este aviso el usuario sólo ve una pantalla muerta.
-    expect(await screen.findByRole('status')).toHaveTextContent('Enviado a DGICP (Registro)');
-    expect(screen.getByLabelText('Nombre del proyecto*')).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('status')).toHaveTextContent('Enviado_DGICP');
+    expect(screen.getByLabelText('Nombre de la iniciativa de inversión*')).toBeDisabled();
+    // El formulario no se puede guardar. El "Guardar" que sí aparece es el del
+    // borrador de la observación, en la sección Revisión PRE, y no es un submit.
+    expect(screen.queryAllByRole('button', { name: 'Guardar' }).map((b) => b.getAttribute('type')))
+      .not.toContain('submit');
   });
 });
 
@@ -452,7 +457,7 @@ describe('ProyectoFormPage — manejo de errores del back', () => {
     );
 
     renderizar();
-    fireEvent.change(await screen.findByLabelText('Nombre del proyecto*'), { target: { value: 'Otro nombre' } });
+    fireEvent.change(await screen.findByLabelText('Nombre de la iniciativa de inversión*'), { target: { value: 'Otro nombre' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
 
     await waitFor(() => expect(swalFire).toHaveBeenCalled());
@@ -467,7 +472,7 @@ describe('ProyectoFormPage — manejo de errores del back', () => {
     actualizarProyecto.mockRejectedValue(errorSinMensaje(403));
 
     renderizar();
-    fireEvent.change(await screen.findByLabelText('Nombre del proyecto*'), { target: { value: 'Otro nombre' } });
+    fireEvent.change(await screen.findByLabelText('Nombre de la iniciativa de inversión*'), { target: { value: 'Otro nombre' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
 
     await waitFor(() => expect(swalFire).toHaveBeenCalled());
@@ -478,7 +483,7 @@ describe('ProyectoFormPage — manejo de errores del back', () => {
     obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
 
     renderizar();
-    fireEvent.change(await screen.findByLabelText('Nombre del proyecto*'), { target: { value: 'Otro nombre' } });
+    fireEvent.change(await screen.findByLabelText('Nombre de la iniciativa de inversión*'), { target: { value: 'Otro nombre' } });
 
     expect(screen.getByRole('button', { name: 'Solicitar CUP' })).toBeDisabled();
     expect(screen.getByText('Guarde los cambios antes de solicitar el CUP.')).toBeInTheDocument();
@@ -502,7 +507,7 @@ describe('ProyectoFormPage — Revisión PRE, guardado previo', () => {
     renderizar();
     // El escenario dice que el Técnico URP "ajusta los campos correspondientes
     // y/o digita comentarios": si hay cambios, se persisten antes de responder.
-    fireEvent.change(await screen.findByLabelText('Nombre del proyecto*'), { target: { value: 'Nombre corregido' } });
+    fireEvent.change(await screen.findByLabelText('Nombre de la iniciativa de inversión*'), { target: { value: 'Nombre corregido' } });
     fireEvent.change(screen.getByLabelText(/Respuesta/), { target: { value: 'Se amplió el alcance.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
@@ -522,5 +527,26 @@ describe('ProyectoFormPage — Revisión PRE, guardado previo', () => {
 
     expect(await screen.findByText('La respuesta no puede superar los 1000 caracteres.')).toBeInTheDocument();
     expect(swalFire).not.toHaveBeenCalled();
+  });
+});
+
+describe('ProyectoFormPage — catálogos que llegan tarde', () => {
+  // Rocío, 21/09/2026: al reabrir una solicitud el Sector aparecía vacío. Pasa
+  // cuando el catálogo termina de cargar después de que el proyecto ya volcó
+  // sus valores: el <select> descarta un valor sin <option>.
+  it('conserva el Sector aunque su catálogo llegue después del proyecto', async () => {
+    let entregarSectores: (valor: unknown) => void = () => {};
+    listarSectores.mockReturnValue(new Promise((resolve) => { entregarSectores = resolve; }));
+    obtenerProyecto.mockResolvedValue({ data: proyecto('EN_REGISTRO') });
+
+    renderizar();
+    await screen.findByDisplayValue('Construcción de puente sobre el río Lempa');
+    expect((document.querySelector('#idSector') as HTMLSelectElement).value).toBe('');
+
+    entregarSectores({
+      data: [{ idSector: 3, nombre: 'Transporte', macrosector: { idMacrosector: 1, nombre: 'Infraestructura' } }],
+    });
+
+    await waitFor(() => expect((document.querySelector('#idSector') as HTMLSelectElement).value).toBe('3'));
   });
 });

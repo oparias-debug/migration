@@ -209,13 +209,14 @@ function ubicarComoPantalla(pathname: string): UbicacionMenu | null {
   if (pathname === pantalla.ruta) {
     return { modulo, sub, titulo: pantalla.texto, tramos: [...base, { texto: pantalla.texto }] };
   }
-  // Detalle bajo un listado: alta o edición de un registro.
-  const hoja = pathname.endsWith('/nuevo') ? 'ruta.nuevo' : 'ruta.detalle';
+  // Alta de un registro. La ficha de uno existente no añade tramo: "Detalle"
+  // no le dice nada al usuario (Rocío, pruebas del 21/09/2026).
+  if (!pathname.endsWith('/nuevo')) return { modulo, sub, titulo: pantalla.texto, tramos: [...base, { texto: pantalla.texto }] };
   return {
     modulo,
     sub,
     titulo: pantalla.texto,
-    tramos: [...base, { texto: pantalla.texto, ruta: pantalla.ruta }, { texto: hoja }],
+    tramos: [...base, { texto: pantalla.texto, ruta: pantalla.ruta }, { texto: 'ruta.nuevo' }],
   };
 }
 

@@ -4,6 +4,7 @@ import { useAuth } from '../../../auth/useAuth';
 import { bandejaApi, tecnicosPreApi } from '../../../api/bandejaPreinversionApi';
 import type { SolicitudActivaItem, SolicitudArchivadaItem, ConteoTecnicoPre, UsuarioResumen, TipoSolicitud } from '../../../api/bandejaPreinversionApi';
 import { confirmDialog } from '../../../components/ConfirmDialog';
+import { formatEstado } from '../proyectos/proyectoLabels';
 import { Pagination } from '../../../components/table/Pagination';
 import './bandeja.css';
 
@@ -107,14 +108,14 @@ export function BandejaPreinversionPage({ archivadas = false }: { readonly archi
     {aviso && <output className="alert alert-success d-block">{aviso}</output>}
     {cargando ? <output>Cargando solicitudes…</output> : <div className="table-responsive">
       <table className="table table-striped align-middle bandeja-pre">
-        <thead><tr>{['Unidad Ejecutora', 'Tipo de Solicitud', 'CUP', 'Nombre del Proyecto', 'Fecha de Solicitud',
+        <thead><tr>{['CUP', 'Nombre de la iniciativa', 'Tipo de Solicitud', 'Unidad Ejecutora', 'Fecha de Solicitud',
           archivadas ? 'Estado de la solicitud' : 'Estado', archivadas ? 'Fecha de Archivo' : 'Asignado a']
           .map(c => <th key={c} scope="col">{c}</th>)}</tr></thead>
         <tbody>{filas.map(s => {
           const activa = 'estado' in s ? s : undefined;
           let estadoTexto: string;
           if (!activa) estadoTexto = 'Archivado';
-          else estadoTexto = activa.estado === 'OBSERVADO_DGICP_REGISTRO' ? 'Observado DGICP' : 'Enviado a DGICP';
+          else estadoTexto = formatEstado(activa.estado);
           let asignadoContenido: ReactNode;
           if (!activa) asignadoContenido = 'fechaArchivo' in s ? fecha(s.fechaArchivo) : '';
           else if (!coordinador) asignadoContenido = activa.asignadoA?.nombreCompleto ?? 'Sin asignar';
@@ -132,12 +133,14 @@ export function BandejaPreinversionPage({ archivadas = false }: { readonly archi
               onClick={() => void actuar(activa, false)}>Guardar</button>
           </div>;
           return <tr key={s.idSolicitud}>
-            <td>{s.unidadEjecutora.nombre}</td><td>{s.tipoSolicitud === 'CUP' ? 'CUP' : 'Opinión Técnica'}</td>
             <td>{s.cup ?? ''}</td><td className="nombre-solicitud">
               {coordinador && activa && <button type="button" className="btn btn-outline-secondary btn-sm archivar me-2" disabled={ocupado}
                 aria-label={`Archivar ${s.nombreProyecto}`} onClick={() => void actuar(activa, true)}>Archivar</button>}
               {!coordinador && activa ? <Link to={rutaCaso(s)}>{s.nombreProyecto}</Link> : s.nombreProyecto}
-            </td><td>{fecha(s.fechaSolicitud)}</td>
+            </td>
+            <td>{s.tipoSolicitud === 'CUP' ? 'CUP' : 'Opinión Técnica'}</td>
+            <td>{s.unidadEjecutora?.nombre ?? 'N/A'}</td>
+            <td>{fecha(s.fechaSolicitud)}</td>
             <td>{estadoTexto}</td>
             <td>{asignadoContenido}</td>
           </tr>;

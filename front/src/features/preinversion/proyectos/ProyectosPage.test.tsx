@@ -203,4 +203,37 @@ describe('ProyectosPage', () => {
       expect(screen.queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument();
     });
   });
+
+  // Pruebas de Rocío del 21/09/2026: el listado debe ir de lo más reciente a lo
+  // más antiguo, y una institución sin Unidad Ejecutora no deja la celda vacía.
+  describe('orden y celdas vacías', () => {
+    const dos = {
+      data: {
+        contenido: [
+          {
+            idProyecto: 1, nombre: 'La más antigua',
+            unidadEjecutora: { idUnidadEjecutora: 4501, nombre: 'MINSAL' },
+            iniciativaInversion: 'PROYECTO', fechaIngreso: '2026-08-01T09:00:00Z', estado: 'EN_REGISTRO',
+          },
+          {
+            idProyecto: 2, nombre: 'La más reciente',
+            unidadEjecutora: undefined,
+            iniciativaInversion: 'PROYECTO', fechaIngreso: '2026-09-15T09:00:00Z', estado: 'EN_REGISTRO',
+          },
+        ],
+        paginacion: { pagina: 0, tamanio: 20, totalElementos: 2, totalPaginas: 1 },
+      },
+    };
+
+    it('ordena de la más reciente a la más antigua y marca la Unidad Ejecutora vacía', async () => {
+      listarProyectos.mockResolvedValue(dos);
+      montar();
+
+      await screen.findByText('La más reciente');
+      const filas = [...document.querySelectorAll('tbody tr')];
+      expect(filas[0]).toHaveTextContent('La más reciente');
+      expect(filas[0]).toHaveTextContent('N/A');
+      expect(filas[1]).toHaveTextContent('La más antigua');
+    });
+  });
 });

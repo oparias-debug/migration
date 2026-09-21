@@ -10,6 +10,7 @@ import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { Pagination } from '../../../components/table/Pagination';
 import { formatTipoSolicitud, tonoEstado, TIPOS_SOLICITUD, ROL_COORDINADOR } from './bandejaLabels';
+import { formatEstado } from '../proyectos/proyectoLabels';
 
 const TAMANIO_PAGINA = 20;
 
@@ -86,6 +87,13 @@ export function BandejaPage() {
   const fecha = (iso: string) => new Date(iso).toLocaleDateString();
 
   const guardarAsignacion = async (idSolicitud: number) => {
+    const tecnico = tecnicos.find((x) => String(x.idUsuario) === seleccion);
+    const { isConfirmed } = await Swal.fire({
+      text: t('preinversion.bandeja.confirmarAsignar', { tecnico: tecnico?.nombreCompleto ?? '' }),
+      icon: 'question', showCancelButton: true,
+      confirmButtonText: t('common.aceptar'), cancelButtonText: t('common.cancelar'),
+    });
+    if (!isConfirmed) return;
     try {
       await bandejaApi.asignarTecnicoPre({ idSolicitud, asignacionTecnicoPreRequest: { idTecnicoAsignado: Number(seleccion) } });
       setEditando(null); setSeleccion('');
@@ -133,7 +141,7 @@ export function BandejaPage() {
             </select>
           </div>
           <div className="campo">
-            <label htmlFor="tipo">{t('preinversion.bandeja.columnaTipo')}</label>
+            <label htmlFor="tipo">{t('preinversion.bandeja.filtroTipoPermiso')}</label>
             <select id="tipo" value={tipo} onChange={(e) => cambiarFiltro(setTipo)(e.target.value as TipoSolicitud | '')}>
               <option value="">{t('preinversion.registro.filtroTodos')}</option>
               {TIPOS_SOLICITUD.map((x) => <option key={x} value={x}>{formatTipoSolicitud(x)}</option>)}
@@ -146,11 +154,11 @@ export function BandejaPage() {
           <table>
             <thead>
               <tr>
-                <th>{t('preinversion.bandeja.columnaUnidadEjecutora')}</th>
-                <th>{t('preinversion.bandeja.columnaTipo')}</th>
-                <th>{t('preinversion.bandeja.columnaCup')}</th>
-                <th>{t('preinversion.bandeja.columnaProyecto')}</th>
-                <th>{t('preinversion.bandeja.columnaFechaSolicitud')}</th>
+                <th style={{ width: '12%' }}>{t('preinversion.bandeja.columnaCup')}</th>
+                <th style={{ width: '32%' }}>{t('preinversion.bandeja.columnaProyecto')}</th>
+                <th style={{ width: '11%' }}>{t('preinversion.bandeja.columnaTipo')}</th>
+                <th style={{ width: '18%' }}>{t('preinversion.bandeja.columnaUnidadEjecutora')}</th>
+                <th style={{ width: '11%' }}>{t('preinversion.bandeja.columnaFechaSolicitud')}</th>
                 <th>{vista === 'activas' ? t('preinversion.bandeja.columnaEstado') : t('preinversion.bandeja.columnaFechaArchivo')}</th>
                 {vista === 'activas' && <th>{t('preinversion.bandeja.columnaAsignadoA')}</th>}
                 {vista === 'activas' && puedeGestionar && <th />}
@@ -165,14 +173,14 @@ export function BandejaPage() {
                 const item = s as SolicitudActivaItem;
                 return (
                   <tr key={s.idSolicitud}>
-                    <td>{s.unidadEjecutora.nombre}</td>
-                    <td>{formatTipoSolicitud(s.tipoSolicitud)}</td>
                     <td className="mono">{s.cup ?? '—'}</td>
                     <td><b>{s.nombreProyecto}</b></td>
+                    <td>{formatTipoSolicitud(s.tipoSolicitud)}</td>
+                    <td>{s.unidadEjecutora?.nombre ?? 'N/A'}</td>
                     <td>{fecha(s.fechaSolicitud)}</td>
                     <td>
                       {activa
-                        ? <span className={`marca-estado ${tonoEstado(item.estado)}`}>{item.estado}</span>
+                        ? <span className={`marca-estado ${tonoEstado(item.estado)}`}>{formatEstado(item.estado)}</span>
                         : fecha((s as SolicitudArchivadaItem).fechaArchivo)}
                     </td>
                     {activa && (
