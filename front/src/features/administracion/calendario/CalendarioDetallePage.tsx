@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
@@ -11,7 +11,10 @@ import {
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
+import { Pestanas } from '../../../components/Pestanas';
 import { CLAVE_CALENDARIO as CLAVE, ROLES_CALENDARIO } from './CalendarioPage';
+import { CalendarioVisual } from './CalendarioVisual';
+import { aIso, clasificar, mesesDelCalendario } from './diasDelCalendario';
 
 const DIAS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const;
 const MESES = [
@@ -55,7 +58,12 @@ export function CalendarioDetallePage() {
   const { codigo = '' } = useParams<{ codigo: string }>();
   const [calendario, setCalendario] = useState<Calendario | null>(null);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const [indiceMes, setIndiceMes] = useState(0);
+  const [diaElegido, setDiaElegido] = useState<string | null>(null);
+  const [panel, setPanel] = useState<'periodo' | 'excepcion' | 'comprobar'>('periodo');
 
+  // Gestionar es de ADMINISTRADOR / ADMINISTRADOR_CALENDARIO (RN12); consultar
+  // el calendario lo puede hacer cualquier usuario (RN18).
   const puedeAdministrar = ROLES_CALENDARIO.some(hasRole);
 
   const cargar = useCallback(() => {
@@ -69,8 +77,23 @@ export function CalendarioDetallePage() {
   }, [codigo, t]);
 
   useEffect(() => {
-    if (puedeAdministrar) cargar();
-  }, [cargar, puedeAdministrar]);
+    cargar();
+  }, [cargar]);
+
+  // Al abrir un calendario se muestra el mes de hoy si cae dentro de su rango;
+  // si no, el primero. Sólo al abrirlo: recargar tras guardar no debe devolver
+  // al usuario al mes inicial mientras trabaja en otro.
+  const calendarioSituado = useRef<string | null>(null);
+  useEffect(() => {
+    if (!calendario || calendarioSituado.current === calendario.codigo) return;
+    calendarioSituado.current = calendario.codigo;
+    const hoy = aIso(new Date());
+    const meses = mesesDelCalendario(calendario.fechaInicio, calendario.fechaFin);
+    const indiceDeHoy = meses.findIndex(
+      (m) => m.anio === Number(hoy.slice(0, 4)) && m.mes === Number(hoy.slice(5, 7)) - 1,
+    );
+    setIndiceMes(indiceDeHoy >= 0 ? indiceDeHoy : 0);
+  }, [calendario]);
 
   const avisar = async (promesa: Promise<unknown>, exito: string) => {
     try {
@@ -82,13 +105,6 @@ export function CalendarioDetallePage() {
     }
   };
 
-  if (!puedeAdministrar) {
-    return (
-      <p className="aviso-error" role="alert">
-        {t(`${CLAVE}.sinPermiso`)}
-      </p>
-    );
-  }
   if (errorCarga) return <p className="aviso-error">{errorCarga}</p>;
   if (!calendario) return <p className="nota">{t('common.cargando')}</p>;
 
@@ -127,6 +143,17 @@ export function CalendarioDetallePage() {
         </span>
       </div>
       <div className="formbody">
+        {/* El calendario a la izquierda y los diálogos de su definición a la
+            derecha, como lo planteó el cliente para este caso de uso. */}
+        <div className="cal-layout">
+          <div className="cal-izq">
+            <CalendarioVisual
+              calendario={calendario}
+              indiceMes={indiceMes}
+              alCambiarMes={setIndiceMes}
+              diaElegido={diaElegido}
+              alElegirDia={setDiaElegido}
+            />
         <section>
           <h2 className="seccion">{t(`${CLAVE}.datos`)}</h2>
           <div className="fr">
@@ -143,7 +170,7 @@ export function CalendarioDetallePage() {
               <input id="cal-hasta-ver" type="text" value={calendario.fechaFin} readOnly />
             </FormRow>
           </div>
-          <div className="acciones-form">
+          {puedeAdministrar && <div className="acciones-form">
             <button
               type="button"
               className="btn secundario"
@@ -160,8 +187,42 @@ export function CalendarioDetallePage() {
             >
               {t(`${CLAVE}.activar`)}
             </button>
-          </div>
+          </div>}
         </section>
+          </div>
+          <div className="cal-der">
+        <DetalleDia
+          calendario={calendario}
+          fecha={diaElegido}
+          puedeAdministrar={puedeAdministrar}
+          alGuardar={cargar}
+        />
+
+        {/* Los diálogos de la definición, uno a la vez: puestos en fila, el
+            panel medía tres pantallas de alto. Las consultas de cálculo no
+            piden rol (RN18); agregar y registrar sí (RN12). */}
+        <Pestanas
+          etiqueta={`${CLAVE}.paneles`}
+          activa={panel}
+          onCambiar={setPanel}
+          pestanas={[
+            ...(puedeAdministrar
+              ? ([
+                  { clave: 'periodo' as const, texto: `${CLAVE}.nuevoPeriodo` },
+                  { clave: 'excepcion' as const, texto: `${CLAVE}.nuevaExcepcion` },
+                ])
+              : []),
+            { clave: 'comprobar' as const, texto: `${CLAVE}.comprobar` },
+          ]}
+        />
+        {puedeAdministrar && panel === 'periodo' && <NuevoPeriodo codigo={codigo} alGuardar={cargar} />}
+        {puedeAdministrar && panel === 'excepcion' && (
+          <NuevaExcepcion codigo={codigo} alGuardar={cargar} fechaInicial={diaElegido} />
+        )}
+        {panel === 'comprobar' && <Consultas codigo={codigo} fechaInicial={diaElegido} />}
+          </div>
+        </div>
+
 
         <section>
           <h2 className="seccion">{t(`${CLAVE}.definicion`)}</h2>
@@ -176,7 +237,7 @@ export function CalendarioDetallePage() {
                     <th>{t(`${CLAVE}.codigo`)}</th>
                     <th>{t(`${CLAVE}.nombre`)}</th>
                     <th>{t(`${CLAVE}.repeticion`)}</th>
-                    <th>{t('common.acciones')}</th>
+                    {puedeAdministrar && <th>{t('common.acciones')}</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -186,16 +247,18 @@ export function CalendarioDetallePage() {
                       <td className="mono">{i.tipoItem === 'EXCEPCION' ? i.fecha : i.codigo}</td>
                       <td>{i.tipoItem === 'EXCEPCION' ? (i.descripcion ?? '—') : i.nombre}</td>
                       <td>{repeticionEnTexto(i, t)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn neutro"
-                          aria-label={t(`${CLAVE}.quitarItem`, { codigo: i.tipoItem === 'EXCEPCION' ? i.fecha : i.codigo })}
-                          onClick={() => quitar(i)}
-                        >
-                          {t(`${CLAVE}.quitar`)}
-                        </button>
-                      </td>
+                      {puedeAdministrar && (
+                        <td>
+                          <button
+                            type="button"
+                            className="btn neutro"
+                            aria-label={t(`${CLAVE}.quitarItem`, { codigo: i.tipoItem === 'EXCEPCION' ? i.fecha : i.codigo })}
+                            onClick={() => quitar(i)}
+                          >
+                            {t(`${CLAVE}.quitar`)}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -204,10 +267,6 @@ export function CalendarioDetallePage() {
           )}
         </section>
 
-        <NuevoPeriodo codigo={codigo} alGuardar={cargar} />
-        <NuevaExcepcion codigo={codigo} alGuardar={cargar} />
-        <Consultas codigo={codigo} />
-
         <div className="acciones-form">
           <button type="button" className="btn neutro" onClick={() => navigate('/administracion/calendario')}>
             {t('common.regresar')}
@@ -215,6 +274,87 @@ export function CalendarioDetallePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * El día elegido en la rejilla: qué tipo resulta, por qué —qué períodos o
+ * excepción lo cubren— y, para quien administra, el atajo para reclasificarlo
+ * con una excepción (HU-ADM-04-04) sin bajar al formulario.
+ */
+function DetalleDia({
+  calendario,
+  fecha,
+  puedeAdministrar,
+  alGuardar,
+}: {
+  readonly calendario: Calendario;
+  readonly fecha: string | null;
+  readonly puedeAdministrar: boolean;
+  readonly alGuardar: () => void;
+}) {
+  const { t } = useTranslation();
+  const [guardando, setGuardando] = useState(false);
+
+  if (!fecha) return <p className="nota">{t(`${CLAVE}.elijaUnDia`)}</p>;
+
+  const { tipo, cubren } = clasificar(calendario.items ?? [], fecha);
+
+  const marcarDia = async (tipoExcepcion: 'DIA_LABORAL' | 'DIA_NO_LABORAL') => {
+    const { isConfirmed, value } = await Swal.fire({
+      icon: 'question',
+      text: t(`${CLAVE}.motivoExcepcion`, { fecha }),
+      input: 'text',
+      inputPlaceholder: t(`${CLAVE}.descripcionExcepcion`),
+      showCancelButton: true,
+      confirmButtonText: t('common.aceptar'),
+      cancelButtonText: t('common.cancelar'),
+    });
+    if (!isConfirmed) return;
+    setGuardando(true);
+    try {
+      await calendariosApi.registrarExcepcion({
+        codigoCalendario: calendario.codigo,
+        registrarExcepcionRequest: { fecha, tipo: tipoExcepcion, descripcion: (value as string)?.trim() || undefined },
+      });
+      await Swal.fire({ icon: 'success', text: t(`${CLAVE}.excepcionRegistrada`) });
+      alGuardar();
+    } catch (error_) {
+      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <section className="cal-dia">
+      <h2 className="seccion">{fecha}</h2>
+      <p className={`cal-dia-tipo ${tipo === 'LABORAL' ? 'es-laboral' : ''} ${tipo === 'NO_LABORAL' ? 'es-no-laboral' : ''}`}>
+        {t(`${CLAVE}.tiposDiaTitulo.${tipo ?? 'SIN_DEFINIR'}`)}
+      </p>
+      {cubren.length === 0 ? (
+        <p className="nota">{t(`${CLAVE}.diaSinPeriodo`)}</p>
+      ) : (
+        <ul className="cal-porque">
+          {cubren.map((item) => (
+            <li key={item.id}>
+              <b>{t(`${CLAVE}.tiposItem.${item.tipoItem}`)}</b>{' '}
+              {item.tipoItem === 'EXCEPCION' ? (item.descripcion ?? item.fecha) : `${item.nombre} (${item.codigo})`}
+            </li>
+          ))}
+        </ul>
+      )}
+      {puedeAdministrar && (
+        <div className="acciones-form">
+          <button type="button" className="btn secundario" disabled={guardando} onClick={() => marcarDia('DIA_NO_LABORAL')}>
+            {t(`${CLAVE}.marcarNoLaboral`)}
+          </button>
+          <button type="button" className="btn secundario" disabled={guardando} onClick={() => marcarDia('DIA_LABORAL')}>
+            {t(`${CLAVE}.marcarLaboral`)}
+          </button>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -349,9 +489,21 @@ function NuevoPeriodo({ codigo, alGuardar }: { readonly codigo: string; readonly
 }
 
 /** Excepciones: un día suelto que rompe la regla del período. */
-function NuevaExcepcion({ codigo, alGuardar }: { readonly codigo: string; readonly alGuardar: () => void }) {
+function NuevaExcepcion({
+  codigo,
+  alGuardar,
+  fechaInicial,
+}: {
+  readonly codigo: string;
+  readonly alGuardar: () => void;
+  readonly fechaInicial?: string | null;
+}) {
   const { t } = useTranslation();
   const [fecha, setFecha] = useState('');
+  // Elegir un día en la rejilla rellena la fecha del formulario.
+  useEffect(() => {
+    if (fechaInicial) setFecha(fechaInicial);
+  }, [fechaInicial]);
   const [tipo, setTipo] = useState<'DIA_LABORAL' | 'DIA_NO_LABORAL'>('DIA_NO_LABORAL');
   const [descripcion, setDescripcion] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -409,9 +561,12 @@ function NuevaExcepcion({ codigo, alGuardar }: { readonly codigo: string; readon
  * Consultas de cálculo: son las que usa el back para contar días hábiles, y
  * aquí sirven para comprobar que lo cargado se comporta como se espera.
  */
-function Consultas({ codigo }: { readonly codigo: string }) {
+function Consultas({ codigo, fechaInicial }: { readonly codigo: string; readonly fechaInicial?: string | null }) {
   const { t } = useTranslation();
   const [fecha, setFecha] = useState('');
+  useEffect(() => {
+    if (fechaInicial) setFecha(fechaInicial);
+  }, [fechaInicial]);
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
   const [respuesta, setRespuesta] = useState<string | null>(null);

@@ -760,8 +760,25 @@
       "faltaFecha": "Indique la fecha de la excepción.",
       "tiposDia": {
         "LABORAL": "laboral",
-        "NO_LABORAL": "no laboral"
-      }
+        "NO_LABORAL": "no laboral",
+        "SIN_DEFINIR": "sin definir"
+      },
+      "mesAnterior": "Mes anterior",
+      "mesSiguiente": "Mes siguiente",
+      "tituloRejilla": "Días del calendario {{calendario}}",
+      "diaEtiqueta": "{{fecha}}: {{tipo}}",
+      "conExcepcion": "Con excepción",
+      "elijaUnDia": "Elija un día del calendario para ver cómo queda clasificado.",
+      "diaSinPeriodo": "Este día no está dentro de ningún período definido.",
+      "marcarNoLaboral": "Marcar como no laboral",
+      "marcarLaboral": "Marcar como laboral",
+      "motivoExcepcion": "Motivo de la excepción del {{fecha}}",
+      "tiposDiaTitulo": {
+        "LABORAL": "Día laboral",
+        "NO_LABORAL": "Día no laboral",
+        "SIN_DEFINIR": "Sin definir"
+      },
+      "paneles": "Definición del calendario"
     }
   },
   "pasos": {

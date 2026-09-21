@@ -145,6 +145,8 @@ describe('CU-ADM-04 · calendario', () => {
     registrarExcepcion.mockResolvedValue({ data: {} });
     montarFicha();
     await screen.findByText('Fines de semana');
+    // Los diálogos van en pestañas: primero se abre el de excepciones.
+    fireEvent.click(screen.getByRole('tab', { name: 'Registrar excepción' }));
     fireEvent.change(screen.getByLabelText('Fecha*'), { target: { value: '2026-05-01' } });
     fireEvent.change(screen.getByLabelText('Descripción', { selector: '#exc-descripcion' }), { target: { value: 'Día del trabajo' } });
     fireEvent.click(screen.getByRole('button', { name: 'Registrar excepción' }));
@@ -185,6 +187,7 @@ describe('CU-ADM-04 · calendario', () => {
     consultarTipoDia.mockResolvedValue({ data: { fecha: '2026-12-25', tipo: 'NO_LABORAL' } });
     montarFicha();
     await screen.findByText('Fines de semana');
+    fireEvent.click(screen.getByRole('tab', { name: 'Comprobar' }));
     fireEvent.change(screen.getByLabelText('Fecha', { selector: '#con-fecha' }), { target: { value: '2026-12-25' } });
     fireEvent.click(screen.getByRole('button', { name: '¿Qué tipo de día es?' }));
     expect(await screen.findByText('Ese día es: no laboral')).toBeInTheDocument();
