@@ -186,6 +186,17 @@ export function ProyectoFormPage() {
   const esNuevo = idProyecto === undefined;
 
   const [guardando, setGuardando] = useState(false);
+  /**
+   * La solicitud de CUP de este proyecto está archivada.
+   *
+   * El Coordinador PRE puede archivar una solicitud (CU-PRE-02) sin que cambie
+   * el estado del proyecto, y `Proyecto` no trae ese dato: la pantalla seguía
+   * ofreciendo "Devolver" y "Emitir CUP" y el back los rechazaba con un
+   * mensaje que contradecía a la franja azul —"archivada" frente a
+   * "Enviado_DGICP"— (Rocío, pruebas del 21/09/2026). Hasta que el contrato lo
+   * exponga, se aprende del 409 y la pantalla lo dice y deja de ofrecerlos.
+   */
+  const [solicitudArchivada, setSolicitudArchivada] = useState(false);
   const [errorRespuesta, setErrorRespuesta] = useState<string | undefined>();
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
 
@@ -270,6 +281,9 @@ export function ProyectoFormPage() {
    */
   const manejarErrorDelBack = async (fallo: unknown) => {
     const error = toErrorApi(fallo);
+    // Se reconoce por el mensaje porque el back usa un único código de
+    // conflicto de estado; pedido a Cristian un dato propio en el contrato.
+    if (error.clase === 'conflicto' && /archivad/i.test(error.mensaje ?? '')) setSolicitudArchivada(true);
     const porCampo = erroresPorCampo(error);
 
     // Un mensaje sólo se considera "mostrado en su campo" si ese campo está
@@ -483,6 +497,12 @@ export function ProyectoFormPage() {
         <output className="aviso-consulta">
           {t('preinversion.registro.soloConsulta', { estado: formatEstado(estadoActual) })}
         </output>
+      )}
+
+      {solicitudArchivada && (
+        <div className="aviso-error" role="alert">
+          {t('preinversion.registro.solicitudArchivada')}
+        </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -727,7 +747,7 @@ export function ProyectoFormPage() {
           <RevisionPre
             comentarios={revisionPre}
             puedeResponder={puedeEditar && estadoActual === 'OBSERVADO_DGICP_REGISTRO'}
-            puedeDevolver={puedeRevisarPre}
+            puedeDevolver={puedeRevisarPre && !solicitudArchivada}
             enviando={guardando}
             errorRespuesta={errorRespuesta}
             onEnviar={enviarRespuesta}
@@ -778,7 +798,7 @@ export function ProyectoFormPage() {
               {t('preinversion.registro.botonSolicitarCup')}
             </button>
           )}
-          {puedeRevisarPre && (
+          {puedeRevisarPre && !solicitudArchivada && (
             <button type="button" className="btn secundario" onClick={emitirCup} disabled={guardando}>
               {t('preinversion.registro.botonEmitirCup')}
             </button>

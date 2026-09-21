@@ -550,3 +550,32 @@ describe('ProyectoFormPage — catálogos que llegan tarde', () => {
     await waitFor(() => expect((document.querySelector('#idSector') as HTMLSelectElement).value).toBe('3'));
   });
 });
+
+describe('ProyectoFormPage — solicitud archivada', () => {
+  // El Coordinador PRE puede archivar la solicitud sin que cambie el estado del
+  // proyecto, y el proyecto no trae ese dato: la pantalla ofrecía "Devolver" y
+  // "Emitir CUP" y el back los rechazaba contradiciendo a la franja azul
+  // (Rocío, 21/09/2026). Se aprende del 409 y se deja de ofrecerlos.
+  it('tras el 409 de archivada lo dice y retira Devolver y Emitir CUP', async () => {
+    rolesActivos = ['TECNICO_PRE'];
+    obtenerProyecto.mockResolvedValue({ data: proyecto('ENVIADO_DGICP_REGISTRO') });
+    const config = { headers: new AxiosHeaders() };
+    emitirCup.mockRejectedValue(
+      new AxiosError('Request failed', '409', config, {}, {
+        status: 409,
+        statusText: '',
+        data: { codigo: 'CONFLICTO_ESTADO', mensaje: 'La solicitud de CUP está archivada.' },
+        headers: {},
+        config,
+      }),
+    );
+
+    renderizar();
+    expect(await screen.findByRole('button', { name: 'Devolver' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Emitir CUP' }));
+
+    expect(await screen.findByText(/está archivada/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Emitir CUP' })).not.toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Devolver' })).not.toBeInTheDocument();
+  });
+});
