@@ -1,8 +1,8 @@
 # language: es
-@UC-PRE-03 @rol:TECNICO_URP @rol:TECNICO_PRE @rol:COORDINADOR_PRE @rol:VIABILIZADOR
+@UC-PRE-03 @rol:TECNICO_URP @rol:TECNICO_PRE @rol:COORDINADOR_PRE @rol:VIABILIZADOR @rol:SISTEMA
 Característica: Navegar al Registro de Etapas desde el CUP de un proyecto
 
-  Como Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador
+  Como Técnico URP, Técnico PRE, Coordinador PRE o Viabilizador
   Quiero hacer clic en el CUP de un proyecto para ir a la pantalla de Registro de Etapas
   Para continuar el flujo del proyecto en CU-PRE-03.5 "Selección y registro de etapas"
 

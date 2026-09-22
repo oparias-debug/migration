@@ -16,6 +16,9 @@ Característica: Registrar el costo y las fechas de las etapas de la Ruta de Pre
     Y se mantiene en la pantalla del Anexo A.1
     Y habilita los botones de las etapas para visualización o registro de información
 
+  Escenario: Listar las etapas en el orden de la Ruta de Preinversión, no alfabético
+    Entonces las etapas se listan en el orden Perfil, Prefactibilidad, Factibilidad, Diseño, Ejecución
+
   Esquema del escenario: Intentar guardar una etapa con un campo obligatorio incompleto
     Cuando el Técnico URP hace clic en "Guardar" sin haber completado el campo "<campo>" de una etapa
     Entonces el sistema marca en rojo el borde del campo "<campo>" (RN19)
@@ -29,6 +32,16 @@ Característica: Registrar el costo y las fechas de las etapas de la Ruta de Pre
   Esquema del escenario: Intentar registrar una fecha en un formato distinto a dd/mm/aaaa
     Cuando el Técnico URP intenta registrar "Fecha estimada de inicio" o "Fecha estimada de finalización" en un formato distinto de dd/mm/aaaa
     Entonces el sistema no acepta el valor, ya que el formato obligatorio es dd/mm/aaaa (RN04)
+
+  Escenario: Rechazar fechas de una etapa que inician antes de que finalice la etapa previa de la ruta
+    Dado que el Técnico URP registró la etapa "Perfil" con fechas del "01/01/2026" al "30/06/2026"
+    Cuando el Técnico URP intenta guardar la etapa "Prefactibilidad" con fecha de inicio "01/03/2026" y fecha de finalización "31/12/2026"
+    Entonces el sistema rechaza la operación por inconsistencia en el orden de las fechas de las etapas
+
+  Escenario: Rechazar fechas inconsistentes entre etapas no adyacentes de la ruta, saltando una etapa intermedia sin fechas
+    Dado que el Técnico URP registró la etapa "Perfil" con fechas del "01/01/2028" al "30/06/2028"
+    Cuando el Técnico URP intenta guardar la etapa "Factibilidad" con fecha de inicio "01/01/2027" y fecha de finalización "31/12/2027"
+    Entonces el sistema rechaza la operación por inconsistencia en el orden de las fechas de las etapas
 
   Esquema del escenario: Habilitación por defecto de los botones de etapa según el tipo de iniciativa
     Dado un proyecto con Iniciativa de Inversión "<iniciativa>"
