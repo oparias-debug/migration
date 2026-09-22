@@ -33,7 +33,7 @@
     "generate:api:administracion-cu-adm-04": "openapi-generator-cli generate -i openapi/administracion/calendario/CU-ADM-04-gestion-de-calendario.openapi.yaml -g typescript-axios -o src/api/generated/administracion-calendario --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "generate:api:preinversion-cu-pre-12": "openapi-generator-cli generate -i openapi/preinversion/CU-PRE-12.openapi.yaml -g typescript-axios -o src/api/generated/preinversion-localizacion --additional-properties=supportsES6=true,withInterfaces=true,useSingleRequestParameter=true",
     "gate": "node scripts/comprobar-quality-gate.mjs",
-    "verificar": "npm run sonar && npm run gate"
+    "verificar": "tsc -b && npm run sonar && npm run gate"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
