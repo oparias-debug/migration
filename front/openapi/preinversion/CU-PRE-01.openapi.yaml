@@ -374,7 +374,7 @@ paths:
     put:
       operationId: cambiarUnidadEjecutoraProyecto
       summary: Cambiar la Unidad Ejecutora de un proyecto (RN 4)
-      description: 'Único cambio administrativo permitido en cualquier etapa/estado del proyecto. Reservado exclusivamente al Administrador del Sistema en la DGICP.
+      description: 'Único cambio administrativo permitido en cualquier etapa/estado del proyecto. Reservado exclusivamente al Administrador en la DGICP.
 
         '
       tags:
@@ -403,7 +403,7 @@ paths:
               schema:
                 $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
         '403':
-          description: El actor autenticado no es Administrador del Sistema.
+          description: El actor autenticado no es Administrador.
           content:
             application/json:
               schema:
