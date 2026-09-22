@@ -122,7 +122,9 @@ describe('FichaEmergenciaPage', () => {
     expect(solicitud.fichaEmergenciaRequest.planteamientoProblema).toBe('Deslizamientos de tierra.');
     expect(solicitud.fichaEmergenciaRequest.productos).toEqual([{ codigoProducto: 'PROD-1' }]);
     expect(solicitud.fichaEmergenciaRequest.distrito).toBe('San Salvador');
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/etapas'));
+    // Guardar ya no saca de la ficha: se queda y ofrece "Enviar a viabilidad".
+    expect(await screen.findByRole('button', { name: 'Enviar a viabilidad' })).toBeDisabled();
+    expect(navigate).not.toHaveBeenCalledWith('/preinversion/proyectos/7/etapas');
   });
 
   it('marca los campos que el back devuelve en un 400 "Existen campos sin diligenciar"', async () => {

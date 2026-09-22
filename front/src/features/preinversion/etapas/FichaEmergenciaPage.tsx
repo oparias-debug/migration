@@ -119,6 +119,15 @@ export function FichaEmergenciaPage() {
     );
   };
 
+  /**
+   * La ficha ya se guardó en esta visita: aparece "Enviar a viabilidad".
+   *
+   * El envío todavía no existe en el contrato —CU-PRE-03.5 sólo tiene
+   * consultar y registrar la ficha—, así que el botón se muestra desactivado y
+   * dice por qué, en vez de prometer una acción que el servidor no ofrece.
+   */
+  const [guardada, setGuardada] = useState(false);
+
   const onSubmit = async (valores: FichaEmergenciaFormValues) => {
     setGuardando(true);
     try {
@@ -143,8 +152,10 @@ export function FichaEmergenciaPage() {
         },
       });
       reset(fichaToFormValues(data));
+      // Guardar deja la ficha en pantalla y habilita "Enviar a viabilidad"
+      // (Rocío, 22/09/2026); antes devolvía al Registro de Etapas.
+      setGuardada(true);
       await Swal.fire({ icon: 'success', text: t('preinversion.fichaEmergencia.mensajeGuardado') });
-      navigate(`/preinversion/proyectos/${idProyecto}/etapas`);
     } catch (error_) {
       const error = toErrorApi(error_);
       const porCampo = erroresPorCampo(error);
@@ -379,7 +390,20 @@ export function FichaEmergenciaPage() {
                 {t('preinversion.registro.botonGuardar')}
               </button>
             )}
+            {puedeEditar && guardada && (
+              <button
+                type="button"
+                className="btn secundario"
+                disabled
+                title={t('preinversion.fichaEmergencia.viabilidadPendiente')}
+              >
+                {t('preinversion.fichaEmergencia.botonEnviarViabilidad')}
+              </button>
+            )}
           </div>
+          {puedeEditar && guardada && (
+            <p className="nota-form">{t('preinversion.fichaEmergencia.viabilidadPendiente')}</p>
+          )}
         </form>
       </div>
     </div>

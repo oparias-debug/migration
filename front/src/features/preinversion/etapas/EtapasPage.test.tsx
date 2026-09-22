@@ -141,4 +141,23 @@ describe('EtapasPage', () => {
     expect(screen.getByText('Bloqueada por modificación')).toBeInTheDocument();
     screen.getAllByRole('textbox').forEach((input) => expect(input).toBeDisabled());
   });
+
+  // Rocío, 22/09/2026: sólo se formula la etapa habilitada, y el orden de las
+  // etapas es perfil, prefactibilidad, factibilidad, diseño, ejecución.
+  it('ordena las etapas y sólo ofrece formular la habilitada', async () => {
+    listarEtapas.mockResolvedValue({
+      data: [
+        etapa({ nombreEtapa: 'EJECUCION', habilitadoParaRegistro: false }),
+        etapa({ nombreEtapa: 'PERFIL', habilitadoParaRegistro: true }),
+        etapa({ nombreEtapa: 'FACTIBILIDAD', habilitadoParaRegistro: false }),
+      ],
+    });
+    obtenerProyecto.mockResolvedValue({ data: { esProyectoEmergencia: false } });
+    renderizar();
+
+    const filas = await screen.findAllByRole('row');
+    const etapas = filas.slice(1).map((f) => f.querySelector('td')?.textContent);
+    expect(etapas).toEqual(['Perfil', 'Factibilidad', 'Ejecución']);
+    expect(screen.getAllByRole('button', { name: 'Formular' })).toHaveLength(1);
+  });
 });

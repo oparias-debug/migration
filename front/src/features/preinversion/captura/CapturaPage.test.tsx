@@ -126,7 +126,9 @@ describe('CapturaPage', () => {
 // CU-PRE-03-navegar-registro-etapas.feature (FA-01): el CUP abre "Registro de
 // Etapas", que es la entrada a los pasos del proyecto, no la ficha del registro.
 describe('CapturaPage · navegación desde el CUP', () => {
-  it('el CUP lleva a Registro de Etapas del proyecto', async () => {
+  // Rocío, 22/09/2026: al entrar al proyecto por este proceso, lo primero que
+  // se ve es la matriz de criterios de la Ruta de Preinversión.
+  it('el CUP lleva a la Ruta de Preinversión del proyecto', async () => {
     navigate.mockReset();
     listarProyectosCaptura.mockResolvedValue(RESPUESTA);
     render(
@@ -135,7 +137,7 @@ describe('CapturaPage · navegación desde el CUP', () => {
       </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole('button', { name: '10001' }));
-    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/etapas');
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/ruta-preinversion');
   });
 });
 
@@ -162,6 +164,6 @@ describe('CapturaPage · entrada a cada proceso', () => {
       </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole('button', { name: '10001' }));
-    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/etapas?grupo=gestion');
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/ruta-preinversion?grupo=gestion');
   });
 });

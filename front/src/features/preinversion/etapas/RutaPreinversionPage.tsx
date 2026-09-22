@@ -38,6 +38,13 @@ export function RutaPreinversionPage() {
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [esIniciativaProyecto, setEsIniciativaProyecto] = useState(false);
+  /**
+   * Los cuatro caminos del proceso (Rocío, 22/09/2026): un proyecto de
+   * emergencia no lleva ruta y se diligencia en su ficha; un proyecto la
+   * genera y elige etapas; un programa y unos estudios generales tampoco la
+   * llevan, porque sus dos etapas —perfil y ejecución— ya están definidas.
+   */
+  const [esEmergencia, setEsEmergencia] = useState(false);
   const [etapasAceptadas, setEtapasAceptadas] = useState<NombreEtapa[]>([]);
   const [fueModificada, setFueModificada] = useState(false);
   const [sugerencia, setSugerencia] = useState<RutaPreinversionSugerida | null>(null);
@@ -62,6 +69,7 @@ export function RutaPreinversionPage() {
     Promise.all([preinversionApi.obtenerProyecto({ idProyecto }), etapasApi.obtenerRutaPreinversion({ idProyecto })])
       .then(([proyectoRes, rutaRes]) => {
         setEsIniciativaProyecto(proyectoRes.data.iniciativaInversion === IniciativaInversion.Proyecto);
+        setEsEmergencia(proyectoRes.data.esProyectoEmergencia ?? false);
         setEtapasAceptadas(rutaRes.data.etapasAceptadas);
         setFueModificada(rutaRes.data.fueModificada);
         setEtapasSeleccionadas(rutaRes.data.etapasAceptadas);
@@ -155,13 +163,28 @@ export function RutaPreinversionPage() {
         <span>{t('preinversion.rutaPreinversion.titulo')}</span>
       </div>
       <div className="formbody">
-        {!esIniciativaProyecto && (
+        {esEmergencia && (
+          <>
+            <p className="aviso-consulta">{t('preinversion.rutaPreinversion.rutaEmergencia')}</p>
+            <div className="acciones-form">
+              <button
+                type="button"
+                className="btn primario"
+                onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/ficha-emergencia`)}
+              >
+                {t('preinversion.rutaPreinversion.irFichaEmergencia')}
+              </button>
+            </div>
+          </>
+        )}
+
+        {!esEmergencia && !esIniciativaProyecto && (
           // RN07/RN08: Programa y Estudios Generales no califican criterios; el botón
           // "Ruta de Preinversión" queda desactivado y la ruta ya viene fija.
           <p className="aviso-consulta">{t('preinversion.rutaPreinversion.rutaFijaProgramaEstudio')}</p>
         )}
 
-        {esIniciativaProyecto && etapasAceptadas.length > 0 && !modificando && (
+        {esIniciativaProyecto && !esEmergencia && etapasAceptadas.length > 0 && !modificando && (
           <div className="fr">
             <FormRow label={t('preinversion.rutaPreinversion.etapasVigentes')} ancho>
               <p className="campo-asignado">{etapasAceptadas.map(formatNombreEtapa).join(', ')}</p>
@@ -170,7 +193,7 @@ export function RutaPreinversionPage() {
           </div>
         )}
 
-        {esIniciativaProyecto && !modificando && (
+        {esIniciativaProyecto && !esEmergencia && !modificando && (
           <>
             {!sugerencia ? (
               puedeGestionar && (
@@ -237,7 +260,7 @@ export function RutaPreinversionPage() {
           </>
         )}
 
-        {esIniciativaProyecto && modificando && puedeGestionar && (
+        {esIniciativaProyecto && !esEmergencia && modificando && puedeGestionar && (
           <div className="fr">
             <FormRow label={t('preinversion.rutaPreinversion.seleccioneEtapas')} ancho>
               <div className="radios">

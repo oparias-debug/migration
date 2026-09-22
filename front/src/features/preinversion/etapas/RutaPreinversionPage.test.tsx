@@ -69,7 +69,7 @@ describe('RutaPreinversionPage', () => {
 
     renderizar();
 
-    expect(await screen.findByText(/ruta ya viene fija/)).toBeInTheDocument();
+    expect(await screen.findByText(/sus etapas ya están definidas/i)).toBeInTheDocument();
     expect(screen.queryByLabelText('Tipo de capital')).not.toBeInTheDocument();
   });
 

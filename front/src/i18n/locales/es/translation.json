@@ -171,7 +171,7 @@
     },
     "rutaPreinversion": {
       "titulo": "Ruta de Preinversión",
-      "rutaFijaProgramaEstudio": "Para Programa/Estudios Generales la ruta ya viene fija (Perfil, Ejecución); no se califican criterios.",
+      "rutaFijaProgramaEstudio": "Un programa y unos estudios generales no llevan Ruta de Preinversión: sus etapas ya están definidas —Perfil y Ejecución— y sólo Perfil se habilita para la formulación.",
       "etapasVigentes": "Etapas vigentes",
       "rutaFueModificada": "Esta ruta fue modificada manualmente.",
       "etapasSugeridas": "Etapas sugeridas",
@@ -187,7 +187,9 @@
       "botonModificar": "Modificar",
       "botonGuardarModificacion": "Guardar modificación",
       "rutaAceptada": "La Ruta de Preinversión ha sido aceptada exitosamente.",
-      "rutaModificada": "La Ruta de Preinversión ha sido modificada exitosamente."
+      "rutaModificada": "La Ruta de Preinversión ha sido modificada exitosamente.",
+      "rutaEmergencia": "Este es un proyecto de emergencia: no lleva Ruta de Preinversión. Su etapa de Perfil queda habilitada y se diligencia en la Ficha de proyectos de emergencia.",
+      "irFichaEmergencia": "Ir a la Ficha de emergencia"
     },
     "registroEtapas": {
       "titulo": "Registro de Etapas",
@@ -204,7 +206,11 @@
       "mensajeGuardado": "¡Guardado! La información de las etapas ha sido guardada exitosamente.",
       "botonRutaPreinversion": "Ruta de Preinversión",
       "botonFichaGeneral": "Ficha de información general",
-      "botonFichaEmergencia": "Ficha de emergencia"
+      "botonFichaEmergencia": "Ficha de emergencia",
+      "botonFormular": "Formular",
+      "aunNoHabilitada": "Se habilita al aprobar la etapa anterior",
+      "estadoPendiente": "Pendiente",
+      "etapaCerrada": "Etapa con opinión técnica"
     },
     "fichaGeneral": {
       "titulo": "Ficha de información general",
@@ -238,7 +244,9 @@
       "campoCostosMantenimiento": "Costos de mantenimiento",
       "campoFuentesFinanciamiento": "Fuentes de Financiamiento",
       "campoFuenteRecursos": "Fuente de Recursos",
-      "mensajeGuardado": "¡Guardado! La Ficha de proyectos de emergencia ha sido guardada exitosamente."
+      "mensajeGuardado": "¡Guardado! La Ficha de proyectos de emergencia ha sido guardada exitosamente.",
+      "botonEnviarViabilidad": "Enviar a viabilidad",
+      "viabilidadPendiente": "El envío a viabilidad todavía no existe en el contrato del API (CU-PRE-03.5 sólo registra y consulta la ficha); el botón queda a la vista y se habilitará cuando el back lo publique."
     },
     "alternativasSolucion": {
       "titulo": "Registro de Alternativas de Solución",

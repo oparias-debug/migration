@@ -8,8 +8,22 @@ import { etapasApi, preinversionApi } from '../../../api/preinversionApi';
 import type { Etapa } from '../../../api/preinversionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
-import { formatNombreEtapa } from './etapasLabels';
+import { formatNombreEtapa, NOMBRE_ETAPA_OPCIONES } from './etapasLabels';
+import { entradaDeGrupo } from '../pasos/pasosProyecto';
 import { actualizarEtapasSchema, conSeparadorDeMiles, sinSeparadorDeMiles, type ActualizarEtapasFormValues } from './etapasFormSchemas';
+
+/**
+ * Orden de las etapas: perfil, prefactibilidad, factibilidad, diseño,
+ * ejecución (Rocío, 22/09/2026). Es el orden en que se recorren, así que la
+ * tabla lo respeta aunque el servidor devuelva las filas en otro.
+ */
+function enOrden(etapas: Etapa[]): Etapa[] {
+  const posicion = (e: Etapa) => {
+    const i = NOMBRE_ETAPA_OPCIONES.indexOf(e.nombreEtapa as (typeof NOMBRE_ETAPA_OPCIONES)[number]);
+    return i === -1 ? NOMBRE_ETAPA_OPCIONES.length : i;
+  };
+  return [...etapas].sort((a, b) => posicion(a) - posicion(b));
+}
 
 function etapasToFormValues(etapas: Etapa[]): ActualizarEtapasFormValues {
   return {
@@ -39,6 +53,17 @@ export function EtapasPage() {
 
   const puedeEditar = hasRole('TECNICO_URP');
 
+  /**
+   * La etapa en la que se trabaja: la más temprana que esté habilitada y que
+   * todavía no tenga opinión técnica. Se empieza por el perfil y se avanza a
+   * medida que cada etapa la obtiene (Rocío, 22/09/2026).
+   *
+   * El servidor marca `habilitadoParaRegistro` en más de una etapa a la vez,
+   * así que la regla se aplica también aquí: ofrecer "Formular" en dos etapas
+   * invitaría a saltarse el orden.
+   */
+  const etapaEnCurso = etapasOriginales.find((e) => e.habilitadoParaRegistro && !e.tieneOpinionTecnica)?.nombreEtapa;
+
   const {
     control,
     register,
@@ -55,9 +80,10 @@ export function EtapasPage() {
     if (!idProyecto) return;
     Promise.all([etapasApi.listarEtapas({ idProyecto }), preinversionApi.obtenerProyecto({ idProyecto })])
       .then(([etapasRes, proyectoRes]) => {
-        setEtapasOriginales(etapasRes.data);
+        const ordenadas = enOrden(etapasRes.data);
+        setEtapasOriginales(ordenadas);
         setEsProyectoEmergencia(proyectoRes.data.esProyectoEmergencia ?? false);
-        reset(etapasToFormValues(etapasRes.data));
+        reset(etapasToFormValues(ordenadas));
       })
       .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
@@ -113,6 +139,7 @@ export function EtapasPage() {
                   <th>{t('preinversion.registroEtapas.columnaFechaInicio')}</th>
                   <th>{t('preinversion.registroEtapas.columnaFechaFin')}</th>
                   <th>{t('preinversion.registroEtapas.columnaEstado')}</th>
+                  <th>{t('common.acciones')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -173,7 +200,9 @@ export function EtapasPage() {
                         )}
                       </td>
                       <td>
-                        {original?.habilitadoParaRegistro && (
+                        {/* El estado sigue la misma regla que la acción: "Habilitada"
+                            es la etapa en curso, no cualquiera que el servidor marque. */}
+                        {original?.nombreEtapa === etapaEnCurso && (
                           <span className="marca-estado e-ok">{t('preinversion.registroEtapas.estadoHabilitada')}</span>
                         )}
                         {original?.tieneOpinionTecnica && (
@@ -181,6 +210,36 @@ export function EtapasPage() {
                         )}
                         {bloqueada && (
                           <span className="marca-estado e-aviso">{t('preinversion.registroEtapas.estadoBloqueada')}</span>
+                        )}
+                        {original?.nombreEtapa !== etapaEnCurso && !original?.tieneOpinionTecnica && !bloqueada && (
+                          <span className="marca-estado e-neutro">{t('preinversion.registroEtapas.estadoPendiente')}</span>
+                        )}
+                      </td>
+                      {/* Sólo se formula la etapa habilitada: se empieza por la más
+                          temprana y las siguientes se abren al obtener su opinión
+                          técnica (Rocío, 22/09/2026). En un proyecto de emergencia,
+                          el Perfil lleva a su ficha, no a la formulación. */}
+                      <td>
+                        {original?.nombreEtapa === etapaEnCurso ? (
+                          <button
+                            type="button"
+                            className="btn primario"
+                            onClick={() =>
+                              navigate(
+                                esProyectoEmergencia && fila.nombreEtapa === 'PERFIL'
+                                  ? `/preinversion/proyectos/${idProyecto}/ficha-emergencia`
+                                  : entradaDeGrupo(idProyecto, 'formulacion'),
+                              )
+                            }
+                          >
+                            {t('preinversion.registroEtapas.botonFormular')}
+                          </button>
+                        ) : (
+                          <span className="nota">
+                            {t(original?.tieneOpinionTecnica
+                              ? 'preinversion.registroEtapas.etapaCerrada'
+                              : 'preinversion.registroEtapas.aunNoHabilitada')}
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -190,10 +249,6 @@ export function EtapasPage() {
             </table>
           </div>
 
-          {/* No se dibuja un botón de navegación por etapa aunque habilitadoParaRegistro sea
-              true: el CU no dice a qué pantalla lleva cada etapa. Los pasos del proyecto que ya
-              tienen pantalla (CU-PRE-04 en adelante) se alcanzan desde PasosProyectoLayout. */}
-          <p className="nota-form">{t('preinversion.registroEtapas.notaSinNavegacion')}</p>
 
           <div className="acciones-form">
             <button type="button" className="btn neutro" onClick={() => navigate(`/preinversion/proyectos/${idProyecto}`)}>

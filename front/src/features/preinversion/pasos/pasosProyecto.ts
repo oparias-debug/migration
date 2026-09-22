@@ -76,7 +76,9 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
             texto: 'pasos.seleccionEtapa',
             cu: 'CU-PRE-03.5',
             pestanas: ['pasos.pestana.criteriosRuta', 'pasos.pestana.fichaInformacion'],
-            rutas: ['etapas', 'ruta-preinversion', 'ficha-informacion-general', 'ficha-emergencia'],
+            // La Ruta va primero: al entrar al proyecto por este proceso, lo
+            // primero que se ve es la matriz de criterios (Rocío, 22/09/2026).
+            rutas: ['ruta-preinversion', 'etapas', 'ficha-informacion-general', 'ficha-emergencia'],
           },
         ],
       },

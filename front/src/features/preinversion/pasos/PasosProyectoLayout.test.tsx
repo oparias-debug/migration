@@ -202,13 +202,13 @@ describe('pasosProyecto', () => {
   });
 
   it('la entrada de cada proceso lleva a su primer capítulo con pantalla', () => {
-    expect(entradaDeGrupo(7, 'creacion-ruta')).toBe('/preinversion/proyectos/7/etapas');
+    expect(entradaDeGrupo(7, 'creacion-ruta')).toBe('/preinversion/proyectos/7/ruta-preinversion');
     expect(entradaDeGrupo(7, 'formulacion')).toBe('/preinversion/proyectos/7/identificacion');
   });
 
   it('un proceso sin pantallas abre la barra en ese proceso', () => {
-    expect(entradaDeGrupo(7, 'programacion')).toBe('/preinversion/proyectos/7/etapas?grupo=programacion');
-    expect(entradaDeGrupo(7, 'gestion')).toBe('/preinversion/proyectos/7/etapas?grupo=gestion');
+    expect(entradaDeGrupo(7, 'programacion')).toBe('/preinversion/proyectos/7/ruta-preinversion?grupo=programacion');
+    expect(entradaDeGrupo(7, 'gestion')).toBe('/preinversion/proyectos/7/ruta-preinversion?grupo=gestion');
   });
 
   it('Priorización ya no es un paso del proyecto', () => {
