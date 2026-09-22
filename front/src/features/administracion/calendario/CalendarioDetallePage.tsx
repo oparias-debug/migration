@@ -22,6 +22,9 @@ const MESES = [
   'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
 ] as const;
 
+/** Las tres formas de repetición de un período (CU-ADM-04, sección 4). */
+type Repeticion = 'UNA_VEZ' | 'SEMANAL' | 'MENSUAL';
+
 const diasDelMes = (texto: string) =>
   texto
     .split(',')
@@ -104,7 +107,7 @@ export function CalendarioDetallePage() {
     const indiceDeHoy = meses.findIndex(
       (m) => m.anio === Number(hoy.slice(0, 4)) && m.mes === Number(hoy.slice(5, 7)) - 1,
     );
-    setIndiceMes(indiceDeHoy >= 0 ? indiceDeHoy : 0);
+    setIndiceMes(Math.max(indiceDeHoy, 0));
   }, [calendario]);
 
   const avisar = async (promesa: Promise<unknown>, exito: string) => {
@@ -423,7 +426,7 @@ function NuevoPeriodo({
   const [tipo, setTipo] = useState<'LABORAL' | 'NO_LABORAL'>('NO_LABORAL');
   const [codigoPeriodo, setCodigoPeriodo] = useState('');
   const [nombre, setNombre] = useState('');
-  const [repeticion, setRepeticion] = useState<'UNA_VEZ' | 'SEMANAL' | 'MENSUAL'>('UNA_VEZ');
+  const [repeticion, setRepeticion] = useState<Repeticion>('UNA_VEZ');
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
   const [dias, setDias] = useState<string[]>([]);
@@ -438,7 +441,7 @@ function NuevoPeriodo({
     setCodigoPeriodo(enEdicion.codigo);
     setNombre(enEdicion.nombre);
     const r = enEdicion.recurrencia;
-    setRepeticion(r.tipo as 'UNA_VEZ' | 'SEMANAL' | 'MENSUAL');
+    setRepeticion(r.tipo as Repeticion);
     setDesde(r.tipo === 'MENSUAL' ? '' : r.fechaInicio);
     setHasta(r.tipo === 'MENSUAL' ? '' : r.fechaFin);
     setDias(r.tipo === 'SEMANAL' ? [...r.diasSemana] : []);
@@ -526,7 +529,7 @@ function NuevoPeriodo({
           <select
             id="per-repeticion"
             value={repeticion}
-            onChange={(e) => setRepeticion(e.target.value as 'UNA_VEZ' | 'SEMANAL' | 'MENSUAL')}
+            onChange={(e) => setRepeticion(e.target.value as Repeticion)}
           >
             <option value="UNA_VEZ">{t(`${CLAVE}.repeticiones.UNA_VEZ`)}</option>
             <option value="SEMANAL">{t(`${CLAVE}.repeticiones.SEMANAL`)}</option>
@@ -624,7 +627,7 @@ function NuevaExcepcion({
 
   // Al elegir "Editar" en la tabla, el formulario se carga con esa excepción.
   useEffect(() => {
-    if (!enEdicion || enEdicion.tipoItem !== 'EXCEPCION') return;
+    if (enEdicion?.tipoItem !== 'EXCEPCION') return;
     setFecha(enEdicion.fecha);
     setTipo(enEdicion.tipo);
     setDescripcion(enEdicion.descripcion ?? '');

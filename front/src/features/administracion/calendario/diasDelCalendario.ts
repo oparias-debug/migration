@@ -71,7 +71,7 @@ export interface DiaClasificado {
 export function clasificar(items: readonly CalendarItem[], fecha: string): DiaClasificado {
   const cubren = items.filter((item) => cubre(item, fecha));
   const excepcion = cubren.find((item) => item.tipoItem === 'EXCEPCION');
-  if (excepcion && excepcion.tipoItem === 'EXCEPCION') {
+  if (excepcion?.tipoItem === 'EXCEPCION') {
     return { fecha, tipo: excepcion.tipo === 'DIA_NO_LABORAL' ? 'NO_LABORAL' : 'LABORAL', cubren };
   }
   if (cubren.some((item) => item.tipoItem === 'NO_LABORAL')) return { fecha, tipo: 'NO_LABORAL', cubren };

@@ -112,4 +112,17 @@ describe('RutaPreinversionPage', () => {
     expect(await screen.findByText('*Campo obligatorio')).toBeInTheDocument();
     expect(modificarRutaPreinversion).not.toHaveBeenCalled();
   });
+
+  // Camino 1 de Rocío (22/09/2026): un proyecto de emergencia no lleva ruta.
+  it('un proyecto de emergencia no pide criterios y lleva a su ficha', async () => {
+    obtenerProyecto.mockResolvedValue({ data: { idProyecto: 7, iniciativaInversion: 'PROYECTO', esProyectoEmergencia: true } });
+    obtenerRutaPreinversion.mockResolvedValue({ data: { etapasAceptadas: [], fueModificada: false } });
+    renderizar();
+
+    expect(await screen.findByText(/no lleva Ruta de Preinversión/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Tipo de capital/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ir a la Ficha de emergencia' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/ficha-emergencia');
+  });
 });

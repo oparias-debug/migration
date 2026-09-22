@@ -265,4 +265,48 @@ describe('CU-ADM-04 · calendario', () => {
     const aviso = await screen.findByText(/.+/, { selector: '.aviso-error' });
     expect(aviso).toBeInTheDocument();
   });
+
+  // El alta de un calendario (CU-ADM-04, HU-01): sin ella no hay nada que probar.
+  it('crea un calendario con su código, nombre y rango de fechas', async () => {
+    crearCalendario.mockResolvedValue({ data: { codigo: 'INVERSION_2028' } });
+    montarLista();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Nuevo calendario' }));
+    fireEvent.change(screen.getByLabelText(/Código/i), { target: { value: 'INVERSION_2028' } });
+    fireEvent.change(screen.getByLabelText(/^Nombre/i), { target: { value: 'Calendario inversión 2028' } });
+    fireEvent.change(screen.getByLabelText(/Fecha de inicio/i), { target: { value: '2028-01-01' } });
+    fireEvent.change(screen.getByLabelText(/Fecha de fin/i), { target: { value: '2028-12-31' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Crear calendario' }));
+
+    await waitFor(() => expect(crearCalendario).toHaveBeenCalled());
+    const enviado = crearCalendario.mock.calls[0][0].crearCalendarioRequest;
+    expect(enviado).toMatchObject({
+      codigo: 'INVERSION_2028',
+      nombre: 'Calendario inversión 2028',
+      fechaInicio: '2028-01-01',
+      fechaFin: '2028-12-31',
+    });
+    // Creado el calendario, se entra a su ficha para definir los períodos.
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/administracion/calendario/INVERSION_2028'));
+  });
+
+  // La rejilla y la ficha del día son lo que Álvaro pidió ver: se comprueban
+  // juntas porque la ficha depende de qué día se pulse.
+  it('pinta la rejilla y explica por qué un día quedó no laboral', async () => {
+    montarFicha();
+    await screen.findByText('Fines de semana');
+
+    // Diciembre de 2026: el 25 tiene excepción y los fines de semana son rojos.
+    expect(document.querySelector('.cal-rejilla')).toBeInTheDocument();
+    expect(document.querySelectorAll('.cal-rejilla td.es-no-laboral').length).toBeGreaterThan(0);
+
+    const dia = document.querySelector('.cal-rejilla td.es-no-laboral .dia') as HTMLButtonElement;
+    fireEvent.click(dia);
+
+    const ficha = document.querySelector('.cal-dia') as HTMLElement;
+    expect(ficha).toBeInTheDocument();
+    expect(ficha.textContent).toContain('Día no laboral');
+    // Y dice qué período lo cubre, que es la explicación que pedía el cliente.
+    expect(ficha.querySelector('.cal-porque')?.textContent).toContain('Fines de semana');
+  });
 });
