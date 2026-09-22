@@ -12,9 +12,9 @@ export function PlaceholderPage() {
   const ubicacion = ubicarEnMenu(pathname);
 
   return (
-    <div className="text-center p-5">
+    <div className="pagina-aviso">
       {ubicacion && <h2>{t(ubicacion.titulo)}</h2>}
-      <p className="lead">{t('placeholder.title')}</p>
+      <p className="pagina-aviso-texto">{t('placeholder.title')}</p>
     </div>
   );
 }

@@ -984,3 +984,11 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 .mc-grupo th, .mc-grupo td { border: 1px solid var(--n200); padding: 7px 10px; font-size: 13px; text-align: left; }
 .mc-grupo th { background: var(--n100); font-weight: 700; color: var(--n700); }
 .mc-pie { padding: 12px 18px; border-top: 1px solid var(--n200); display: flex; justify-content: flex-end; }
+
+/* Utilidades que cubrían las de Bootstrap, ahora propias. */
+.pagina-aviso { text-align: center; padding: 48px 24px; }
+.pagina-aviso-texto { font-size: 16px; color: var(--n500); margin: 8px 0 0; }
+/* Tabla de datos sencilla, con rejilla: la usan los listados de alternativas y etapas. */
+.tabla-datos { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tabla-datos th, .tabla-datos td { border: 1px solid var(--n200); padding: 7px 10px; text-align: left; }
+.tabla-datos th { background: var(--n100); font-weight: 700; color: var(--n700); }

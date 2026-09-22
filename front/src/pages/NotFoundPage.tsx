@@ -5,9 +5,9 @@ export function NotFoundPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="text-center p-5">
+    <div className="pagina-aviso">
       <h1>404</h1>
-      <p className="lead">{t('notFound.title')}</p>
+      <p className="pagina-aviso-texto">{t('notFound.title')}</p>
       <Link className="btn primario" to="/">
         {t('placeholder.backHome')}
       </Link>

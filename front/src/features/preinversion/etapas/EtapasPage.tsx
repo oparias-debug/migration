@@ -105,7 +105,7 @@ export function EtapasPage() {
       <div className="formbody">
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="tabla-cont">
-            <table className="table table-sm table-bordered">
+            <table className="tabla-datos">
               <thead>
                 <tr>
                   <th>{t('preinversion.registroEtapas.columnaEtapa')}</th>

@@ -74,7 +74,7 @@ export function LoginPage() {
             )}
 
           <div className="login-campo">
-            <label htmlFor="username" className="visually-hidden">
+            <label htmlFor="username" className="sr-only">
                   {t('login.username')}
                 </label>
             <i className="bi bi-person-fill" aria-hidden="true" />
@@ -90,7 +90,7 @@ export function LoginPage() {
               </div>
 
           <div className="login-campo">
-            <label htmlFor="password" className="visually-hidden">
+            <label htmlFor="password" className="sr-only">
                   {t('login.password')}
                 </label>
             <i className="bi bi-lock-fill" aria-hidden="true" />
