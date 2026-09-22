@@ -1,6 +1,0 @@
-projectKey=siip-front
-serverUrl=http://localhost:9000
-serverVersion=26.9.0.129388
-dashboardUrl=http://localhost:9000/dashboard?id=siip-front
-ceTaskId=06d76447-22db-4eef-a5d9-c59291d9387d
-ceTaskUrl=http://localhost:9000/api/ce/task?id=06d76447-22db-4eef-a5d9-c59291d9387d

@@ -609,6 +609,12 @@ Cada uno de estos botones será el enlace al registro de la información en la I
 
 **Origen:** Documento, sección "Reglas del Negocio".
 
+### RN23
+
+**Descripción:** Las etapas Perfil, Prefactibilidad, Factibilidad, Diseño y Ejecución siguen ese orden fijo dentro de la Ruta de Preinversión. Al guardar (botón "Guardar" de Registro de Etapas), las fechas estimadas de inicio y finalización de cada etapa deben ser consistentes con ese orden: ninguna etapa puede tener una fecha de inicio posterior a su propia fecha de finalización, ni una fecha de inicio anterior a la fecha de finalización de la etapa previa de la ruta (cuando ambas etapas tienen sus dos fechas completas). El sistema rechaza el guardado si esto no se cumple, con el mismo criterio que RN04 (a diferencia de RN19, que es puramente visual). Las etapas con alguna de las dos fechas sin completar quedan fuera de esta validación.
+
+**Origen:** Solicitado por el usuario (2026-09-21, no proveniente del PDF original).
+
 ---
 
 # Campos

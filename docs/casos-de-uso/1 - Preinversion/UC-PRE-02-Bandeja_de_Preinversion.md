@@ -354,6 +354,12 @@ Técnico PRE (interviene en los Flujos Alternativos FA-01 y FA-02, ingresando a 
 
 **Origen:** Documento, sección "Reglas del Negocio".
 
+### RN11
+
+**Descripción:** El Coordinador PRE puede desarchivar una solicitud que él mismo archivó manualmente (FA3): la solicitud vuelve al estado que tenía justo antes de archivarse y reaparece en "Solicitudes Activas", desapareciendo del "Reporte de solicitudes Preinversión archivadas". Esto no aplica a una solicitud archivada automáticamente por el Sistema (RN-4 de CU-PRE-01, tras 3 meses sin CUP más 5 días hábiles sin respuesta a la alerta): ese archivo automático ya canceló la instancia de proceso Flowable asociada y desactivó el proyecto, así que no existe un estado previo seguro al cual restaurarlo — el Sistema rechaza el intento de desarchivarla.
+
+**Origen:** Solicitado por el usuario (2026-09-21, no proveniente del PDF original).
+
 ---
 
 # Campos
