@@ -847,7 +847,9 @@
       "localizacion": "Localización",
       "indicadoresResultado": "Indicadores de resultado",
       "indicadoresProducto": "Indicadores de producto"
-    }
+    },
+    "ocultar": "Ocultar pasos",
+    "mostrar": "Ver todos los pasos"
   },
   "pestanas": {
     "pendiente": "con campos pendientes"

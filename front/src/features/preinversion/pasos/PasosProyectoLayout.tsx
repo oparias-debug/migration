@@ -25,7 +25,7 @@ function PasoEnBarra({
       <span className="pasos-numero" aria-hidden="true">
         {paso.codigo}
       </span>
-      {t(paso.texto)}
+      <span className="pasos-texto">{t(paso.texto)}</span>
     </>
   );
   if (destino) {
@@ -78,6 +78,30 @@ export function PasosProyectoLayout() {
     if (destino) setGrupoVisible(destino);
   }, [grupoActual, grupoPedido]);
 
+  /**
+   * La barra ocupaba media pantalla antes de llegar al formulario (Rocío,
+   * 22/09/2026). Se puede plegar y deja sólo el paso actual; la preferencia se
+   * recuerda en el equipo, porque quien trabaja dentro de un paso no necesita
+   * el índice delante todo el rato.
+   */
+  const [plegada, setPlegada] = useState(() => {
+    try {
+      return localStorage.getItem('siip.pasos.plegada') === 'si';
+    } catch {
+      return false;
+    }
+  });
+  const alternarPlegada = () => {
+    setPlegada((antes) => {
+      try {
+        localStorage.setItem('siip.pasos.plegada', antes ? 'no' : 'si');
+      } catch {
+        /* Sin almacenamiento local la barra sigue funcionando, sólo no recuerda. */
+      }
+      return !antes;
+    });
+  };
+
   const [cabecera, setCabecera] = useState<{ nombre: string; cup: string | null } | null>(null);
   useEffect(() => {
     if (!idProyecto) return undefined;
@@ -102,15 +126,24 @@ export function PasosProyectoLayout() {
 
   return (
     <>
-      <div className="pasos-proyecto">
-        {cabecera && (
-          <p className="pasos-cabecera">
-            <b>{cabecera.nombre}</b>
-            {cabecera.cup && <span className="mono"> · CUP {cabecera.cup}</span>}
+      <div className={plegada ? 'pasos-proyecto plegada' : 'pasos-proyecto'}>
+        <div className="pasos-cabecera">
+          <p>
+            {cabecera && <b>{cabecera.nombre}</b>}
+            {cabecera?.cup && <span className="mono"> · CUP {cabecera.cup}</span>}
+            {plegada && (
+              <span className="pasos-actual-inline">
+                <span className="pasos-numero" aria-hidden="true">{ubicacion.paso.codigo}</span>
+                {t(ubicacion.paso.texto)}
+              </span>
+            )}
           </p>
-        )}
+          <button type="button" className="pasos-plegar" onClick={alternarPlegada} aria-expanded={!plegada}>
+            {t(plegada ? 'pasos.mostrar' : 'pasos.ocultar')}
+          </button>
+        </div>
 
-        <div className="pasos-grupos">
+        {!plegada && <div className="pasos-grupos">
           {GRUPOS_PASOS.map((g) => (
             <button
               key={g.clave}
@@ -122,14 +155,16 @@ export function PasosProyectoLayout() {
               <span className="pasos-codigo">{g.codigo}</span> {t(g.texto)}
             </button>
           ))}
-        </div>
+        </div>}
 
-        <nav className="pasos-lista" aria-label={t('pasos.titulo')}>
+        {!plegada && <nav className="pasos-lista" aria-label={t('pasos.titulo')}>
           {grupo.secciones.map((seccion) => (
             <div className="pasos-seccion" key={seccion.codigo ?? grupo.clave}>
+              {/* El rótulo del subproceso va a la izquierda de sus capítulos, no
+                  encima: ahorra una línea por subproceso. */}
               {seccion.texto && (
                 <p className="pasos-seccion-titulo">
-                  {seccion.codigo} {t(seccion.texto)}
+                  <span className="pasos-codigo">{seccion.codigo}</span> {t(seccion.texto)}
                 </p>
               )}
               <ol>
@@ -145,7 +180,7 @@ export function PasosProyectoLayout() {
               </ol>
             </div>
           ))}
-        </nav>
+        </nav>}
       </div>
 
       <Outlet />

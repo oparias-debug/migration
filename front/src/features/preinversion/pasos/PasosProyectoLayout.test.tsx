@@ -57,9 +57,12 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
 
   it('agrupa los capítulos de Formulación por subproceso', async () => {
     montar(IDENTIFICACION);
-    expect(screen.getByText('1.3.1 Registrar identificación')).toBeInTheDocument();
-    expect(screen.getByText('1.3.2 Registrar formulación')).toBeInTheDocument();
-    expect(screen.getByText('1.3.3 Evaluación ex ante')).toBeInTheDocument();
+    const rotulos = [...document.querySelectorAll('.pasos-seccion-titulo')].map((e) => e.textContent?.trim());
+    expect(rotulos).toEqual([
+      '1.3.1 Registrar identificación',
+      '1.3.2 Registrar formulación',
+      '1.3.3 Evaluación ex ante',
+    ]);
     await screen.findByText('Hospital de Santa Ana');
   });
 
@@ -97,7 +100,7 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
 
   it('un capítulo con pestañas las anuncia', async () => {
     montar(IDENTIFICACION);
-    expect(screen.getByText('Diagnóstico de la situación actual')).toHaveAttribute(
+    expect(screen.getByText('Diagnóstico de la situación actual').closest('[title]')).toHaveAttribute(
       'title',
       expect.stringContaining('Gestión de interesados'),
     );
@@ -156,6 +159,23 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
     expect(screen.getByRole('link', { name: 'Identificación' })).toBeInTheDocument();
     expect(screen.getByText('pantalla identificación')).toBeInTheDocument();
   });
+
+    // Rocío, 22/09/2026: la barra ocupaba media pantalla antes del formulario.
+    it('se pliega y deja sólo el paso actual, y lo recuerda', async () => {
+      montar(IDENTIFICACION);
+      await screen.findByText('Hospital de Santa Ana');
+      expect(document.querySelectorAll('.pasos-seccion').length).toBeGreaterThan(0);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Ocultar pasos' }));
+
+      expect(document.querySelectorAll('.pasos-seccion')).toHaveLength(0);
+      expect(document.querySelector('.pasos-actual-inline')?.textContent).toContain('Identificación');
+      expect(localStorage.getItem('siip.pasos.plegada')).toBe('si');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Ver todos los pasos' }));
+      expect(document.querySelectorAll('.pasos-seccion').length).toBeGreaterThan(0);
+      expect(localStorage.getItem('siip.pasos.plegada')).toBe('no');
+    });
 });
 
 describe('pasosProyecto', () => {
@@ -194,4 +214,5 @@ describe('pasosProyecto', () => {
   it('Priorización ya no es un paso del proyecto', () => {
     expect(GRUPOS_PASOS.flatMap(pasosDe).some((p) => p.cu === 'CU-PRE-26.5')).toBe(false);
   });
+
 });
