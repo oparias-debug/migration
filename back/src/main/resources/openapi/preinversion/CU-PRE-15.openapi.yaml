@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-15 Análisis de Riesgo
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-15 "Análisis de Riesgo"
+    (UC-PRE-15-Analisis_de_Riesgo.md) y sus 4 historias BDD. Actor
+    principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE.
+    Mismo criterio que toda la serie CU-PRE-06 a CU-PRE-14 para RN01:
+    `x-roles` no incluye "Usuarios Internos/Externos". Introduce el recurso
+    `AnalisisRiesgo`, hijo de `Proyecto`. A diferencia de CU-PRE-06/12/14,
+    aquí sí existe un campo calculado a nivel de fila (`calificacionRiesgo`,
+    derivado de `probabilidad`×`impactoRiesgo` según la tabla del Anexo C.1),
+    por lo que `FilaRiesgo` (lectura) es un schema propio, no una
+    reutilización de `FilaRiesgoRequest`. A diferencia de CU-PRE-06/12/14
+    (y del resto de la serie desde CU-PRE-04), "Siguiente" (FA-02) sí tiene
+    una validación de servidor real con mensaje literal confirmado (RN06),
+    igual que `avanzarAAnalisisInteresados` en CU-PRE-05 — se modela como
+    endpoint propio, `avanzarAAnalisisLegal`.
+
+paths:
+
+  /proyectos/{idProyecto}/analisis-riesgo:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      operationId: obtenerAnalisisRiesgo
+      summary: Consultar la pantalla "Análisis de Riesgos" (Anexo A.1)
+      description: >
+        Igual que el resto de la serie CU-PRE-06 a CU-PRE-14: ninguna regla
+        de este CU condiciona el acceso de Técnico PRE a que la información
+        ya se haya guardado al menos una vez; no se modeló ese 404 condicional.
+      tags: [Preinversión - Análisis de Riesgo]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        "200":
+          description: Análisis de riesgo del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalisisRiesgo'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP ni Técnico PRE, o
+            (Técnico URP/Técnico PRE) el proyecto no está dentro de su
+            alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarAnalisisRiesgo
+      summary: Registrar y guardar el análisis de riesgo (botón "Guardar", FA-01)
+      description: >
+        RN07 (bordes rojos) es puramente visual, mismo criterio que el
+        resto de la serie — no genera 400. `calificacionRiesgo` y
+        `totalAccionesMitigacion` nunca se envían: son siempre calculados
+        por el servidor (ver `FilaRiesgo`/`AnalisisRiesgo`). La
+        obligatoriedad condicional de `accionMitigacion`/`costoAccionMitigacion`
+        cuando `calificacionRiesgo` es ALTO/MUY_ALTO (RN06) **no** se valida
+        aquí — el propio RN06 y su mensaje "Se requiere completar los
+        campos obligatorios" están atados explícitamente al botón
+        "Siguiente", no a "Guardar" (ver `avanzarAAnalisisLegal`).
+      tags: [Preinversión - Análisis de Riesgo]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalisisRiesgoRequest'
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "Sus datos han sido guardados
+            exitosamente. Recuerde que los costos derivados del análisis de
+            riesgos deben estar considerados dentro del presupuesto del
+            proyecto.", Anexo A.2); el modal y su "Aceptar" son de cliente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalisisRiesgo'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP, o el proyecto no está en
+            su alcance de Unidad Ejecutora (RN01). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/analisis-riesgo/avance:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: avanzarAAnalisisLegal
+      summary: Avanzar a "Análisis Legal" (botón "Siguiente", FA-02, RN06)
+      description: >
+        Valida el estado ya persistido (el guardado más reciente de
+        `guardarAnalisisRiesgo`) contra RN06: para cada fila cuya
+        `calificacionRiesgo` sea ALTO o MUY_ALTO, `accionMitigacion` y
+        `costoAccionMitigacion` deben estar completos. No recibe cuerpo —
+        mismo patrón que `avanzarAAnalisisInteresados` en CU-PRE-05.
+      tags: [Preinversión - Análisis de Riesgo]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: >
+            Validación superada (o ninguna fila con calificación Alto/Muy
+            Alto); el proyecto avanza a "Análisis Legal" (CU-PRE-16).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalisisRiesgo'
+        "400":
+          description: >
+            RN06: al menos una fila con `calificacionRiesgo` ALTO o
+            MUY_ALTO no tiene `accionMitigacion` y/o `costoAccionMitigacion`
+            completos. `Error.mensaje` usa el texto literal confirmado por
+            el CU: "Se requiere completar los campos obligatorios" — a
+            diferencia de la mayoría del contrato, aquí sí hay un mensaje
+            exacto documentado (tabla "Mensajes al Usuario" del CU).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    Probabilidad:
+      type: string
+      description: Catálogo Probabilidad (Anexo C.3), listado fijo.
+      enum: [IMPROBABLE, PROBABLE, MUY_PROBABLE, CASI_SEGURO]
+
+    ImpactoRiesgo:
+      type: string
+      description: Catálogo Impacto (Anexo C.4), listado fijo.
+      enum: [INSIGNIFICANTE, BAJO, MODERADO, ALTO, EXTREMO]
+
+    CalificacionRiesgo:
+      type: string
+      description: >
+        Calculado por el servidor según la tabla de 20 combinaciones del
+        Anexo C.1 (Probabilidad × Impacto → Calificación, con su color):
+        IMPROBABLE+{EXTREMO→MEDIO, ALTO→BAJO, MODERADO→BAJO, BAJO→BAJO,
+        INSIGNIFICANTE→BAJO}; PROBABLE+{EXTREMO→ALTO, ALTO→MEDIO,
+        MODERADO→MEDIO, BAJO→BAJO, INSIGNIFICANTE→BAJO};
+        MUY_PROBABLE+{EXTREMO→MUY_ALTO, ALTO→ALTO, MODERADO→ALTO,
+        BAJO→MEDIO, INSIGNIFICANTE→BAJO}; CASI_SEGURO+{EXTREMO→MUY_ALTO,
+        ALTO→MUY_ALTO, MODERADO→ALTO, BAJO→MEDIO, INSIGNIFICANTE→BAJO}.
+        Nunca se recibe en `FilaRiesgoRequest`. Colores: BAJO=verde,
+        MEDIO=amarillo, ALTO=naranja, MUY_ALTO=rojo (leyenda del Anexo A.1).
+      enum: [BAJO, MEDIO, ALTO, MUY_ALTO]
+
+    FilaRiesgoRequest:
+      type: object
+      description: >
+        Fila de la tabla "Análisis de Riesgos". Ningún campo es obligatorio
+        a nivel de schema (RN07 es solo visual); la obligatoriedad
+        condicional de `accionMitigacion`/`costoAccionMitigacion` (RN06) se
+        valida en `avanzarAAnalisisLegal`, no en el guardado. Agregar/
+        eliminar una fila (RN03) ocurre en el cliente antes del `PUT` —
+        reemplazo completo del array.
+      properties:
+        descripcionRiesgo:
+          type: string
+        probabilidad:
+          $ref: '#/components/schemas/Probabilidad'
+        impactoRiesgo:
+          $ref: '#/components/schemas/ImpactoRiesgo'
+        accionMitigacion:
+          type: string
+          description: Condicionalmente obligatorio si calificacionRiesgo = ALTO o MUY_ALTO (RN06, validado en avanzarAAnalisisLegal).
+        costoAccionMitigacion:
+          type: number
+          format: double
+          description: Mismo criterio de obligatoriedad condicional que accionMitigacion (RN06).
+
+    FilaRiesgo:
+      type: object
+      description: >
+        Forma de lectura de una fila. A diferencia de `FilaRiesgoRequest`,
+        incluye `calificacionRiesgo`, calculada por el servidor a partir de
+        `probabilidad` e `impactoRiesgo` — por eso no se reutiliza el mismo
+        schema para lectura y escritura (a diferencia de `InteresadoRequest`
+        en CU-PRE-06 o `FilaLocalizacionRequest` en CU-PRE-12, que sí lo
+        hacen porque ahí no hay ningún campo calculado a nivel de fila).
+      properties:
+        descripcionRiesgo:
+          type: string
+          nullable: true
+        probabilidad:
+          $ref: '#/components/schemas/Probabilidad'
+        impactoRiesgo:
+          $ref: '#/components/schemas/ImpactoRiesgo'
+        calificacionRiesgo:
+          type: string
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CalificacionRiesgo'
+        accionMitigacion:
+          type: string
+          nullable: true
+        costoAccionMitigacion:
+          type: number
+          format: double
+          nullable: true
+
+    AnalisisRiesgoRequest:
+      type: object
+      properties:
+        tieneRiesgosDesastres:
+          type: boolean
+          nullable: true
+          description: >
+            RN04: si es true, `filas` es relevante y se despliega en
+            pantalla; si es false, la tabla no se despliega en el cliente.
+            No se fuerza como restricción de servidor.
+        filas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaRiesgoRequest'
+
+    AnalisisRiesgo:
+      type: object
+      description: Análisis de riesgo del proyecto (lectura).
+      required: [idProyecto, filas]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        tieneRiesgosDesastres:
+          type: boolean
+          nullable: true
+        filas:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaRiesgo'
+        totalAccionesMitigacion:
+          type: number
+          format: double
+          nullable: true
+          description: >
+            Calculado por el servidor como la suma de `costoAccionMitigacion`
+            de todas las filas; nunca se recibe en `AnalisisRiesgoRequest`.

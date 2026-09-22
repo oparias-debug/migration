@@ -1,11 +1,13 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
-import sv.gob.mh.siip.model.preinversion.enums.NivelRiesgo;
+
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Analisis de riesgo del proyecto (1:N, un registro por tipo de riesgo). CU-PRE-15. */
 @Entity
@@ -29,15 +31,18 @@ public class AnalisisRiesgo {
     @JoinColumn(name = "ID_PROYECTO", nullable = false)
     private Proyecto proyecto;
 
-    @NotBlank
-    @Column(name = "TIPO_RIESGO", nullable = false, length = 100)
-    private String tipoRiesgo;
+    @Column(name = "TIENE_RIESGOS_DESASTRES")
+    private Boolean tieneRiesgosDesastres;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "NIVEL_RIESGO", nullable = false, length = 20)
-    private NivelRiesgo nivelRiesgo;
+    @Column(name = "TOTAL_ACCIONES_MITIGACION")
+    private Double totalAccionesMitigacion;
 
-    @Column(name = "MEDIDAS_MITIGACION", length = 2000)
-    private String medidasMitigacion;
+    /**
+     * Detalle de filas de la matriz de riesgos.
+     * Cascade ALL y orphanRemoval garantizan la persistencia y limpieza automática al actualizar desde el controlador.
+     */
+    @OneToMany(mappedBy = "analisisRiesgo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<RiesgosDesastresInminentes> filas = new ArrayList<>();
+
 }
