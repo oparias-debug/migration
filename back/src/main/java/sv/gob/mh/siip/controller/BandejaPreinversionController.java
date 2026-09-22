@@ -37,6 +37,11 @@ public class BandejaPreinversionController implements PreinversinBandejaPreinver
     }
 
     @Override
+    public ResponseEntity<SolicitudActivaItemDto> desarchivarSolicitud(Long idSolicitud) {
+        return ResponseEntity.ok(service.desarchivar(idSolicitud));
+    }
+
+    @Override
     public ResponseEntity<List<UsuarioResumenDto>> listarTecnicosPre() {
         return ResponseEntity.ok(service.tecnicos());
     }

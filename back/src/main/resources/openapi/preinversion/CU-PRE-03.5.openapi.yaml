@@ -241,7 +241,9 @@ paths:
       - Técnico URP
       responses:
         '200':
-          description: Etapas de la Ruta de Preinversión aceptada, con su estado actual.
+          description: 'Etapas de la Ruta de Preinversión aceptada, con su estado actual. El array se devuelve siempre en el orden de la ruta (Perfil, Prefactibilidad, Factibilidad, Diseño, Ejecución) — no alfabético ni el orden de creación en base de datos.
+
+            '
           content:
             application/json:
               schema:
@@ -263,8 +265,8 @@ paths:
     put:
       operationId: actualizarEtapas
       summary: Registrar costo y fechas de las etapas (botón único "Guardar", FA-01.1/FA-03)
-      description: 'Un solo botón "Guardar" para toda la tabla (Anexo A.1 no tiene un botón por fila); por eso este endpoint recibe y actualiza todas las etapas visibles en un solo `PUT`, no una por una. RN19 (bordes rojos por campos obligatorios incompletos — "Costo de la etapa", fechas) es puramente visual, mismo criterio que la mayoría del contrato: **no** genera 400 (corrección respecto a una versión previa de este fragmento, que trataba esta regla como rechazo real; el `.feature` actualizado confirma explícitamente "el sistema marca en rojo el borde del campo", no un rechazo de guardado). RN04: el formato de fecha dd/mm/aaaa **sí** se rechaza si no se cumple — confirmado por escenario BDD dedicado ("el sistema no acepta el valor"), distinto de RN19. RN05/RN11: el `costo` de la etapa EJECUCIÓN es sobrescrito automáticamente por el servidor según el Presupuesto de inversión u Opinión Técnica más reciente — cualquier valor enviado para EJECUCIÓN en este `PUT` se ignora. RN22 sugería que
-        lo mismo aplicaría a las etapas de Preinversión (costo "procederá" de CU-PRE-22.1); esto quedó confirmado al procesar ese CU (su RN06: "el valor... se debe actualizar en el campo Costo de la etapa de CU-PRE-03.5"), pero sigue sin resolver la contradicción con RN04/Anexo B.1 de este mismo CU-PRE-03.5 (que marcan `costo` editable) y con el propio camino feliz de la historia BDD de este CU (que sí registra un costo manualmente); se mantiene el comportamiento funcional de la BDD para las etapas de Preinversión — ver contrato-CU-PRE-03.5.md y contrato-CU-PRE-22.1.md.
+      description: 'Un solo botón "Guardar" para toda la tabla (Anexo A.1 no tiene un botón por fila); por eso este endpoint recibe y actualiza todas las etapas visibles en un solo `PUT`, no una por una. RN19 (bordes rojos por campos obligatorios incompletos — "Costo de la etapa", fechas) es puramente visual, mismo criterio que la mayoría del contrato: **no** genera 400 (corrección respecto a una versión previa de este fragmento, que trataba esta regla como rechazo real; el `.feature` actualizado confirma explícitamente "el sistema marca en rojo el borde del campo", no un rechazo de guardado). RN04: el formato de fecha dd/mm/aaaa **sí** se rechaza si no se cumple — confirmado por escenario BDD dedicado ("el sistema no acepta el valor"), distinto de RN19; el servidor también rechaza una fecha con formato válido pero que no existe en el calendario (p.ej. 31/02/2026). RN05/RN11: el `costo` de la etapa EJECUCIÓN es sobrescrito automáticamente por el servidor según el Presupuesto de inversión u Opinión Técnica más reciente — cualquier valor enviado para EJECUCIÓN en este `PUT` se ignora. RN22 sugería que
+        lo mismo aplicaría a las etapas de Preinversión (costo "procederá" de CU-PRE-22.1); esto quedó confirmado al procesar ese CU (su RN06: "el valor... se debe actualizar en el campo Costo de la etapa de CU-PRE-03.5"), pero sigue sin resolver la contradicción con RN04/Anexo B.1 de este mismo CU-PRE-03.5 (que marcan `costo` editable) y con el propio camino feliz de la historia BDD de este CU (que sí registra un costo manualmente); se mantiene el comportamiento funcional de la BDD para las etapas de Preinversión — ver contrato-CU-PRE-03.5.md y contrato-CU-PRE-22.1.md. RN23 (nueva): las etapas con fechaInicio/fechaFin completos deben respetar el orden cronológico de la ruta (PERFIL/PREFACTIBILIDAD/FACTIBILIDAD/DISEÑO/EJECUCIÓN) — ninguna puede iniciar antes de que finalice la etapa previa con fechas completas, ni terminar antes de su propio inicio; se rechaza con 400, igual que RN04. Las etapas sin ambas fechas quedan fuera de esta validación (RN19).
 
         '
       tags:
@@ -281,7 +283,7 @@ paths:
               $ref: '#/components/schemas/ActualizarEtapasRequest'
       responses:
         '200':
-          description: 'Información guardada; se habilitan los botones de navegación de las etapas guardadas (FA-01.1.2/FA-03.2).
+          description: 'Información guardada; se habilitan los botones de navegación de las etapas guardadas (FA-01.1.2/FA-03.2). El array se devuelve siempre en el orden de la ruta (Perfil, Prefactibilidad, Factibilidad, Diseño, Ejecución) — no alfabético ni el orden de creación en base de datos.
 
             '
           content:
@@ -291,7 +293,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Etapa'
         '400':
-          description: '`fechaInicio` o `fechaFin` no cumplen el formato dd/mm/aaaa (RN04). Escenario BDD explícito ("el sistema no acepta el valor"), sin mensaje literal documentado. A diferencia de una versión anterior de este fragmento, ya no se rechaza aquí por "Costo de la etapa"/fechas faltantes (RN19, puramente visual).
+          description: '`fechaInicio` o `fechaFin` no cumplen el formato dd/mm/aaaa, o son una fecha que no existe en el calendario (RN04). Escenario BDD explícito ("el sistema no acepta el valor"), sin mensaje literal documentado. A diferencia de una versión anterior de este fragmento, ya no se rechaza aquí por "Costo de la etapa"/fechas faltantes (RN19, puramente visual). También se rechaza aquí cuando las fechas de las etapas no respetan el orden cronológico de la ruta (RN23).
 
             '
           content:
@@ -642,14 +644,14 @@ components:
           type: string
           pattern: ^\d{2}/\d{2}/\d{4}$
           nullable: true
-          description: '"Fecha estimada de inicio", formato dd/mm/aaaa — ✅ confirmado (04/09/2026, decisión funcional v1.3): el Anexo B.1 decía "MM/AA" y el mockup mostraba "mm/aaaa"; RN04 (dd/mm/aaaa) queda como el formato definitivo. Ya no se modela como texto enteramente libre.
+          description: '"Fecha estimada de inicio", formato dd/mm/aaaa — ✅ confirmado (04/09/2026, decisión funcional v1.3): el Anexo B.1 decía "MM/AA" y el mockup mostraba "mm/aaaa"; RN04 (dd/mm/aaaa) queda como el formato definitivo. Ya no se modela como texto enteramente libre. RN23: no puede ser posterior a `fechaFin` de la misma etapa, ni anterior a la `fechaFin` de la etapa previa de la ruta (cuando ambas tienen fechas completas).
 
             '
         fechaFin:
           type: string
           pattern: ^\d{2}/\d{2}/\d{4}$
           nullable: true
-          description: Fecha estimada de finalización, formato dd/mm/aaaa. Mismo criterio que fechaInicio.
+          description: Fecha estimada de finalización, formato dd/mm/aaaa. Mismo criterio que fechaInicio (RN04/RN23).
         habilitadoParaRegistro:
           type: boolean
           description: 'Si el botón de navegación de esta etapa hacia identificación/ formulación/evaluación/programación (CU-PRE-04 a CU-PRE-26) está habilitado. Pasa a true la primera vez que se guardan sus fechas (FA-01.1.2/FA-03.2); PERFIL y EJECUCIÓN lo tienen desde el inicio por defecto (RN09).

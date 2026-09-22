@@ -12,6 +12,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.administracion.mapper.CatalogosAdministracionMapper;
@@ -116,11 +117,35 @@ public class BandejaPreinversionService {
         actores.exigirRol(RolUsuario.COORDINADOR_PRE);
         SolicitudPreinversion solicitud = buscar(id);
         if (solicitud.getEstado() != EstadoSolicitud.ARCHIVADA) {
+            solicitud.setEstadoPrevioArchivo(solicitud.getEstado());
             solicitud.setEstado(EstadoSolicitud.ARCHIVADA);
             solicitud.setFechaArchivo(LocalDateTime.now(ZoneId.of("America/El_Salvador")));
             solicitudes.save(solicitud);
         }
         return archivada(solicitud);
+    }
+
+    /**
+     * RN11 (nueva): solo deshace un archivo manual (botón "Archivar"). Una solicitud archivada
+     * automáticamente por el scheduler (RN-4 CU-PRE-01) no tiene {@code estadoPrevioArchivo}
+     * guardado — ese archivo ya canceló la instancia de proceso Flowable y desactivó el proyecto,
+     * así que no hay un estado seguro al cual volver.
+     */
+    public SolicitudActivaItemDto desarchivar(Long id) {
+        actores.exigirRol(RolUsuario.COORDINADOR_PRE);
+        SolicitudPreinversion solicitud = buscar(id);
+        if (solicitud.getEstado() != EstadoSolicitud.ARCHIVADA) {
+            throw new ConflictoEstadoException("La solicitud no está archivada.");
+        }
+        if (solicitud.getEstadoPrevioArchivo() == null) {
+            throw new ConflictoEstadoException(
+                    "Esta solicitud fue archivada automáticamente por el sistema y no puede desarchivarse.");
+        }
+        solicitud.setEstado(solicitud.getEstadoPrevioArchivo());
+        solicitud.setEstadoPrevioArchivo(null);
+        solicitud.setFechaArchivo(null);
+        solicitudes.save(solicitud);
+        return activa(solicitud);
     }
 
     @Transactional(readOnly = true)

@@ -16,6 +16,7 @@ import io.cucumber.java.es.Entonces;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
+import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
 import sv.gob.mh.siip.model.common.domain.Usuario;
@@ -87,6 +88,7 @@ public class Pre35RegistrarEtapas {
     private String fechaInicioRegistrada;
     private String fechaFinRegistrada;
     private Set<ConstraintViolation<EtapaRegistroRequestDto>> violaciones;
+    private ValidacionNegocioException ultimaExcepcionEtapas;
     private String etapaAnexoF;
     private String iniciativaAnexoF;
     private ContenidoIniciativaResumenDto filaAnexoFSeleccionada;
@@ -137,6 +139,42 @@ public class Pre35RegistrarEtapas {
     @Entonces("el sistema no acepta el valor, ya que el formato obligatorio es dd\\/mm\\/aaaa \\(RN04)")
     public void el_sistema_no_acepta_el_valor_formato_dd_mm_aaaa() {
         assertThat(violaciones).isNotEmpty();
+        RequestContextHolder.resetRequestAttributes();
+    }
+
+    @Dado("que el Técnico URP registró la etapa {string} con fechas del {string} al {string}")
+    public void que_el_tecnico_urp_registro_la_etapa_con_fechas(String etapaLabel, String fechaInicio, String fechaFin) {
+        crearProyectoYAutenticar(IniciativaInversion.PROYECTO, false);
+        service.aceptarRutaPreinversion(proyecto.getId(), criteriosCompletos());
+        service.actualizarEtapas(proyecto.getId(), new ActualizarEtapasRequestDto()
+                .addEtapasItem(new EtapaRegistroRequestDto().nombreEtapa(mapearNombreEtapa(etapaLabel))
+                        .costo(1000.0).fechaInicio(fechaInicio).fechaFin(fechaFin)));
+    }
+
+    @Cuando("el Técnico URP intenta guardar la etapa {string} con fecha de inicio {string} y fecha de finalización {string}")
+    public void el_tecnico_urp_intenta_guardar_la_etapa_con_fechas(String etapaLabel, String fechaInicio, String fechaFin) {
+        ultimaExcepcionEtapas = null;
+        try {
+            service.actualizarEtapas(proyecto.getId(), new ActualizarEtapasRequestDto()
+                    .addEtapasItem(new EtapaRegistroRequestDto().nombreEtapa(mapearNombreEtapa(etapaLabel))
+                            .costo(1000.0).fechaInicio(fechaInicio).fechaFin(fechaFin)));
+        } catch (ValidacionNegocioException ex) {
+            ultimaExcepcionEtapas = ex;
+        }
+    }
+
+    @Entonces("el sistema rechaza la operación por inconsistencia en el orden de las fechas de las etapas")
+    public void el_sistema_rechaza_la_operacion_por_inconsistencia_de_fechas() {
+        assertThat(ultimaExcepcionEtapas).isNotNull();
+        RequestContextHolder.resetRequestAttributes();
+    }
+
+    @Entonces("las etapas se listan en el orden Perfil, Prefactibilidad, Factibilidad, Diseño, Ejecución")
+    public void las_etapas_se_listan_en_el_orden_de_la_ruta() {
+        List<EtapaDto> etapas = service.listarEtapas(proyecto.getId());
+        assertThat(etapas).extracting(EtapaDto::getNombreEtapa).containsExactly(NombreEtapaDto.PERFIL,
+                NombreEtapaDto.PREFACTIBILIDAD, NombreEtapaDto.FACTIBILIDAD, NombreEtapaDto.DISENO,
+                NombreEtapaDto.EJECUCION);
         RequestContextHolder.resetRequestAttributes();
     }
 
@@ -257,7 +295,7 @@ public class Pre35RegistrarEtapas {
 
         service.actualizarEtapas(proyecto.getId(), new ActualizarEtapasRequestDto()
                 .addEtapasItem(new EtapaRegistroRequestDto().nombreEtapa(NombreEtapaDto.EJECUCION)
-                        .costo(999.0).fechaInicio("01/2027").fechaFin("12/2027")));
+                        .costo(999.0).fechaInicio("01/01/2027").fechaFin("31/12/2027")));
     }
 
     @Entonces("el sistema actualiza automáticamente el campo \"Costo de la etapa\" de Ejecución")
@@ -415,6 +453,17 @@ public class Pre35RegistrarEtapas {
             case "Proyecto" -> IniciativaInversion.PROYECTO;
             case "Estudio General" -> IniciativaInversion.ESTUDIO_GENERAL;
             default -> throw new IllegalArgumentException("Iniciativa no reconocida: " + etiqueta);
+        };
+    }
+
+    private NombreEtapaDto mapearNombreEtapa(String etiqueta) {
+        return switch (etiqueta) {
+            case "Perfil" -> NombreEtapaDto.PERFIL;
+            case "Prefactibilidad" -> NombreEtapaDto.PREFACTIBILIDAD;
+            case "Factibilidad" -> NombreEtapaDto.FACTIBILIDAD;
+            case "Diseño" -> NombreEtapaDto.DISENO;
+            case "Ejecución" -> NombreEtapaDto.EJECUCION;
+            default -> throw new IllegalArgumentException("Etapa no reconocida: " + etiqueta);
         };
     }
 }

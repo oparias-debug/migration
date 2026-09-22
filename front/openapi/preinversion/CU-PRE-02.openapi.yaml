@@ -205,6 +205,55 @@ paths:
             application/json:
               schema:
                 $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+    delete:
+      operationId: desarchivarSolicitud
+      summary: Desarchivar una solicitud (RN11, nueva — no proviene del documento original)
+      description: 'RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya canceló la instancia de proceso Flowable asociada y desactivó el proyecto, así que no existe un estado previo seguro al cual volver.
+
+        '
+      tags:
+      - Preinversión - Bandeja Preinversión
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Coordinador PRE
+      responses:
+        '200':
+          description: 'Solicitud desarchivada; vuelve a "Solicitudes Activas" con el estado que tenía antes de archivarse, y desaparece del "Reporte de solicitudes Preinversión archivadas".
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudActivaItem'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '403':
+          description: 'El actor autenticado no es Coordinador PRE (el archivo es exclusivo del Coordinador PRE).
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '404':
+          description: La solicitud no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '409':
+          description: 'La solicitud no está archivada, o fue archivada automáticamente por el sistema (sin estado previo que restaurar) — ver RN11.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
 components:
   securitySchemes:
     bearerAuth:

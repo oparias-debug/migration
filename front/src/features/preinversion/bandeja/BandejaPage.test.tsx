@@ -8,6 +8,7 @@ const listarSolicitudesActivas = vi.fn();
 const listarSolicitudesArchivadas = vi.fn();
 const asignarTecnicoPre = vi.fn();
 const archivarSolicitud = vi.fn();
+const desarchivarSolicitud = vi.fn();
 const listarTecnicosPre = vi.fn();
 const swalFire = vi.fn().mockResolvedValue({ isConfirmed: true });
 let esCoordinador = true;
@@ -19,6 +20,7 @@ vi.mock('../../../api/preinversionApi', async (importOriginal) => ({
     listarSolicitudesArchivadas: (...a: unknown[]) => listarSolicitudesArchivadas(...a),
     asignarTecnicoPre: (...a: unknown[]) => asignarTecnicoPre(...a),
     archivarSolicitud: (...a: unknown[]) => archivarSolicitud(...a),
+    desarchivarSolicitud: (...a: unknown[]) => desarchivarSolicitud(...a),
   },
   catalogoBandejaApi: { listarTecnicosPre: () => listarTecnicosPre() },
 }));
@@ -150,5 +152,37 @@ describe('BandejaPage', () => {
     );
     montar();
     expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('errores.servidor'));
+  });
+
+  // RN11 (endpoint nuevo, 21/09/2026): el Coordinador PRE puede deshacer un
+  // archivo manual; la solicitud vuelve con el estado que tenía.
+  it('desarchiva una solicitud desde la vista de archivadas', async () => {
+    listarSolicitudesArchivadas.mockResolvedValue({
+      data: {
+        contenido: [{ ...UNA, estado: undefined, fechaArchivo: '2026-09-01' }],
+        paginacion: { pagina: 0, tamanio: 20, totalElementos: 1, totalPaginas: 1 },
+      },
+    });
+    desarchivarSolicitud.mockResolvedValue({ data: {} });
+    montar();
+    fireEvent.change(await screen.findByLabelText('Tipo de solicitud'), { target: { value: 'archivadas' } });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Desarchivar' }));
+    await waitFor(() => expect(swalFire).toHaveBeenCalled());
+    await waitFor(() => expect(desarchivarSolicitud).toHaveBeenCalledWith({ idSolicitud: 1 }));
+  });
+
+  it('no ofrece desarchivar a quien no es Coordinador PRE', async () => {
+    esCoordinador = false;
+    listarSolicitudesArchivadas.mockResolvedValue({
+      data: {
+        contenido: [{ ...UNA, estado: undefined, fechaArchivo: '2026-09-01' }],
+        paginacion: { pagina: 0, tamanio: 20, totalElementos: 1, totalPaginas: 1 },
+      },
+    });
+    montar();
+    fireEvent.change(await screen.findByLabelText('Tipo de solicitud'), { target: { value: 'archivadas' } });
+    await screen.findByText(UNA.nombreProyecto);
+    expect(screen.queryByRole('button', { name: 'Desarchivar' })).not.toBeInTheDocument();
   });
 });

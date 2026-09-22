@@ -11,8 +11,13 @@ import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 
 public interface EtapaPreinversionRepository extends JpaRepository<EtapaPreinversion, Long> {
 
-    /** Tabla "Registro de Etapas" (Anexo A.1), en el orden natural de la ruta. */
-    List<EtapaPreinversion> findByProyectoIdOrderByTipoEtapaAsc(Long idProyecto);
+    /**
+     * Etapas del proyecto, en orden arbitrario. {@code TipoEtapa} es {@code @Enumerated(STRING)},
+     * así que un {@code ORDER BY} SQL sobre esa columna ordenaría alfabéticamente, no en el orden
+     * de la ruta (PERFIL, PREFACTIBILIDAD, FACTIBILIDAD, DISEÑO, EJECUCIÓN) — para eso, ver
+     * {@code SeleccionYRegistroDeEtapasServiceImpl#etapasEnOrdenDeRuta}.
+     */
+    List<EtapaPreinversion> findByProyectoId(Long idProyecto);
 
     Optional<EtapaPreinversion> findByProyectoIdAndTipoEtapa(Long idProyecto, TipoEtapaPreinversion tipoEtapa);
 

@@ -17,6 +17,8 @@ import sv.gob.mh.siip.model.administracion.dto.TipoCostoResumenDto;
 public interface SeleccionYRegistroDeEtapasMapper {
 
     @Mapping(target = "nombreEtapa", source = "tipoEtapa")
+    @Mapping(target = "fechaInicio", source = "fechaInicio", dateFormat = "dd/MM/yyyy")
+    @Mapping(target = "fechaFin", source = "fechaFin", dateFormat = "dd/MM/yyyy")
     EtapaDto toDto(EtapaPreinversion etapa);
 
     List<EtapaDto> toDtoList(List<EtapaPreinversion> etapas);

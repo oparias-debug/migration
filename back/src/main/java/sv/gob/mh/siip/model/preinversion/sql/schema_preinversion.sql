@@ -211,8 +211,8 @@ CREATE TABLE ETAPA_PREINVERSION (
     FECHA_SELECCION     TIMESTAMP       NOT NULL,
     JUSTIFICACION       VARCHAR2(2000),
     COSTO               NUMBER(18,2),
-    FECHA_INICIO        VARCHAR2(20),
-    FECHA_FIN           VARCHAR2(20),
+    FECHA_INICIO        DATE,
+    FECHA_FIN           DATE,
     HABILITADO_PARA_REGISTRO NUMBER(1)  DEFAULT 0 NOT NULL,
     TIENE_OPINION_TECNICA NUMBER(1)     DEFAULT 0 NOT NULL,
     BLOQUEADA_POR_MODIFICACION NUMBER(1) DEFAULT 0 NOT NULL,
@@ -227,10 +227,12 @@ CREATE TABLE ETAPA_PREINVERSION (
 );
 COMMENT ON TABLE ETAPA_PREINVERSION IS 'Etapa de preinversión seleccionada para el proyecto. CU-PRE-03.5';
 
--- Fechas "estimada de inicio/fin" como texto libre (no DATE): RN04, Anexo B.1 y el mockup de
--- pantalla proponen 3 formatos distintos sin resolver (dd/mm/aaaa, MM/AA, mm/aaaa) - ver
--- CU-PRE-03.5.openapi.yaml. UK_ETAPA_PROYECTO_TIPO: una fila por etapa y proyecto (actualizarEtapas
--- hace upsert sobre esta combinacion, nunca duplica etapas).
+-- FECHA_INICIO/FECHA_FIN son DATE (RN04 dd/mm/aaaa confirmado v1.3, ya sin ambiguedad con Anexo
+-- B.1/mockup); el contrato OpenAPI sigue exponiendolas como string dd/mm/aaaa, la conversion vive
+-- en el mapper (ver CU-PRE-03.5.openapi.yaml). RN23: deben respetar el orden cronologico de la
+-- ruta (PERFIL/PREFACTIBILIDAD/FACTIBILIDAD/DISENO/EJECUCION), validado en el servicio, no en el
+-- schema. UK_ETAPA_PROYECTO_TIPO: una fila por etapa y proyecto (actualizarEtapas hace upsert sobre
+-- esta combinacion, nunca duplica etapas).
 
 CREATE SEQUENCE RUTA_PREINVERSION_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE RUTA_PREINVERSION (
@@ -339,15 +341,24 @@ CREATE TABLE SOLICITUD_PREINVERSION (
     FECHA_ASIGNACION    TIMESTAMP,
     FECHA_ARCHIVO       TIMESTAMP,
     FECHA_ALERTA_ELIMINACION TIMESTAMP,
+    ESTADO_PREVIO_ARCHIVO VARCHAR2(30),
     FECHA_CREACION      TIMESTAMP       DEFAULT SYSTIMESTAMP,
     USUARIO_CREACION    VARCHAR2(100),
     CONSTRAINT PK_SOLICITUD_PREINVERSION PRIMARY KEY (ID_SOLICITUD),
     CONSTRAINT FK_SOLICITUD_PROYECTO FOREIGN KEY (ID_PROYECTO) REFERENCES PROYECTO (ID_PROYECTO),
     CONSTRAINT FK_SOLICITUD_TECNICO FOREIGN KEY (ID_TECNICO_ASIGNADO) REFERENCES USUARIO (ID_USUARIO),
     CONSTRAINT CK_SOLICITUD_TIPO CHECK (TIPO_SOLICITUD IN ('CUP','OPINION_TECNICA')),
-    CONSTRAINT CK_SOLICITUD_ESTADO CHECK (ESTADO IN ('REGISTRADA','ASIGNADA','EN_REVISION','OBSERVADA','APROBADA','ARCHIVADA'))
+    CONSTRAINT CK_SOLICITUD_ESTADO CHECK (ESTADO IN ('REGISTRADA','ASIGNADA','EN_REVISION','OBSERVADA','APROBADA','ARCHIVADA')),
+    CONSTRAINT CK_SOLICITUD_ESTADO_PREVIO CHECK (ESTADO_PREVIO_ARCHIVO IN ('REGISTRADA','ASIGNADA','EN_REVISION','OBSERVADA','APROBADA'))
 );
 COMMENT ON TABLE SOLICITUD_PREINVERSION IS 'Solicitud de CUP u Opinión Técnica. CU-PRE-01, CU-PRE-01.5, CU-PRE-02';
+
+-- ESTADO_PREVIO_ARCHIVO (RN11 CU-PRE-02, nueva): solo lo fija el archivo MANUAL (boton
+-- "Archivar", Coordinador PRE) para poder restaurar el estado exacto al desarchivar; el archivo
+-- AUTOMATICO del scheduler (RN-4 CU-PRE-01, tras 3 meses + 5 dias habiles sin respuesta) nunca lo
+-- fija -- esas solicitudes no se pueden desarchivar (ya cancelaron su instancia de proceso
+-- Flowable y desactivaron el proyecto). Null en toda solicitud no archivada o archivada
+-- automaticamente.
 
 CREATE SEQUENCE COMENTARIO_SOLICITUD_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE TABLE COMENTARIO_SOLICITUD (

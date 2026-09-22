@@ -103,6 +103,22 @@ export function BandejaPage() {
     }
   };
 
+  const desarchivar = async (s: SolicitudArchivadaItem) => {
+    const { isConfirmed } = await Swal.fire({
+      text: t('preinversion.bandeja.confirmarDesarchivar'),
+      icon: 'question', showCancelButton: true,
+      confirmButtonText: t('common.aceptar'), cancelButtonText: t('common.cancelar'),
+    });
+    if (!isConfirmed) return;
+    try {
+      await bandejaApi.desarchivarSolicitud({ idSolicitud: s.idSolicitud });
+      await Swal.fire({ icon: 'success', text: t('preinversion.bandeja.desarchivada') });
+      await cargar(pagina);
+    } catch (error_) {
+      Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
+    }
+  };
+
   const archivar = async (s: SolicitudActivaItem) => {
     // El texto difiere entre el paso 3.4 del CU y el mockup del Anexo A.3; se
     // usa el del mockup y queda anotado en el .feature como pendiente.
@@ -161,7 +177,7 @@ export function BandejaPage() {
                 <th style={{ width: '11%' }}>{t('preinversion.bandeja.columnaFechaSolicitud')}</th>
                 <th>{vista === 'activas' ? t('preinversion.bandeja.columnaEstado') : t('preinversion.bandeja.columnaFechaArchivo')}</th>
                 {vista === 'activas' && <th>{t('preinversion.bandeja.columnaAsignadoA')}</th>}
-                {vista === 'activas' && puedeGestionar && <th />}
+                {puedeGestionar && <th />}
               </tr>
             </thead>
             <tbody>
@@ -193,6 +209,15 @@ export function BandejaPage() {
                         ) : (
                           item.asignadoA?.nombreCompleto ?? t('preinversion.bandeja.sinAsignar')
                         )}
+                      </td>
+                    )}
+                    {!activa && puedeGestionar && (
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {/* RN11: sólo deshace un archivo manual; el automático no
+                            tiene estado previo al que volver, y el back lo rechaza. */}
+                        <button type="button" className="enlace-fila" onClick={() => desarchivar(s as SolicitudArchivadaItem)}>
+                          {t('preinversion.bandeja.botonDesarchivar')}
+                        </button>
                       </td>
                     )}
                     {activa && puedeGestionar && (

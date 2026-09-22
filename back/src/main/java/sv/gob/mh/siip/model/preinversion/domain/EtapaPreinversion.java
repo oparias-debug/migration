@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -55,15 +56,16 @@ public class EtapaPreinversion extends Auditable {
     private Double costo;
 
     /**
-     * Campo "Fecha estimada de inicio". Texto libre, no {@code LocalDate}: el propio CU tiene 3
-     * formatos en conflicto sin resolver (RN04 "dd/mm/aaaa", Anexo B.1 "MM/AA", mockup "mm/aaaa").
+     * Campo "Fecha estimada de inicio" (RN04: formato dd/mm/aaaa en el contrato, confirmado v1.3).
+     * RN23: no puede ser posterior a {@link #fechaFin} ni anterior a la fecha de finalización de la
+     * etapa previa de la ruta con fechas completas.
      */
-    @Column(name = "FECHA_INICIO", length = 20)
-    private String fechaInicio;
+    @Column(name = "FECHA_INICIO")
+    private LocalDate fechaInicio;
 
-    /** Campo "Fecha estimada de finalización". Mismo criterio que {@link #fechaInicio}. */
-    @Column(name = "FECHA_FIN", length = 20)
-    private String fechaFin;
+    /** Campo "Fecha estimada de finalización". Mismo criterio que {@link #fechaInicio} (RN04/RN23). */
+    @Column(name = "FECHA_FIN")
+    private LocalDate fechaFin;
 
     /**
      * Si el botón de navegación de esta etapa hacia identificación/formulación/evaluación/

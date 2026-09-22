@@ -1,8 +1,12 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -62,6 +66,9 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
     private static final String CAMPO_OBLIGATORIO = "*Campo obligatorio";
 
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+
+    /** RN04: mismo formato dd/mm/aaaa ya validado a nivel de DTO (`@Pattern`) para fechaInicio/fechaFin. */
+    private static final DateTimeFormatter FORMATO_FECHA_ETAPA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     /** Ruta con Diseño, sin Prefactibilidad/Factibilidad (Anexo B.2: "Perfil con Diseño Básico"/"Perfil + Diseño"). */
     private static final List<TipoEtapaPreinversion> RUTA_PERFIL_DISENO = List.of(TipoEtapaPreinversion.PERFIL,
@@ -178,7 +185,7 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
     public List<EtapaDto> listarEtapas(Long idProyecto) {
         actorContexto.exigir();
         Proyecto proyecto = buscarProyecto(idProyecto);
-        List<EtapaPreinversion> etapas = etapaPreinversionRepository.findByProyectoIdOrderByTipoEtapaAsc(idProyecto);
+        List<EtapaPreinversion> etapas = etapasEnOrdenDeRuta(idProyecto);
 
         // RN09: PERFIL y EJECUCION estan habilitadas desde el inicio, para cualquier iniciativa,
         // sin esperar a generarRutaPreinversion/aceptarRutaPreinversion (RN07/RN08: para Programa/
@@ -190,7 +197,7 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
                     ? List.of(TipoEtapaPreinversion.PERFIL)
                     : RUTA_PROGRAMA_ESTUDIO;
             sincronizarEtapas(proyecto, etapasIniciales, false);
-            etapas = etapaPreinversionRepository.findByProyectoIdOrderByTipoEtapaAsc(idProyecto);
+            etapas = etapasEnOrdenDeRuta(idProyecto);
         }
         return mapper.toDtoList(etapas);
     }
@@ -200,6 +207,8 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
         actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
 
+        List<ErrorDetalleDto> detalles = new ArrayList<>();
+        List<EtapaPreinversion> etapasTocadas = new ArrayList<>();
         for (EtapaRegistroRequestDto item : request.getEtapas()) {
             TipoEtapaPreinversion tipoEtapa = TipoEtapaPreinversion.valueOf(item.getNombreEtapa().name());
             EtapaPreinversion etapa = etapaPreinversionRepository.findByProyectoIdAndTipoEtapa(idProyecto, tipoEtapa)
@@ -210,15 +219,85 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
             if (tipoEtapa != TipoEtapaPreinversion.EJECUCION) {
                 etapa.setCosto(item.getCosto());
             }
-            etapa.setFechaInicio(item.getFechaInicio());
-            etapa.setFechaFin(item.getFechaFin());
-            if (item.getFechaInicio() != null && item.getFechaFin() != null) {
+            LocalDate fechaInicio = parsearFechaEtapa(tipoEtapa, item.getFechaInicio(), detalles);
+            LocalDate fechaFin = parsearFechaEtapa(tipoEtapa, item.getFechaFin(), detalles);
+            etapa.setFechaInicio(fechaInicio);
+            etapa.setFechaFin(fechaFin);
+            if (fechaInicio != null && fechaFin != null) {
                 etapa.setHabilitadoParaRegistro(true);
             }
-            etapaPreinversionRepository.save(etapa);
+            etapasTocadas.add(etapa);
+        }
+        if (!detalles.isEmpty()) {
+            throw new ValidacionNegocioException("FECHA_INVALIDA",
+                    "Alguna de las fechas indicadas no es una fecha calendario válida.", detalles);
+        }
+        etapasTocadas.forEach(etapaPreinversionRepository::save);
+
+        List<EtapaPreinversion> etapasActualizadas = etapasEnOrdenDeRuta(idProyecto);
+        validarConsistenciaFechasEtapas(etapasActualizadas);
+        return mapper.toDtoList(etapasActualizadas);
+    }
+
+    /**
+     * Etapas del proyecto en el orden PERFIL/PREFACTIBILIDAD/FACTIBILIDAD/DISENO/EJECUCION de la
+     * ruta. No se puede usar un {@code ORDER BY} sobre la columna TIPO_ETAPA en el repositorio: al
+     * ser {@code @Enumerated(EnumType.STRING)}, eso ordenaría alfabéticamente (DISENO, EJECUCION,
+     * FACTIBILIDAD, PERFIL, PREFACTIBILIDAD), no en el orden real de la ruta. Se ordena en memoria
+     * por el ordinal del enum, que sí refleja ese orden de forma estable.
+     */
+    private List<EtapaPreinversion> etapasEnOrdenDeRuta(Long idProyecto) {
+        return etapaPreinversionRepository.findByProyectoId(idProyecto).stream()
+                .sorted(Comparator.comparing(EtapaPreinversion::getTipoEtapa))
+                .toList();
+    }
+
+    /**
+     * RN23: las etapas PERFIL/PREFACTIBILIDAD/FACTIBILIDAD/DISENO/EJECUCION deben respetar ese
+     * orden cronológico entre sí — ninguna etapa puede iniciar antes de que termine la etapa previa
+     * (en orden de ruta) que también tenga fechas completas, ni terminar antes de su propio inicio.
+     * Solo se comparan etapas con fechaInicio y fechaFin completos: las incompletas son
+     * responsabilidad visual del cliente (RN19), no entran en esta validación. Rechaza con 400,
+     * igual que RN04 (formato de fecha), del cual esta regla es una extensión natural.
+     */
+    private void validarConsistenciaFechasEtapas(List<EtapaPreinversion> etapas) {
+        List<ErrorDetalleDto> detalles = new ArrayList<>();
+        List<EtapaPreinversion> conFechas = etapas.stream()
+                .filter(etapa -> etapa.getFechaInicio() != null && etapa.getFechaFin() != null)
+                .sorted(Comparator.comparing(EtapaPreinversion::getTipoEtapa))
+                .toList();
+
+        for (int i = 0; i < conFechas.size(); i++) {
+            EtapaPreinversion actual = conFechas.get(i);
+            if (actual.getFechaInicio().isAfter(actual.getFechaFin())) {
+                detalles.add(new ErrorDetalleDto().campo(actual.getTipoEtapa().name())
+                        .mensaje("La fecha de inicio no puede ser posterior a la fecha de finalización de la misma etapa."));
+            }
+            if (i > 0) {
+                EtapaPreinversion previa = conFechas.get(i - 1);
+                if (actual.getFechaInicio().isBefore(previa.getFechaFin())) {
+                    detalles.add(new ErrorDetalleDto().campo(actual.getTipoEtapa().name())
+                            .mensaje("No puede iniciar antes de que finalice la etapa " + previa.getTipoEtapa() + "."));
+                }
+            }
         }
 
-        return mapper.toDtoList(etapaPreinversionRepository.findByProyectoIdOrderByTipoEtapaAsc(idProyecto));
+        if (!detalles.isEmpty()) {
+            throw new ValidacionNegocioException("FECHAS_ETAPAS_INCONSISTENTES",
+                    "Las fechas de las etapas no son consistentes con el orden de la ruta.", detalles);
+        }
+    }
+
+    private LocalDate parsearFechaEtapa(TipoEtapaPreinversion tipoEtapa, String fecha, List<ErrorDetalleDto> detalles) {
+        if (fecha == null) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(fecha, FORMATO_FECHA_ETAPA);
+        } catch (DateTimeParseException ex) {
+            detalles.add(new ErrorDetalleDto().campo(tipoEtapa.name()).mensaje("Fecha inválida."));
+            return null;
+        }
     }
 
     @Override
@@ -350,7 +429,7 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
     /** Crea/actualiza las filas de EtapaPreinversion para reflejar la seleccion vigente. */
     private void sincronizarEtapas(Proyecto proyecto, List<TipoEtapaPreinversion> seleccion,
             boolean bloquearEmitidasFueraDeSeleccion) {
-        List<EtapaPreinversion> existentes = etapaPreinversionRepository.findByProyectoIdOrderByTipoEtapaAsc(proyecto.getId());
+        List<EtapaPreinversion> existentes = etapaPreinversionRepository.findByProyectoId(proyecto.getId());
 
         if (bloquearEmitidasFueraDeSeleccion) {
             for (EtapaPreinversion existente : existentes) {
@@ -382,8 +461,7 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
 
     private RutaPreinversionDto construirRutaDto(Proyecto proyecto) {
         RutaPreinversion ruta = rutaPreinversionRepository.findByProyectoId(proyecto.getId()).orElse(null);
-        List<NombreEtapaDto> etapasAceptadas = etapaPreinversionRepository
-                .findByProyectoIdOrderByTipoEtapaAsc(proyecto.getId()).stream()
+        List<NombreEtapaDto> etapasAceptadas = etapasEnOrdenDeRuta(proyecto.getId()).stream()
                 .map(e -> aNombreEtapaDto(e.getTipoEtapa()))
                 .toList();
 

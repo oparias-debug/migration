@@ -12,6 +12,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
+import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.model.common.domain.*;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.common.repository.*;
@@ -50,6 +51,7 @@ public class Pre02Bandeja {
     private String accion, pantalla, dialogo;
     private boolean hover;
     private SolicitudesActivasResponseDto resultado;
+    private ConflictoEstadoException ultimaExcepcionDesarchivo;
 
     @Before("@CU-PRE-02")
     public void preparar() {
@@ -161,6 +163,39 @@ public class Pre02Bandeja {
     public void reporte(String pantalla, String estado) { assertThat(bandeja.archivadas(null, 0, 200).getContenido()).extracting(SolicitudArchivadaItemDto::getIdSolicitud).contains(solicitud.getId()); }
     @Entonces("la solicitud permanece en la tabla {string}")
     public void sigueActiva(String tabla) { existe(tabla); }
+    @Dado("que la solicitud fue archivada manualmente por el Coordinador PRE")
+    public void archivadaManualmente() { bandeja.archivar(solicitud.getId()); }
+    @Dado("que la solicitud fue archivada automáticamente por el sistema tras 3 meses sin respuesta")
+    public void archivadaAutomaticamente() {
+        // Refleja AlertaEliminacionAutomaticaScheduler: fija ARCHIVADA/fechaArchivo pero nunca
+        // estadoPrevioArchivo — por eso no puede desarchivarse por este medio.
+        solicitud.setEstado(EstadoSolicitud.ARCHIVADA);
+        solicitud.setFechaArchivo(LocalDateTime.now());
+        solicitudes.saveAndFlush(solicitud);
+    }
+    @Cuando("el Coordinador PRE desarchiva la solicitud")
+    public void desarchivar() { bandeja.desarchivar(solicitud.getId()); }
+    @Cuando("el Coordinador PRE intenta desarchivar la solicitud")
+    public void intentaDesarchivar() {
+        ultimaExcepcionDesarchivo = null;
+        try { bandeja.desarchivar(solicitud.getId()); }
+        catch (ConflictoEstadoException ex) { ultimaExcepcionDesarchivo = ex; }
+    }
+    @Entonces("la solicitud vuelve al estado que tenía antes de archivarse")
+    public void vuelveAlEstadoPrevio() {
+        assertThat(actual().getEstado()).isEqualTo(EstadoSolicitud.REGISTRADA);
+        assertThat(actual().getEstadoPrevioArchivo()).isNull();
+        assertThat(actual().getFechaArchivo()).isNull();
+    }
+    @Entonces("la solicitud reaparece en la tabla {string}")
+    public void reaparece(String tabla) { existe(tabla); }
+    @Entonces("la solicitud desaparece del {string}")
+    public void desapareceDelReporte(String reporte) {
+        assertThat(bandeja.archivadas(null, 0, 200).getContenido())
+                .extracting(SolicitudArchivadaItemDto::getIdSolicitud).doesNotContain(solicitud.getId());
+    }
+    @Entonces("el sistema rechaza la operación porque no puede restaurar el estado previo")
+    public void rechazaDesarchivo() { assertThat(ultimaExcepcionDesarchivo).isNotNull(); }
     @Entonces("el sistema muestra la tabla {string} con las columnas Unidad Ejecutora, Tipo de Solicitud, CUP, Nombre del Proyecto, Fecha de Solicitud, Estado y Asignado a")
     public void columnas(String tabla) {
         consultar(); var fila = resultado.getContenido().stream().filter(s -> s.getIdSolicitud().equals(solicitud.getId())).findFirst().orElseThrow();
