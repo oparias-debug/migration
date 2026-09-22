@@ -146,12 +146,15 @@ export const MODULOS: readonly Modulo[] = [
     icono: 'menu-administracion',
     texto: 'menu.administracion',
     submenu: [
-      { clave: 'seguridad', texto: 'menu.seguridad', ruta: '/administracion/seguridad' },
-      // Sólo para el rol que el back del CU-ADM-01 acepta; a cualquier otro le respondería 403.
-      { clave: 'catalogos', texto: 'menu.catalogos', ruta: '/catalogos-generales', rolesRequeridos: ['ADMINISTRADOR_DE_CATALOGOS'] },
+      // Todavía no tiene caso de uso ni endpoints; se muestra sólo a quien
+      // administraría el sistema, no a un técnico (Olga, 21/09/2026: el menú
+      // de Administración es Seguridad, Calendario y Catálogo).
+      { clave: 'seguridad', texto: 'menu.seguridad', ruta: '/administracion/seguridad', rolesRequeridos: ['ADMINISTRADOR'] },
       // CU-ADM-04. El back exige ADMINISTRADOR o ADMINISTRADOR_CALENDARIO, y
       // desde la sincronización de roles del 18/09 los dos existen en Keycloak.
       { clave: 'calendario', texto: 'menu.calendario', ruta: '/administracion/calendario', rolesRequeridos: ['ADMINISTRADOR', 'ADMINISTRADOR_CALENDARIO'] },
+      // Sólo para el rol que el back del CU-ADM-01 acepta; a cualquier otro le respondería 403.
+      { clave: 'catalogos', texto: 'menu.catalogos', ruta: '/catalogos-generales', rolesRequeridos: ['ADMINISTRADOR_DE_CATALOGOS'] },
     ],
   },
 ];
