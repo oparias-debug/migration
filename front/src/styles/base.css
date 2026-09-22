@@ -22,7 +22,8 @@ a { color: var(--azul); }
    Dos aros: el claro se ve sobre los azules (menú, banda, botón primario) y el
    oscuro sobre los fondos claros. Antes era un solo aro azul, invisible sobre
    cualquier superficie azul (1:1 sobre el propio botón primario).
-   Lleva !important a propósito: bootstrap.min.css (que se importa en main.tsx)
+   Lleva !important a propósito: alguna regla de botón quita el contorno del
+   navegador, y el aro de foco debe ganar siempre
    anula el contorno en `.btn:focus-visible`, y algunas píldoras del menú traen
    box-shadow propio. El foco es una garantía de accesibilidad, no un adorno:
    tiene que ganar siempre. */
@@ -928,3 +929,42 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
+
+/* ================== ESTILOS QUE SUSTITUYEN A BOOTSTRAP (retirado) ========= */
+/* Eran las últimas pantallas que dependían de bootstrap.min.css: 276 KB de
+   CSS para una docena de clases. Se reescriben con el propio diseño. */
+
+/* Bloque con cabecera, como el que usaba .card + .card-header. */
+.bloque { border: 1px solid var(--n200); border-radius: var(--r2); background: #fff; margin-bottom: 18px; overflow: hidden; }
+.bloque-cabecera { background: var(--n100); padding: 10px 16px; border-bottom: 1px solid var(--n200); }
+.bloque-cabecera h2 { font-size: 13.5px; font-weight: 700; color: var(--n700); margin: 0; }
+.bloque-cuerpo { padding: 14px 16px; }
+
+/* Navegación secundaria y filtro suelto de la bandeja. */
+.sub-nav { margin-bottom: 14px; font-size: 13.5px; }
+.filtro-suelto {
+  font: inherit; font-size: 13.5px; padding: 9px 11px; margin-bottom: 14px;
+  border: 1px solid var(--n300); border-radius: var(--r); background: #fff; max-width: 320px;
+}
+.celda-asignacion { display: flex; gap: 8px; align-items: center; }
+.celda-asignacion select { font: inherit; font-size: 13px; padding: 6px 9px; border: 1px solid var(--n300); border-radius: var(--r); }
+.bandeja-pre { width: 100%; border-collapse: collapse; }
+.bandeja-pre th, .bandeja-pre td { padding: 10px 12px; border-bottom: 1px solid var(--n200); vertical-align: middle; text-align: left; }
+.bandeja-pre tbody tr:nth-child(odd) { background: var(--n50); }
+
+/* Modal de categorías (GRD/GRC/ACC). */
+.modal-categorias {
+  border: 0; border-radius: var(--r2); padding: 0; max-width: 780px; width: 92%;
+  box-shadow: 0 18px 48px rgba(0,0,0,.28);
+}
+.modal-categorias::backdrop { background: rgba(0,0,0,.5); }
+.mc-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--n200); }
+.mc-cabecera h2 { font-family: var(--tipo-titulo); font-size: 17px; margin: 0; color: var(--navy); }
+.mc-cerrar { border: 0; background: none; font-size: 24px; line-height: 1; color: var(--n500); cursor: pointer; padding: 0 4px; }
+.mc-cuerpo { padding: 16px 18px; max-height: 65vh; overflow-y: auto; }
+.mc-grupo { margin-bottom: 20px; }
+.mc-grupo h3 { font-size: 13.5px; font-weight: 700; color: var(--n700); margin: 0 0 8px; }
+.mc-grupo table { width: 100%; border-collapse: collapse; }
+.mc-grupo th, .mc-grupo td { border: 1px solid var(--n200); padding: 7px 10px; font-size: 13px; text-align: left; }
+.mc-grupo th { background: var(--n100); font-weight: 700; color: var(--n700); }
+.mc-pie { padding: 12px 18px; border-top: 1px solid var(--n200); display: flex; justify-content: flex-end; }

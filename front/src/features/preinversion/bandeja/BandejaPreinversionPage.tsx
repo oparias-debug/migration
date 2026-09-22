@@ -68,6 +68,23 @@ export function BandejaPreinversionPage({ archivadas = false }: { readonly archi
     return () => { vigente = false; };
   }, [coordinador, archivadas]);
 
+  async function desarchivar(s: SolicitudArchivadaItem) {
+    if (accionActiva.current) return;
+    accionActiva.current = true;
+    setOcupado(true);
+    setAviso('');
+    try {
+      const confirmado = await confirmDialog('¿Desea devolver esta solicitud a las activas?',
+        { confirmButtonText: 'Aceptar', cancelButtonText: 'Cancelar' });
+      if (!confirmado) return;
+      await bandejaApi.desarchivarSolicitud({ idSolicitud: s.idSolicitud });
+      setAviso('La solicitud volvió a las solicitudes activas.');
+      await cargar();
+    } catch {
+      setError('No se pudo desarchivar la solicitud. Compruebe sus permisos e intente nuevamente.');
+    } finally { accionActiva.current = false; setOcupado(false); }
+  }
+
   async function actuar(s: SolicitudActivaItem, archivo: boolean) {
     if (accionActiva.current) return;
     accionActiva.current = true;
@@ -94,20 +111,20 @@ export function BandejaPreinversionPage({ archivadas = false }: { readonly archi
 
   return <section aria-labelledby="bandeja-titulo">
     <h1 id="bandeja-titulo">{archivadas ? 'Reporte de solicitudes Preinversión archivadas' : 'Bandeja Preinversión'}</h1>
-    {coordinador && <nav className="mb-3" aria-label="Bandeja">
+    {coordinador && <nav className="sub-nav" aria-label="Bandeja">
       <Link to="/preinversion/bandeja">Solicitudes Activas</Link>{' · '}
       <Link to="/preinversion/bandeja/archivadas">Solicitudes archivadas</Link>
     </nav>}
     {!archivadas && <h2>Solicitudes Activas</h2>}
     <label htmlFor="tipo-solicitud">Tipo de solicitud</label>
-    <select id="tipo-solicitud" className="form-select mb-3" value={tipo} disabled={ocupado}
+    <select id="tipo-solicitud" className="filtro-suelto" value={tipo} disabled={ocupado}
       onChange={e => { setTipo(e.target.value as TipoSolicitud | ''); setPagina(0); }}>
       <option value="">Todas</option><option value="CUP">CUP</option><option value="OPINION_TECNICA">Opinión Técnica</option>
     </select>
-    {error && <div role="alert" className="alert alert-danger">{error} <button type="button" onClick={() => void cargar()}>Reintentar</button></div>}
-    {aviso && <output className="alert alert-success d-block">{aviso}</output>}
-    {cargando ? <output>Cargando solicitudes…</output> : <div className="table-responsive">
-      <table className="table table-striped align-middle bandeja-pre">
+    {error && <div role="alert" className="aviso-error">{error} <button type="button" onClick={() => void cargar()}>Reintentar</button></div>}
+    {aviso && <output className="aviso-ok">{aviso}</output>}
+    {cargando ? <output>Cargando solicitudes…</output> : <div className="tabla-cont">
+      <table className="bandeja-pre">
         <thead><tr>{['CUP', 'Nombre de la iniciativa', 'Tipo de Solicitud', 'Unidad Ejecutora', 'Fecha de Solicitud',
           archivadas ? 'Estado de la solicitud' : 'Estado', archivadas ? 'Fecha de Archivo' : 'Asignado a']
           .map(c => <th key={c} scope="col">{c}</th>)}</tr></thead>
@@ -117,10 +134,16 @@ export function BandejaPreinversionPage({ archivadas = false }: { readonly archi
           if (!activa) estadoTexto = 'Archivado';
           else estadoTexto = formatEstado(activa.estado);
           let asignadoContenido: ReactNode;
-          if (!activa) asignadoContenido = 'fechaArchivo' in s ? fecha(s.fechaArchivo) : '';
+          if (!activa) {
+            asignadoContenido = <div className="celda-asignacion">
+              <span>{'fechaArchivo' in s ? fecha(s.fechaArchivo) : ''}</span>
+              {coordinador && <button type="button" className="btn neutro" disabled={ocupado}
+                onClick={() => void desarchivar(s as SolicitudArchivadaItem)}>Desarchivar</button>}
+            </div>;
+          }
           else if (!coordinador) asignadoContenido = activa.asignadoA?.nombreCompleto ?? 'Sin asignar';
-          else asignadoContenido = <div className="d-flex gap-2">
-            <select aria-label={`Asignado a ${s.nombreProyecto}`} className="form-select" disabled={ocupado}
+          else asignadoContenido = <div className="celda-asignacion">
+            <select aria-label={`Asignado a ${s.nombreProyecto}`} disabled={ocupado}
               value={seleccion[s.idSolicitud] ?? String(activa.asignadoA?.idUsuario ?? '')}
               onChange={e => setSeleccion(prev => ({ ...prev, [s.idSolicitud]: e.target.value }))}>
               <option value="">Sin asignar</option>
@@ -128,13 +151,13 @@ export function BandejaPreinversionPage({ archivadas = false }: { readonly archi
                 <option value={activa.asignadoA.idUsuario}>{activa.asignadoA.nombreCompleto}</option>}
               {tecnicos.map(t => <option key={t.idUsuario} value={t.idUsuario}>{t.nombreCompleto}</option>)}
             </select>
-            <button type="button" className="btn btn-primary" disabled={ocupado || !seleccion[s.idSolicitud] ||
+            <button type="button" className="btn primario" disabled={ocupado || !seleccion[s.idSolicitud] ||
               seleccion[s.idSolicitud] === String(activa.asignadoA?.idUsuario ?? '')}
               onClick={() => void actuar(activa, false)}>Guardar</button>
           </div>;
           return <tr key={s.idSolicitud}>
             <td>{s.cup ?? ''}</td><td className="nombre-solicitud">
-              {coordinador && activa && <button type="button" className="btn btn-outline-secondary btn-sm archivar me-2" disabled={ocupado}
+              {coordinador && activa && <button type="button" className="btn neutro archivar" disabled={ocupado}
                 aria-label={`Archivar ${s.nombreProyecto}`} onClick={() => void actuar(activa, true)}>Archivar</button>}
               {!coordinador && activa ? <Link to={rutaCaso(s)}>{s.nombreProyecto}</Link> : s.nombreProyecto}
             </td>

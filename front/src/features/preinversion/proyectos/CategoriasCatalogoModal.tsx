@@ -42,35 +42,24 @@ export function CategoriasCatalogoModal({ onClose }: CategoriasCatalogoModalProp
   return (
     <dialog
       ref={dialogRef}
-      className="modal d-block"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        maxWidth: 'none',
-        maxHeight: 'none',
-        margin: 0,
-        padding: 0,
-        border: 'none',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-      }}
+      className="modal-categorias"
       onClose={onClose}
     >
-      <div className="modal-dialog modal-lg modal-dialog-scrollable">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">{t('preinversion.registro.categoriasTitulo')}</h5>
-            <button type="button" className="btn-close" aria-label="Close" onClick={onClose} />
-          </div>
-          <div className="modal-body">
+      <div className="mc-caja">
+        <div className="mc-cabecera">
+          <h2>{t('preinversion.registro.categoriasTitulo')}</h2>
+          <button type="button" className="mc-cerrar" aria-label={t('common.cerrar')} onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="mc-cuerpo">
             {cargando ? (
               <p>...</p>
             ) : (
               TIPOS.map(({ tipo, tituloKey }) => (
-                <div key={tipo} className="mb-4">
-                  <h6>{t(tituloKey)}</h6>
-                  <table className="table table-sm table-bordered">
+                <div key={tipo} className="mc-grupo">
+                  <h3>{t(tituloKey)}</h3>
+                  <table>
                     <thead>
                       <tr>
                         <th>{t('preinversion.registro.categoriasCodigo')}</th>
@@ -89,12 +78,11 @@ export function CategoriasCatalogoModal({ onClose }: CategoriasCatalogoModalProp
                 </div>
               ))
             )}
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn neutro" onClick={onClose}>
-              {t('common.cerrar')}
-            </button>
-          </div>
+        </div>
+        <div className="mc-pie">
+          <button type="button" className="btn neutro" onClick={onClose}>
+            {t('common.cerrar')}
+          </button>
         </div>
       </div>
     </dialog>

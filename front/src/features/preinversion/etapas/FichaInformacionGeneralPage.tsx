@@ -145,11 +145,11 @@ export function FichaInformacionGeneralPage() {
         </div>
 
         {esCoordinadorSymp && (
-          <section className="card mb-4">
-            <div className="card-header">
-              <h2 className="h6 mb-0">{t('preinversion.fichaGeneral.tituloCoEjecutor')}</h2>
+          <section className="bloque">
+            <div className="bloque-cabecera">
+              <h2>{t('preinversion.fichaGeneral.tituloCoEjecutor')}</h2>
             </div>
-            <div className="card-body">
+            <div className="bloque-cuerpo">
               <p className="nota">{SIN_RESPALDO_CO_EJECUTOR}</p>
               <FormRow controlId="idCoEjecutor" label={t('preinversion.fichaGeneral.campoIdCoEjecutor')}>
                 <input
