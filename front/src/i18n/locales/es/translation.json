@@ -534,6 +534,44 @@
         "OTROS": "Otros"
       },
       "distritoODesconocido": "No se encontró el proyecto o alguno de los distritos elegidos. Revise los distritos de la tabla."
+    },
+    "presupuestoOm": {
+      "titulo": "Presupuesto de Operación y Mantenimiento",
+      "configuracion": "Configuración",
+      "tipoCosto": "Seleccione el tipo de costo a registrar",
+      "tiposCosto": {
+        "OPERACION": "Costos de operación",
+        "MANTENIMIENTO": "Costos de mantenimiento",
+        "O_M": "Costos de operación y mantenimiento",
+        "NO_APLICA": "No aplica"
+      },
+      "vidaUtil": "Períodos a proyectar (vida útil)",
+      "tasaCrecimiento": "Tasa de crecimiento de los costos (%)",
+      "tasaAyuda": "entre 0 y 3",
+      "elijaTipoCosto": "Elija el tipo de costo que va a registrar.",
+      "noAplica": "Este proyecto no registra costos de operación ni de mantenimiento.",
+      "tabla": {
+        "OPERACION": "Costos de operación",
+        "MANTENIMIENTO": "Costos de mantenimiento"
+      },
+      "columnaNumero": "N°",
+      "columnaActividad": "Actividad",
+      "columnaPeriodo": "Período {{numero}}",
+      "sinActividades": "Todavía no hay actividades registradas.",
+      "agregarActividad": "Agregar actividad",
+      "quitar": "Quitar",
+      "confirmarQuitar": "¿Quitar la actividad «{{nombre}}»?",
+      "totalMercado": "Total (precios de mercado)",
+      "totalAjustado": "Total (precios ajustados)",
+      "periodosPendientes": "Los períodos siguientes al primero se proyectan a partir de la tasa de crecimiento. La fórmula todavía no está definida en el caso de uso, así que esas columnas se muestran vacías en lugar de con un cálculo inventado.",
+      "nuevaActividad": "Nueva actividad — {{tabla}}",
+      "nombreActividad": "Nombre de la actividad",
+      "nombreObligatorio": "El nombre de la actividad es obligatorio.",
+      "alMenosUnInsumo": "Registre el costo de al menos un insumo.",
+      "insumo": "Insumo",
+      "costoDe": "Costo de {{insumo}} en el período 1",
+      "totalActividad": "Total de la actividad",
+      "sinInsumos": "El catálogo de tipos de insumo está vacío; sin él no se pueden registrar costos."
     }
   },
   "app": {

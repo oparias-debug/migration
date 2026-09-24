@@ -19,6 +19,7 @@ import {
   CatlogosSeleccinYRegistroDeEtapasApi,
   CatlogosDescripcinTcnicaApi,
 } from './generated/administracion-catalogos';
+import { PreinversinOperacinYMantenimientoApi } from './generated/preinversion-presupuesto-om';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -60,6 +61,10 @@ export const catalogoBandejaApi = new CatlogosBandejaPreinversinApi(undefined, u
 // generado propio (generated/preinversion-captura).
 export const capturaApi = new PreinversinCapturaDeProyectosApi(undefined, undefined, preinversionAxios);
 export const etapasApi = new PreinversinSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
+// CU-PRE-18 (Flujo de Costos de Operación y Mantenimiento): contrato propio,
+// mismo basePath /back. Comparte el catálogo de tipos de insumo con CU-PRE-17.
+export const presupuestoOmApi = new PreinversinOperacinYMantenimientoApi(undefined, undefined, preinversionAxios);
+
 export const catalogoEtapasApi = new CatlogosSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
 // CU-PRE-05 (Alternativas de Solución): mismo recurso Proyecto y mismo basePath /back, pero tag
 // distinto en el OpenAPI -> fragmento y módulo generado propios (generated/preinversion-alternativas);
@@ -174,3 +179,11 @@ export type {
   InsumoTipoResumen,
   FuentesFinanciamientoRequest,
 } from './generated/preinversion-presupuesto';
+
+export { TipoCostoOM } from './generated/preinversion-presupuesto-om';
+export type {
+  Actividad as ActividadOM,
+  ActividadRequest as ActividadOMRequest,
+  PresupuestoOM,
+  TablaCostosOM,
+} from './generated/preinversion-presupuesto-om';

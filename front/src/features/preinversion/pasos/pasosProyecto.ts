@@ -122,7 +122,7 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
           { clave: 'riesgos', codigo: arbol(1, 3, 2, 4), texto: 'pasos.riesgos', cu: 'CU-PRE-15' },
           { clave: 'legal', codigo: arbol(1, 3, 2, 5), texto: 'pasos.legal', cu: 'CU-PRE-16' },
           { clave: 'presupuesto-inversion', codigo: arbol(1, 3, 2, 6), texto: 'pasos.presupuestoInversion', cu: 'CU-PRE-17', rutas: ['presupuesto'] },
-          { clave: 'presupuesto-operacion', codigo: arbol(1, 3, 2, 7), texto: 'pasos.presupuestoOperacion', cu: 'CU-PRE-18' },
+          { clave: 'presupuesto-operacion', codigo: arbol(1, 3, 2, 7), texto: 'pasos.presupuestoOperacion', cu: 'CU-PRE-18', rutas: ['presupuesto-om'] },
         ],
       },
       {

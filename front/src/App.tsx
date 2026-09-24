@@ -19,6 +19,7 @@ import { FichaEmergenciaPage } from './features/preinversion/etapas/FichaEmergen
 import { IdentificacionPage } from './features/preinversion/identificacion/IdentificacionPage';
 import { PasosProyectoLayout } from './features/preinversion/pasos/PasosProyectoLayout';
 import { PresupuestoPage } from './features/preinversion/presupuesto/PresupuestoPage';
+import { PresupuestoOmPage } from './features/preinversion/presupuesto-om/PresupuestoOmPage';
 import { CatalogosPage } from './features/administracion/catalogos/CatalogosPage';
 import { CatalogoDetallePage } from './features/administracion/catalogos/CatalogoDetallePage';
 import { CalendarioPage } from './features/administracion/calendario/CalendarioPage';
@@ -93,6 +94,7 @@ export function App() {
               <Route path="/preinversion/proyectos/:id/diagnostico" element={<DiagnosticoPage />} />
               <Route path="/preinversion/proyectos/:id/estudio-tecnico" element={<EstudioTecnicoPage />} />
               <Route path="/preinversion/proyectos/:id/presupuesto" element={<PresupuestoPage />} />
+              <Route path="/preinversion/proyectos/:id/presupuesto-om" element={<PresupuestoOmPage />} />
             </Route>
 
             {PLACEHOLDER_PATHS.map((path) => (

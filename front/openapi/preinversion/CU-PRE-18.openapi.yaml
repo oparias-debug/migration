@@ -1,0 +1,507 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-18 Flujo de Costos de Operación y Mantenimiento
+  version: "1.0.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-18 "Flujo de costos de Operación y
+    Mantenimiento" (UC-PRE-18-Flujo_de_costos_de_Operacion_y_Mantenimiento.md)
+    y sus 5 historias BDD. Actor principal: Técnico URP. Actor secundario de
+    solo lectura: Técnico PRE.
+
+    Reutiliza `InsumoTipoResumen`/`GET /catalogos/insumos-tipo` de
+    CU-PRE-17.openapi.yaml: el catálogo "Insumos" de este CU tiene
+    exactamente los mismos 8 valores, el mismo FC=1.00 para todos, y la
+    misma nota "sujeto a actualización por parte de la DGICP" que el
+    catálogo "Insumo Tipo" de CU-PRE-17 — es el mismo catálogo, no uno
+    nuevo. También reutiliza `MontoPorPeriodo` de CU-PRE-17 para los
+    totales con redondeo (RN10, misma regla y mismos dos ejemplos
+    numéricos que RN12 de CU-PRE-17).
+
+    ⚠️ [SUPUESTO] la fórmula de RN06 para proyectar el costo de Período 2 en
+    adelante es ilegible en el documento fuente (solo se conocen las
+    variables: costo del período base, tasa de crecimiento y posición del
+    período). Para los totales por período de cada tabla
+    (`TablaCostosOM.totalPorPeriodoPrecioMercado`/`PrecioAjustado`, campo
+    requerido y no-`nullable` por elemento) se implementó crecimiento
+    compuesto `costoPeriodoBase × (1 + tasa)^n`, reutilizando la misma
+    convención que `BeneficioProyecto.tasaCrecimientoProyectado` en otro CU
+    — ver contrato-CU-PRE-18.md y el Javadoc de `PresupuestoOmService`. El
+    campo `Actividad.costosProyectadosPeriodo2EnAdelante` (proyección por
+    actividad individual, distinto del total por tabla) sigue sin
+    calcularse: permanece como placeholder `nullable` documentado, sin
+    fórmula confirmada a ese nivel de detalle.
+
+    A diferencia de CU-PRE-17 (donde RQ-C-03 resolvió la definición de
+    "Usuarios Internos" como "cualquier usuario del Ministerio de Hacienda,
+    independientemente de su rol"), la resolución nunca se propagó
+    formalmente a este CU. Mientras el negocio no lo confirme, el backend
+    usa como proxy [SUPUESTO] la misma convención ya aplicada en
+    `UsuarioDevSeeder`: un actor sin Institución asignada (Técnico PRE,
+    Coordinador PRE, Administrador...) califica como "interno"; un Técnico
+    URP, siempre adscrito a una Institución, no. Ver
+    `PresupuestoOmService.esUsuarioInterno`.
+
+paths:
+
+  /proyectos/{idProyecto}/presupuesto-om:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: obtenerPresupuestoOM
+      summary: Consultar la pantalla "Presupuesto de Operación y Mantenimiento" (Anexo A.1)
+      description: >
+        `costosOperacion`/`costosMantenimiento` son `nullable` según
+        `tipoCosto` (RN04: solo aplican para OPERACION/MANTENIMIENTO/O_M,
+        ninguno para NO_APLICA). Los totales "Precios Ajustados" dentro de
+        cada tabla, y `totalInversionPrecioAjustado`, son `nullable` según
+        si el actor autenticado califica como "Usuarios Internos" (RN09) —
+        mismo patrón de campo condicional ya usado en CU-PRE-17 para RN10;
+        ver `PresupuestoOmService.esUsuarioInterno` para el criterio
+        [SUPUESTO] aplicado mientras el negocio no confirme RN09 para este CU.
+      tags: [Preinversión - Operación y Mantenimiento]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        "200":
+          description: Presupuesto de Operación y Mantenimiento del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresupuestoOM'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no es Técnico URP ni Técnico PRE, o
+            (Técnico URP/Técnico PRE) el proyecto no está dentro de su
+            alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`;
+            sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/presupuesto-om/configuracion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: configurarPresupuestoOM
+      summary: Seleccionar el tipo de costo y configurar vida útil/tasa de crecimiento (botón "Aceptar", RN04-RN06)
+      description: >
+        Genera las columnas de período reflejadas en `obtenerPresupuestoOM`
+        (RN05). `vidaUtil` y `tasaCrecimientoCostos` son obligatorios
+        cuando el tipo seleccionado no es `NO_APLICA`. La tasa se valida
+        entre 0% y 3%, inclusive.
+      tags: [Preinversión - Operación y Mantenimiento]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tipoCosto]
+              properties:
+                tipoCosto:
+                  $ref: '#/components/schemas/TipoCostoOM'
+                vidaUtil:
+                  type: integer
+                  description: "\"Períodos a proyectar\"; no aplica si tipoCosto = NO_APLICA."
+                tasaCrecimientoCostos:
+                  type: number
+                  format: double
+                  minimum: 0
+                  maximum: 3
+                  description: Porcentaje entre 0 y 3, inclusive. No aplica si tipoCosto = NO_APLICA.
+      responses:
+        "200":
+          description: Configuración registrada; columnas de período generadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresupuestoOM'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/presupuesto-om/{tipoCostoTabla}/actividades:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+      - name: tipoCostoTabla
+        in: path
+        required: true
+        description: A cuál de las dos tablas pertenece la actividad (RN03).
+        schema:
+          $ref: '#/components/schemas/TipoCostoTabla'
+    post:
+      operationId: registrarActividad
+      summary: Registrar una actividad (botón "Agregar Actividad" + "Guardar" en Anexo A.2, SF-01, FA-01.1)
+      description: >
+        Igual que `registrarMacroactividad` en CU-PRE-17: cada actividad se
+        crea de forma individual (no reemplazo de array completo). Aquí
+        "Guardar" **sí rechaza** con 400 en dos casos, ambos confirmados
+        por escenarios BDD explícitos ("el sistema no permite guardar"):
+        falta `nombreActividad`, o ningún insumo tiene
+        `costoPeriodo1PrecioMercado` registrado. Nota de comportamiento de
+        cliente (no afecta la forma del endpoint): tras Guardar, la
+        pantalla "Detalle de Actividad" no se cierra — el sistema vacía los
+        campos de Período 1 para que el Técnico URP siga registrando otra
+        actividad en la misma sesión de modal (FA-01.1, distinto del
+        comportamiento de CU-PRE-17, donde Guardar sí regresa a la
+        pantalla principal). El botón "Salir" (FA-01.2) no tiene endpoint:
+        descarte puro de cliente.
+      tags: [Preinversión - Operación y Mantenimiento]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActividadRequest'
+      responses:
+        "201":
+          description: Actividad registrada (mensaje "¡Guardado!", Anexo A.3); su total ya se refleja en `obtenerPresupuestoOM` (RN06).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Actividad'
+        "400":
+          description: >
+            Falta `nombreActividad`, o ningún insumo tiene
+            `costoPeriodo1PrecioMercado` registrado. Ambos casos con
+            escenario BDD explícito, sin mensaje literal documentado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/presupuesto-om/{tipoCostoTabla}/actividades/{idActividad}:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+      - name: tipoCostoTabla
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TipoCostoTabla'
+      - name: idActividad
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    delete:
+      operationId: eliminarActividad
+      summary: Eliminar una fila de actividad (RN03)
+      description: >
+        A diferencia de CU-PRE-17 (que no describe eliminar una
+        macroactividad ya creada), aquí sí hay un escenario BDD explícito
+        de eliminación de actividad.
+      tags: [Preinversión - Operación y Mantenimiento]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "204":
+          description: Actividad eliminada.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto o la actividad no existen.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /proyectos/{idProyecto}/presupuesto-om/guardado:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: guardarPresupuestoOM
+      summary: Guardar el presupuesto de Operación y Mantenimiento (botón "Guardar" en Anexo A.1, FA-02)
+      description: >
+        No recibe cuerpo, mismo criterio que `guardarPresupuesto` en
+        CU-PRE-17. A diferencia de aquel, aquí no hay un escenario BDD que
+        exija al menos una actividad por tabla — no se modeló ningún 400
+        para ese caso.
+      tags: [Preinversión - Operación y Mantenimiento]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "200":
+          description: >
+            Información guardada (mensaje "¡Guardado! Sus datos han sido
+            guardados exitosamente.", Anexo A.3); el modal y su "Aceptar"
+            son de cliente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresupuestoOM'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TipoCostoOM:
+      type: string
+      description: "\"Seleccione el tipo de costo a registrar\" (RN04)."
+      enum: [OPERACION, MANTENIMIENTO, O_M, NO_APLICA]
+
+    TipoCostoTabla:
+      type: string
+      description: >
+        Subconjunto de `TipoCostoOM` aplicable a una tabla concreta de
+        actividades (RN03) — O_M/NO_APLICA no son tablas propias, son
+        combinaciones o ausencia de las dos tablas reales.
+      enum: [OPERACION, MANTENIMIENTO]
+
+    ActividadInsumoRequest:
+      type: object
+      required: [tipoInsumo]
+      properties:
+        tipoInsumo:
+          type: string
+          description: Código tomado de GET /catalogos/insumos-tipo (compartido con CU-PRE-17).
+        costoPeriodo1PrecioMercado:
+          type: number
+          format: double
+          description: >
+            Único período que se registra manualmente (RN06); Período 2 en
+            adelante se calcula automáticamente — ver `Actividad`.
+
+    ActividadInsumo:
+      type: object
+      description: >
+        Forma de lectura. `tipoInsumo` resuelto al catálogo;
+        `costoPeriodo1PrecioAjustado` calculado como
+        costoPeriodo1PrecioMercado × FC.
+      properties:
+        tipoInsumo:
+          $ref: '../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/InsumoTipoResumen'
+        costoPeriodo1PrecioMercado:
+          type: number
+          format: double
+          nullable: true
+        costoPeriodo1PrecioAjustado:
+          type: number
+          format: double
+          nullable: true
+
+    ActividadRequest:
+      type: object
+      required: [nombreActividad]
+      properties:
+        nombreActividad:
+          type: string
+        insumos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActividadInsumoRequest'
+
+    Actividad:
+      type: object
+      description: >
+        Actividad registrada. `costosProyectadosPeriodo2EnAdelante` queda
+        como hueco documentado: la fórmula de RN06 para proyectar estos
+        valores es ilegible en el documento fuente (solo se conocen las
+        variables — costo del período base, tasa de crecimiento, posición
+        del período — no la fórmula real); no se inventó ningún cálculo.
+      required: [idActividad, numero, insumos, totalPeriodo1PrecioMercado]
+      properties:
+        idActividad:
+          type: integer
+          format: int64
+        numero:
+          type: integer
+          description: Consecutivo generado automáticamente por el sistema.
+        nombreActividad:
+          type: string
+          nullable: true
+        insumos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActividadInsumo'
+        totalPeriodo1PrecioMercado:
+          type: number
+          format: double
+          description: Suma de costoPeriodo1PrecioMercado de todos los insumos (traslado a Anexo A.1, RN06).
+        totalPeriodo1PrecioAjustado:
+          type: number
+          format: double
+          nullable: true
+          description: >
+            Suma de costoPeriodo1PrecioAjustado de todos los insumos. Nulo
+            si el actor no califica como "Usuarios Internos" (RN09) — ver
+            nota de visibilidad condicional en `obtenerPresupuestoOM`.
+        costosProyectadosPeriodo2EnAdelante:
+          type: array
+          nullable: true
+          description: >
+            ⚠️ No calculable: la fórmula de RN06 para Período 2..n es
+            ilegible en el documento fuente. Placeholder documentado hasta
+            que el negocio aporte la fórmula correcta — ver contrato-CU-PRE-18.md.
+          items:
+            type: number
+            format: double
+            nullable: true
+
+    TablaCostosOM:
+      type: object
+      description: Tabla "Costos de Operación" o "Costos de Mantenimiento" (Anexo A.1).
+      required: [actividades, totalPorPeriodoPrecioMercado]
+      properties:
+        actividades:
+          type: array
+          items:
+            $ref: '#/components/schemas/Actividad'
+        totalPorPeriodoPrecioMercado:
+          $ref: './CU-PRE-17.openapi.yaml#/components/schemas/MontoPorPeriodo'
+        totalPorPeriodoPrecioAjustado:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: './CU-PRE-17.openapi.yaml#/components/schemas/MontoPorPeriodo'
+          description: >
+            Nulo si el actor no califica como "Usuarios Internos" (RN09) —
+            ver nota de visibilidad condicional en `obtenerPresupuestoOM`.
+
+    PresupuestoOM:
+      type: object
+      description: Presupuesto de Operación y Mantenimiento del proyecto (lectura).
+      required: [idProyecto]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        tipoCosto:
+          allOf:
+            - $ref: '#/components/schemas/TipoCostoOM'
+          nullable: true
+          type: string
+        vidaUtil:
+          type: integer
+          nullable: true
+        tasaCrecimientoCostos:
+          type: number
+          format: double
+          nullable: true
+        costosOperacion:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/TablaCostosOM'
+          description: Nulo si tipoCosto no es OPERACION ni O_M (RN04).
+        costosMantenimiento:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/TablaCostosOM'
+          description: Nulo si tipoCosto no es MANTENIMIENTO ni O_M (RN04).
+        totalInversionPrecioMercado:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: './CU-PRE-17.openapi.yaml#/components/schemas/MontoPorPeriodo'
+          description: >
+            RN10. No está confirmado si estas celdas ("TOTAL INVERSIÓN")
+            son las mismas que "TOTAL (PRECIOS DE MERCADO)" de cada tabla
+            (`TablaCostosOM.totalPorPeriodoPrecioMercado`) o celdas
+            adicionales no documentadas en el mockup — el propio CU deja
+            esta ambigüedad sin resolver. Se expone como campo separado sin
+            asumir que sea un duplicado ni una suma automática de las dos
+            tablas.
+        totalInversionPrecioAjustado:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: './CU-PRE-17.openapi.yaml#/components/schemas/MontoPorPeriodo'
+          description: Misma ambigüedad que totalInversionPrecioMercado; nulo también si el actor no califica como "Usuarios Internos" (RN09).
