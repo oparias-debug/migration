@@ -5,6 +5,7 @@ import { AppLayout } from './layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { PreinversionPage } from './pages/PreinversionPage';
+import { BancoProyectosPage } from './features/preinversion/banco/BancoProyectosPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProyectosPage } from './features/preinversion/proyectos/ProyectosPage';
@@ -36,7 +37,6 @@ import { AnalisisLegalPage } from './features/preinversion/analisis/AnalisisLega
 // pantalla: se muestran como "🚧 Página en Construcción".
 const PLACEHOLDER_PATHS = [
   // Opciones del menú del árbol del sistema que todavía no tienen pantalla.
-  'banco-proyectos',
   'programacion/priorizacion',
   'programacion/pap',
   'programacion/pripme',
@@ -66,6 +66,7 @@ export function App() {
           >
             <Route path="/" element={<HomePage />} />
             <Route path="/preinversion" element={<PreinversionPage />} />
+            <Route path="/banco-proyectos" element={<BancoProyectosPage />} />
 
             <Route path="/catalogos-generales" element={<CatalogosPage />} />
             <Route path="/catalogos-generales/:codigo" element={<CatalogoDetallePage />} />

@@ -204,3 +204,4 @@ export type { AnalisisAmbiental, FilaImpactoAmbientalRequest } from './generated
 export { Probabilidad, ImpactoRiesgo, CalificacionRiesgo } from './generated/preinversion-analisis-riesgo';
 export type { AnalisisRiesgo, FilaRiesgo, FilaRiesgoRequest } from './generated/preinversion-analisis-riesgo';
 export type { AnalisisLegal, FilaAnalisisLegalRequest } from './generated/preinversion-analisis-legal';
+export type { ProyectoBancoItem } from './generated/preinversion-banco-proyectos';

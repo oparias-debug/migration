@@ -659,6 +659,18 @@
       "entregable": "Entregable",
       "costoEntregable": "Costo del entregable (US$)",
       "total": "Costo total de los entregables"
+    },
+    "banco": {
+      "busqueda": "Buscar",
+      "busquedaAyuda": "CUP o nombre del proyecto",
+      "buscar": "Buscar",
+      "columnaCup": "CUP",
+      "columnaProyecto": "Nombre del proyecto",
+      "columnaEtapa": "Etapa",
+      "columnaInversion": "Inversión estimada",
+      "columnaEstado": "Estado",
+      "columnaPrioridad": "Prioridad",
+      "sinProyectos": "No hay proyectos que mostrar."
     }
   },
   "app": {
