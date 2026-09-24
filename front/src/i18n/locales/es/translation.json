@@ -19,7 +19,9 @@
     "regresar": "Regresar",
     "eliminar": "Eliminar",
     "editar": "Editar",
-    "acciones": "Acciones"
+    "acciones": "Acciones",
+    "quitar": "Quitar",
+    "agregarFila": "Agregar fila"
   },
   "errores": {
     "validacion": "Hay campos con datos inválidos. Revise los mensajes indicados en cada campo.",
@@ -575,6 +577,88 @@
       "costoDe": "Costo de {{insumo}} en el período 1",
       "totalActividad": "Total de la actividad",
       "sinInsumos": "El catálogo de tipos de insumo está vacío; sin él no se pueden registrar costos."
+    },
+    "analisisAmbiental": {
+      "titulo": "Análisis Ambiental",
+      "pregunta": "¿El proyecto tiene impactos ambientales?",
+      "sinFilas": "Todavía no hay impactos registrados.",
+      "medio": "Medio",
+      "impacto": "Descripción del impacto",
+      "tipoImpacto": "Tipo de impacto",
+      "magnitud": "Magnitud",
+      "duracion": "Duración",
+      "reversibilidad": "Reversibilidad",
+      "medidaGestion": "Medida de gestión",
+      "costoMedidaGestion": "Costo de la medida (US$)",
+      "total": "Costo total de las medidas de gestión",
+      "medios": {
+        "FISICO_AGUA": "Físico · Agua",
+        "FISICO_TIERRA": "Físico · Tierra",
+        "FISICO_AIRE": "Físico · Aire",
+        "BIOLOGICO_FLORA": "Biológico · Flora",
+        "BIOLOGICO_FAUNA": "Biológico · Fauna",
+        "SOCIAL_ESTRUCTURA_SOCIAL": "Social · Estructura social",
+        "SOCIAL_PATRIMONIO_CULTURAL": "Social · Patrimonio cultural"
+      },
+      "tiposImpacto": {
+        "POSITIVO": "Positivo",
+        "NEGATIVO": "Negativo"
+      },
+      "magnitudes": {
+        "LEVE": "Leve",
+        "MODERADO": "Moderado",
+        "FUERTE": "Fuerte"
+      },
+      "duraciones": {
+        "CORTO_PLAZO": "Corto plazo",
+        "MEDIANO_PLAZO": "Mediano plazo",
+        "LARGO_PLAZO": "Largo plazo"
+      },
+      "reversibilidades": {
+        "REVERSIBLE": "Reversible",
+        "IRREVERSIBLE": "Irreversible"
+      }
+    },
+    "analisisRiesgo": {
+      "titulo": "Análisis de Riesgos",
+      "pregunta": "¿El proyecto tiene riesgos de desastres?",
+      "sinFilas": "Todavía no hay riesgos registrados.",
+      "descripcion": "Descripción del riesgo",
+      "probabilidad": "Probabilidad",
+      "impacto": "Impacto",
+      "calificacion": "Calificación",
+      "accionMitigacion": "Acción de mitigación",
+      "costoAccion": "Costo de la acción (US$)",
+      "total": "Costo total de las acciones de mitigación",
+      "siguiente": "Siguiente: Análisis Legal",
+      "probabilidades": {
+        "IMPROBABLE": "Improbable",
+        "PROBABLE": "Probable",
+        "MUY_PROBABLE": "Muy probable",
+        "CASI_SEGURO": "Casi seguro"
+      },
+      "impactos": {
+        "INSIGNIFICANTE": "Insignificante",
+        "BAJO": "Bajo",
+        "MODERADO": "Moderado",
+        "ALTO": "Alto",
+        "EXTREMO": "Extremo"
+      },
+      "calificaciones": {
+        "BAJO": "Bajo",
+        "MEDIO": "Medio",
+        "ALTO": "Alto",
+        "MUY_ALTO": "Muy alto"
+      }
+    },
+    "analisisLegal": {
+      "titulo": "Análisis Legal",
+      "pregunta": "¿El proyecto requiere análisis legal?",
+      "sinFilas": "Todavía no hay análisis legales registrados.",
+      "analisisRequerido": "Análisis o gestión legal requerida",
+      "entregable": "Entregable",
+      "costoEntregable": "Costo del entregable (US$)",
+      "total": "Costo total de los entregables"
     }
   },
   "app": {

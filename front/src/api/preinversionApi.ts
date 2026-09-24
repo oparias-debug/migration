@@ -20,6 +20,10 @@ import {
   CatlogosDescripcinTcnicaApi,
 } from './generated/administracion-catalogos';
 import { PreinversinOperacinYMantenimientoApi } from './generated/preinversion-presupuesto-om';
+import { PreinversinAnlisisAmbientalApi } from './generated/preinversion-analisis-ambiental';
+import { PreinversinAnlisisDeRiesgoApi } from './generated/preinversion-analisis-riesgo';
+import { PreinversinAnlisisLegalApi } from './generated/preinversion-analisis-legal';
+import { PreinversinBancoDeProyectosApi } from './generated/preinversion-banco-proyectos';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -63,6 +67,13 @@ export const capturaApi = new PreinversinCapturaDeProyectosApi(undefined, undefi
 export const etapasApi = new PreinversinSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
 // CU-PRE-18 (Flujo de Costos de Operación y Mantenimiento): contrato propio,
 // mismo basePath /back. Comparte el catálogo de tipos de insumo con CU-PRE-17.
+// CU-PRE-14, 15 y 16: los tres análisis del capítulo 1.3.2, cada uno con su
+// contrato y su módulo generado. CU-PRE-29: Banco de Proyectos.
+export const analisisAmbientalApi = new PreinversinAnlisisAmbientalApi(undefined, undefined, preinversionAxios);
+export const analisisRiesgoApi = new PreinversinAnlisisDeRiesgoApi(undefined, undefined, preinversionAxios);
+export const analisisLegalApi = new PreinversinAnlisisLegalApi(undefined, undefined, preinversionAxios);
+export const bancoProyectosApi = new PreinversinBancoDeProyectosApi(undefined, undefined, preinversionAxios);
+
 export const presupuestoOmApi = new PreinversinOperacinYMantenimientoApi(undefined, undefined, preinversionAxios);
 
 export const catalogoEtapasApi = new CatlogosSeleccinYRegistroDeEtapasApi(undefined, undefined, preinversionAxios);
@@ -187,3 +198,9 @@ export type {
   PresupuestoOM,
   TablaCostosOM,
 } from './generated/preinversion-presupuesto-om';
+
+export { Medio, TipoImpacto, Magnitud, Duracion, Reversibilidad } from './generated/preinversion-analisis-ambiental';
+export type { AnalisisAmbiental, FilaImpactoAmbientalRequest } from './generated/preinversion-analisis-ambiental';
+export { Probabilidad, ImpactoRiesgo, CalificacionRiesgo } from './generated/preinversion-analisis-riesgo';
+export type { AnalisisRiesgo, FilaRiesgo, FilaRiesgoRequest } from './generated/preinversion-analisis-riesgo';
+export type { AnalisisLegal, FilaAnalisisLegalRequest } from './generated/preinversion-analisis-legal';

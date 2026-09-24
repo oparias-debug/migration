@@ -84,8 +84,21 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
 
   it('un capítulo sin pantalla se ve en su sitio pero no enlaza', async () => {
     montar(IDENTIFICACION);
-    expect(screen.getByText('Análisis ambiental')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Análisis ambiental/ })).not.toBeInTheDocument();
+    // Los tres análisis (CU-PRE-14, 15 y 16) ya tienen pantalla; el flujo de
+    // caja socioeconómico todavía no.
+    expect(screen.getByText('Flujo de caja socioeconómico')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Flujo de caja socioeconómico/ })).not.toBeInTheDocument();
+    await screen.findByText('Hospital de Santa Ana');
+  });
+
+  it('los tres análisis del capítulo 1.3.2 ya enlazan a su pantalla', async () => {
+    montar(IDENTIFICACION);
+    expect(screen.getByRole('link', { name: 'Análisis ambiental' })).toHaveAttribute(
+      'href',
+      '/preinversion/proyectos/7/analisis-ambiental',
+    );
+    expect(screen.getByRole('link', { name: 'Análisis de riesgos' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Análisis legal' })).toBeInTheDocument();
     await screen.findByText('Hospital de Santa Ana');
   });
 

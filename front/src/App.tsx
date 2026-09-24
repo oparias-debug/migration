@@ -28,6 +28,9 @@ import { CalendarioDetallePage } from './features/administracion/calendario/Cale
 import { AlternativasSolucionPage } from './features/preinversion/alternativas-solucion/AlternativasSolucionPage';
 import { DiagnosticoPage } from './features/preinversion/diagnostico/DiagnosticoPage';
 import { EstudioTecnicoPage } from './features/preinversion/estudio-tecnico/EstudioTecnicoPage';
+import { AnalisisAmbientalPage } from './features/preinversion/analisis/AnalisisAmbientalPage';
+import { AnalisisRiesgoPage } from './features/preinversion/analisis/AnalisisRiesgoPage';
+import { AnalisisLegalPage } from './features/preinversion/analisis/AnalisisLegalPage';
 
 // Opciones del menú lateral (layout/navegacion.ts) que todavía no tienen
 // pantalla: se muestran como "🚧 Página en Construcción".
@@ -95,6 +98,9 @@ export function App() {
               <Route path="/preinversion/proyectos/:id/alternativas-solucion" element={<AlternativasSolucionPage />} />
               <Route path="/preinversion/proyectos/:id/diagnostico" element={<DiagnosticoPage />} />
               <Route path="/preinversion/proyectos/:id/estudio-tecnico" element={<EstudioTecnicoPage />} />
+              <Route path="/preinversion/proyectos/:id/analisis-ambiental" element={<AnalisisAmbientalPage />} />
+              <Route path="/preinversion/proyectos/:id/analisis-riesgo" element={<AnalisisRiesgoPage />} />
+              <Route path="/preinversion/proyectos/:id/analisis-legal" element={<AnalisisLegalPage />} />
               <Route path="/preinversion/proyectos/:id/presupuesto" element={<PresupuestoPage />} />
               <Route path="/preinversion/proyectos/:id/presupuesto-om" element={<PresupuestoOmPage />} />
             </Route>
