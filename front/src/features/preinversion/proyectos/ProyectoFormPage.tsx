@@ -276,8 +276,13 @@ export function ProyectoFormPage() {
     // maquetación se asiente y se baja al final, que es donde están los botones.
     setTimeout(() => {
       const acciones = document.querySelector('.acciones-form');
-      if (acciones) acciones.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      // scrollIntoView no existe en jsdom: sin la comprobación, el temporizador
+      // revienta fuera de la prueba y el error queda sin dueño.
+      if (acciones && typeof acciones.scrollIntoView === 'function') {
+        acciones.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      } else if (typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
     }, 350);
   };
   // La marca viaja en la navegación, no en una referencia: al pasar de

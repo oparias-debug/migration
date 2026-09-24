@@ -108,7 +108,20 @@ export const MODULOS: readonly Modulo[] = [
     texto: 'menu.programacion',
     submenu: [
       { clave: 'priorizacion', texto: 'menu.priorizacion', ruta: '/programacion/priorizacion' },
-      { clave: 'pap', texto: 'menu.pap', ruta: '/programacion/pap' },
+      // 2.2 PAP: los cuatro documentos de CU-PRE-30 a CU-PRE-33 cuelgan de la
+      // misma opción; la opción lleva a la pantalla que los ofrece.
+      {
+        clave: 'pap',
+        texto: 'menu.pap',
+        ruta: '/programacion/pap',
+        pantallas: [
+          { ruta: '/programacion/pap', texto: 'menu.pap' },
+          { ruta: '/programacion/pap/programacion-financiera', texto: 'preinversion.pap.documentos.programacion-financiera' },
+          { ruta: '/programacion/pap/programacion-metas', texto: 'preinversion.pap.documentos.programacion-metas' },
+          { ruta: '/programacion/pap/avance-financiero', texto: 'preinversion.pap.documentos.avance-financiero' },
+          { ruta: '/programacion/pap/avance-metas', texto: 'preinversion.pap.documentos.avance-metas' },
+        ],
+      },
       { clave: 'pripme', texto: 'menu.pripme', ruta: '/programacion/pripme' },
       { clave: 'paip', texto: 'menu.paip', ruta: '/programacion/paip' },
     ],

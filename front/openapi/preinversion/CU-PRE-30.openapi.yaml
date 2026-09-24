@@ -1,0 +1,716 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-30 Programación Cuatrimestral Financiera de la Preinversión
+  version: "1.2.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-30 "Programación Cuatrimestral
+    Financiera de la Preinversión"
+    (UC-PRE-30-Programacion_Cuatrimestral_Financiera_Preinversion.md,
+    versión 1.2) y sus 8 historias BDD.
+
+    ⚠️ **Primer fragmento de la serie cuyo recurso raíz no está anidado bajo
+    un proyecto individual**: la pantalla "Programación Financiera
+    Cuatrimestral del PAP" (Anexo A.1) es una tabla cruzada por Unidad
+    Ejecutora + Año que lista múltiples estudios simultáneamente — mismo
+    patrón arquitectónico que "Banco de Proyectos" (CU-PRE-29) y "Bandeja
+    de Preinversión" (CU-PRE-02), no el patrón `/proyectos/{idProyecto}/...`
+    del resto de la serie de Formulación/Evaluación.
+
+    Reutiliza `FuenteFinanciamiento` de CU-PRE-17.openapi.yaml para el
+    campo "Fuente de Financiamiento": los valores observados en los
+    mockups de este CU ("FGEN", "Préstamo Externo") coinciden exactamente
+    con las siglas SIIP ya documentadas en CU-PRE-17 para ese enum
+    (FONDO_GENERAL="FGEN", PRESTAMOS_EXTERNOS="P.Ext"). El valor "FOSEP"
+    observado en el mismo mockup no coincide con ninguno de los 7 tokens
+    de ese catálogo — se documenta como posible indicio de que en realidad
+    pertenece a "Fuente de Recursos" (catálogo que, igual que en CU-PRE-17,
+    permanece como `string` libre por decisión del Gestor del Dominio
+    todavía pendiente), no como una falla de este fragmento. Reutiliza
+    también `NombreEtapa` de CU-PRE-03.5.openapi.yaml para el campo "Etapa".
+
+    **Primer CU con una acción de escritura sustancial del Administrador
+    del Sistema** (`habilitarModificacionesFueraPlazo`, SF-4/SF-5): en el
+    resto de la serie, ese actor solo había aparecido como referencia
+    tangencial (parametrización no expuesta en CU-PRE-18).
+
+    Este documento tiene una **decisión funcional explícita de su versión
+    1.2 (no proveniente del PDF)**: no existe un flujo propio de "solicitud
+    de aprobación"/"envío a revisión" en este CU — esa acción está
+    unificada en CU-PRE-31 (no procesado todavía). El botón "Enviar a
+    revisión DGI" mencionado en el texto del Anexo A.8 no se modela, mismo
+    criterio que el propio documento ya adoptó.
+
+paths:
+
+  /programacion-financiera-pap:
+    get:
+      operationId: obtenerProgramacionFinancieraPAP
+      summary: Consultar "Programación Financiera Cuatrimestral del PAP" (Anexo A.1)
+      description: >
+        RN-A.a: para Técnico URP, `idUnidadEjecutora` se fuerza siempre a su
+        propia Unidad Ejecutora (mismo criterio de anulación silenciosa ya
+        usado en CU-PRE-29); para Técnico PRE y el resto de roles de
+        consulta, es libremente seleccionable entre todas las Unidades
+        Ejecutoras del sistema. `anio` por defecto es el año vigente, con
+        rango documentado desde 1999 hasta 10 años adelante (no forzado
+        como `minimum`/`maximum` en el schema, ya que "10 años adelante del
+        año vigente" es un valor relativo, no una constante). Cada fila
+        representa una combinación etapa+fuente de un estudio (RN, Anexo
+        A.1); un mismo `cup` puede aparecer en varias filas.
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          description: Opcional para roles de alcance amplio; ignorado y sobrescrito para Técnico URP (RN-A.a).
+          schema: { type: integer, format: int64 }
+        - name: anio
+          in: query
+          schema: { type: integer }
+        - name: busqueda
+          in: query
+          description: Botón "BUSCAR" (RN-E, visible/habilitado para todos los actores); campo/comportamiento exacto no detallado más allá del botón.
+          schema: { type: string }
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: Listado de la Programación Financiera Cuatrimestral del PAP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramacionFinancieraPAPResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no corresponde a ninguno de los roles de
+            este CU. Inferido de `x-roles`; sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-financiera-pap/estudios:
+    post:
+      operationId: agregarEstudio
+      summary: Agregar un nuevo estudio (botón "Agregar estudio", SF-2, RN-B.b, RN-B.e)
+      description: >
+        Solo requiere `cup` y `anio`/`idUnidadEjecutora`. Valida la Ruta de
+        Preinversión y las etapas ya finalizadas (RN-B.e — esas etapas se
+        excluyen automáticamente del array `etapas` de la respuesta, no se
+        devuelven ni bloqueadas ni editables: simplemente no aparecen).
+        `costoEtapa` viene prediligenciado desde CU-PRE-03.5 pero es
+        editable (contradicción del propio Anexo B.1 entre su columna
+        "Editable: No" y su columna "Detalle", que sí permite editarlo
+        durante el período de elaboración del PAP — se siguió el
+        comportamiento más específico, mismo criterio que el propio
+        análisis de HU). RN-A.b: rechaza con 409 fuera del Calendario de
+        Eventos del PAP.
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cup, idUnidadEjecutora, anio]
+              properties:
+                cup: { type: string }
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+      responses:
+        "201":
+          description: Estudio agregado; etapas de la Ruta de Preinversión (ya filtradas por RN-B.e) listas para programar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstudioProgramacionPAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (RN-E, inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El CUP indicado no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período habilitado por el Calendario de Eventos del
+            PAP (RN-A.b). Mensaje literal: "Periodo de ingreso de
+            información ha finalizado" (Anexo A.4).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-financiera-pap/estudios/{cup}:
+    parameters:
+      - name: cup
+        in: path
+        required: true
+        schema: { type: string }
+      - name: anio
+        in: query
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: obtenerProgramacionEstudio
+      summary: Consultar la "Programación Financiera por Etapa de Preinversión" de un estudio (Anexo A.2)
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI]
+      responses:
+        "200":
+          description: Programación del estudio, por etapa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstudioProgramacionPAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarProgramacionEstudio
+      summary: Registrar y guardar la programación cuatrimestral de un estudio (botón "Guardar", SF-1/SF-2/SF-5)
+      description: >
+        Un solo endpoint para los tres subflujos de guardado (SF-1
+        estudios de arrastre, SF-2 estudios nuevos, SF-5 modificación
+        fuera de plazo) — comparten exactamente la misma validación y
+        forma de payload; lo que cambia entre ellos es la editabilidad de
+        `fuenteFinanciamiento`/`fuenteRecursos`/`convenios` por fila (RN-B.a):
+        para estudios de arrastre (`esArrastre = true` en la lectura previa),
+        las filas ya existentes tienen esos tres campos bloqueados
+        (prediligenciados del ejercicio anterior) — el servidor debe
+        ignorar cualquier cambio a esos campos en filas ya existentes de un
+        estudio de arrastre, sin código de error específico (sin escenario
+        BDD que pruebe el rechazo). Agregar una fuente nueva (botón "+")
+        siempre es editable, incluso en estudios de arrastre. Tres causas
+        de 400, distinguidas por `Error.codigo`: `SIN_NINGUNA_ETAPA_PROGRAMADA`
+        (RN-B.b, sin mensaje literal), `RUTA_PREINVERSION_SALTEADA` (RN-B.b,
+        mensaje literal "Las etapas no coinciden con las registradas en la
+        Ruta de Preinversión. Revisar y ajustar según corresponda", Anexo
+        A.7), `MONTO_SUPERA_COSTO_ETAPA` (RN-B.c.1/c.2, mensaje literal
+        "Monto Programado supera el costo de la etapa", Anexo A.3). RN-A.b:
+        rechaza con 409 fuera del Calendario de Eventos del PAP.
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardarProgramacionEstudioRequest'
+      responses:
+        "200":
+          description: >
+            Programación guardada y trasladada a la tabla del Anexo A.1
+            (SF-1 paso 5; SF-2 paso 10).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstudioProgramacionPAP'
+        "400":
+          description: >
+            `Error.codigo` = `SIN_NINGUNA_ETAPA_PROGRAMADA`,
+            `RUTA_PREINVERSION_SALTEADA` (mensaje literal) o
+            `MONTO_SUPERA_COSTO_ETAPA` (mensaje literal) — ver descripción del endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (RN-E, inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período habilitado por el Calendario de Eventos del
+            PAP (RN-A.b). Mensaje literal: "Periodo de ingreso de
+            información ha finalizado" (Anexo A.4).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    delete:
+      operationId: desactivarEstudio
+      summary: Desactivar un estudio no iniciado (RN-D)
+      description: >
+        Rechaza con 409 si el estudio es de arrastre y no completó el 100%
+        de lo programado física o financieramente en años anteriores
+        (RN-D; sin mensaje literal transcrito para este caso específico —
+        el documento solo transcribe el texto de la pregunta de
+        confirmación, "¿está seguro de desactivar el proyecto con código
+        XXX?", que es responsabilidad de cliente, no de este endpoint).
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "204":
+          description: Estudio desactivado.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            El estudio es de arrastre y no completó el 100% de lo
+            programado en años anteriores (RN-D), o está fuera del período
+            del Calendario de Eventos del PAP (RN-A.b, mensaje literal
+            "Periodo de ingreso de información ha finalizado"). `Error.codigo`
+            distingue ambos casos.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-financiera-pap/estudios/{cup}/etapas/{etapa}:
+    parameters:
+      - name: cup
+        in: path
+        required: true
+        schema: { type: string }
+      - name: etapa
+        in: path
+        required: true
+        schema:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+      - name: anio
+        in: query
+        required: true
+        schema: { type: integer }
+    delete:
+      operationId: eliminarEtapaProgramacion
+      summary: Eliminar una etapa del estudio (RN-C)
+      description: >
+        Rechaza con 409 si existe ejecución de años anteriores relacionada
+        para ese CUP en esa etapa. El mensaje de confirmación
+        ("¿Está seguro de eliminar la etapa seleccionada?") es
+        responsabilidad de cliente, no de este endpoint.
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "204":
+          description: Etapa eliminada.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio o la etapa no existen.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Existe ejecución de años anteriores relacionada (RN-C). Mensaje
+            literal: "Etapa y/o Fuente de Financiamiento no puede ser
+            eliminado, existe ejecución en años anteriores" (Anexo A.6).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-financiera-pap/estudios/{cup}/etapas/{etapa}/fuentes/{idFuente}:
+    parameters:
+      - name: cup
+        in: path
+        required: true
+        schema: { type: string }
+      - name: etapa
+        in: path
+        required: true
+        schema:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+      - name: idFuente
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+      - name: anio
+        in: query
+        required: true
+        schema: { type: integer }
+    delete:
+      operationId: eliminarFuenteFinanciamiento
+      summary: Eliminar una fuente de financiamiento de una etapa (RN-C)
+      description: Mismo criterio de rechazo por ejecución de años anteriores que `eliminarEtapaProgramacion`, mismo mensaje literal (Anexo A.6).
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      responses:
+        "204":
+          description: Fuente de financiamiento eliminada.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio, la etapa o la fuente no existen.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Existe ejecución de años anteriores relacionada (RN-C). Mensaje
+            literal: "Etapa y/o Fuente de Financiamiento no puede ser
+            eliminado, existe ejecución en años anteriores" (Anexo A.6).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-financiera-pap/reporte:
+    get:
+      operationId: generarReporteProgramacionPAP
+      summary: Generar el reporte de la Programación Financiera de la Preinversión (botón "Generar Reporte", SF-3, RN-E)
+      description: >
+        RN-E: visible y habilitado para todos los actores, sin condición
+        previa — a pesar de que el texto del Anexo A.8 menciona un botón
+        "Enviar a revisión DGI" como condición, esa mención no tiene
+        respaldo de flujo/regla propios de este CU (decisión funcional de
+        la versión 1.2) y no se modela como restricción.
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: anio
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: formato
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [EXCEL, PDF]
+      responses:
+        "200":
+          description: Reporte generado en el formato solicitado.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+            application/pdf:
+              schema: { type: string, format: binary }
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-financiera-pap/habilitacion-modificaciones:
+    put:
+      operationId: habilitarModificacionesFueraPlazo
+      summary: Habilitar modificaciones al PAP fuera del período de elaboración (SF-4/SF-5)
+      description: >
+        Previa solicitud del Coordinador PRE con nota de solicitud remitida
+        por la Institución — no se modela un flujo/endpoint para esa
+        solicitud previa: ni el CU ni la BDD describen una pantalla o
+        mecanismo formal para ella dentro del sistema (solo se menciona la
+        existencia de la nota), mismo criterio que la propia BDD, que
+        marca explícitamente este escenario como pendiente.
+      tags: [Preinversión - Programación Financiera PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Administrador del Sistema]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+      responses:
+        "200":
+          description: >
+            Modificaciones habilitadas: el Técnico URP puede ejecutar
+            SF-2/SF-5 (agregar/modificar) fuera del período regular.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Administrador del Sistema (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    FilaFuenteProgramacionRequest:
+      type: object
+      description: >
+        Fila de fuente de financiamiento dentro de una etapa. En estudios
+        de arrastre, `fuenteFinanciamiento`/`fuenteRecursos`/`convenios` de
+        filas ya existentes se ignoran si se reenvían con un valor
+        distinto (RN-B.a) — ver descripción de `guardarProgramacionEstudio`.
+      properties:
+        idFuente:
+          type: integer
+          format: int64
+          nullable: true
+          description: Nulo si es una fuente nueva (agregada con el botón "+"); requerido para identificar una fuente ya existente.
+        fuenteFinanciamiento:
+          allOf:
+            - $ref: './CU-PRE-17.openapi.yaml#/components/schemas/FuenteFinanciamiento'
+          nullable: true
+          type: string
+        fuenteRecursos:
+          type: string
+          nullable: true
+          description: Catálogo remitido a CU-PRE-17, todavía sin resolver allá (string libre).
+        convenios:
+          type: array
+          description: RN — puede seleccionarse más de un convenio para cada fuente de recursos.
+          items: { type: string }
+        montoCuatrimestre1:
+          type: number
+          format: double
+          default: 0
+        montoCuatrimestre2:
+          type: number
+          format: double
+          default: 0
+        montoCuatrimestre3:
+          type: number
+          format: double
+          default: 0
+
+    FilaFuenteProgramacion:
+      type: object
+      description: >
+        Forma de lectura. `totalProgramadoAnio`, `porcentajeCuatrimestre1/2/3`
+        y `aniosPosteriores` son calculados por el servidor (RN-B.c, RN-B.d)
+        y nunca se reciben en `FilaFuenteProgramacionRequest`.
+      required: [idFuente, montoCuatrimestre1, montoCuatrimestre2, montoCuatrimestre3, totalProgramadoAnio]
+      properties:
+        idFuente: { type: integer, format: int64 }
+        fuenteFinanciamiento:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: './CU-PRE-17.openapi.yaml#/components/schemas/FuenteFinanciamiento'
+        fuenteRecursos: { type: string, nullable: true }
+        convenios:
+          type: array
+          items: { type: string }
+        ejecutadoAniosAnteriores:
+          type: number
+          format: double
+          nullable: true
+          description: Solo aplica a estudios de arrastre; nulo para estudios nuevos.
+        montoCuatrimestre1: { type: number, format: double }
+        montoCuatrimestre2: { type: number, format: double }
+        montoCuatrimestre3: { type: number, format: double }
+        totalProgramadoAnio:
+          type: number
+          format: double
+          description: Suma de los tres montos de cuatrimestre.
+        aniosPosteriores:
+          type: number
+          format: double
+          nullable: true
+          description: "Costo de la etapa − Ejecutado años anteriores − Total Año (RN-B.c); nulo si el resultado es cero o negativo."
+        porcentajeCuatrimestre1: { type: number, format: double, description: "RN-B.d." }
+        porcentajeCuatrimestre2: { type: number, format: double }
+        porcentajeCuatrimestre3: { type: number, format: double }
+
+    EtapaProgramacionRequest:
+      type: object
+      required: [etapa]
+      properties:
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        costoEtapa:
+          type: number
+          format: double
+          description: Prediligenciado desde CU-PRE-03.5; editable durante el período de elaboración del PAP.
+        fuentes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaFuenteProgramacionRequest'
+
+    EtapaProgramacion:
+      type: object
+      required: [etapa, fuentes]
+      properties:
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        costoEtapa:
+          type: number
+          format: double
+          nullable: true
+        fuentes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaFuenteProgramacion'
+
+    GuardarProgramacionEstudioRequest:
+      type: object
+      properties:
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaProgramacionRequest'
+
+    EstudioProgramacionPAP:
+      type: object
+      description: Programación cuatrimestral de un estudio, por etapa (Anexo A.2, lectura).
+      required: [cup, nombreProyecto, esArrastre, etapas]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        esArrastre:
+          type: boolean
+          description: >
+            true si el estudio viene de un ejercicio anterior con
+            ejecución financiera y/o física pendiente (determina el
+            bloqueo de fuente/recursos/convenio en filas ya existentes,
+            RN-B.a).
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaProgramacion'
+
+    EstudioFilaListaPAP:
+      type: object
+      description: Fila de la tabla "Programación Financiera Cuatrimestral del PAP" (Anexo A.1) — una por combinación etapa+fuente.
+      required: [cup, nombreProyecto, etapa]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        fuenteFinanciamiento:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: './CU-PRE-17.openapi.yaml#/components/schemas/FuenteFinanciamiento'
+        costoEtapa: { type: number, format: double, nullable: true }
+        ejecutadoAniosAnteriores: { type: number, format: double, nullable: true }
+        montoCuatrimestre1:
+          type: number
+          format: double
+          nullable: true
+          description: Columna "Programación I Cuatrimestre" (Anexo A.1); procede del campo "Monto" del I Cuatrimestre del Anexo A.2.
+        montoCuatrimestre2:
+          type: number
+          format: double
+          nullable: true
+          description: Columna "Programación II Cuatrimestre" (Anexo A.1).
+        montoCuatrimestre3:
+          type: number
+          format: double
+          nullable: true
+          description: Columna "Programación III Cuatrimestre" (Anexo A.1).
+        totalProgramadoAnio: { type: number, format: double, nullable: true }
+        aniosPosteriores: { type: number, format: double, nullable: true }
+
+    ProgramacionFinancieraPAPResponse:
+      type: object
+      required: [idUnidadEjecutora, anio, contenido, paginacion]
+      properties:
+        idUnidadEjecutora: { type: integer, format: int64 }
+        anio: { type: integer }
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstudioFilaListaPAP'
+        paginacion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PaginacionMetadata'

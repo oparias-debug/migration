@@ -21,7 +21,8 @@
     "editar": "Editar",
     "acciones": "Acciones",
     "quitar": "Quitar",
-    "agregarFila": "Agregar fila"
+    "agregarFila": "Agregar fila",
+    "volver": "Volver"
   },
   "errores": {
     "validacion": "Hay campos con datos inválidos. Revise los mensajes indicados en cada campo.",
@@ -671,6 +672,164 @@
       "columnaEstado": "Estado",
       "columnaPrioridad": "Prioridad",
       "sinProyectos": "No hay proyectos que mostrar."
+    },
+    "pap": {
+      "titulo": "Programa Anual de Preinversión (PAP)",
+      "intro": "Primero se programa el año —lo financiero y las metas físicas— y después, cada cuatrimestre, se informa el avance de cada uno.",
+      "documentos": {
+        "programacion-financiera": "Programación Financiera Cuatrimestral",
+        "programacion-metas": "Programación por Meta Física Cuatrimestral",
+        "avance-financiero": "Avance Cuatrimestral Financiero",
+        "avance-metas": "Avance Cuatrimestral de Metas"
+      },
+      "descripciones": {
+        "programacion-financiera": "Lo que cada estudio va a costar en cada cuatrimestre del año, por fuente de financiamiento.",
+        "programacion-metas": "El porcentaje de la meta física que cada estudio alcanzará en cada cuatrimestre.",
+        "avance-financiero": "Lo ejecutado en el cuatrimestre frente a lo programado en la programación financiera.",
+        "avance-metas": "El avance físico alcanzado en el cuatrimestre frente a la meta programada."
+      },
+      "anio": "Año",
+      "periodo": "Cuatrimestre",
+      "cuatrimestres": {
+        "CUATRIMESTRE_I": "I cuatrimestre",
+        "CUATRIMESTRE_II": "II cuatrimestre",
+        "CUATRIMESTRE_III": "III cuatrimestre"
+      },
+      "busqueda": "Buscar",
+      "busquedaAyuda": "CUP o nombre del proyecto",
+      "buscar": "Buscar",
+      "sinFilas": "No hay estudios que mostrar para ese año.",
+      "generarReporte": "Generar reporte",
+      "enviarRevision": "Enviar a revisión DGICP",
+      "habilitarPlazo": "Habilitar modificaciones fuera de plazo",
+      "revision": {
+        "titulo": "Revisión de la DGICP",
+        "observaciones": "Observaciones de la DGICP",
+        "respuesta": "Respuesta de la institución",
+        "enviarObservaciones": "Enviar observaciones",
+        "enviarRespuesta": "Enviar respuesta",
+        "finalizar": "Finalizar revisión"
+      }
+    },
+    "programacionFinanciera": {
+      "titulo": "Programación Financiera Cuatrimestral del PAP",
+      "tituloFicha": "Programación financiera del estudio",
+      "sinFilas": "El estudio no tiene fuentes de financiamiento registradas.",
+      "columnaCup": "CUP",
+      "columnaProyecto": "Nombre del proyecto",
+      "columnaEtapa": "Etapa",
+      "columnaFuente": "Fuente de financiamiento",
+      "columnaRecursos": "Fuente de recursos",
+      "columnaCosto": "Costo de la etapa",
+      "columnaEjecutadoPrevio": "Ejecutado años anteriores",
+      "columnaCuatrimestre1": "I cuatrimestre",
+      "columnaCuatrimestre2": "II cuatrimestre",
+      "columnaCuatrimestre3": "III cuatrimestre",
+      "columnaTotalAnio": "Total del año",
+      "columnaPosteriores": "Años posteriores",
+      "reporteGenerado": "El reporte se generó correctamente.",
+      "plazoHabilitado": "Se habilitaron las modificaciones fuera de plazo.",
+      "estados": {
+        "EN_ELABORACION": "En elaboración",
+        "ENVIADO_A_REVISION_DGICP": "Enviado a revisión DGICP",
+        "OBSERVADO": "Observado",
+        "PAP_REVISADO": "PAP revisado",
+        "REVISADO": "Revisado"
+      }
+    },
+    "programacionMetas": {
+      "titulo": "Programación por Meta Física Cuatrimestral del PAP",
+      "tituloFicha": "Programación de metas físicas del estudio",
+      "sinFilas": "El estudio no tiene etapas programadas.",
+      "columnaCup": "CUP",
+      "columnaProyecto": "Nombre del proyecto",
+      "columnaEtapa": "Etapa",
+      "columnaMeta": "Total meta",
+      "columnaEntregable": "Entregable",
+      "columnaEjecutadoPrevio": "Ejecutado años anteriores",
+      "columnaCuatrimestre1": "I cuatrimestre",
+      "columnaCuatrimestre2": "II cuatrimestre",
+      "columnaCuatrimestre3": "III cuatrimestre",
+      "columnaTotalAnio": "Total del año",
+      "columnaPosteriores": "Años posteriores",
+      "columnaComentarios": "Comentarios DGICP",
+      "reporteGenerado": "El reporte se generó correctamente.",
+      "enviadoARevision": "La programación se envió a revisión de la DGICP.",
+      "plazoHabilitado": "Se habilitaron las modificaciones fuera de plazo.",
+      "observacionesGuardadas": "Se guardaron las observaciones.",
+      "observacionesEnviadas": "Se enviaron las observaciones a la institución.",
+      "respuestaGuardada": "Se guardó la respuesta.",
+      "respuestaEnviada": "Se envió la respuesta a la DGICP.",
+      "revisionFinalizada": "Se finalizó la revisión del PAP.",
+      "estados": {
+        "EN_ELABORACION": "En elaboración",
+        "ENVIADO_A_REVISION_DGICP": "Enviado a revisión DGICP",
+        "OBSERVADO": "Observado",
+        "PAP_REVISADO": "PAP revisado",
+        "REVISADO": "Revisado"
+      }
+    },
+    "avanceFinanciero": {
+      "titulo": "Avance Cuatrimestral Financiero del PAP",
+      "tituloFicha": "Avance financiero del estudio",
+      "sinFilas": "El estudio no tiene fuentes con programación en ese cuatrimestre.",
+      "columnaCup": "CUP",
+      "columnaProyecto": "Nombre del proyecto",
+      "columnaEtapa": "Etapa",
+      "columnaFuente": "Fuente de financiamiento",
+      "columnaCosto": "Costo de la etapa",
+      "columnaAnualProgramado": "Programado del año",
+      "columnaAnualEjecutado": "Ejecutado del año",
+      "columnaAnualPorcentaje": "% del año",
+      "columnaCuatriProgramado": "Programado del cuatrimestre",
+      "columnaCuatriEjecutado": "Ejecutado del cuatrimestre",
+      "columnaCuatriPorcentaje": "% del cuatrimestre",
+      "columnaObservaciones": "Observaciones",
+      "columnaAlerta": "Alerta",
+      "excesoProgramado": "Excede lo programado",
+      "reporteGenerado": "El reporte se generó correctamente.",
+      "estados": {
+        "EN_ELABORACION": "En elaboración",
+        "ENVIADO_A_REVISION_DGICP": "Enviado a revisión DGICP",
+        "OBSERVADO": "Observado",
+        "PAP_REVISADO": "PAP revisado",
+        "REVISADO": "Revisado"
+      }
+    },
+    "avanceMetas": {
+      "titulo": "Informe de avance cuatrimestral de metas del PAP",
+      "tituloFicha": "Avance de metas físicas del estudio",
+      "sinFilas": "El estudio no tiene etapas con metas programadas en ese cuatrimestre.",
+      "columnaCup": "CUP",
+      "columnaProyecto": "Nombre del proyecto",
+      "columnaEtapa": "Etapa",
+      "columnaMeta": "Meta",
+      "columnaEntregable": "Entregable",
+      "columnaProgramadoAnio": "Programado del año",
+      "columnaEjecutadoAnio": "Ejecutado del año",
+      "columnaProgramadoCuatri": "Programado del cuatrimestre",
+      "columnaEjecutadoCuatri": "Ejecutado del cuatrimestre",
+      "columnaTotalEjecutado": "Total meta ejecutada",
+      "columnaObservaciones": "Observaciones",
+      "columnaEstado": "Estado",
+      "estadosAvance": {
+        "EN_TIEMPO": "En tiempo",
+        "EN_RIESGO": "En riesgo",
+        "RETRASADO": "Retrasado"
+      },
+      "reporteGenerado": "El reporte se generó correctamente.",
+      "observacionesGuardadas": "Se guardaron las observaciones.",
+      "observacionesEnviadas": "Se enviaron las observaciones a la institución.",
+      "respuestaGuardada": "Se guardó la respuesta.",
+      "respuestaEnviada": "Se envió la respuesta a la DGICP.",
+      "revisionFinalizada": "Se finalizó la revisión del avance.",
+      "estados": {
+        "EN_ELABORACION": "En elaboración",
+        "ENVIADO_A_REVISION_DGICP": "Enviado a revisión DGICP",
+        "OBSERVADO": "Observado",
+        "PAP_REVISADO": "PAP revisado",
+        "REVISADO": "Revisado"
+      }
     }
   },
   "app": {

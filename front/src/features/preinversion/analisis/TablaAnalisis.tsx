@@ -21,6 +21,8 @@ interface Props<F extends Record<string, unknown>> {
   readonly filaVacia: () => F;
   readonly onCambiar: (filas: F[]) => void;
   readonly puedeEditar: boolean;
+  /** Si las filas se agregan y se quitan; en el PAP vienen dadas por la ruta del proyecto. */
+  readonly permiteAgregar?: boolean;
   /** Clave de i18n del texto que se muestra cuando no hay filas. */
   readonly sinFilas: string;
 }
@@ -42,6 +44,7 @@ export function TablaAnalisis<F extends Record<string, unknown>>({
   filaVacia,
   onCambiar,
   puedeEditar,
+  permiteAgregar = true,
   sinFilas,
 }: Props<F>) {
   const { t } = useTranslation();
@@ -61,13 +64,13 @@ export function TablaAnalisis<F extends Record<string, unknown>>({
                   {t(c.etiqueta)}
                 </th>
               ))}
-              {puedeEditar && <th>{t('common.acciones')}</th>}
+              {puedeEditar && permiteAgregar && <th>{t('common.acciones')}</th>}
             </tr>
           </thead>
           <tbody>
             {filas.length === 0 && (
               <tr>
-                <td className="vacio" colSpan={columnas.length + (puedeEditar ? 1 : 0)}>
+                <td className="vacio" colSpan={columnas.length + (puedeEditar && permiteAgregar ? 1 : 0)}>
                   {t(sinFilas)}
                 </td>
               </tr>
@@ -122,7 +125,7 @@ export function TablaAnalisis<F extends Record<string, unknown>>({
                     </td>
                   );
                 })}
-                {puedeEditar && (
+                {puedeEditar && permiteAgregar && (
                   <td>
                     <button
                       type="button"
@@ -139,7 +142,7 @@ export function TablaAnalisis<F extends Record<string, unknown>>({
         </table>
       </div>
 
-      {puedeEditar && (
+      {puedeEditar && permiteAgregar && (
         <div className="acciones-form">
           <button type="button" className="btn secundario" onClick={() => onCambiar([...filas, filaVacia()])}>
             {t('common.agregarFila')}

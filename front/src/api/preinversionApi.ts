@@ -24,6 +24,10 @@ import { PreinversinAnlisisAmbientalApi } from './generated/preinversion-analisi
 import { PreinversinAnlisisDeRiesgoApi } from './generated/preinversion-analisis-riesgo';
 import { PreinversinAnlisisLegalApi } from './generated/preinversion-analisis-legal';
 import { PreinversinBancoDeProyectosApi } from './generated/preinversion-banco-proyectos';
+import { PreinversinProgramacinFinancieraPAPApi } from './generated/preinversion-programacion-financiera';
+import { PreinversinProgramacinDeMetasFsicasPAPApi } from './generated/preinversion-programacion-metas';
+import { PreinversinAvanceFinancieroPAPApi } from './generated/preinversion-avance-financiero';
+import { PreinversinAvanceDeMetasFsicasPAPApi } from './generated/preinversion-avance-metas';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -73,6 +77,13 @@ export const analisisAmbientalApi = new PreinversinAnlisisAmbientalApi(undefined
 export const analisisRiesgoApi = new PreinversinAnlisisDeRiesgoApi(undefined, undefined, preinversionAxios);
 export const analisisLegalApi = new PreinversinAnlisisLegalApi(undefined, undefined, preinversionAxios);
 export const bancoProyectosApi = new PreinversinBancoDeProyectosApi(undefined, undefined, preinversionAxios);
+
+// CU-PRE-30 a 33: la programación y el avance cuatrimestral del PAP, en sus dos
+// caras —financiera y de metas físicas—, cada una con su contrato.
+export const programacionFinancieraApi = new PreinversinProgramacinFinancieraPAPApi(undefined, undefined, preinversionAxios);
+export const programacionMetasApi = new PreinversinProgramacinDeMetasFsicasPAPApi(undefined, undefined, preinversionAxios);
+export const avanceFinancieroApi = new PreinversinAvanceFinancieroPAPApi(undefined, undefined, preinversionAxios);
+export const avanceMetasApi = new PreinversinAvanceDeMetasFsicasPAPApi(undefined, undefined, preinversionAxios);
 
 export const presupuestoOmApi = new PreinversinOperacinYMantenimientoApi(undefined, undefined, preinversionAxios);
 
@@ -205,3 +216,30 @@ export { Probabilidad, ImpactoRiesgo, CalificacionRiesgo } from './generated/pre
 export type { AnalisisRiesgo, FilaRiesgo, FilaRiesgoRequest } from './generated/preinversion-analisis-riesgo';
 export type { AnalisisLegal, FilaAnalisisLegalRequest } from './generated/preinversion-analisis-legal';
 export type { ProyectoBancoItem } from './generated/preinversion-banco-proyectos';
+export type { EstudioFilaListaPAP } from './generated/preinversion-programacion-financiera';
+export type {
+  EstudioFilaMetasFisicas,
+  EstudioProgramacionMetas,
+  EtapaMetaFisica,
+  EtapaMetaFisicaRequest,
+  RevisionProgramacionPAP,
+} from './generated/preinversion-programacion-metas';
+export { Entregable, EstadoPAP } from './generated/preinversion-programacion-metas';
+export type {
+  AvanceEstudio,
+  EstudioFilaAvancePAP,
+  EtapaAvance,
+  EtapaAvanceRequest,
+  FilaAvanceFuente,
+  FilaAvanceFuenteRequest,
+} from './generated/preinversion-avance-financiero';
+export { Cuatrimestre } from './generated/preinversion-avance-financiero';
+export type {
+  AvanceMetasEstudio,
+  EstudioFilaAvanceMetas,
+  EtapaAvanceMetas,
+  EtapaAvanceMetasRequest,
+  RevisionAvancePAP,
+} from './generated/preinversion-avance-metas';
+export type { EstudioProgramacionPAP } from './generated/preinversion-programacion-financiera';
+

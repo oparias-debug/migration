@@ -32,13 +32,21 @@ import { EstudioTecnicoPage } from './features/preinversion/estudio-tecnico/Estu
 import { AnalisisAmbientalPage } from './features/preinversion/analisis/AnalisisAmbientalPage';
 import { AnalisisRiesgoPage } from './features/preinversion/analisis/AnalisisRiesgoPage';
 import { AnalisisLegalPage } from './features/preinversion/analisis/AnalisisLegalPage';
+import { PapPage } from './features/preinversion/pap/PapPage';
+import { ProgramacionFinancieraPage } from './features/preinversion/pap/ProgramacionFinancieraPage';
+import { ProgramacionFinancieraEstudioPage } from './features/preinversion/pap/ProgramacionFinancieraEstudioPage';
+import { ProgramacionMetasPage } from './features/preinversion/pap/ProgramacionMetasPage';
+import { ProgramacionMetasEstudioPage } from './features/preinversion/pap/ProgramacionMetasEstudioPage';
+import { AvanceFinancieroPage } from './features/preinversion/pap/AvanceFinancieroPage';
+import { AvanceFinancieroEstudioPage } from './features/preinversion/pap/AvanceFinancieroEstudioPage';
+import { AvanceMetasPage } from './features/preinversion/pap/AvanceMetasPage';
+import { AvanceMetasEstudioPage } from './features/preinversion/pap/AvanceMetasEstudioPage';
 
 // Opciones del menú lateral (layout/navegacion.ts) que todavía no tienen
 // pantalla: se muestran como "🚧 Página en Construcción".
 const PLACEHOLDER_PATHS = [
   // Opciones del menú del árbol del sistema que todavía no tienen pantalla.
   'programacion/priorizacion',
-  'programacion/pap',
   'programacion/pripme',
   'programacion/paip',
   'ejecucion/actualizaciones',
@@ -67,6 +75,16 @@ export function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/preinversion" element={<PreinversionPage />} />
             <Route path="/banco-proyectos" element={<BancoProyectosPage />} />
+            {/* PAP: CU-PRE-30 a CU-PRE-33, cada uno con su listado y su ficha por estudio. */}
+            <Route path="/programacion/pap" element={<PapPage />} />
+            <Route path="/programacion/pap/programacion-financiera" element={<ProgramacionFinancieraPage />} />
+            <Route path="/programacion/pap/programacion-financiera/:cup" element={<ProgramacionFinancieraEstudioPage />} />
+            <Route path="/programacion/pap/programacion-metas" element={<ProgramacionMetasPage />} />
+            <Route path="/programacion/pap/programacion-metas/:cup" element={<ProgramacionMetasEstudioPage />} />
+            <Route path="/programacion/pap/avance-financiero" element={<AvanceFinancieroPage />} />
+            <Route path="/programacion/pap/avance-financiero/:cup" element={<AvanceFinancieroEstudioPage />} />
+            <Route path="/programacion/pap/avance-metas" element={<AvanceMetasPage />} />
+            <Route path="/programacion/pap/avance-metas/:cup" element={<AvanceMetasEstudioPage />} />
 
             <Route path="/catalogos-generales" element={<CatalogosPage />} />
             <Route path="/catalogos-generales/:codigo" element={<CatalogoDetallePage />} />

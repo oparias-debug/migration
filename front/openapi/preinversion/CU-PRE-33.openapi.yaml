@@ -1,0 +1,688 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-33 Avance Cuatrimestral por Metas Físicas del PAP
+  version: "1.2.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-33 "Avance Cuatrimestral por Metas
+    Físicas del PAP" (UC-PRE-33-Avance_Cuatrimestral_Metas_Fisicas_PAP.md,
+    versión 1.2) y sus 8 historias BDD. Mismo patrón arquitectónico que
+    CU-PRE-32 (recurso raíz por Unidad Ejecutora + Año + Período).
+
+    ⚠️ **Hallazgo documental mayor, no resuelto, heredado tal cual del
+    propio CU**: a diferencia de CU-PRE-31 (que sí describe explícitamente,
+    en su SF-2 pasos 7-8, el clic del Técnico URP en "Enviar a revisión
+    DGICP" y la notificación al Técnico PRE), **ningún Flujo Básico ni
+    Subflujo de este documento describe ese mismo paso** — el botón solo
+    se menciona como visible/habilitado en RN-A.b y en la lista de botones
+    del mockup, sin que ningún flujo narre el clic real ni su efecto. El
+    propio documento no puede determinar si el paso simplemente no fue
+    transcrito al PDF, o si el envío a revisión ocurre implícitamente al
+    guardar (SF-1). **No se modela ningún endpoint para esta acción** — es
+    el pendiente más importante de este fragmento, ver contrato-CU-PRE-33.md.
+
+    La aprobación única (`finalizarRevisionAvance`, SF-3) sí está
+    completamente descrita y se modela con normalidad — es una acción
+    **distinta y paralela** a `finalizarRevision` de CU-PRE-31: aquella
+    cubre la aprobación de la *programación* (CU-PRE-30+31, actualiza
+    CU-PRO-25 con estado "PAP Revisado"); esta cubre la aprobación del
+    *avance/ejecución* (CU-PRE-32+33, actualiza CU-EJE-10 con estado
+    "Revisado") — dos ciclos de aprobación unificados independientes, no
+    el mismo recurso.
+
+paths:
+
+  /avance-metas-fisicas-pap:
+    get:
+      operationId: obtenerAvanceMetasFisicasPAP
+      summary: Consultar "Avance de la ejecución Cuatrimestral de Metas del PAP" (Anexo A.1)
+      description: >
+        RN-B.a: solo estudios activos para el ejercicio fiscal vigente al
+        cuatrimestre consultado (según CU-PRE-31); para años anteriores,
+        los estudios vigentes de esos ejercicios. `comentarioReporteFinancieroDgicp`/
+        `comentarioReporteMetasFisicasDgicp` son `nullable`: la subsección
+        completa "Revisión del avance cuatrimestral del PAP" solo es
+        visible para actores internos de la DGICP (RN-D.a) — a diferencia
+        de CU-PRE-31 (RN-C), este documento no enumera la lista exacta de
+        roles que califican como "actores internos"; se interpreta como
+        Técnico PRE, Coordinador PRE, Técnico PRO, Coordinador PRO, Jefe
+        DGI y Subjefe DGI (excluyendo Técnico URP, explícitamente negado
+        por RN-A.b), sin que esto sea una lista confirmada literalmente
+        por el documento. `observaciones` es de solo lectura aquí (mismo
+        criterio que CU-PRE-32 para la contradicción "procede de"/"Editable: Sí").
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          schema: { type: integer, format: int64 }
+        - name: anio
+          in: query
+          schema: { type: integer }
+        - name: periodo
+          in: query
+          schema:
+            $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: Listado del avance de metas físicas del PAP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvanceMetasFisicasPAPResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no corresponde a ninguno de los roles de
+            este CU. Inferido de `x-roles`; sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-metas-fisicas-pap/estudios/{cup}:
+    parameters:
+      - name: cup
+        in: path
+        required: true
+        schema: { type: string }
+      - name: anio
+        in: query
+        required: true
+        schema: { type: integer }
+      - name: periodo
+        in: query
+        required: true
+        schema:
+          $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+    get:
+      operationId: obtenerAvanceMetasEstudio
+      summary: Consultar el avance de metas de un estudio, por etapa (Anexo A.4)
+      description: >
+        `avancesCuatrimestresAnteriores` se puebla progresivamente según
+        RN-G (mismo patrón que RN-F de CU-PRE-32).
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI]
+      responses:
+        "200":
+          description: Avance de metas del estudio, por etapa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvanceMetasEstudio'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año + período) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarAvanceMetasEstudio
+      summary: Registrar y guardar el avance de metas del cuatrimestre (botón "Guardar", SF-1)
+      description: >
+        RN-C.b: el avance no puede superar el porcentaje "Programado en
+        el Año" de CU-PRE-31 (se valida el acumulado del año: cuatrimestres
+        previos + el registrado) — 400, `Error.codigo` =
+        `PORCENTAJE_SUPERA_PROGRAMADO_ANUAL`, con mensaje literal
+        confirmado. RN-B.b: los estudios con "programado del cuatrimestre"
+        = 0 siempre pueden reportar avance, por lo que quedan fuera del
+        tope de RN-C.b. RN-B.d: en todos los casos, Ejecutado años
+        anteriores + Ejecutado en el año no puede superar el 100% — 400,
+        `Error.codigo` = `PORCENTAJE_SUPERA_100`, mismo mensaje. RN-A.a:
+        rechaza con 409 fuera del Calendario de Eventos del PAP.
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardarAvanceMetasEstudioRequest'
+      responses:
+        "200":
+          description: >
+            Avance guardado; "Total meta acumulada"/"Total meta ejecutada"
+            calculados, trasladado a "Ejecutado del Cuatrimestre" y
+            "Observaciones del cuatrimestre" del Anexo A.1.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvanceMetasEstudio'
+        "400":
+          description: >
+            Mensaje literal (RN-C.b): "El porcentaje total registrado
+            supera el 100%".
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año + período) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período habilitado por el Calendario de Eventos del
+            PAP (RN-A.a). Mensaje del Anexo A.3, no transcrito
+            literalmente en este documento — se asume el mismo texto que
+            CU-PRE-30/31 ("Periodo de ingreso de información ha
+            finalizado") por consistencia, sin confirmación explícita en
+            este documento (mismo criterio ya aplicado en CU-PRE-32).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-metas-fisicas-pap/observaciones:
+    put:
+      operationId: registrarObservacionesAvanceDgicp
+      summary: Registrar "Observaciones DGICP" sobre el avance de metas físicas (SF-2, paso 1)
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico PRE, Coordinador PRE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio, periodo, observacionesDgicp]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+                periodo:
+                  $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+                observacionesDgicp: { type: string }
+      responses:
+        "200":
+          description: Observaciones guardadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionAvancePAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico PRE ni Coordinador PRE (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-metas-fisicas-pap/observaciones/envio:
+    post:
+      operationId: enviarObservacionesAvanceDgicp
+      summary: Enviar observaciones (botón "Enviar observaciones", SF-2, pasos 1-3)
+      description: >
+        Guarda con fecha, habilita "Respuesta Institución" para el Técnico
+        URP y los campos de los Anexos A.1/A.4, y lo notifica por correo.
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico PRE, Coordinador PRE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio, periodo]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+                periodo:
+                  $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+      responses:
+        "200":
+          description: Observaciones enviadas; campos habilitados para el Técnico URP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionAvancePAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico PRE ni Coordinador PRE (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-metas-fisicas-pap/respuesta-institucion:
+    put:
+      operationId: registrarRespuestaInstitucionAvance
+      summary: Registrar "Respuesta Institución" (SF-2, paso 4)
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio, periodo, respuestaInstitucion]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+                periodo:
+                  $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+                respuestaInstitucion: { type: string }
+      responses:
+        "200":
+          description: Respuesta guardada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionAvancePAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-metas-fisicas-pap/respuesta-institucion/envio:
+    post:
+      operationId: enviarRespuestaInstitucionAvance
+      summary: Enviar respuesta a las observaciones (botón "Enviar Respuesta", SF-2, pasos 4-5)
+      description: Guarda con fecha y notifica al Técnico PRE por correo. A diferencia de CU-PRE-31, este subflujo no menciona deshabilitar campos explícitamente al enviar la respuesta.
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio, periodo]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+                periodo:
+                  $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+      responses:
+        "200":
+          description: Respuesta enviada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionAvancePAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-metas-fisicas-pap/revision-finalizada:
+    put:
+      operationId: finalizarRevisionAvance
+      summary: Finalizar la revisión del avance cuatrimestral del PAP (botón "Revisión Finalizada", SF-3, RN-D.b, RN-E)
+      description: >
+        ⚠️ Acción compartida con CU-PRE-32 (decisión funcional v1.2): es la
+        **única** aprobación del avance cuatrimestral del PAP, cubre de
+        forma unificada el avance financiero (CU-PRE-32) y el de metas
+        físicas (este documento) — CU-PRE-32 no tiene su propio endpoint
+        equivalente. Actualiza el estado a "Revisado" en el Monitoreo PAP
+        de CU-EJE-10 (no procesado todavía; efecto secundario documentado,
+        sin endpoint propio expuesto aquí). **Distinta** de
+        `finalizarRevision` en CU-PRE-31 (esa aprueba la programación,
+        actualiza CU-PRO-25 con estado "PAP Revisado"; esta aprueba el
+        avance, actualiza CU-EJE-10 con estado "Revisado") — no se puede
+        confirmar si ambos estados resultantes ("Revisado" aquí, "PAP
+        Revisado" en CU-PRE-31) son el mismo concepto con nombre
+        inconsistente; se mantienen como valores de enum distintos en cada
+        fragmento. Visible/habilitado solo para Técnico PRE y Coordinador
+        PRE (RQ-C-01, RN-D.b).
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico PRE, Coordinador PRE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio, periodo]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+                periodo:
+                  $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+                comentarioReporteFinancieroDgicp: { type: string }
+                comentarioReporteMetasFisicasDgicp: { type: string }
+      responses:
+        "200":
+          description: Revisión finalizada; avance marcado como "Revisado" en CU-EJE-10.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionAvancePAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico PRE ni Coordinador PRE (RN-D.b, inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-metas-fisicas-pap/reporte:
+    get:
+      operationId: generarReporteAvanceMetas
+      summary: Generar el reporte del Avance Cuatrimestral por Metas Físicas (botón "Generar Reporte", SF-4)
+      description: >
+        Igual que el listado, para el Técnico URP se ignora
+        `idUnidadEjecutora` y el reporte se genera siempre con su propia
+        unidad ejecutora; el Técnico PRE puede indicar cualquiera.
+      tags: [Preinversión - Avance de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: anio
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: periodo
+          in: query
+          required: true
+          schema:
+            $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+        - name: formato
+          in: query
+          required: true
+          schema: { type: string, enum: [EXCEL, PDF] }
+      responses:
+        "200":
+          description: Reporte generado en el formato solicitado.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+            application/pdf:
+              schema: { type: string, format: binary }
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    EstadoAvanceMetas:
+      type: string
+      description: >
+        Catálogo de Estados del estudio (RN-B.c). FINALIZADO cuando el
+        "Total meta ejecutada" alcanza el 100% (RN-B.d); ADELANTADO solo
+        mientras lo ejecutado no sobrepase el "Programado en el Año". Si lo
+        sobrepasa (excepción RN-B.b o reprogramación posterior en
+        CU-PRE-31) no aplica ningún estado del catálogo y el campo `estado`
+        se devuelve en null.
+      enum: [A_TIEMPO, ATRASADO, ADELANTADO, FINALIZADO]
+
+    AvanceCuatrimestreMetaAnterior:
+      type: object
+      required: [periodo, porcentajeEjecutado]
+      properties:
+        periodo:
+          $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+        porcentajeEjecutado:
+          type: number
+          format: double
+
+    EtapaAvanceMetasRequest:
+      type: object
+      required: [etapa, avanceCuatrimestre]
+      properties:
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        avanceCuatrimestre:
+          type: number
+          format: double
+          description: Porcentaje ejecutado del cuatrimestre que se está registrando.
+        observacionesCuatrimestre:
+          type: string
+          nullable: true
+
+    EtapaAvanceMetas:
+      type: object
+      description: >
+        Forma de lectura. Los campos calculados (RN-F) nunca se reciben en
+        `EtapaAvanceMetasRequest`.
+      required: [etapa, avanceCuatrimestre]
+      properties:
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        meta:
+          type: number
+          format: double
+          nullable: true
+          description: Desde CU-PRE-31; el mockup lo muestra como "1.00" numérico, pese a documentarse como "Porcentaje" en el Anexo B.1 — discrepancia de formato no resuelta.
+        entregable:
+          type: string
+          nullable: true
+        ejecutadoAniosAnteriores:
+          type: number
+          format: double
+          nullable: true
+        programadoEnElAnio:
+          type: number
+          format: double
+          nullable: true
+          description: "\"Avance Anual Programado\" (AAP), desde CU-PRE-31 (RN-F)."
+        ejecutadoEnElAnio:
+          type: number
+          format: double
+          nullable: true
+          description: "\"Avance Anual Ejecutado\" (AAE), acumulado (RN-F)."
+        programadoAlCuatrimestre:
+          type: number
+          format: double
+          nullable: true
+          description: "\"Avance Programado al Cuatrimestre\" (APC), acumulado desde CU-PRE-31 (RN-F)."
+        ejecutadoAlCuatrimestre:
+          type: number
+          format: double
+          nullable: true
+          description: "\"Avance Ejecutado al Cuatrimestre\" (AEC), acumulado (RN-F)."
+        programadoDelCuatrimestre:
+          type: number
+          format: double
+          nullable: true
+        avanceCuatrimestre:
+          type: number
+          format: double
+        totalMetaEjecutada:
+          type: number
+          format: double
+          nullable: true
+          description: >
+            "Total Meta Ejecutada" = Ejecutado años anteriores + Avance
+            Anual Ejecutado (RN-F). Se documenta con al menos tres nombres
+            distintos a través del propio CU ("Total meta acumulada" en
+            SF-1, "Total avance acumulado" en el Anexo A.4, "Total meta
+            ejecutada" aquí y en el mockup) — no se puede confirmar si son
+            el mismo concepto con nombres distintos; se modeló como un
+            único campo, siguiendo la lectura más consistente con la
+            fórmula de RN-F.
+        estado:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/EstadoAvanceMetas'
+        avancesCuatrimestresAnteriores:
+          type: array
+          description: RN-G — poblado progresivamente.
+          items:
+            $ref: '#/components/schemas/AvanceCuatrimestreMetaAnterior'
+
+    GuardarAvanceMetasEstudioRequest:
+      type: object
+      properties:
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaAvanceMetasRequest'
+
+    AvanceMetasEstudio:
+      type: object
+      required: [cup, nombreProyecto, etapas]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaAvanceMetas'
+
+    EstudioFilaAvanceMetas:
+      type: object
+      description: Fila de "Informe de avance cuatrimestral de metas del PAP" (Anexo A.1).
+      required: [cup, nombreProyecto, etapa]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        meta: { type: number, format: double, nullable: true }
+        entregable: { type: string, nullable: true }
+        ejecutadoAniosAnteriores: { type: number, format: double, nullable: true }
+        programadoEnElAnio: { type: number, format: double, nullable: true }
+        ejecutadoEnElAnio: { type: number, format: double, nullable: true }
+        programadoAlCuatrimestre: { type: number, format: double, nullable: true }
+        ejecutadoAlCuatrimestre: { type: number, format: double, nullable: true }
+        programadoDelCuatrimestre: { type: number, format: double, nullable: true }
+        ejecutadoDelCuatrimestre: { type: number, format: double, nullable: true }
+        totalMetaEjecutada: { type: number, format: double, nullable: true }
+        observaciones:
+          type: string
+          nullable: true
+          description: Solo lectura en esta pantalla (procede de "Observaciones del Cuatrimestre" del Anexo A.4).
+        estado:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/EstadoAvanceMetas'
+
+    AvanceMetasFisicasPAPResponse:
+      type: object
+      required: [idUnidadEjecutora, anio, periodo, contenido, paginacion]
+      properties:
+        idUnidadEjecutora: { type: integer, format: int64 }
+        anio: { type: integer }
+        periodo:
+          $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstudioFilaAvanceMetas'
+        paginacion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PaginacionMetadata'
+
+    EstadoRevisionAvancePAP:
+      type: string
+      enum: [EN_ELABORACION, OBSERVADO, REVISADO]
+
+    RevisionAvancePAP:
+      type: object
+      description: >
+        Estado del ciclo de revisión/aprobación del avance del PAP —
+        recurso paralelo a `RevisionProgramacionPAP` de CU-PRE-31, pero
+        conceptualmente distinto (aprueba avance/ejecución, no
+        programación). Compartido con CU-PRE-32.
+      required: [idUnidadEjecutora, anio, periodo, estado]
+      properties:
+        idUnidadEjecutora: { type: integer, format: int64 }
+        anio: { type: integer }
+        periodo:
+          $ref: './CU-PRE-32.openapi.yaml#/components/schemas/Cuatrimestre'
+        estado:
+          $ref: '#/components/schemas/EstadoRevisionAvancePAP'
+        observacionesDgicp:
+          type: string
+          nullable: true
+          description: Visible para Técnico URP, editable solo por Técnico PRE/Coordinador PRE (RN-A.b).
+        fechaObservaciones: { type: string, format: date-time, nullable: true }
+        respuestaInstitucion:
+          type: string
+          nullable: true
+          description: Visible para Técnico PRE/Coordinador PRE, editable solo por Técnico URP (RN-A.b).
+        fechaRespuesta: { type: string, format: date-time, nullable: true }
+        comentarioReporteFinancieroDgicp:
+          type: string
+          nullable: true
+          description: No visible para Técnico URP (RN-A.b); ver nota de "actores internos DGICP" en obtenerAvanceMetasFisicasPAP.
+        comentarioReporteMetasFisicasDgicp:
+          type: string
+          nullable: true
+          description: Mismo criterio de visibilidad que comentarioReporteFinancieroDgicp.
