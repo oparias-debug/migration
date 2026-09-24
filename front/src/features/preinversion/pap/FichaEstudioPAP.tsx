@@ -134,7 +134,12 @@ export function FichaEstudioPAP<D, F extends Record<string, unknown>>({
             {t('common.volver')}
           </button>
           {puedeEditar && (
-            <button type="button" className="btn primario" disabled={cargando || guardando} onClick={() => void alGuardar()}>
+            <button
+              type="button"
+              className="btn primario"
+              disabled={cargando || guardando}
+              onClick={() => void alGuardar()}
+            >
               {t('common.guardar')}
             </button>
           )}

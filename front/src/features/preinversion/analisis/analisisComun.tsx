@@ -12,7 +12,10 @@ export const ROL_ANALISIS = 'TECNICO_URP';
 
 /** "$1,750.58" en pantalla; number en el contrato. */
 export const aNumero = (texto: unknown): number | undefined => {
-  const limpio = String(texto ?? '').replace(/[^0-9.-]/g, '');
+  // Las filas de la tabla llegan como Record<string, unknown>: lo que no sea
+  // texto ni número no es un monto, y convertirlo daría "[object Object]".
+  if (typeof texto !== 'string' && typeof texto !== 'number') return undefined;
+  const limpio = `${texto}`.replace(/[^0-9.-]/g, '');
   if (limpio === '') return undefined;
   const n = Number(limpio);
   return Number.isFinite(n) ? n : undefined;

@@ -1,11 +1,119 @@
 import { useCallback } from 'react';
+import type { TFunction } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { programacionMetasApi, type EstudioFilaMetasFisicas } from '../../../api/preinversionApi';
-import { ListadoPAP, ejecutar, numero, porcentaje, type ColumnaPAP } from './papComun';
+import { ListadoPAP, ejecutar, numero, porcentaje, type ColumnaPAP, type ContextoPAP } from './papComun';
 import { PanelRevision } from './PanelRevision';
+import { etiquetaEntregable, etiquetaEtapa } from './etiquetas';
 
 const CLAVE = 'preinversion.programacionMetas';
+
+const columnas = (t: TFunction): ColumnaPAP<EstudioFilaMetasFisicas>[] => [
+  { clave: 'cup', etiqueta: `${CLAVE}.columnaCup`, valor: (f) => f.cup },
+  { clave: 'proyecto', etiqueta: `${CLAVE}.columnaProyecto`, valor: (f) => f.nombreProyecto },
+  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, valor: (f) => etiquetaEtapa(f.etapa) },
+  { clave: 'meta', etiqueta: `${CLAVE}.columnaMeta`, valor: (f) => numero(f.metaTotal), alineado: 'derecha' },
+  { clave: 'entregable', etiqueta: `${CLAVE}.columnaEntregable`, valor: (f) => etiquetaEntregable(t, f.entregable) },
+  {
+    clave: 'previo',
+    etiqueta: `${CLAVE}.columnaEjecutadoPrevio`,
+    valor: (f) => porcentaje(f.ejecutadoAniosAnteriores),
+    alineado: 'derecha',
+  },
+  { clave: 'total', etiqueta: `${CLAVE}.columnaTotalAnio`, valor: (f) => porcentaje(f.totalAnio), alineado: 'derecha' },
+  {
+    clave: 'posteriores',
+    etiqueta: `${CLAVE}.columnaPosteriores`,
+    valor: (f) => porcentaje(f.aniosPosteriores),
+    alineado: 'derecha',
+  },
+  // RN-C: sólo lo reciben los actores internos de la DGICP; para el Técnico URP llega nulo.
+  { clave: 'comentarios', etiqueta: `${CLAVE}.columnaComentarios`, valor: (f) => f.comentariosReporteDgicp ?? '—' },
+];
+
+/** Reporte, envío a revisión (único para CU-PRE-30 y CU-PRE-31) y plazos. */
+function AccionesMetas({ anio, idUnidadEjecutora, recargar }: ContextoPAP) {
+  const { t } = useTranslation();
+  const contexto = { anio, idUnidadEjecutora: idUnidadEjecutora as number };
+  return (
+    <>
+      <button
+        type="button"
+        className="btn secundario"
+        onClick={() =>
+          void ejecutar(
+            () => programacionMetasApi.generarReporteMetasFisicas({ ...contexto, formato: 'EXCEL' }),
+            `${CLAVE}.reporteGenerado`,
+            t,
+          )
+        }
+      >
+        {t('preinversion.pap.generarReporte')}
+      </button>
+      <button
+        type="button"
+        className="btn primario"
+        onClick={() =>
+          void ejecutar(
+            () =>
+              programacionMetasApi.enviarProgramacionARevisionDgicp({
+                enviarProgramacionARevisionDgicpRequest: contexto,
+              }),
+            `${CLAVE}.enviadoARevision`,
+            t,
+            recargar,
+          )
+        }
+      >
+        {t('preinversion.pap.enviarRevision')}
+      </button>
+      <button
+        type="button"
+        className="btn neutro"
+        onClick={() =>
+          void ejecutar(
+            () =>
+              programacionMetasApi.habilitarModificacionesMetasFueraPlazo({
+                enviarProgramacionARevisionDgicpRequest: contexto,
+              }),
+            `${CLAVE}.plazoHabilitado`,
+            t,
+            recargar,
+          )
+        }
+      >
+        {t('preinversion.pap.habilitarPlazo')}
+      </button>
+    </>
+  );
+}
+
+/** Ciclo de observaciones y respuesta entre la DGICP y la institución (SF-3). */
+function RevisionMetas({ anio, idUnidadEjecutora, recargar }: ContextoPAP) {
+  const contexto = { anio, idUnidadEjecutora: idUnidadEjecutora as number };
+  return (
+    <PanelRevision
+      clave={CLAVE}
+      alCambiar={recargar}
+      acciones={{
+        guardarObservaciones: (observacionesDgicp) =>
+          programacionMetasApi.registrarObservacionesDgicp({
+            registrarObservacionesDgicpRequest: { ...contexto, observacionesDgicp },
+          }),
+        enviarObservaciones: () =>
+          programacionMetasApi.enviarObservacionesDgicp({ enviarProgramacionARevisionDgicpRequest: contexto }),
+        guardarRespuesta: (respuestaInstitucion) =>
+          programacionMetasApi.registrarRespuestaInstitucion({
+            registrarRespuestaInstitucionRequest: { ...contexto, respuestaInstitucion },
+          }),
+        enviarRespuesta: () =>
+          programacionMetasApi.enviarRespuestaInstitucion({ enviarProgramacionARevisionDgicpRequest: contexto }),
+        finalizar: () => programacionMetasApi.finalizarRevision({ finalizarRevisionRequest: contexto }),
+      }}
+    />
+  );
+}
 
 /**
  * "Programación por Meta Física Cuatrimestral del PAP" (CU-PRE-31, Anexo A.1).
@@ -17,29 +125,6 @@ const CLAVE = 'preinversion.programacionMetas';
 export function ProgramacionMetasPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
-  const columnas: ColumnaPAP<EstudioFilaMetasFisicas>[] = [
-    { clave: 'cup', etiqueta: `${CLAVE}.columnaCup`, valor: (f) => f.cup },
-    { clave: 'proyecto', etiqueta: `${CLAVE}.columnaProyecto`, valor: (f) => f.nombreProyecto },
-    { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, valor: (f) => String(f.etapa ?? '—') },
-    { clave: 'meta', etiqueta: `${CLAVE}.columnaMeta`, valor: (f) => numero(f.metaTotal), alineado: 'derecha' },
-    { clave: 'entregable', etiqueta: `${CLAVE}.columnaEntregable`, valor: (f) => String(f.entregable ?? '—') },
-    {
-      clave: 'previo',
-      etiqueta: `${CLAVE}.columnaEjecutadoPrevio`,
-      valor: (f) => porcentaje(f.ejecutadoAniosAnteriores),
-      alineado: 'derecha',
-    },
-    { clave: 'total', etiqueta: `${CLAVE}.columnaTotalAnio`, valor: (f) => porcentaje(f.totalAnio), alineado: 'derecha' },
-    {
-      clave: 'posteriores',
-      etiqueta: `${CLAVE}.columnaPosteriores`,
-      valor: (f) => porcentaje(f.aniosPosteriores),
-      alineado: 'derecha',
-    },
-    // RN-C: sólo lo reciben los actores internos de la DGICP; para el Técnico URP llega nulo.
-    { clave: 'comentarios', etiqueta: `${CLAVE}.columnaComentarios`, valor: (f) => f.comentariosReporteDgicp ?? '—' },
-  ];
 
   const cargar = useCallback(async (p: { anio: number; pagina: number; tamanio: number }) => {
     const { data } = await programacionMetasApi.obtenerProgramacionMetasFisicasPAP(p);
@@ -55,111 +140,14 @@ export function ProgramacionMetasPage() {
   return (
     <ListadoPAP<EstudioFilaMetasFisicas>
       clave={CLAVE}
-      columnas={columnas}
+      columnas={columnas(t)}
       cargar={cargar}
       conBusqueda={false}
+      Acciones={AccionesMetas}
+      Pie={RevisionMetas}
       alAbrir={(fila, contexto) =>
         navigate(`/programacion/pap/programacion-metas/${encodeURIComponent(fila.cup)}`, { state: contexto })
       }
-      acciones={({ anio, idUnidadEjecutora, recargar }) => (
-        <>
-          <button
-            type="button"
-            className="btn secundario"
-            onClick={() =>
-              void ejecutar(
-                () =>
-                  programacionMetasApi.generarReporteMetasFisicas({
-                    anio,
-                    idUnidadEjecutora: idUnidadEjecutora as number,
-                    formato: 'EXCEL',
-                  }),
-                `${CLAVE}.reporteGenerado`,
-                t,
-              )
-            }
-          >
-            {t('preinversion.pap.generarReporte')}
-          </button>
-          {/* Único envío a revisión del PAP institucional: cubre CU-PRE-30 y CU-PRE-31. */}
-          <button
-            type="button"
-            className="btn primario"
-            onClick={() =>
-              void ejecutar(
-                () =>
-                  programacionMetasApi.enviarProgramacionARevisionDgicp({
-                    enviarProgramacionARevisionDgicpRequest: {
-                      anio,
-                      idUnidadEjecutora: idUnidadEjecutora as number,
-                    },
-                  }),
-                `${CLAVE}.enviadoARevision`,
-                t,
-                recargar,
-              )
-            }
-          >
-            {t('preinversion.pap.enviarRevision')}
-          </button>
-          <button
-            type="button"
-            className="btn neutro"
-            onClick={() =>
-              void ejecutar(
-                () =>
-                  programacionMetasApi.habilitarModificacionesMetasFueraPlazo({
-                    enviarProgramacionARevisionDgicpRequest: {
-                      anio,
-                      idUnidadEjecutora: idUnidadEjecutora as number,
-                    },
-                  }),
-                `${CLAVE}.plazoHabilitado`,
-                t,
-                recargar,
-              )
-            }
-          >
-            {t('preinversion.pap.habilitarPlazo')}
-          </button>
-        </>
-      )}
-      pie={({ anio, idUnidadEjecutora, recargar }) => (
-        <PanelRevision
-          clave={CLAVE}
-          alCambiar={recargar}
-          acciones={{
-            guardarObservaciones: (observacionesDgicp) =>
-              programacionMetasApi.registrarObservacionesDgicp({
-                registrarObservacionesDgicpRequest: {
-                  anio,
-                  idUnidadEjecutora: idUnidadEjecutora as number,
-                  observacionesDgicp,
-                },
-              }),
-            enviarObservaciones: () =>
-              programacionMetasApi.enviarObservacionesDgicp({
-                enviarProgramacionARevisionDgicpRequest: { anio, idUnidadEjecutora: idUnidadEjecutora as number },
-              }),
-            guardarRespuesta: (respuestaInstitucion) =>
-              programacionMetasApi.registrarRespuestaInstitucion({
-                registrarRespuestaInstitucionRequest: {
-                  anio,
-                  idUnidadEjecutora: idUnidadEjecutora as number,
-                  respuestaInstitucion,
-                },
-              }),
-            enviarRespuesta: () =>
-              programacionMetasApi.enviarRespuestaInstitucion({
-                enviarProgramacionARevisionDgicpRequest: { anio, idUnidadEjecutora: idUnidadEjecutora as number },
-              }),
-            finalizar: () =>
-              programacionMetasApi.finalizarRevision({
-                finalizarRevisionRequest: { anio, idUnidadEjecutora: idUnidadEjecutora as number },
-              }),
-          }}
-        />
-      )}
     />
   );
 }

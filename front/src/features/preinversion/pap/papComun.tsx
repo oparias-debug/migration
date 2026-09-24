@@ -1,43 +1,42 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import Swal from "sweetalert2";
-import { mensajeDeError, toErrorApi } from "../../../api/apiError";
-import { Pagination } from "../../../components/table/Pagination";
+import { useCallback, useEffect, useState, type ComponentType, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import Swal from 'sweetalert2';
+import { mensajeDeError, toErrorApi } from '../../../api/apiError';
+import { Pagination } from '../../../components/table/Pagination';
 
 export const TAMANIO_PAGINA = 20;
 
 export const monto = (valor: number | null | undefined): string =>
-  valor == null
-    ? "—"
-    : valor.toLocaleString("es-SV", { style: "currency", currency: "USD" });
+  valor == null ? '—' : valor.toLocaleString('es-SV', { style: 'currency', currency: 'USD' });
 
 export const numero = (valor: number | null | undefined): string =>
-  valor == null ? "—" : valor.toLocaleString("es-SV");
+  valor == null ? '—' : valor.toLocaleString('es-SV');
 
 export const porcentaje = (valor: number | null | undefined): string =>
-  valor == null
-    ? "—"
-    : `${valor.toLocaleString("es-SV", { maximumFractionDigits: 2 })} %`;
+  valor == null ? '—' : `${valor.toLocaleString('es-SV', { maximumFractionDigits: 2 })} %`;
 
 /** Los tres cuatrimestres del PAP (CU-PRE-32 y CU-PRE-33 listan uno a la vez). */
-export const CUATRIMESTRES = [
-  "CUATRIMESTRE_I",
-  "CUATRIMESTRE_II",
-  "CUATRIMESTRE_III",
-] as const;
+export const CUATRIMESTRES = ['CUATRIMESTRE_I', 'CUATRIMESTRE_II', 'CUATRIMESTRE_III'] as const;
 
 export type Periodo = (typeof CUATRIMESTRES)[number];
 
 /** Cuatrimestre en curso: enero-abril, mayo-agosto, septiembre-diciembre. */
-export const cuatrimestreVigente = (hoy = new Date()): Periodo =>
-  CUATRIMESTRES[Math.floor(hoy.getMonth() / 4)];
+export const cuatrimestreVigente = (hoy = new Date()): Periodo => CUATRIMESTRES[Math.floor(hoy.getMonth() / 4)];
 
 /** Una columna del listado del PAP. */
 export interface ColumnaPAP<F> {
   readonly clave: string;
   readonly etiqueta: string;
   readonly valor: (fila: F) => ReactNode;
-  readonly alineado?: "derecha";
+  readonly alineado?: 'derecha';
+}
+
+/** Lo que el listado sabe y las pantallas necesitan para sus botones. */
+export interface ContextoPAP {
+  readonly anio: number;
+  readonly periodo: Periodo;
+  readonly idUnidadEjecutora?: number;
+  readonly recargar: () => void;
 }
 
 interface ListadoProps<F> {
@@ -60,20 +59,9 @@ interface ListadoProps<F> {
     idUnidadEjecutora?: number;
   }>;
   /** Botones propios del caso de uso (reporte, revisión, plazos). */
-  readonly acciones?: (contexto: {
-    anio: number;
-    periodo: Periodo;
-    idUnidadEjecutora?: number;
-    estado?: string;
-    recargar: () => void;
-  }) => ReactNode;
+  readonly Acciones?: ComponentType<ContextoPAP>;
   /** Bloque propio del caso de uso bajo el listado (el panel de revisión). */
-  readonly pie?: (contexto: {
-    anio: number;
-    periodo: Periodo;
-    idUnidadEjecutora?: number;
-    recargar: () => void;
-  }) => ReactNode;
+  readonly Pie?: ComponentType<ContextoPAP>;
   /** Qué hacer al pulsar una fila; sin esto, la fila no es un enlace. */
   readonly alAbrir?: (fila: F, contexto: { anio: number; periodo: Periodo }) => void;
   /** Solo CU-PRE-30 acepta búsqueda por CUP o nombre en el contrato. */
@@ -94,8 +82,8 @@ export function ListadoPAP<F>({
   clave,
   columnas,
   cargar,
-  acciones,
-  pie,
+  Acciones,
+  Pie,
   alAbrir,
   conBusqueda = true,
   conPeriodo = false,
@@ -105,13 +93,11 @@ export function ListadoPAP<F>({
 
   const [anio, setAnio] = useState(anioActual);
   const [periodo, setPeriodo] = useState<Periodo>(cuatrimestreVigente);
-  const [busqueda, setBusqueda] = useState("");
-  const [busquedaAplicada, setBusquedaAplicada] = useState("");
+  const [busqueda, setBusqueda] = useState('');
+  const [busquedaAplicada, setBusquedaAplicada] = useState('');
   const [filas, setFilas] = useState<F[]>([]);
   const [estado, setEstado] = useState<string | undefined>();
-  const [idUnidadEjecutora, setIdUnidadEjecutora] = useState<
-    number | undefined
-  >();
+  const [idUnidadEjecutora, setIdUnidadEjecutora] = useState<number | undefined>();
   const [pagina, setPagina] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [totalElementos, setTotalElementos] = useState(0);
@@ -151,34 +137,28 @@ export function ListadoPAP<F>({
     void pedir(0);
   }, [pedir]);
 
+  const recargar = useCallback(() => void pedir(pagina), [pedir, pagina]);
+
   return (
     <>
       <div className="formcard">
         <div className="formhead">
           <span>{t(`${clave}.titulo`)}</span>
-          {estado && (
-            <span className="mono">
-              · {t(`${clave}.estados.${estado}`, { defaultValue: estado })}
-            </span>
-          )}
+          {estado && <span className="mono">· {t(`${clave}.estados.${estado}`, { defaultValue: estado })}</span>}
         </div>
         <div className="formbody">
           {error && (
             <div className="aviso-error" role="alert">
               <span>{error}</span>
-              <button
-                type="button"
-                className="btn neutro"
-                onClick={() => void pedir(pagina)}
-              >
-                {t("errores.reintentar")}
+              <button type="button" className="btn neutro" onClick={() => void pedir(pagina)}>
+                {t('errores.reintentar')}
               </button>
             </div>
           )}
 
           <div className="filtros">
             <div className="campo">
-              <label htmlFor="pap-anio">{t("preinversion.pap.anio")}</label>
+              <label htmlFor="pap-anio">{t('preinversion.pap.anio')}</label>
               <input
                 id="pap-anio"
                 type="number"
@@ -190,14 +170,8 @@ export function ListadoPAP<F>({
             </div>
             {conPeriodo && (
               <div className="campo">
-                <label htmlFor="pap-periodo">
-                  {t("preinversion.pap.periodo")}
-                </label>
-                <select
-                  id="pap-periodo"
-                  value={periodo}
-                  onChange={(e) => setPeriodo(e.target.value as Periodo)}
-                >
+                <label htmlFor="pap-periodo">{t('preinversion.pap.periodo')}</label>
+                <select id="pap-periodo" value={periodo} onChange={(e) => setPeriodo(e.target.value as Periodo)}>
                   {CUATRIMESTRES.map((c) => (
                     <option key={c} value={c}>
                       {t(`preinversion.pap.cuatrimestres.${c}`)}
@@ -209,35 +183,28 @@ export function ListadoPAP<F>({
             {conBusqueda && (
               <>
                 <div className="campo crece">
-                  <label htmlFor="pap-busqueda">
-                    {t("preinversion.pap.busqueda")}
-                  </label>
+                  <label htmlFor="pap-busqueda">{t('preinversion.pap.busqueda')}</label>
                   <input
                     id="pap-busqueda"
                     type="search"
-                    placeholder={t("preinversion.pap.busquedaAyuda")}
+                    placeholder={t('preinversion.pap.busquedaAyuda')}
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter")
-                        setBusquedaAplicada(busqueda.trim());
+                      if (e.key === 'Enter') setBusquedaAplicada(busqueda.trim());
                     }}
                   />
                 </div>
                 <div className="campo">
-                  <button
-                    type="button"
-                    className="btn primario"
-                    onClick={() => setBusquedaAplicada(busqueda.trim())}
-                  >
-                    {t("preinversion.pap.buscar")}
+                  <button type="button" className="btn primario" onClick={() => setBusquedaAplicada(busqueda.trim())}>
+                    {t('preinversion.pap.buscar')}
                   </button>
                 </div>
               </>
             )}
           </div>
 
-          {cargando && <p className="cargando">{t("common.cargando")}</p>}
+          {cargando && <p className="cargando">{t('common.cargando')}</p>}
 
           {!cargando && !error && (
             <div className="tabla-cont">
@@ -253,7 +220,7 @@ export function ListadoPAP<F>({
                   {filas.length === 0 && (
                     <tr>
                       <td className="vacio" colSpan={columnas.length}>
-                        {t("preinversion.pap.sinFilas")}
+                        {t('preinversion.pap.sinFilas')}
                       </td>
                     </tr>
                   )}
@@ -261,14 +228,7 @@ export function ListadoPAP<F>({
                     // eslint-disable-next-line react/no-array-index-key
                     <tr key={indice}>
                       {columnas.map((c, columna) => (
-                        <td
-                          key={c.clave}
-                          style={
-                            c.alineado === "derecha"
-                              ? { textAlign: "right" }
-                              : undefined
-                          }
-                        >
+                        <td key={c.clave} style={c.alineado === 'derecha' ? { textAlign: 'right' } : undefined}>
                           {columna === 0 && alAbrir ? (
                             <button
                               type="button"
@@ -291,7 +251,7 @@ export function ListadoPAP<F>({
 
           {!cargando && !error && filas.length > 0 && (
             <p className="conteo-listado">
-              {t("preinversion.registro.conteo", {
+              {t('preinversion.registro.conteo', {
                 desde: pagina * TAMANIO_PAGINA + 1,
                 hasta: pagina * TAMANIO_PAGINA + filas.length,
                 total: totalElementos,
@@ -309,25 +269,14 @@ export function ListadoPAP<F>({
             />
           )}
 
-          {acciones && (
+          {Acciones && (
             <div className="acciones-form">
-              {acciones({
-                anio,
-                periodo,
-                idUnidadEjecutora,
-                estado,
-                recargar: () => void pedir(pagina),
-              })}
+              <Acciones anio={anio} periodo={periodo} idUnidadEjecutora={idUnidadEjecutora} recargar={recargar} />
             </div>
           )}
         </div>
       </div>
-      {pie?.({
-        anio,
-        periodo,
-        idUnidadEjecutora,
-        recargar: () => void pedir(pagina),
-      })}
+      {Pie && <Pie anio={anio} periodo={periodo} idUnidadEjecutora={idUnidadEjecutora} recargar={recargar} />}
     </>
   );
 }
@@ -341,11 +290,11 @@ export async function ejecutar(
 ) {
   try {
     await accion();
-    await Swal.fire({ icon: "success", text: t(mensajeExito) });
+    await Swal.fire({ icon: 'success', text: t(mensajeExito) });
     despues?.();
   } catch (error_) {
     await Swal.fire({
-      icon: "error",
+      icon: 'error',
       text: mensajeDeError(toErrorApi(error_), t),
     });
   }

@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { programacionFinancieraApi, type EstudioProgramacionPAP } from '../../../api/preinversionApi';
 import { formatearMonto } from '../analisis/analisisComun';
 import type { ColumnaAnalisis } from '../analisis/TablaAnalisis';
 import { FichaEstudioPAP } from './FichaEstudioPAP';
 import { ETAPAS, ROL_PAP, aMonto, agruparPorEtapa } from './fichaComun';
+import { etiquetaEtapa } from './etiquetas';
 
 const CLAVE = 'preinversion.programacionFinanciera';
 
@@ -29,9 +32,15 @@ type Fila = {
   aniosPosteriores: string;
 };
 
-const columnas: ColumnaAnalisis<Fila>[] = [
-  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, tipo: 'select', opciones: ETAPAS },
-  { clave: 'fuenteFinanciamiento', etiqueta: `${CLAVE}.columnaFuente`, tipo: 'select', opciones: FUENTES },
+const columnas = (t: TFunction): ColumnaAnalisis<Fila>[] => [
+  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, tipo: 'select', opciones: ETAPAS, formato: etiquetaEtapa },
+  {
+    clave: 'fuenteFinanciamiento',
+    etiqueta: `${CLAVE}.columnaFuente`,
+    tipo: 'select',
+    opciones: FUENTES,
+    formato: (v) => t(`preinversion.presupuesto.fuente.${v}`, { defaultValue: v }),
+  },
   { clave: 'fuenteRecursos', etiqueta: `${CLAVE}.columnaRecursos`, tipo: 'texto' },
   { clave: 'montoCuatrimestre1', etiqueta: `${CLAVE}.columnaCuatrimestre1`, tipo: 'numero' },
   { clave: 'montoCuatrimestre2', etiqueta: `${CLAVE}.columnaCuatrimestre2`, tipo: 'numero' },
@@ -76,11 +85,12 @@ const leer = (dato: EstudioProgramacionPAP) => ({
  * calcula el servidor al guardar.
  */
 export function ProgramacionFinancieraEstudioPage() {
+  const { t } = useTranslation();
   return (
     <FichaEstudioPAP<EstudioProgramacionPAP, Fila>
       clave={CLAVE}
       volverA="/programacion/pap/programacion-financiera"
-      columnas={columnas}
+      columnas={columnas(t)}
       rolEditor={ROL_PAP}
       leer={leer}
       filaVacia={(filas) => ({

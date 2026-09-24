@@ -1,16 +1,14 @@
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { programacionMetasApi, type EstudioProgramacionMetas } from '../../../api/preinversionApi';
 import type { ColumnaAnalisis } from '../analisis/TablaAnalisis';
 import { FichaEstudioPAP } from './FichaEstudioPAP';
 import { ROL_PAP, aMonto } from './fichaComun';
+import { etiquetaEtapa } from './etiquetas';
 
 const CLAVE = 'preinversion.programacionMetas';
 
-const ENTREGABLES = [
-  'ESTUDIO_DE_PERFIL',
-  'ESTUDIO_DE_PREFACTIBILIDAD',
-  'ESTUDIO_DE_FACTIBILIDAD',
-  'ESTUDIO_DE_DISENO',
-];
+const ENTREGABLES = ['ESTUDIO_DE_PERFIL', 'ESTUDIO_DE_PREFACTIBILIDAD', 'ESTUDIO_DE_FACTIBILIDAD', 'ESTUDIO_DE_DISENO'];
 
 /** Una fila: la meta física de una etapa, en porcentaje. */
 type Fila = {
@@ -26,10 +24,16 @@ type Fila = {
 
 const conSigno = (valor: string) => (valor === '' ? '—' : `${valor} %`);
 
-const columnas: ColumnaAnalisis<Fila>[] = [
-  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, tipo: 'calculada' },
+const columnas = (t: TFunction): ColumnaAnalisis<Fila>[] => [
+  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, tipo: 'calculada', formato: etiquetaEtapa },
   // RN-B.a.1: en estudios de arrastre el entregable ya está decidido; el servidor rechaza cambiarlo.
-  { clave: 'entregable', etiqueta: `${CLAVE}.columnaEntregable`, tipo: 'select', opciones: ENTREGABLES },
+  {
+    clave: 'entregable',
+    etiqueta: `${CLAVE}.columnaEntregable`,
+    tipo: 'select',
+    opciones: ENTREGABLES,
+    formato: (v) => t(`preinversion.pap.entregables.${v}`, { defaultValue: v }),
+  },
   {
     clave: 'ejecutadoAniosAnteriores',
     etiqueta: `${CLAVE}.columnaEjecutadoPrevio`,
@@ -65,11 +69,12 @@ const leer = (dato: EstudioProgramacionMetas) => ({
  * aquí no se agregan ni se quitan filas.
  */
 export function ProgramacionMetasEstudioPage() {
+  const { t } = useTranslation();
   return (
     <FichaEstudioPAP<EstudioProgramacionMetas, Fila>
       clave={CLAVE}
       volverA="/programacion/pap/programacion-metas"
-      columnas={columnas}
+      columnas={columnas(t)}
       rolEditor={ROL_PAP}
       leer={leer}
       cargar={async ({ cup, anio }) => (await programacionMetasApi.obtenerProgramacionMetasEstudio({ cup, anio })).data}

@@ -83,13 +83,15 @@ export function TablaAnalisis<F extends Record<string, unknown>>({
                 {columnas.map((c) => {
                   const valor = String(fila[c.clave] ?? '');
                   if (c.tipo === 'calculada') {
+                    // El distintivo de color es para lo que tiene estado (la calificación
+                    // de un riesgo); un importe o un porcentaje calculado se lee mejor
+                    // como texto, sin el punto de color de una marca sin tono.
+                    const tono = c.clase?.(valor);
                     return (
                       <td key={c.clave}>
-                        {valor ? (
-                          <span className={`marca-estado ${c.clase?.(valor) ?? ''}`}>{c.formato?.(valor) ?? valor}</span>
-                        ) : (
-                          '—'
-                        )}
+                        {!valor && '—'}
+                        {valor && tono && <span className={`marca-estado ${tono}`}>{c.formato?.(valor) ?? valor}</span>}
+                        {valor && !tono && (c.formato?.(valor) ?? valor)}
                       </td>
                     );
                   }

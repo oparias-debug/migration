@@ -3,6 +3,10 @@ import { formatearMonto } from '../analisis/analisisComun';
 import type { ColumnaAnalisis } from '../analisis/TablaAnalisis';
 import { FichaEstudioPAP } from './FichaEstudioPAP';
 import { ROL_PAP, aMonto, agruparPorEtapa } from './fichaComun';
+import { etiquetaEtapa, etiquetaFuente } from './etiquetas';
+import i18n from '../../../i18n/i18n';
+
+const tFijo = i18n.t.bind(i18n);
 
 const CLAVE = 'preinversion.avanceFinanciero';
 
@@ -18,8 +22,13 @@ type Fila = {
 };
 
 const columnas: ColumnaAnalisis<Fila>[] = [
-  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, tipo: 'calculada' },
-  { clave: 'fuenteFinanciamiento', etiqueta: `${CLAVE}.columnaFuente`, tipo: 'calculada' },
+  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, tipo: 'calculada', formato: etiquetaEtapa },
+  {
+    clave: 'fuenteFinanciamiento',
+    etiqueta: `${CLAVE}.columnaFuente`,
+    tipo: 'calculada',
+    formato: (v) => etiquetaFuente(tFijo, v),
+  },
   {
     clave: 'montoProgramadoCuatrimestre',
     etiqueta: `${CLAVE}.columnaCuatriProgramado`,

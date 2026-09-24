@@ -2,6 +2,10 @@ import { avanceMetasApi, type AvanceMetasEstudio, type Cuatrimestre } from '../.
 import type { ColumnaAnalisis } from '../analisis/TablaAnalisis';
 import { FichaEstudioPAP } from './FichaEstudioPAP';
 import { ROL_PAP, aMonto } from './fichaComun';
+import { etiquetaEntregable, etiquetaEtapa } from './etiquetas';
+import i18n from '../../../i18n/i18n';
+
+const tFijo = i18n.t.bind(i18n);
 
 const CLAVE = 'preinversion.avanceMetas';
 
@@ -18,8 +22,13 @@ type Fila = {
 const conSigno = (valor: string) => (valor === '' ? '—' : `${valor} %`);
 
 const columnas: ColumnaAnalisis<Fila>[] = [
-  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, tipo: 'calculada' },
-  { clave: 'entregable', etiqueta: `${CLAVE}.columnaEntregable`, tipo: 'calculada' },
+  { clave: 'etapa', etiqueta: `${CLAVE}.columnaEtapa`, tipo: 'calculada', formato: etiquetaEtapa },
+  {
+    clave: 'entregable',
+    etiqueta: `${CLAVE}.columnaEntregable`,
+    tipo: 'calculada',
+    formato: (v) => etiquetaEntregable(tFijo, v),
+  },
   {
     clave: 'programadoDelCuatrimestre',
     etiqueta: `${CLAVE}.columnaProgramadoCuatri`,

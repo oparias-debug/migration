@@ -152,7 +152,7 @@ const AVANCE_METAS = {
         programadoDelCuatrimestre: 33,
         ejecutadoDelCuatrimestre: 20,
         totalMetaEjecutada: 20,
-        estado: 'RETRASADO',
+        estado: 'ATRASADO',
       },
     ],
     paginacion,
@@ -203,7 +203,12 @@ const ESTUDIO_METAS = {
   },
 };
 
-const montar = (Pantalla: () => JSX.Element) => render(<MemoryRouter><Pantalla /></MemoryRouter>);
+const montar = (Pantalla: () => JSX.Element) =>
+  render(
+    <MemoryRouter>
+      <Pantalla />
+    </MemoryRouter>,
+  );
 
 const montarFicha = (Pantalla: () => JSX.Element, base: string) =>
   render(
@@ -216,9 +221,19 @@ const montarFicha = (Pantalla: () => JSX.Element, base: string) =>
 
 beforeEach(() => {
   rolesActivos = ['TECNICO_URP'];
-  [swalFire, navigate, generarReporteProgramacionPAP, enviarProgramacionARevisionDgicp, registrarObservacionesDgicp,
-    enviarObservacionesDgicp, registrarRespuestaInstitucion, finalizarRevision, generarReporteAvanceMetas,
-    guardarProgramacionEstudio, guardarProgramacionMetasEstudio].forEach((m) => m.mockReset().mockResolvedValue({ data: {} }));
+  [
+    swalFire,
+    navigate,
+    generarReporteProgramacionPAP,
+    enviarProgramacionARevisionDgicp,
+    registrarObservacionesDgicp,
+    enviarObservacionesDgicp,
+    registrarRespuestaInstitucion,
+    finalizarRevision,
+    generarReporteAvanceMetas,
+    guardarProgramacionEstudio,
+    guardarProgramacionMetasEstudio,
+  ].forEach((m) => m.mockReset().mockResolvedValue({ data: {} }));
   swalFire.mockResolvedValue({ isConfirmed: true });
   obtenerProgramacionFinancieraPAP.mockReset().mockResolvedValue(FINANCIERA);
   obtenerProgramacionMetasFisicasPAP.mockReset().mockResolvedValue(METAS);
@@ -248,6 +263,15 @@ describe('Programación Financiera del PAP (CU-PRE-30)', () => {
     expect(screen.getAllByText(/40,000/).length).toBeGreaterThan(0);
   });
 
+  // El PAP devuelve códigos de catálogo; en pantalla se leen como en el resto del sistema.
+  it('las etapas y las fuentes se leen, no se muestran como código', async () => {
+    montar(ProgramacionFinancieraPage);
+    await screen.findByText('Hospital de Santa Ana');
+    expect(screen.getByText('Perfil')).toBeInTheDocument();
+    expect(screen.getByText('Fondo general (FGEN)')).toBeInTheDocument();
+    expect(screen.queryByText('FONDO_GENERAL')).not.toBeInTheDocument();
+  });
+
   it('la búsqueda por CUP la resuelve el servidor', async () => {
     montar(ProgramacionFinancieraPage);
     await screen.findByText('Hospital de Santa Ana');
@@ -268,7 +292,11 @@ describe('Programación Financiera del PAP (CU-PRE-30)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Generar reporte' }));
 
     await waitFor(() =>
-      expect(generarReporteProgramacionPAP).toHaveBeenCalledWith({ anio: expect.any(Number), idUnidadEjecutora: 3, formato: 'EXCEL' }),
+      expect(generarReporteProgramacionPAP).toHaveBeenCalledWith({
+        anio: expect.any(Number),
+        idUnidadEjecutora: 3,
+        formato: 'EXCEL',
+      }),
     );
   });
 
@@ -305,7 +333,9 @@ describe('Ficha financiera de un estudio (CU-PRE-30)', () => {
             etapas: [
               {
                 etapa: 'PERFIL',
-                fuentes: [expect.objectContaining({ idFuente: 9, montoCuatrimestre1: 50000, montoCuatrimestre3: 40000 })],
+                fuentes: [
+                  expect.objectContaining({ idFuente: 9, montoCuatrimestre1: 50000, montoCuatrimestre3: 40000 }),
+                ],
               },
             ],
           },
@@ -327,6 +357,7 @@ describe('Programación de Metas Físicas del PAP (CU-PRE-31)', () => {
     montar(ProgramacionMetasPage);
     expect(await screen.findByText('Hospital de Santa Ana')).toBeInTheDocument();
     expect(screen.getByText('100 %')).toBeInTheDocument();
+    expect(screen.getByText('Estudio de perfil')).toBeInTheDocument();
   });
 
   // Decisión funcional v1.2: el envío a revisión es uno solo para CU-PRE-30 y CU-PRE-31.
@@ -353,7 +384,11 @@ describe('Programación de Metas Físicas del PAP (CU-PRE-31)', () => {
 
     await waitFor(() =>
       expect(registrarRespuestaInstitucion).toHaveBeenCalledWith({
-        registrarRespuestaInstitucionRequest: { anio: expect.any(Number), idUnidadEjecutora: 3, respuestaInstitucion: 'Corregido' },
+        registrarRespuestaInstitucionRequest: {
+          anio: expect.any(Number),
+          idUnidadEjecutora: 3,
+          respuestaInstitucion: 'Corregido',
+        },
       }),
     );
   });
@@ -364,7 +399,9 @@ describe('Programación de Metas Físicas del PAP (CU-PRE-31)', () => {
     await screen.findByText('Hospital de Santa Ana');
 
     expect(screen.queryByLabelText('Respuesta de la institución')).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Observaciones de la DGICP'), { target: { value: 'Falta el III cuatrimestre' } });
+    fireEvent.change(screen.getByLabelText('Observaciones de la DGICP'), {
+      target: { value: 'Falta el III cuatrimestre' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() => expect(registrarObservacionesDgicp).toHaveBeenCalled());
 
@@ -395,7 +432,9 @@ describe('Ficha de metas físicas de un estudio (CU-PRE-31)', () => {
       expect(guardarProgramacionMetasEstudio).toHaveBeenCalledWith(
         expect.objectContaining({
           guardarProgramacionMetasEstudioRequest: {
-            etapas: [expect.objectContaining({ etapa: 'PERFIL', entregable: 'ESTUDIO_DE_PERFIL', montoCuatrimestre2: 35 })],
+            etapas: [
+              expect.objectContaining({ etapa: 'PERFIL', entregable: 'ESTUDIO_DE_PERFIL', montoCuatrimestre2: 35 }),
+            ],
           },
         }),
       ),
@@ -417,7 +456,9 @@ describe('Avance Financiero del PAP (CU-PRE-32)', () => {
     fireEvent.change(screen.getByLabelText('Cuatrimestre'), { target: { value: 'CUATRIMESTRE_III' } });
 
     await waitFor(() =>
-      expect(obtenerAvanceFinancieroPAP).toHaveBeenLastCalledWith(expect.objectContaining({ periodo: 'CUATRIMESTRE_III' })),
+      expect(obtenerAvanceFinancieroPAP).toHaveBeenLastCalledWith(
+        expect.objectContaining({ periodo: 'CUATRIMESTRE_III' }),
+      ),
     );
   });
 
@@ -433,7 +474,8 @@ describe('Avance de Metas Físicas del PAP (CU-PRE-33)', () => {
   it('muestra el estado del avance de cada etapa', async () => {
     montar(AvanceMetasPage);
     expect(await screen.findByText('Hospital de Santa Ana')).toBeInTheDocument();
-    expect(screen.getByText('Retrasado')).toBeInTheDocument();
+    // Los cuatro valores del contrato son A_TIEMPO, ATRASADO, ADELANTADO y FINALIZADO.
+    expect(screen.getByText('Atrasado')).toBeInTheDocument();
   });
 
   it('el reporte se pide para el año y el cuatrimestre en pantalla', async () => {
@@ -444,7 +486,11 @@ describe('Avance de Metas Físicas del PAP (CU-PRE-33)', () => {
 
     await waitFor(() =>
       expect(generarReporteAvanceMetas).toHaveBeenCalledWith(
-        expect.objectContaining({ idUnidadEjecutora: 3, formato: 'EXCEL', periodo: expect.stringContaining('CUATRIMESTRE') }),
+        expect.objectContaining({
+          idUnidadEjecutora: 3,
+          formato: 'EXCEL',
+          periodo: expect.stringContaining('CUATRIMESTRE'),
+        }),
       ),
     );
   });
@@ -452,7 +498,9 @@ describe('Avance de Metas Físicas del PAP (CU-PRE-33)', () => {
 
 describe('PAP · casos de borde comunes', () => {
   it('un año sin programación se dice, no se deja la tabla muda', async () => {
-    obtenerProgramacionFinancieraPAP.mockResolvedValue({ data: { contenido: [], paginacion: { ...paginacion, totalElementos: 0, totalPaginas: 0 } } });
+    obtenerProgramacionFinancieraPAP.mockResolvedValue({
+      data: { contenido: [], paginacion: { ...paginacion, totalElementos: 0, totalPaginas: 0 } },
+    });
     montar(ProgramacionFinancieraPage);
     expect(await screen.findByText('No hay estudios que mostrar para ese año.')).toBeInTheDocument();
   });
@@ -506,7 +554,9 @@ describe('PAP · casos de borde comunes', () => {
 
     fireEvent.change(screen.getByLabelText('Año'), { target: { value: '2025' } });
 
-    await waitFor(() => expect(obtenerProgramacionFinancieraPAP).toHaveBeenLastCalledWith(expect.objectContaining({ anio: 2025 })));
+    await waitFor(() =>
+      expect(obtenerProgramacionFinancieraPAP).toHaveBeenLastCalledWith(expect.objectContaining({ anio: 2025 })),
+    );
   });
 });
 

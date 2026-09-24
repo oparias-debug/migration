@@ -709,6 +709,12 @@
         "enviarObservaciones": "Enviar observaciones",
         "enviarRespuesta": "Enviar respuesta",
         "finalizar": "Finalizar revisión"
+      },
+      "entregables": {
+        "ESTUDIO_DE_PERFIL": "Estudio de perfil",
+        "ESTUDIO_DE_PREFACTIBILIDAD": "Estudio de prefactibilidad",
+        "ESTUDIO_DE_FACTIBILIDAD": "Estudio de factibilidad",
+        "ESTUDIO_DE_DISENO": "Estudio de diseño"
       }
     },
     "programacionFinanciera": {
@@ -813,9 +819,10 @@
       "columnaObservaciones": "Observaciones",
       "columnaEstado": "Estado",
       "estadosAvance": {
-        "EN_TIEMPO": "En tiempo",
-        "EN_RIESGO": "En riesgo",
-        "RETRASADO": "Retrasado"
+        "A_TIEMPO": "A tiempo",
+        "ATRASADO": "Atrasado",
+        "ADELANTADO": "Adelantado",
+        "FINALIZADO": "Finalizado"
       },
       "reporteGenerado": "El reporte se generó correctamente.",
       "observacionesGuardadas": "Se guardaron las observaciones.",
