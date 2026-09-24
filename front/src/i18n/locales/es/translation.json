@@ -167,7 +167,8 @@
       "confirmarEliminar": "¿Eliminar el registro «{{nombre}}»? Esta acción no se puede deshacer.",
       "eliminado": "El registro se eliminó de la Bandeja de Registro de Proyectos.",
       "eliminarNoPermitido": "El proyecto ya tiene una solicitud de CUP registrada; no puede eliminarse (RN 4).",
-      "solicitudArchivada": "La solicitud de CUP de este proyecto está archivada, por lo que no admite más trámite. El Coordinador PRE es quien la archivó y quien puede reactivarla."
+      "solicitudArchivada": "La solicitud de CUP de este proyecto está archivada, por lo que no admite más trámite. El Coordinador PRE es quien la archivó y quien puede reactivarla.",
+      "asignadaAOtroTecnico": "Esta solicitud está asignada a otro Técnico PRE. Sólo quien la tiene asignada puede devolverla o emitir su CUP; pida al Coordinador PRE que se la reasigne si le corresponde."
     },
     "rutaPreinversion": {
       "titulo": "Ruta de Preinversión",

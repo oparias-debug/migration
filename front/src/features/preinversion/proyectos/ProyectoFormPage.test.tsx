@@ -276,7 +276,9 @@ describe('ProyectoFormPage — Devolver (CU-PRE-01.5-devolver.feature)', () => {
     devolverSolicitudCup.mockResolvedValue({ data: proyecto('OBSERVADO_DGICP_REGISTRO') });
 
     renderizar();
-    fireEvent.click(await screen.findByRole('button', { name: 'Devolver' }));
+    // Se devuelve sólo después de guardar (Rocío, 24/09/2026).
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Devolver' }));
 
     await waitFor(() =>
       expect(devolverSolicitudCup).toHaveBeenCalledWith({
@@ -291,7 +293,9 @@ describe('ProyectoFormPage — Devolver (CU-PRE-01.5-devolver.feature)', () => {
     confirmDialog.mockResolvedValue(false);
 
     renderizar();
-    fireEvent.click(await screen.findByRole('button', { name: 'Devolver' }));
+    // Se devuelve sólo después de guardar (Rocío, 24/09/2026).
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Devolver' }));
 
     await waitFor(() => expect(confirmDialog).toHaveBeenCalled());
     expect(devolverSolicitudCup).not.toHaveBeenCalled();
@@ -604,5 +608,38 @@ describe('ProyectoFormPage — solicitud archivada', () => {
 
     await waitFor(() => expect(confirmDialog).toHaveBeenCalled());
     expect(responderObservacionCup).not.toHaveBeenCalled();
+  });
+
+  // Rocío, 24/09/2026: al cancelar la confirmación se perdía la observación ya
+  // redactada, y se podía devolver sin haber guardado.
+  describe('devolver una solicitud (Técnico PRE)', () => {
+    it('exige guardar antes de devolver', async () => {
+      rolesActivos = ['TECNICO_PRE'];
+      obtenerProyecto.mockResolvedValue({ data: proyecto('ENVIADO_DGICP_REGISTRO') });
+
+      renderizar();
+      await screen.findByLabelText('Comentarios');
+      expect(screen.getByRole('button', { name: 'Devolver' })).toBeDisabled();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+      expect(screen.getByRole('button', { name: 'Devolver' })).toBeEnabled();
+    });
+
+    it('cancelar la confirmación conserva lo redactado', async () => {
+      rolesActivos = ['TECNICO_PRE'];
+      obtenerProyecto.mockResolvedValue({ data: proyecto('ENVIADO_DGICP_REGISTRO') });
+      confirmDialog.mockResolvedValue(false);
+
+      renderizar();
+      const campo = await screen.findByLabelText('Comentarios');
+      fireEvent.change(campo, { target: { value: 'Falta el estudio de prefactibilidad.' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Devolver' }));
+
+      await waitFor(() => expect(confirmDialog).toHaveBeenCalled());
+      expect(devolverSolicitudCup).not.toHaveBeenCalled();
+      // Lo escrito sigue ahí: volver a redactarlo era el problema.
+      expect((campo as HTMLTextAreaElement).value).toBe('Falta el estudio de prefactibilidad.');
+    });
   });
 });

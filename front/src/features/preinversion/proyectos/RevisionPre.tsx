@@ -15,8 +15,12 @@ interface RevisionPreProps {
   /** Error de `campo: "respuesta"` devuelto por el back en un 400 (sólo aplica a Responder). */
   readonly errorRespuesta?: string;
   readonly onEnviar: (respuesta: string) => void;
-  /** El comentario no es obligatorio (ver CU-PRE-01.5, sección Validaciones): puede llegar vacío. */
-  readonly onDevolver?: (comentario: string) => void;
+  /**
+   * El comentario no es obligatorio (ver CU-PRE-01.5, sección Validaciones):
+   * puede llegar vacío. Devuelve `true` si la solicitud se devolvió de verdad;
+   * si el actor canceló la confirmación, `false`, y el texto se conserva.
+   */
+  readonly onDevolver?: (comentario: string) => Promise<boolean>;
   /**
    * Guardar los cambios del formulario sin enviar la respuesta. Es el mismo
    * "Guardar" del pie de la pantalla, repetido aquí porque es donde está el
@@ -72,8 +76,12 @@ export function RevisionPre({
     }
   }, [puedeDevolver, idProyecto]);
 
-  /** Hay texto escrito que todavía no se ha guardado. */
-  const sinGuardar = comentario.trim() !== '' && !borradorGuardado;
+  /**
+   * Se devuelve sólo después de guardar, aunque la observación esté vacía
+   * (Rocío, 24/09/2026: "¿lo pertinente no sería que primero se guarde y luego
+   * se devuelva?").
+   */
+  const sinGuardar = !borradorGuardado;
 
   const guardarBorrador = () => {
     try {
@@ -89,8 +97,12 @@ export function RevisionPre({
     setRespuesta('');
   };
 
-  const devolver = () => {
-    onDevolver?.(comentario);
+  const devolver = async () => {
+    // Si el actor cancela la confirmación, lo redactado se queda donde está:
+    // borrarlo le costaba volver a escribir la observación entera
+    // (Rocío, 24/09/2026).
+    const devuelta = await onDevolver?.(comentario);
+    if (!devuelta) return;
     setComentario('');
     setBorradorGuardado(false);
     try {
@@ -176,15 +188,15 @@ export function RevisionPre({
           {/* Con la observación escrita y sin guardar, devolver la mandaría a
               medias: primero se guarda (Rocío, 24/09/2026). Sin observación —que
               el CU admite— se puede devolver directamente. */}
-          {sinGuardar && <output className="rp-aviso">{t('preinversion.revisionPre.guardeAntesDeDevolver')}</output>}
+          {sinGuardar && <p className="rp-aviso">{t('preinversion.revisionPre.guardeAntesDeDevolver')}</p>}
           <div className="rp-acciones">
-            <button type="button" className="btn neutro" onClick={guardarBorrador} disabled={enviando || !sinGuardar}>
+            <button type="button" className="btn neutro" onClick={guardarBorrador} disabled={enviando}>
               {t('preinversion.registro.botonGuardar')}
             </button>
             <button
               type="button"
               className="btn secundario"
-              onClick={devolver}
+              onClick={() => void devolver()}
               disabled={enviando || sinGuardar}
               title={sinGuardar ? t('preinversion.revisionPre.guardeAntesDeDevolver') : undefined}
             >

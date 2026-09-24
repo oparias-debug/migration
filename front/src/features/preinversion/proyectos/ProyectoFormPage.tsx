@@ -314,6 +314,14 @@ export function ProyectoFormPage() {
    */
   const manejarErrorDelBack = async (fallo: unknown) => {
     const error = toErrorApi(fallo);
+    // El servidor rechaza devolver o emitir el CUP cuando la solicitud está
+    // asignada a otro Técnico PRE. Su mensaje es correcto pero no dice qué
+    // hacer; la pantalla no puede saberlo de antemano porque `Proyecto` no trae
+    // a quién está asignada (Rocío, 24/09/2026). Pedido a Cristian ese dato.
+    if (/no fue asignada al T[eé]cnico PRE/i.test(error.mensaje ?? '')) {
+      await Swal.fire({ icon: 'info', text: t('preinversion.registro.asignadaAOtroTecnico') });
+      return;
+    }
     // Se reconoce por el mensaje porque el back usa un único código de
     // conflicto de estado; pedido a Cristian un dato propio en el contrato.
     if (error.clase === 'conflicto' && /archivad/i.test(error.mensaje ?? '')) setSolicitudArchivada(true);
@@ -438,14 +446,15 @@ export function ProyectoFormPage() {
    * El comentario no es obligatorio (a diferencia de "Respuesta" del Técnico
    * URP): se envía sólo si el Técnico PRE escribió algo.
    */
-  const devolverSolicitud = async (comentario: string) => {
-    if (idProyecto === undefined) return;
+  /** Devuelve `true` sólo si la solicitud llegó a devolverse (ver RevisionPre). */
+  const devolverSolicitud = async (comentario: string): Promise<boolean> => {
+    if (idProyecto === undefined) return false;
 
     const confirmado = await confirmDialog(t('preinversion.revisionPre.confirmarDevolver'), {
       confirmButtonText: t('common.aceptar'),
       cancelButtonText: t('common.cancelar'),
     });
-    if (!confirmado) return;
+    if (!confirmado) return false;
 
     setGuardando(true);
     try {
@@ -457,8 +466,11 @@ export function ProyectoFormPage() {
       setEstadoActual(data.estado);
       // "el sistema pasa a la pantalla Nuevo registro": se sigue aquí, igual que al responder.
       await Swal.fire({ icon: 'success', text: t('preinversion.revisionPre.devuelta') });
+      return true;
     } catch (error_) {
       await manejarErrorDelBack(error_);
+      // El fallo deja la observación escrita: se podrá reintentar sin volver a redactarla.
+      return false;
     } finally {
       setGuardando(false);
     }
