@@ -412,6 +412,10 @@ tbody tr:hover td { background: var(--azul-suave); }
 .e-info   { color: var(--info); }
 .e-aviso  { color: var(--aviso); }
 .e-ok     { color: var(--ok); }
+/* Lo que exige atención inmediata: un riesgo "Muy alto" (CU-PRE-15) o una meta
+   atrasada (CU-PRE-33). Sin esta clase, el color del estado no se aplicaba y la
+   fila crítica se leía igual que cualquier otra. */
+.e-error  { color: var(--error); }
 
 /* ----------------------------------------------------------------- FILTROS -- */
 .filtros {

@@ -171,3 +171,21 @@ describe('Análisis Legal (CU-PRE-16)', () => {
     expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
   });
 });
+
+// El color de la calificación vive en base.css (.e-error): si la clase deja de
+// aplicarse, un riesgo "Muy alto" se lee igual que uno "Bajo".
+describe('CU-PRE-15 · la calificación se distingue por color', () => {
+  it('un riesgo muy alto lleva la marca de error', async () => {
+    obtenerAnalisisRiesgo.mockResolvedValue({
+      data: {
+        idProyecto: 7,
+        tieneRiesgosDesastres: true,
+        filas: [{ descripcionRiesgo: 'Sismo', probabilidad: 'MUY_PROBABLE', impactoRiesgo: 'EXTREMO', calificacionRiesgo: 'MUY_ALTO' }],
+        totalAccionesMitigacion: 0,
+      },
+    });
+    montar('analisis-riesgo', AnalisisRiesgoPage);
+    const marca = await screen.findByText('Muy alto');
+    expect(marca).toHaveClass('marca-estado', 'e-error');
+  });
+});

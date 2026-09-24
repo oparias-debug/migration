@@ -475,7 +475,7 @@ describe('Avance de Metas Físicas del PAP (CU-PRE-33)', () => {
     montar(AvanceMetasPage);
     expect(await screen.findByText('Hospital de Santa Ana')).toBeInTheDocument();
     // Los cuatro valores del contrato son A_TIEMPO, ATRASADO, ADELANTADO y FINALIZADO.
-    expect(screen.getByText('Atrasado')).toBeInTheDocument();
+    expect(screen.getByText('Atrasado')).toHaveClass('marca-estado', 'e-error');
   });
 
   it('el reporte se pide para el año y el cuatrimestre en pantalla', async () => {
