@@ -83,6 +83,14 @@ export function BandejaPage() {
     catalogoBandejaApi.listarTecnicosPre().then(({ data }) => setTecnicos(data)).catch(() => setTecnicos([]));
   }, [puedeGestionar]);
 
+  /**
+   * Abre la solicitud recordando de dónde se viene: al pulsar "Regresar" el
+   * sistema devolvía al listado de creación de solicitudes y había que volver a
+   * entrar por el menú (Rocío, 24/09/2026).
+   */
+  const abrirSolicitud = (idProyecto: number) =>
+    navigate(`/preinversion/proyectos/${idProyecto}`, { state: { volverA: '/preinversion/bandeja' } });
+
   const cambiarFiltro = <T,>(fn: (v: T) => void) => (v: T) => { fn(v); setPagina(0); };
   const fecha = (iso: string) => new Date(iso).toLocaleDateString();
 
@@ -190,7 +198,15 @@ export function BandejaPage() {
                 return (
                   <tr key={s.idSolicitud}>
                     <td className="mono">{s.cup ?? '—'}</td>
-                    <td><b>{s.nombreProyecto}</b></td>
+                    <td>
+                      <button
+                        type="button"
+                        className="enlace-fila"
+                        onClick={() => abrirSolicitud(s.idProyecto)}
+                      >
+                        <b>{s.nombreProyecto}</b>
+                      </button>
+                    </td>
                     <td>{formatTipoSolicitud(s.tipoSolicitud)}</td>
                     <td>{s.unidadEjecutora?.nombre ?? 'N/A'}</td>
                     <td>{fecha(s.fechaSolicitud)}</td>
@@ -239,7 +255,7 @@ export function BandejaPage() {
                               {t('preinversion.bandeja.botonAsignar')}
                             </button>
                             {' · '}
-                            <button type="button" className="enlace-fila" onClick={() => navigate(`/preinversion/proyectos/${s.idProyecto}`)}>
+                            <button type="button" className="enlace-fila" onClick={() => abrirSolicitud(s.idProyecto)}>
                               {t('preinversion.bandeja.botonAbrir')}
                             </button>
                             {' · '}

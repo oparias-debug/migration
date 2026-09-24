@@ -182,6 +182,8 @@ export function ProyectoFormPage() {
   const { hasRole } = useAuth();
   const navigate = useNavigate();
   const ubicacion = useLocation();
+  /** De dónde se entró a esta ficha; por defecto, el listado de solicitudes. */
+  const volverA = (ubicacion.state as { volverA?: string } | null)?.volverA ?? '/preinversion/proyectos';
   const { id } = useParams<{ id: string }>();
   const idProyecto = idDeLaRuta(id);
   const esNuevo = idProyecto === undefined;
@@ -296,7 +298,9 @@ export function ProyectoFormPage() {
       });
       if (!confirmado) return;
     }
-    navigate('/preinversion/proyectos');
+    // Se vuelve a la pantalla desde la que se entró —la bandeja de asignación o
+    // el listado de solicitudes—, no siempre al listado (Rocío, 24/09/2026).
+    navigate(volverA);
   };
 
   /**
@@ -362,7 +366,7 @@ export function ProyectoFormPage() {
       const { data } = await preinversionApi.solicitarCup({ idProyecto });
       setEstadoActual(data.estado);
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.cupSolicitado') });
-      navigate('/preinversion/proyectos');
+      navigate(volverA);
     } catch (error_) {
       await manejarErrorDelBack(error_);
     } finally {
@@ -477,7 +481,7 @@ export function ProyectoFormPage() {
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.cupEmitido', { cup: data.cup ?? '' }) });
       // "el sistema envía el proyecto a la pantalla Captura de Proyectos (UC-PRE-03)": fuera
       // del alcance de este fragmento; se regresa al listado, como en "Solicitar CUP".
-      navigate('/preinversion/proyectos');
+      navigate(volverA);
     } catch (error_) {
       await manejarErrorDelBack(error_);
     } finally {

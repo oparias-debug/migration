@@ -905,7 +905,7 @@
   "preinversionInicio": {
     "titulo": "Preinversión",
     "intro": "Elija el subproceso en el que va a trabajar. Siguen el orden del proceso: se empieza por la asignación del CUP y se avanza hasta la gestión del proyecto.",
-    "asignacionCup": "Crear la solicitud del Código Único de Proyecto y seguir su aprobación.",
+    "asignacionCup": "Crear la solicitud del Código Único de Proyecto, asignarla a un Técnico PRE y seguir su aprobación.",
     "creacionRuta": "Definir la ruta de preinversión del proyecto y las etapas que va a desarrollar.",
     "formulacion": "Formular y evaluar el proyecto: identificación, diagnóstico, estudios y presupuesto.",
     "programacionProyecto": "Programar el proyecto una vez formulado.",

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import { IconoMascara } from '../components/Icono';
-import { MODULOS, destinoDe, ubicarEnMenu, type Modulo, type SubModulo } from './navegacion';
+import { MODULOS, ubicarEnMenu, type Modulo, type SubModulo } from './navegacion';
 
 /**
  * Menú lateral, según el diseño aprobado (siip-INICIO-NUEVA-GRIS /
@@ -140,7 +140,11 @@ export function Sidebar({
                       tabIndex={abiertoAqui ? 0 : -1}
                       className={`sni${subActivo?.clave === sub.clave ? ' activo' : ''}`}
                       aria-current={subActivo?.clave === sub.clave ? 'page' : undefined}
-                      onClick={() => ir(destinoDe(sub, hasRole))}
+                      /* El menú lleva siempre a la pantalla base del subproceso —para
+                         "Asignación CUP", el listado de solicitudes—; la tarea propia del
+                         rol se abre desde los botones grandes de Preinversión
+                         (Rocío, 24/09/2026). */
+                      onClick={() => ir(sub.ruta)}
                     >
                       {t(sub.texto)}
                     </button>
