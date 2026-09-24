@@ -1,17 +1,21 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
 
-/** Programacion cuatrimestral financiera de la preinversion (PAP). CU-PRE-30. */
+/**
+ * Monto programado por cuatrimestre para una {@link FuenteFinanciamientoEtapaPap} en un año n+1
+ * determinado (Anexo A.2, sección "Programación Cuatrimestral"). CU-PRE-30. Una fila por
+ * combinación (fuente, año); el resto de campos de lectura de {@code FilaFuenteProgramacion}
+ * (totalProgramadoAnio, porcentajes, ejecutadoAniosAnteriores, aniosPosteriores) se calculan a
+ * partir de estos montos y del histórico de años anteriores de la misma fuente (RN-B.c, RN-B.d).
+ */
 @Entity
 @Table(name = "PROG_CUATRIMESTRAL_FINANCIERA",
-       uniqueConstraints = @UniqueConstraint(name = "UK_PROG_CUATRI_FIN", columnNames = {"ID_PROYECTO", "ANIO", "CUATRIMESTRE"}))
+       uniqueConstraints = @UniqueConstraint(name = "UK_PROG_CUATRI_FIN", columnNames = {"ID_FUENTE", "ANIO"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,23 +32,29 @@ public class ProgCuatrimestralFinanciera {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ID_PROYECTO", nullable = false)
-    private Proyecto proyecto;
+    @JoinColumn(name = "ID_FUENTE", nullable = false)
+    private FuenteFinanciamientoEtapaPap fuente;
 
     @NotNull
     @Column(name = "ANIO", nullable = false)
     private Integer anio;
 
     @NotNull
-    @Min(1) @Max(3)
-    @Column(name = "CUATRIMESTRE", nullable = false)
-    private Integer cuatrimestre;
+    @Builder.Default
+    @Column(name = "MONTO_CUATRIMESTRE_1", nullable = false, precision = 18, scale = 2)
+    private BigDecimal montoCuatrimestre1 = BigDecimal.ZERO;
 
     @NotNull
-    @Column(name = "MONTO_PROGRAMADO", nullable = false, precision = 18, scale = 2)
-    private BigDecimal montoProgramado;
-
-    @OneToMany(mappedBy = "programacion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    private java.util.List<AvanceFinancieroCuatrimestral> avances = new java.util.ArrayList<>();
+    @Column(name = "MONTO_CUATRIMESTRE_2", nullable = false, precision = 18, scale = 2)
+    private BigDecimal montoCuatrimestre2 = BigDecimal.ZERO;
+
+    @NotNull
+    @Builder.Default
+    @Column(name = "MONTO_CUATRIMESTRE_3", nullable = false, precision = 18, scale = 2)
+    private BigDecimal montoCuatrimestre3 = BigDecimal.ZERO;
+
+    public BigDecimal totalProgramadoAnio() {
+        return montoCuatrimestre1.add(montoCuatrimestre2).add(montoCuatrimestre3);
+    }
 }

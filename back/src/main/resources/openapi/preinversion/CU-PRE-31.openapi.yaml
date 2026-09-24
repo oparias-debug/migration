@@ -1,0 +1,739 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-31 Programación Cuatrimestral de Metas Físicas de la Preinversión
+  version: "1.2.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-31 "Programación Cuatrimestral de
+    Metas Físicas de la Preinversión"
+    (UC-PRE-31-Programacion_Cuatrimestral_Metas_Fisicas_Preinversion.md,
+    versión 1.2) y sus 10 historias BDD.
+
+    RN-A.a confirma que este CU comparte pantalla con CU-PRE-30 ("el
+    Sistema mostrará en la misma pantalla los Anexos A.1 del CU-PRE-30 y
+    A.1 del CU-PRE-31"); se modela como un fragmento separado de todas
+    formas (mismo criterio del resto del contrato: una tabla/entidad
+    propia por CU, aunque se presenten juntas en una sola pantalla), con
+    el mismo patrón de recurso raíz no anidado bajo un proyecto individual
+    ya usado en CU-PRE-30.
+
+    **Aquí vive el único flujo de aprobación para ambos documentos**
+    (decisión funcional v1.2, no proveniente del PDF, confirmada de forma
+    idéntica en CU-PRE-30): `enviarProgramacionARevisionDgicp` (SF-2 pasos
+    7-8) y `finalizarRevision` (SF-6) cubren de forma unificada tanto la
+    programación financiera (CU-PRE-30) como la de metas físicas (este
+    documento) — CU-PRE-30 no tiene ni tendrá estos endpoints en su propio
+    fragmento.
+
+    Reutiliza `NombreEtapa` de CU-PRE-03.5.openapi.yaml para "Etapa".
+    Introduce el catálogo "Entregable" (Anexo D, 4 valores confirmados,
+    sin nota de administración externa) como `enum`, sin endpoint propio.
+
+paths:
+
+  /programacion-metas-fisicas-pap:
+    get:
+      operationId: obtenerProgramacionMetasFisicasPAP
+      summary: Consultar "Programación por Meta Física Cuatrimestral del PAP" (Anexo A.1)
+      description: >
+        Mismo criterio de alcance por Unidad Ejecutora/Año y anulación
+        silenciosa para Técnico URP ya usado en CU-PRE-30.
+        `comentariosReporteDgicp` (por fila) es `nullable`: visible solo
+        para los "actores internos de la DGICP" (Técnico PRE, Técnico PRO,
+        Técnico SYMP, Coordinador PRE, Coordinador PRO, Coordinador SYMP,
+        Subjefe DGI, Jefe DGI, RN-C) — ni Técnico URP ni ningún otro actor
+        lo ven. `metaTotal` (columna "Total Meta") es `nullable` y su
+        origen/cálculo no está documentado en el Anexo B.1 pese a
+        aparecer en el mockup y en el anexo Excel — se expone tal cual,
+        sin inventar su fórmula.
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI, Técnico SYMP, Coordinador SYMP]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          schema: { type: integer, format: int64 }
+        - name: anio
+          in: query
+          schema: { type: integer }
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: Listado de la Programación de Metas Físicas del PAP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramacionMetasFisicasPAPResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no corresponde a ninguno de los roles de
+            este CU. Inferido de `x-roles`; sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/estudios/{cup}:
+    parameters:
+      - name: cup
+        in: path
+        required: true
+        schema: { type: string }
+      - name: anio
+        in: query
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: obtenerProgramacionMetasEstudio
+      summary: Consultar la programación de metas de un estudio (Anexo A.4)
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI, Técnico SYMP, Coordinador SYMP]
+      responses:
+        "200":
+          description: Programación de metas del estudio, por etapa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstudioProgramacionMetas'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarProgramacionMetasEstudio
+      summary: Registrar y guardar la programación de metas físicas (botón "Guardar", SF-1/SF-2/SF-9)
+      description: >
+        Un solo endpoint para los tres subflujos de guardado, mismo
+        criterio que `guardarProgramacionEstudio` en CU-PRE-30. La
+        validación aplicada depende del `esArrastre` DE CADA ETAPA
+        (`EtapaMetaFisica.esArrastre`), no del estudio completo — un mismo
+        proyecto puede combinar una etapa de arrastre y una nueva (RN-B.a.1 para
+        arrastre, mensaje literal "Porcentaje Programado supera el 100%
+        de la etapa"; RN-B.a.2 para nuevos, mensaje literal "Monto
+        Programado supera el 100%") — para SF-9 (modificación de un
+        estudio existente fuera de plazo), el propio documento no aclara
+        cuál de las dos aplica ("un estudio existente" podría ser
+        cualquiera); se resolvió usando el mismo criterio de `esArrastre`
+        que ya distingue SF-1 de SF-2, **sin que esto sea una confirmación
+        del negocio** — es la interpretación más consistente disponible,
+        no una resolución documentada. RN-A.b: rechaza con 409 fuera del
+        Calendario de Eventos del PAP.
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardarProgramacionMetasEstudioRequest'
+      responses:
+        "200":
+          description: Programación de metas guardada y trasladada al Anexo A.1.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstudioProgramacionMetas'
+        "400":
+          description: >
+            `Error.codigo` = `PORCENTAJE_SUPERA_100_ARRASTRE` (mensaje
+            literal "Porcentaje Programado supera el 100% de la etapa",
+            RN-B.a.1) o `MONTO_SUPERA_100_NUEVO` (mensaje literal "Monto
+            Programado supera el 100%", RN-B.a.2), según la etapa que
+            incumple. Antes de RN-B.a se validan los campos del Anexo A.4
+            (Anexo B.1) y se reportan juntos con `Error.codigo` =
+            `VALIDACION_NEGOCIO` y un `ErrorDetalle` por campo (`campo` =
+            `<ETAPA>.entregable`, `<ETAPA>.montoCuatrimestreN` o
+            `<ETAPA>.programacionCuatrimestral`): "Entregable" obligatorio
+            (en etapas de arrastre se valida el ya registrado), cada
+            cuatrimestre entre 0.00% y 100%, y al menos un cuatrimestre
+            con porcentaje mayor que 0.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período habilitado por el Calendario de Eventos del
+            PAP (RN-A.b). Mensaje literal: "Periodo de ingreso de
+            información ha finalizado" (Anexo A.3).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/envio-revision:
+    put:
+      operationId: enviarProgramacionARevisionDgicp
+      summary: Enviar la programación PAP a revisión de la DGICP (botón "Enviar a revisión DGICP", SF-2 pasos 7-8, RN-E)
+      description: >
+        ⚠️ Acción compartida con CU-PRE-30 (decisión funcional v1.2): es la
+        **única** solicitud de aprobación del PAP Institucional, cubre de
+        forma unificada la programación financiera (CU-PRE-30) y la de
+        metas físicas (este documento) — CU-PRE-30 no tiene su propio
+        endpoint equivalente. Notifica al Técnico PRE. Visible/habilitado
+        solo para Técnico URP durante el período de ingreso o modificaciones (RN-E).
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+      responses:
+        "200":
+          description: Programación PAP (financiera y de metas físicas) enviada a revisión.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionProgramacionPAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (RN-E, inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período habilitado por el Calendario de Eventos del
+            PAP (RN-A.b).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/observaciones:
+    put:
+      operationId: registrarObservacionesDgicp
+      summary: Registrar "Observaciones DGICP" (SF-3, paso 1)
+      description: >
+        RN-A.c/RN-C.a (RQ-C-01): Técnico PRE y Coordinador PRE pueden
+        visualizar y registrar/modificar este campo; Técnico URP puede
+        visualizarlo pero no editarlo.
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico PRE, Coordinador PRE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio, observacionesDgicp]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+                observacionesDgicp: { type: string }
+      responses:
+        "200":
+          description: Observaciones guardadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionProgramacionPAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico PRE ni Coordinador PRE (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/observaciones/envio:
+    post:
+      operationId: enviarObservacionesDgicp
+      summary: Enviar observaciones (botón "Enviar observaciones", SF-3, paso 1-2)
+      description: >
+        Guarda con fecha de registro, habilita los campos del Anexo A.1/A.4
+        y "Respuesta Institución" para el Técnico URP, y lo notifica por correo.
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico PRE, Coordinador PRE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+      responses:
+        "200":
+          description: Observaciones enviadas; campos habilitados para el Técnico URP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionProgramacionPAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico PRE ni Coordinador PRE (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/respuesta-institucion:
+    put:
+      operationId: registrarRespuestaInstitucion
+      summary: Registrar "Respuesta Institución" (SF-3, paso 3)
+      description: >
+        Técnico PRE y Coordinador PRE pueden visualizar este campo, sin
+        derecho a edición (RN-A.c). RN-A.b: rechaza con 409 fuera del
+        Calendario de Eventos del PAP, salvo habilitación de modificaciones
+        fuera de plazo (SF-8/SF-9).
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio, respuestaInstitucion]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+                respuestaInstitucion: { type: string }
+      responses:
+        "200":
+          description: Respuesta guardada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionProgramacionPAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período habilitado por el Calendario de Eventos del
+            PAP (RN-A.b). `Error.codigo` = `PERIODO_CERRADO`, mensaje
+            literal "Periodo de ingreso de información ha finalizado" (Anexo A.3).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/respuesta-institucion/envio:
+    post:
+      operationId: enviarRespuestaInstitucion
+      summary: Enviar respuesta a las observaciones (botón "Enviar Respuesta", SF-3, pasos 3-4)
+      description: >
+        Guarda con fecha de registro, deshabilita los campos, y notifica al
+        Técnico PRE por correo. RN-A.b: rechaza con 409 fuera del
+        Calendario de Eventos del PAP, salvo habilitación de modificaciones
+        fuera de plazo (SF-8/SF-9).
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+      responses:
+        "200":
+          description: Respuesta enviada; campos deshabilitados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionProgramacionPAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período habilitado por el Calendario de Eventos del
+            PAP (RN-A.b). `Error.codigo` = `PERIODO_CERRADO`.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/revision-finalizada:
+    put:
+      operationId: finalizarRevision
+      summary: Finalizar la revisión de la programación PAP (botón "Revisión Finalizada", SF-6, RN-D, RN-E)
+      description: >
+        ⚠️ Acción compartida con CU-PRE-30 (decisión funcional v1.2): es la
+        **única** aprobación del PAP Institucional, cubre de forma
+        unificada la programación financiera y la de metas físicas —
+        CU-PRE-30 no tiene su propio endpoint equivalente. Actualiza el
+        estado a "PAP Revisado" en el Monitoreo PAP de CU-PRO-25 (no
+        procesado todavía; efecto secundario documentado, sin endpoint
+        propio expuesto aquí). Visible/habilitado solo para Técnico PRE y
+        Coordinador PRE (RQ-C-01) durante el período de ingreso o
+        modificaciones (RN-E).
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico PRE, Coordinador PRE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+                comentariosReporteFinancieroDgicp: { type: string }
+                comentariosReporteMetasFisicasDgicp: { type: string }
+      responses:
+        "200":
+          description: Revisión finalizada; PAP marcado como "PAP Revisado" en CU-PRO-25.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionProgramacionPAP'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico PRE ni Coordinador PRE (RN-E, inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período de ingreso de información del Calendario de
+            Eventos del PAP y sin habilitación de modificaciones fuera de
+            plazo (RN-E). `Error.codigo` = `PERIODO_CERRADO`.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/reporte:
+    get:
+      operationId: generarReporteMetasFisicas
+      summary: Generar el reporte de la Programación de Metas Físicas (botón "Generar Reporte", SF-7, RN-E)
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI, Técnico SYMP, Coordinador SYMP]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: anio
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: formato
+          in: query
+          required: true
+          schema: { type: string, enum: [EXCEL, PDF] }
+      responses:
+        "200":
+          description: Reporte generado en el formato solicitado.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+            application/pdf:
+              schema: { type: string, format: binary }
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /programacion-metas-fisicas-pap/habilitacion-modificaciones:
+    put:
+      operationId: habilitarModificacionesMetasFueraPlazo
+      summary: Habilitar modificaciones a la programación de metas físicas fuera de plazo (SF-8/SF-9)
+      description: >
+        Precondición documentada: requiere que ya se haya registrado
+        previamente la modificación correspondiente en CU-PRE-30 (no
+        forzado como error de servidor por falta de escenario BDD de
+        rechazo). Sin flujo/endpoint propio para la "solicitud" previa del
+        Coordinador PRE — mismo criterio que CU-PRE-30.
+      tags: [Preinversión - Programación de Metas Físicas PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Administrador del Sistema]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idUnidadEjecutora, anio]
+              properties:
+                idUnidadEjecutora: { type: integer, format: int64 }
+                anio: { type: integer }
+      responses:
+        "200":
+          description: Modificaciones habilitadas.
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Administrador del Sistema (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    Entregable:
+      type: string
+      description: Catálogo "Entregable" (Anexo D), 4 valores confirmados, sin nota de administración externa.
+      enum: [ESTUDIO_DE_PERFIL, ESTUDIO_DE_PREFACTIBILIDAD, ESTUDIO_DE_FACTIBILIDAD, ESTUDIO_DE_DISENO]
+
+    EstadoPAP:
+      type: string
+      description: Estado del ciclo de aprobación conjunta (CU-PRE-30 + CU-PRE-31).
+      enum: [EN_ELABORACION, ENVIADO_A_REVISION_DGICP, OBSERVADO, PAP_REVISADO]
+
+    EtapaMetaFisicaRequest:
+      type: object
+      required: [etapa]
+      properties:
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        entregable:
+          $ref: '#/components/schemas/Entregable'
+        montoCuatrimestre1: { type: number, format: double, default: 0 }
+        montoCuatrimestre2: { type: number, format: double, default: 0 }
+        montoCuatrimestre3: { type: number, format: double, default: 0 }
+
+    EtapaMetaFisica:
+      type: object
+      required: [etapa, montoCuatrimestre1, montoCuatrimestre2, montoCuatrimestre3, totalAnio]
+      properties:
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        esArrastre:
+          type: boolean
+          description: >
+            `true` si esta etapa ya tuvo programación de metas físicas en un
+            año anterior (SF-1: "Entregable" deshabilitado; RN-B.a.1). Se
+            evalúa por etapa: un mismo proyecto puede mezclar etapas de
+            arrastre y nuevas (RN-B.a.2).
+        meta:
+          type: number
+          format: double
+          default: 1
+          description: Siempre 1.00 (Anexo B.1).
+        entregable:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Entregable'
+        ejecutadoAniosAnteriores:
+          type: number
+          format: double
+          nullable: true
+          description: Porcentaje; solo aplica a estudios de arrastre. 0.00% por defecto en estudios nuevos.
+        montoCuatrimestre1: { type: number, format: double }
+        montoCuatrimestre2: { type: number, format: double }
+        montoCuatrimestre3: { type: number, format: double }
+        totalAnio:
+          type: number
+          format: double
+          description: Suma de los tres montos de cuatrimestre (porcentaje).
+        aniosPosteriores:
+          type: number
+          format: double
+          nullable: true
+          description: "100% − Ejecutado años anteriores% − Total Año%."
+
+    GuardarProgramacionMetasEstudioRequest:
+      type: object
+      properties:
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaMetaFisicaRequest'
+
+    EstudioProgramacionMetas:
+      type: object
+      required: [cup, nombreProyecto, esArrastre, etapas]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        esArrastre:
+          type: boolean
+          description: >
+            Resumen: `true` si al menos una etapa del estudio es de arrastre.
+            El literal de RN-B.a aplicado (a.1 arrastre, a.2 nuevos) se
+            decide por etapa, con `EtapaMetaFisica.esArrastre`.
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaMetaFisica'
+
+    EstudioFilaMetasFisicas:
+      type: object
+      description: Fila de "Programación por Meta Física Cuatrimestral del PAP" (Anexo A.1) — una por combinación estudio+etapa.
+      required: [cup, nombreProyecto, etapa]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        metaTotal:
+          type: number
+          format: double
+          nullable: true
+          description: >
+            ⚠️ Columna "Total Meta": visible en el mockup y en el anexo
+            Excel (valor "1" en los ejemplos), pero sin fila propia en el
+            Anexo B.1 (sin tipo, formato ni origen de cálculo documentados).
+            Se expone tal cual, sin inventar su fórmula.
+        entregable:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Entregable'
+        ejecutadoAniosAnteriores: { type: number, format: double, nullable: true }
+        totalAnio: { type: number, format: double, nullable: true }
+        aniosPosteriores: { type: number, format: double, nullable: true }
+        comentariosReporteDgicp:
+          type: string
+          nullable: true
+          description: >
+            RN-C — visible solo para actores internos de la DGICP (Técnico
+            PRE, Técnico PRO, Técnico SYMP, Coordinador PRE, Coordinador
+            PRO, Coordinador SYMP, Subjefe DGI, Jefe DGI); nulo para
+            Técnico URP y cualquier otro actor.
+
+    ProgramacionMetasFisicasPAPResponse:
+      type: object
+      required: [idUnidadEjecutora, anio, contenido, paginacion]
+      properties:
+        idUnidadEjecutora: { type: integer, format: int64 }
+        anio: { type: integer }
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstudioFilaMetasFisicas'
+        paginacion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PaginacionMetadata'
+
+    RevisionProgramacionPAP:
+      type: object
+      description: >
+        Estado del ciclo de revisión/aprobación conjunta del PAP (RN-A.c,
+        SF-3, SF-6) — mismo recurso para ambos documentos, CU-PRE-30 y
+        CU-PRE-31.
+      required: [idUnidadEjecutora, anio, estadoPap]
+      properties:
+        idUnidadEjecutora: { type: integer, format: int64 }
+        anio: { type: integer }
+        estadoPap:
+          $ref: '#/components/schemas/EstadoPAP'
+        observacionesDgicp:
+          type: string
+          nullable: true
+          description: Visible para Técnico URP, editable solo por Técnico PRE/Coordinador PRE (RN-A.c).
+        fechaObservaciones: { type: string, format: date-time, nullable: true }
+        respuestaInstitucion:
+          type: string
+          nullable: true
+          description: Visible para Técnico PRE/Coordinador PRE, editable solo por Técnico URP (RN-A.c).
+        fechaRespuesta: { type: string, format: date-time, nullable: true }
+        comentariosReporteFinancieroDgicp: { type: string, nullable: true }
+        comentariosReporteMetasFisicasDgicp: { type: string, nullable: true }

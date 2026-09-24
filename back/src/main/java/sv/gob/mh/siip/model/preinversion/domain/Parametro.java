@@ -1,9 +1,8 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * Catálogo "Parámetros" con Factor de Corrección (CU-ADM-02/CU-PRE-20 "Flujo de Beneficios").
@@ -16,25 +15,13 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@EqualsAndHashCode(of = "id")
-public class Parametro {
+@SuperBuilder
+@EqualsAndHashCode(callSuper = false, of = "id")
+public class Parametro extends CatalogoConFactorCorreccion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "parametro_seq")
     @SequenceGenerator(name = "parametro_seq", sequenceName = "PARAMETRO_SEQ", allocationSize = 1)
     @Column(name = "ID_PARAMETRO")
     private Long id;
-
-    @NotBlank
-    @Column(name = "CODIGO", nullable = false, length = 100, unique = true)
-    private String codigo;
-
-    @NotBlank
-    @Column(name = "NOMBRE", nullable = false, length = 250)
-    private String nombre;
-
-    @NotNull
-    @Column(name = "FACTOR_CORRECCION", nullable = false)
-    private Double factorCorreccion;
 }

@@ -121,7 +121,8 @@ class ProyectoServiceImplTest {
                                 ejeTematicoRepository,
                                 ejePlanGobiernoRepository, planSectorialRegionalRepository, medidaCatalogoRepository,
                                 actorContexto,
-                                mapper, notificacionService, runtimeService, taskService);
+                                mapper, notificacionService, runtimeService, taskService,
+                                new GeneradorCup(proyectoRepository));
 
                 Institucion institucion = Institucion.builder().id(1L).codigo("INS").nombre("Institucion").activo(true)
                                 .build();
@@ -615,6 +616,7 @@ class ProyectoServiceImplTest {
                 Proyecto entidad = proyectoEnviadoDgicp();
                 when(proyectoRepository.findById(1L)).thenReturn(Optional.of(entidad));
                 when(proyectoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+                when(proyectoRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
                 when(solicitudRepository.findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(1L,
                                 TipoSolicitud.CUP))
                                 .thenReturn(Optional.of(SolicitudPreinversion.builder().id(1L)
@@ -634,6 +636,7 @@ class ProyectoServiceImplTest {
                 Proyecto entidad = proyectoEnviadoDgicp();
                 when(proyectoRepository.findById(1L)).thenReturn(Optional.of(entidad));
                 when(proyectoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+                when(proyectoRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
                 when(solicitudRepository.findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(1L,
                                 TipoSolicitud.CUP))
                                 .thenReturn(Optional.of(SolicitudPreinversion.builder().id(1L)
@@ -654,6 +657,7 @@ class ProyectoServiceImplTest {
                 Proyecto entidad = proyectoEnviadoDgicp();
                 when(proyectoRepository.findById(1L)).thenReturn(Optional.of(entidad));
                 when(proyectoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+                when(proyectoRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
                 when(solicitudRepository.findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(1L,
                                 TipoSolicitud.CUP))
                                 .thenReturn(Optional.of(SolicitudPreinversion.builder().id(1L)

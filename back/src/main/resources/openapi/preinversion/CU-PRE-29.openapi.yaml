@@ -1,0 +1,172 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-29 Banco de Proyectos
+  version: "1.1.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-29 "Banco de Proyectos"
+    (UC-PRE-29-Banco_de_Proyectos.md, versión 1.1) y sus 2 historias BDD.
+    CU 100% de consulta (RN04: "no deben tener botones de ajuste, sólo
+    botones de ingreso a consulta") — sin ningún endpoint de escritura.
+    El propio documento declara que no hay un actor principal distinguido
+    (los 4 actores se listan conjuntamente, sin jerarquía); se agrega
+    Viabilizador (mencionado en Permisos, aunque no en el campo "Actores"
+    de la Identificación — inconsistencia interna del propio documento,
+    no resuelta aquí).
+
+    "Usuarios Internos" se usa aquí directamente en `x-roles`, a diferencia
+    del tratamiento como condición de campo ya usado en CU-PRE-17/18/20/21/26.5:
+    en aquellos CU, ese grupo transversal otorgaba visibilidad *adicional*
+    sobre un campo concreto (p. ej. precios ajustados) por encima de otros
+    roles ya con acceso; aquí no otorga nada adicional — es simplemente uno
+    más de los grupos con el mismo nivel de acceso de lectura a toda la
+    pantalla (RN01), sin ninguna diferencia de datos visibles frente a los
+    demás actores listados. Por eso se trata como una entrada más de
+    `x-roles`, no como un campo `nullable` condicional.
+
+    ⚠️ Discrepancia real entre las dos historias BDD de este CU: el propio
+    `CU-PRE-29.md` (resumen de historias) afirma que "no se genera un
+    escenario de búsqueda por Código/Nombre/Institución", pero
+    `CU-PRE-29-consultar-buscar.feature` sí contiene un
+    `Scenario Outline` explícito con ejemplos concretos para búsqueda por
+    Código y por Nombre (solo excluye "Institución", con la misma
+    advertencia de ambigüedad que el resto de fuentes). Se siguió el
+    `.feature` (fuente primaria de escenarios de error/comportamiento) en
+    vez del resumen de HU — ver contrato-CU-PRE-29.md.
+
+paths:
+
+  /banco-proyectos:
+    get:
+      operationId: listarBancoProyectos
+      summary: Consultar el listado "Banco de Proyectos" (Anexo A.1)
+      description: >
+        RN03: incluye todos los proyectos registrados en el sistema con su
+        estado. `idUnidadEjecutora` es opcional para los roles con alcance
+        amplio (Técnico PRE, Coordinador PRE, Viabilizador, Usuarios
+        Internos — si se omite, se asume "todas las Unidades Ejecutoras
+        disponibles en el SIIP"); para Técnico URP, el servidor lo fuerza
+        siempre a su propia Unidad Ejecutora sin importar qué valor se
+        envíe (Anexo B.1: "selección bloqueada en su respectiva Unidad
+        Ejecutora") — no hay escenario BDD que pruebe un rechazo si el
+        Técnico URP intenta forzar otra, así que no se modeló un código de
+        error para ese caso, solo el comportamiento de anulación silenciosa
+        documentado aquí. `busqueda` filtra por CUP o por Nombre del
+        proyecto simultáneamente (RN02, parcialmente confirmado por
+        `consultar-buscar.feature` — ver info.description del archivo);
+        la búsqueda "por Institución" que también menciona RN02 no se
+        modela, consistente con ambas historias BDD.
+      tags: [Preinversión - Banco de Proyectos]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador, Usuarios Internos]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          description: >
+            Opcional para roles con alcance amplio; ignorado y sobrescrito
+            por el servidor para Técnico URP (siempre su propia Unidad
+            Ejecutora).
+          schema: { type: integer, format: int64 }
+        - name: busqueda
+          in: query
+          description: Filtra por CUP o por Nombre del proyecto (RN02, parcial — sin "Institución").
+          schema: { type: string }
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: Listado paginado del Banco de Proyectos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BancoProyectosResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no corresponde a ninguno de los roles de
+            este CU. Inferido de `x-roles`; sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    ProyectoBancoItem:
+      type: object
+      description: >
+        Fila del listado "Banco de Proyectos". `nombreProyecto` no se
+        trunca en el contrato: el truncamiento con puntos suspensivos
+        visible en el mockup es un artefacto de presentación de esa
+        columna angosta, no una regla de negocio ni un límite real de
+        longitud — el servidor devuelve el nombre completo, y el
+        truncamiento (si se desea) es responsabilidad del cliente.
+      required: [idProyecto, cup, nombreProyecto, etapa, estado]
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+          description: Necesario para que el cliente navegue a la Ficha del proyecto (CU-PRE-3.6, no procesado todavía — ver contrato-CU-PRE-29.md).
+        cup:
+          type: string
+        nombreProyecto:
+          type: string
+        etapa:
+          type: string
+          description: >
+            Valores observados en el mockup (Ejecución, Diseño,
+            Factibilidad, Prefactibilidad), sin catálogo completo
+            documentado en este CU — mismo criterio que `estado`. Se envía la
+            etiqueta de UI de la etapa más avanzada de la Ruta de Preinversión.
+        inversionEstimada:
+          type: number
+          format: double
+          nullable: true
+          description: Desde CU-PRE-17, "Total Inversión" (según la última OT emitida).
+        estado:
+          type: string
+          description: >
+            RN05: el catálogo completo de estados se retoma de UC-PRE-03
+            "Captura de proyectos" (`EstadoProyecto` en CU-PRE-01.openapi.yaml,
+            corregido durante ese CU) — no se redefine aquí un enum propio
+            para no duplicar esa definición ya existente; se documenta como
+            `string` libre en vez de un `$ref` real porque los valores
+            observados en el mockup de este CU ("Proyecto con OT", "En
+            proceso de OT", "Observado", "Proyecto viable") no coinciden
+            textualmente con los tokens del enum `EstadoProyecto`
+            (`PROYECTO_CON_OT`, `EN_OT`, `OBSERVADO`, `VIABLE`) — se asume
+            que son la misma información con formato de presentación
+            distinto, pero no se fuerza el `$ref` sin esa confirmación. El
+            servidor envía la etiqueta de UI (`EstadoProyecto.getEtiquetaUi()`),
+            no el token del enum.
+        prioridad:
+          type: number
+          format: double
+          nullable: true
+          description: Desde CU-PRE-25, calificación de prioridad (base 100 puntos).
+
+    BancoProyectosResponse:
+      type: object
+      required: [contenido, paginacion]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProyectoBancoItem'
+        paginacion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PaginacionMetadata'

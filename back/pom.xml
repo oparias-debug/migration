@@ -103,6 +103,18 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.9</version>
 		</dependency>
+		<!-- Generacion del reporte Excel de CU-PRE-30 (Anexo A.8) -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.5</version>
+		</dependency>
+		<!-- Generacion del reporte PDF de CU-PRE-30 (Anexo A.8) -->
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>2.0.31</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -467,7 +479,19 @@
 						</configuration>
 					</execution>
 					<execution>
-                        <id>generate-administracion-cu01-api</id>
+						<id>generate-preinversion-cu18-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-18.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.om.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.om.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-administracion-cu01-api</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
@@ -490,6 +514,84 @@
                             <modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
                         </configuration>
                     </execution>
+					<execution>
+						<id>generate-preinversion-cu29-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-29.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu30-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-30.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu31-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-31.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu32-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-32.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu33-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-33.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+                    <execution>
+                        <id>generate-preinversion-cu14-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-14.openapi.yaml</inputSpec>
+                            <apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+                            <modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>generate-preinversion-cu15-api</id>
                         <phase>generate-sources</phase>
@@ -499,6 +601,19 @@
                         <configuration>
                             <inputSpec>
                                 ${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-15.openapi.yaml</inputSpec>
+                            <apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+                            <modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-preinversion-cu16-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-16.openapi.yaml</inputSpec>
                             <apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
                             <modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
                         </configuration>

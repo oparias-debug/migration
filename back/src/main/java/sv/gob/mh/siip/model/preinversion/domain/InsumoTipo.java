@@ -1,9 +1,8 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * Catálogo "Insumo Tipo" con Factor de Corrección (CU-ADM-02), usado por CU-PRE-17/18 para
@@ -17,25 +16,13 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@EqualsAndHashCode(of = "id")
-public class InsumoTipo {
+@SuperBuilder
+@EqualsAndHashCode(callSuper = false, of = "id")
+public class InsumoTipo extends CatalogoConFactorCorreccion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "insumo_tipo_seq")
     @SequenceGenerator(name = "insumo_tipo_seq", sequenceName = "INSUMO_TIPO_SEQ", allocationSize = 1)
     @Column(name = "ID_INSUMO_TIPO")
     private Long id;
-
-    @NotBlank
-    @Column(name = "CODIGO", nullable = false, length = 100, unique = true)
-    private String codigo;
-
-    @NotBlank
-    @Column(name = "NOMBRE", nullable = false, length = 250)
-    private String nombre;
-
-    @NotNull
-    @Column(name = "FACTOR_CORRECCION", nullable = false)
-    private Double factorCorreccion;
 }

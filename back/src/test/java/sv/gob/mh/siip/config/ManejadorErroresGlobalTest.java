@@ -75,7 +75,7 @@ class ManejadorErroresGlobalTest {
     }
 
     @Test
-    @DisplayName("Debería manejar ConflictoEstadoException y retornar status 409")
+    @DisplayName("Debería manejar ConflictoEstadoException sin código y retornar el código genérico")
     void testManejarConflictoEstado() {
         ResponseEntity<ErrorDto> responseEntity = manejadorErroresGlobal
                 .manejarConflictoEstado(new ConflictoEstadoException("Estado invalido"));
@@ -84,6 +84,19 @@ class ManejadorErroresGlobalTest {
         ErrorDto body = responseEntity.getBody();
         assertNotNull(body);
         assertEquals("CONFLICTO_ESTADO", body.getCodigo());
+    }
+
+    @Test
+    @DisplayName("Debería manejar ConflictoEstadoException con código propio y respetarlo en la respuesta")
+    void testManejarConflictoEstadoConCodigoPropio() {
+        ResponseEntity<ErrorDto> responseEntity = manejadorErroresGlobal
+                .manejarConflictoEstado(new ConflictoEstadoException("PERIODO_CERRADO", "Periodo cerrado"));
+
+        assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+        ErrorDto body = responseEntity.getBody();
+        assertNotNull(body);
+        assertEquals("PERIODO_CERRADO", body.getCodigo());
+        assertEquals("Periodo cerrado", body.getMensaje());
     }
 
     @Test

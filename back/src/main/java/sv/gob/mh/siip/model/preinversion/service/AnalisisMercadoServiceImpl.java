@@ -85,7 +85,8 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
     }
 
     private FilaAnalisisMercado mapearFila(FilaAnalisisMercadoRequestDto fila) {
-        String codigo = fila.getProducto() == null ? null : fila.getProducto().getCodigoProducto();
+        ProductoSeleccionadoDto productoSeleccionado = fila.getProducto();
+        String codigo = productoSeleccionado == null ? null : productoSeleccionado.getCodigoProducto();
         ProductoIndicadorCatalogo producto = buscarProducto(codigo);
         return FilaAnalisisMercado.builder()
                 .codigoProducto(codigo)

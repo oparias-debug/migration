@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /** Analisis legal del proyecto. CU-PRE-16. */
 @Entity
 @Table(name = "ANALISIS_LEGAL")
@@ -26,9 +29,11 @@ public class AnalisisLegal {
     @JoinColumn(name = "ID_PROYECTO", nullable = false, unique = true)
     private Proyecto proyecto;
 
-    @Column(name = "MARCO_LEGAL_APLICABLE", length = 2000)
-    private String marcoLegalAplicable;
+    @Column(name = "REQUIERE_ANALISIS_LEGAL")
+    private Boolean requiereAnalisisLegal;
 
-    @Column(name = "OBSERVACIONES", length = 2000)
-    private String observaciones;
+    @Builder.Default
+    @OneToMany(mappedBy = "analisisLegal", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<AnalsisGestionesLegalesRequeridas> filas = new ArrayList<>();
+
 }

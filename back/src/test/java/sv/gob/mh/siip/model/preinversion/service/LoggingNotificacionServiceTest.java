@@ -56,7 +56,7 @@ class LoggingNotificacionServiceTest {
     void notificarSolicitudCup_indicaSinDestinatarios_cuandoListaVacia() {
         service.notificarSolicitudCup(proyecto(), List.of());
 
-        assertThat(ultimoMensaje()).contains("sin destinatarios con rol COORDINADOR_PRE");
+        assertThat(ultimoMensaje()).contains("sin destinatarios activos con ese rol");
     }
 
     @Test
@@ -99,5 +99,33 @@ class LoggingNotificacionServiceTest {
         service.notificarEmisionCup(proyecto(), usuario("urp@test.com"));
 
         assertThat(ultimoMensaje()).contains("00123", "urp@test.com");
+    }
+
+    @Test
+    void notificarProgramacionEnviadaARevision_incluyeUnidadAnioYCorreosDeLosDestinatarios() {
+        service.notificarProgramacionEnviadaARevision(25L, 2027, List.of(usuario("pre1@test.com")));
+
+        assertThat(ultimoMensaje()).contains("25", "2027", "pre1@test.com");
+    }
+
+    @Test
+    void notificarProgramacionEnviadaARevision_indicaSinDestinatarios_cuandoListaVacia() {
+        service.notificarProgramacionEnviadaARevision(25L, 2027, List.of());
+
+        assertThat(ultimoMensaje()).contains("sin destinatarios activos con ese rol");
+    }
+
+    @Test
+    void notificarObservacionesDgicp_incluyeUnidadAnioYCorreosDeLosDestinatarios() {
+        service.notificarObservacionesDgicp(25L, 2027, List.of(usuario("urp1@test.com")));
+
+        assertThat(ultimoMensaje()).contains("25", "2027", "urp1@test.com");
+    }
+
+    @Test
+    void notificarRespuestaInstitucion_incluyeUnidadAnioYCorreosDeLosDestinatarios() {
+        service.notificarRespuestaInstitucion(25L, 2027, List.of(usuario("pre2@test.com")));
+
+        assertThat(ultimoMensaje()).contains("25", "2027", "pre2@test.com");
     }
 }

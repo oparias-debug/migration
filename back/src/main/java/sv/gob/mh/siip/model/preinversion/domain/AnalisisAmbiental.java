@@ -1,10 +1,13 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
-import sv.gob.mh.siip.model.preinversion.enums.CategoriaAmbiental;
+
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Analisis ambiental y permisos requeridos. CU-PRE-14. */
 @Entity
@@ -29,13 +32,13 @@ public class AnalisisAmbiental {
     private Proyecto proyecto;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "CATEGORIA_AMBIENTAL", nullable = false, length = 20)
-    private CategoriaAmbiental categoriaAmbiental;
+    @Column(name = "TIENE_IMPACTOS_AMBIENTALES", nullable = false)
+    private Boolean tieneImpactosAmbientales;
 
-    @Column(name = "PERMISOS_REQUERIDOS", length = 2000)
-    private String permisosRequeridos;
 
-    @Column(name = "OBSERVACIONES", length = 2000)
-    private String observaciones;
+    // Relación One-to-Many con los impactos (hijos)
+    @Builder.Default
+    @OneToMany(mappedBy = "analisisAmbiental", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ImpactosAmbientales> impactosAmbientales = new ArrayList<>();
+
 }

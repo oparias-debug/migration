@@ -61,7 +61,54 @@ public class LoggingNotificacionService implements NotificacionService {
     }
 
     private String correos(List<Usuario> usuarios) {
-        return usuarios.isEmpty() ? "(sin destinatarios con rol COORDINADOR_PRE)"
+        return usuarios.isEmpty() ? "(sin destinatarios activos con ese rol)"
                 : usuarios.stream().map(Usuario::getCorreo).toList().toString();
+    }
+
+    @Override
+    public void notificarProgramacionEnviadaARevision(Long idUnidadEjecutora, Integer anio, List<Usuario> destinatarios) {
+        if (logger.isInfoEnabled()) {
+            logger.info(
+                    "[CU-PRE-31 SF-2] Programación PAP de la Unidad Ejecutora {} (año {}) enviada a revisión de la DGICP -> Técnico PRE: {}",
+                    idUnidadEjecutora, anio, correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarObservacionesDgicp(Long idUnidadEjecutora, Integer anio, List<Usuario> destinatarios) {
+        if (logger.isInfoEnabled()) {
+            logger.info(
+                    "[CU-PRE-31 SF-3] Observaciones DGICP registradas para la Unidad Ejecutora {} (año {}) -> Técnico URP: {}",
+                    idUnidadEjecutora, anio, correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarRespuestaInstitucion(Long idUnidadEjecutora, Integer anio, List<Usuario> destinatarios) {
+        if (logger.isInfoEnabled()) {
+            logger.info(
+                    "[CU-PRE-31 SF-3] Respuesta Institución registrada para la Unidad Ejecutora {} (año {}) -> Técnico PRE: {}",
+                    idUnidadEjecutora, anio, correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarObservacionesAvance(Long idUnidadEjecutora, Integer anio, String periodo,
+            List<Usuario> destinatarios) {
+        if (logger.isInfoEnabled()) {
+            logger.info(
+                    "[CU-PRE-33 SF-2] Observaciones DGICP registradas sobre el avance de la Unidad Ejecutora {} (año {}, {}) -> Técnico URP: {}",
+                    idUnidadEjecutora, anio, periodo, correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarRespuestaInstitucionAvance(Long idUnidadEjecutora, Integer anio, String periodo,
+            List<Usuario> destinatarios) {
+        if (logger.isInfoEnabled()) {
+            logger.info(
+                    "[CU-PRE-33 SF-2] Respuesta Institución registrada sobre el avance de la Unidad Ejecutora {} (año {}, {}) -> Técnico PRE: {}",
+                    idUnidadEjecutora, anio, periodo, correos(destinatarios));
+        }
     }
 }

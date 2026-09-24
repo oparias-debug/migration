@@ -1,0 +1,455 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-32 Avance Financiero Cuatrimestral del PAP
+  version: "1.2.0"
+  description: >
+    Fragmento OpenAPI derivado de CU-PRE-32 "Avance Financiero Cuatrimestral
+    del PAP" (UC-PRE-32-Avance_Financiero_Cuatrimestral_PAP.md, versión
+    1.2) y sus 7 historias BDD. Mismo patrón arquitectónico que CU-PRE-30
+    (recurso raíz no anidado bajo un proyecto individual, escala Unidad
+    Ejecutora + Año), con un tercer eje de alcance: `periodo` (cuatrimestre
+    I/II/III).
+
+    Decisión funcional v1.2 (no proveniente del PDF, idéntica a CU-PRE-30):
+    este documento no tiene flujo propio de solicitud de aprobación/envío
+    a revisión — el botón "Siguiente"/"Seguimiento de Metas" (SF-2) es pura
+    navegación hacia CU-PRE-33 (no procesado todavía), donde vive la única
+    solicitud/aprobación unificada del avance del PAP (financiero y de
+    metas físicas). No se modela ningún endpoint de aprobación aquí.
+
+    RN-B.b (alerta cuando lo ejecutado acumulado supera lo programado) se
+    modela como una advertencia no bloqueante (campo `alertaExcesoProgramado`),
+    distinta de RN-D.a (que sí bloquea con 400 y mensaje literal
+    confirmado) — la propia historia BDD describe RN-B.b como "genera una
+    alerta", no como un rechazo de guardado.
+
+paths:
+
+  /avance-financiero-pap:
+    get:
+      operationId: obtenerAvanceFinancieroPAP
+      summary: Consultar "Avance de la ejecución financiera cuatrimestral del PAP" (Anexo A.1)
+      description: >
+        RN-B.a: solo se muestran los estudios activos para el ejercicio
+        fiscal vigente al cuatrimestre del período consultado (según
+        CU-PRE-30); para consultar años anteriores, los estudios vigentes
+        de esos ejercicios. `observaciones` es de solo lectura en esta
+        pantalla — contradicción del propio Anexo B.1 entre su descripción
+        ("procede de" el Anexo A.5, campo derivado) y su columna "Editable:
+        Sí"; se siguió el comportamiento funcional (solo lectura aquí,
+        editable en `guardarAvanceEstudio`), mismo criterio que el propio
+        análisis de HU.
+      tags: [Preinversión - Avance Financiero PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          description: Por defecto, la del Técnico URP (RN-A.a); libremente seleccionable para Técnico PRE.
+          schema: { type: integer, format: int64 }
+        - name: anio
+          in: query
+          description: Por defecto, el año vigente (RN-A.a).
+          schema: { type: integer }
+        - name: periodo
+          in: query
+          description: Por defecto, el cuatrimestre vigente (RN-A.a).
+          schema:
+            $ref: '#/components/schemas/Cuatrimestre'
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanio
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+      responses:
+        "200":
+          description: Listado del avance financiero cuatrimestral del PAP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvanceFinancieroPAPResponse'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: >
+            El actor autenticado no corresponde a ninguno de los roles de
+            este CU. Inferido de `x-roles`; sin escenario BDD negativo explícito.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-financiero-pap/estudios/{cup}:
+    parameters:
+      - name: cup
+        in: path
+        required: true
+        schema: { type: string }
+      - name: anio
+        in: query
+        required: true
+        schema: { type: integer }
+      - name: periodo
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Cuatrimestre'
+    get:
+      operationId: obtenerAvanceEstudio
+      summary: Consultar el avance de un estudio, por etapa y fuente (Anexo A.5)
+      description: >
+        `avancesCuatrimestresAnteriores` se puebla progresivamente según
+        RN-F: vacío para Cuatrimestre I; solo Cuatrimestre I para
+        Cuatrimestre II; Cuatrimestre I y II para Cuatrimestre III.
+      tags: [Preinversión - Avance Financiero PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI]
+      responses:
+        "200":
+          description: Avance del estudio, por etapa y fuente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvanceEstudio'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año + período) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+    put:
+      operationId: guardarAvanceEstudio
+      summary: Registrar y guardar el avance del cuatrimestre (botón "Guardar", SF-1)
+      description: >
+        RN-D.a: el avance no puede superar el monto pendiente según el
+        cuatrimestre que se está registrando (Cuatrimestre I: ≤ "Total
+        Año" de CU-PRE-30; Cuatrimestre II: ≤ Total anual − Cuatrimestre I;
+        Cuatrimestre III: ≤ Total anual − Cuatrimestre I − Cuatrimestre
+        II) — 400 con mensaje literal confirmado. RN-B.b: si el acumulado
+        ejecutado supera el "Costo de la Etapa" programado, **no se
+        rechaza** el guardado — se refleja como advertencia
+        (`alertaExcesoProgramado`) en la respuesta. RN-A.b: rechaza con
+        409 fuera del Calendario de Eventos del PAP.
+      tags: [Preinversión - Avance Financiero PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardarAvanceEstudioRequest'
+      responses:
+        "200":
+          description: >
+            Avance guardado; trasladado a "Ejecutado" y "Observaciones" del
+            Anexo A.1.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvanceEstudio'
+        "400":
+          description: >
+            Mensaje literal: "Error. El monto del avance del cuatrimestre
+            no debe superar el monto anual programado" (RN-D.a; nótese que
+            el mockup del Anexo A.2 usa un texto distinto, "Monto Ejecutado
+            supera Monto Programado Anual" — se usó el texto de RN-D.a,
+            señalando la discrepancia).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "403":
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "404":
+          description: El estudio (CUP + año + período) no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+        "409":
+          description: >
+            Fuera del período habilitado por el Calendario de Eventos del
+            PAP (RN-A.b). Mensaje del Anexo A.3, no transcrito literalmente
+            en este documento (a diferencia de CU-PRE-30/31, que sí lo
+            transcriben: "Periodo de ingreso de información ha finalizado" —
+            se asume el mismo texto por consistencia con esos dos
+            documentos hermanos, sin confirmación explícita en este).
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+  /avance-financiero-pap/reporte:
+    get:
+      operationId: generarReporteAvanceFinanciero
+      summary: Generar el reporte del Avance Cuatrimestral Financiero (botón "Generar Reporte", SF-3)
+      description: >
+        Visible/habilitado para todos los actores, sin condición previa
+        (RN-A.c), incluso fuera del período del Calendario de Eventos del
+        PAP (RN-A.b lo excluye explícitamente del bloqueo). No se
+        especifica si el reporte conserva los botones de la pantalla
+        original (a diferencia de los reportes homólogos de CU-PRE-30/31,
+        que sí lo aclaran) — no se modela esa distinción.
+      tags: [Preinversión - Avance Financiero PAP]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE, Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI, Subjefe DGI]
+      parameters:
+        - name: idUnidadEjecutora
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: anio
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: periodo
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Cuatrimestre'
+        - name: formato
+          in: query
+          required: true
+          schema: { type: string, enum: [EXCEL, PDF] }
+      responses:
+        "200":
+          description: Reporte generado en el formato solicitado.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+            application/pdf:
+              schema: { type: string, format: binary }
+        "401":
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    Cuatrimestre:
+      type: string
+      enum: [CUATRIMESTRE_I, CUATRIMESTRE_II, CUATRIMESTRE_III]
+
+    AvanceCuatrimestreAnterior:
+      type: object
+      description: Fila de "Avances reportados en cuatrimestres anteriores" (RN-F).
+      required: [periodo, montoEjecutado]
+      properties:
+        periodo:
+          $ref: '#/components/schemas/Cuatrimestre'
+        montoEjecutado:
+          type: number
+          format: double
+
+    FilaAvanceFuenteRequest:
+      type: object
+      required: [idFuente, montoEjecutadoCuatrimestre]
+      properties:
+        idFuente:
+          type: integer
+          format: int64
+          description: Identifica la fila de programación correspondiente en CU-PRE-30.
+        montoEjecutadoCuatrimestre:
+          type: number
+          format: double
+        observacionesCuatrimestre:
+          type: string
+          nullable: true
+
+    FilaAvanceFuente:
+      type: object
+      description: >
+        Forma de lectura. Los campos "Programado"/"Avance Anual"/"Avance al
+        Cuatrimestre" son calculados o proceden de CU-PRE-30 (RN-E) y nunca
+        se reciben en `FilaAvanceFuenteRequest`.
+      required: [idFuente, montoEjecutadoCuatrimestre]
+      properties:
+        idFuente: { type: integer, format: int64 }
+        fuenteFinanciamiento:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: './CU-PRE-17.openapi.yaml#/components/schemas/FuenteFinanciamiento'
+        montoProgramadoCuatrimestre:
+          type: number
+          format: double
+          nullable: true
+          description: "Avance del Cuatrimestre Programado\" — desde CU-PRE-30 (RN-E)."
+        montoEjecutadoCuatrimestre:
+          type: number
+          format: double
+        porcentajeEjecutadoCuatrimestre:
+          type: number
+          format: double
+          nullable: true
+          description: "\"Avance del Cuatrimestre Porcentaje Ejecutado\" = Ejecutado/Programado×100 (RN-E)."
+        observacionesCuatrimestre:
+          type: string
+          nullable: true
+        avanceAnualProgramado:
+          type: number
+          format: double
+          nullable: true
+          description: Suma de lo programado en los 3 cuatrimestres, desde CU-PRE-30 (RN-E).
+        avanceAnualEjecutadoMonto:
+          type: number
+          format: double
+          nullable: true
+          description: Suma acumulada de lo ejecutado hasta el período consultado (RN-E).
+        avanceAnualEjecutadoPorcentaje:
+          type: number
+          format: double
+          nullable: true
+        avanceAlCuatrimestreProgramado:
+          type: number
+          format: double
+          nullable: true
+          description: Suma de lo programado hasta el cuatrimestre consultado (RN-E).
+        avanceAlCuatrimestreEjecutadoMonto:
+          type: number
+          format: double
+          nullable: true
+        avanceAlCuatrimestreEjecutadoPorcentaje:
+          type: number
+          format: double
+          nullable: true
+        avancesCuatrimestresAnteriores:
+          type: array
+          description: RN-F — poblado progresivamente según el cuatrimestre que se está registrando.
+          items:
+            $ref: '#/components/schemas/AvanceCuatrimestreAnterior'
+        alertaExcesoProgramado:
+          type: boolean
+          description: >
+            RN-B.b — true si el acumulado ejecutado supera el "Costo de la
+            Etapa" programado en CU-PRE-30. No bloquea el guardado, solo
+            informa.
+
+    EtapaAvanceRequest:
+      type: object
+      required: [etapa]
+      properties:
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        fuentes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaAvanceFuenteRequest'
+
+    EtapaAvance:
+      type: object
+      required: [etapa, fuentes]
+      properties:
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        costoEtapa:
+          type: number
+          format: double
+          nullable: true
+        ejecutadoAniosAnteriores:
+          type: number
+          format: double
+          nullable: true
+        fuentes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilaAvanceFuente'
+
+    GuardarAvanceEstudioRequest:
+      type: object
+      properties:
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaAvanceRequest'
+
+    AvanceEstudio:
+      type: object
+      required: [cup, nombreProyecto, etapas]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        etapas:
+          type: array
+          items:
+            $ref: '#/components/schemas/EtapaAvance'
+
+    EstudioFilaAvancePAP:
+      type: object
+      description: Fila de "Avance de la ejecución financiera cuatrimestral del PAP" (Anexo A.1).
+      required: [cup, nombreProyecto, etapa]
+      properties:
+        cup: { type: string }
+        nombreProyecto: { type: string }
+        etapa:
+          $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa'
+        costoEtapa: { type: number, format: double, nullable: true }
+        fuenteFinanciamiento:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: './CU-PRE-17.openapi.yaml#/components/schemas/FuenteFinanciamiento'
+        ejecutadoAniosAnteriores: { type: number, format: double, nullable: true }
+        avanceAnualProgramado: { type: number, format: double, nullable: true }
+        avanceAnualEjecutadoMonto: { type: number, format: double, nullable: true }
+        avanceAnualEjecutadoPorcentaje: { type: number, format: double, nullable: true }
+        avanceAlCuatrimestreProgramado: { type: number, format: double, nullable: true }
+        avanceAlCuatrimestreEjecutadoMonto: { type: number, format: double, nullable: true }
+        avanceAlCuatrimestreEjecutadoPorcentaje: { type: number, format: double, nullable: true }
+        avanceDelCuatrimestreProgramado: { type: number, format: double, nullable: true }
+        avanceDelCuatrimestreEjecutadoMonto: { type: number, format: double, nullable: true }
+        avanceDelCuatrimestrePorcentaje: { type: number, format: double, nullable: true }
+        observaciones:
+          type: string
+          nullable: true
+          description: >
+            Solo lectura en esta pantalla (procede de "Observaciones del
+            Cuatrimestre" del Anexo A.5) — ver info.description del endpoint.
+        alertaExcesoProgramado: { type: boolean }
+
+    AvanceFinancieroPAPResponse:
+      type: object
+      required: [idUnidadEjecutora, anio, periodo, contenido, paginacion]
+      properties:
+        idUnidadEjecutora: { type: integer, format: int64 }
+        anio: { type: integer }
+        periodo:
+          $ref: '#/components/schemas/Cuatrimestre'
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstudioFilaAvancePAP'
+        paginacion:
+          $ref: './CU-PRE-01.openapi.yaml#/components/schemas/PaginacionMetadata'

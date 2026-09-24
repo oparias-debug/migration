@@ -43,7 +43,8 @@ public class ManejadorErroresGlobal {
 
     @ExceptionHandler(ConflictoEstadoException.class)
     public ResponseEntity<ErrorDto> manejarConflictoEstado(ConflictoEstadoException ex) {
-        return respuesta(HttpStatus.CONFLICT, "CONFLICTO_ESTADO", ex.getMessage(), null);
+        String codigo = ex.getCodigo() != null ? ex.getCodigo() : "CONFLICTO_ESTADO";
+        return respuesta(HttpStatus.CONFLICT, codigo, ex.getMessage(), null);
     }
 
     @ExceptionHandler(ValidacionNegocioException.class)

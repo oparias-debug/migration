@@ -7,9 +7,19 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/** Avance cuatrimestral por metas fisicas del PAP. CU-PRE-33. */
+import sv.gob.mh.siip.model.preinversion.enums.Cuatrimestre;
+
+/**
+ * Avance de metas físicas de un cuatrimestre para una {@link ProgCuatrimestralMetaFisica} (etapa +
+ * año) (Anexo A.4, "Avance del Cuatrimestre"). CU-PRE-33. Una fila por combinación (programacionMeta,
+ * cuatrimestre); análogo de {@link AvanceFinancieroCuatrimestral} pero con valores porcentuales
+ * (0-100), no montos monetarios. El resto de campos de lectura de {@code EtapaAvanceMetas}
+ * (acumulados, estado, totalMetaEjecutada) se calculan a partir de estas filas y del histórico de la
+ * misma etapa (RN-F, RN-G).
+ */
 @Entity
-@Table(name = "AVANCE_CUATRI_META_FISICA")
+@Table(name = "AVANCE_CUATRI_META_FISICA",
+       uniqueConstraints = @UniqueConstraint(name = "UK_AVANCE_META_FIS_CUATRI", columnNames = {"ID_PROG_CUATRI_META_FIS", "CUATRIMESTRE"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,12 +40,16 @@ public class AvanceCuatriMetaFisica {
     private ProgCuatrimestralMetaFisica programacionMeta;
 
     @NotNull
-    @Column(name = "AVANCE_FISICO", nullable = false, precision = 18, scale = 2)
-    private BigDecimal avanceFisico;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "CUATRIMESTRE", nullable = false, length = 20)
+    private Cuatrimestre cuatrimestre;
 
     @NotNull
-    @Column(name = "PORCENTAJE_AVANCE", nullable = false, precision = 5, scale = 2)
-    private BigDecimal porcentajeAvance;
+    @Column(name = "AVANCE_CUATRIMESTRE", nullable = false, precision = 5, scale = 2)
+    private BigDecimal avanceCuatrimestre;
+
+    @Column(name = "OBSERVACIONES", length = 2000)
+    private String observaciones;
 
     @NotNull
     @Column(name = "FECHA_REGISTRO", nullable = false)

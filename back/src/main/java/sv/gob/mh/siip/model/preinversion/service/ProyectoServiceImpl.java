@@ -11,6 +11,7 @@ import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -80,9 +81,11 @@ public class ProyectoServiceImpl implements ProyectoService {
     private final NotificacionService notificacionService;
     private final RuntimeService runtimeService;
     private final TaskService taskService;
+    private final GeneradorCup generadorCup;
 
     private static final String CAMPO_OBLIGATORIO = "*Campo obligatorio";
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+    private static final int INTENTOS_MAXIMOS_CUP = 5;
 
     public ProyectoServiceImpl(ProyectoRepository proyectoRepository,
             SolicitudPreinversionRepository solicitudRepository,
@@ -98,7 +101,8 @@ public class ProyectoServiceImpl implements ProyectoService {
             ProyectoMapper mapper,
             NotificacionService notificacionService,
             RuntimeService runtimeService,
-            TaskService taskService) {
+            TaskService taskService,
+            GeneradorCup generadorCup) {
         this.proyectoRepository = proyectoRepository;
         this.solicitudRepository = solicitudRepository;
         this.comentarioRepository = comentarioRepository;
@@ -114,6 +118,7 @@ public class ProyectoServiceImpl implements ProyectoService {
         this.notificacionService = notificacionService;
         this.runtimeService = runtimeService;
         this.taskService = taskService;
+        this.generadorCup = generadorCup;
     }
 
     @Override
@@ -283,7 +288,7 @@ public class ProyectoServiceImpl implements ProyectoService {
         Proyecto entidad = buscarPorId(idProyecto);
         SolicitudPreinversion solicitud = solicitudAsignadaVigente(entidad, actor);
 
-        entidad.setCup(siguienteCup());
+        entidad = asignarCupConReintentos(entidad);
         entidad.setFechaCupAsignado(LocalDateTime.now(ZONA_EL_SALVADOR));
         entidad.setEstado(EstadoProyecto.CUP_ASIGNADO);
         entidad = proyectoRepository.save(entidad);
@@ -404,12 +409,22 @@ public class ProyectoServiceImpl implements ProyectoService {
         return usuarioRepository.findByNombreUsuario(entidad.getUsuarioCreacion()).orElse(null);
     }
 
-    /** CU-PRE-01.5, RN 2.8.c: siguiente CUP consecutivo de 5 digitos, partiendo de 10000. */
-    private String siguienteCup() {
-        int siguiente = proyectoRepository.findFirstByCupIsNotNullOrderByCupDesc()
-                .map(p -> Integer.parseInt(p.getCup()) + 1)
-                .orElse(10000);
-        return String.format("%05d", siguiente);
+    /**
+     * Reintenta {@link GeneradorCup#asignar(Proyecto)} si dos emisiones de CUP calculan el mismo
+     * "siguiente" valor a la vez (choque contra la unique constraint de {@code PROYECTO.CUP} al
+     * hacer flush) — ver Javadoc de {@link GeneradorCup}.
+     */
+    private Proyecto asignarCupConReintentos(Proyecto entidad) {
+        for (int intento = 1; intento <= INTENTOS_MAXIMOS_CUP; intento++) {
+            try {
+                return generadorCup.asignar(entidad);
+            } catch (DataIntegrityViolationException choqueDeConcurrencia) {
+                if (intento == INTENTOS_MAXIMOS_CUP) {
+                    throw choqueDeConcurrencia;
+                }
+            }
+        }
+        throw new IllegalStateException("No se pudo asignar el CUP tras " + INTENTOS_MAXIMOS_CUP + " intentos.");
     }
 
     private void exigirEstadoEditable(Proyecto entidad) {
