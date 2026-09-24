@@ -72,6 +72,9 @@ export function RevisionPre({
     }
   }, [puedeDevolver, idProyecto]);
 
+  /** Hay texto escrito que todavía no se ha guardado. */
+  const sinGuardar = comentario.trim() !== '' && !borradorGuardado;
+
   const guardarBorrador = () => {
     try {
       localStorage.setItem(claveBorrador(idProyecto), comentario);
@@ -170,11 +173,21 @@ export function RevisionPre({
             disabled={enviando}
           />
           {borradorGuardado && <output className="rp-aviso">{t('preinversion.revisionPre.borradorGuardado')}</output>}
+          {/* Con la observación escrita y sin guardar, devolver la mandaría a
+              medias: primero se guarda (Rocío, 24/09/2026). Sin observación —que
+              el CU admite— se puede devolver directamente. */}
+          {sinGuardar && <output className="rp-aviso">{t('preinversion.revisionPre.guardeAntesDeDevolver')}</output>}
           <div className="rp-acciones">
-            <button type="button" className="btn neutro" onClick={guardarBorrador} disabled={enviando}>
+            <button type="button" className="btn neutro" onClick={guardarBorrador} disabled={enviando || !sinGuardar}>
               {t('preinversion.registro.botonGuardar')}
             </button>
-            <button type="button" className="btn secundario" onClick={devolver} disabled={enviando}>
+            <button
+              type="button"
+              className="btn secundario"
+              onClick={devolver}
+              disabled={enviando || sinGuardar}
+              title={sinGuardar ? t('preinversion.revisionPre.guardeAntesDeDevolver') : undefined}
+            >
               {t('preinversion.revisionPre.botonDevolver')}
             </button>
           </div>

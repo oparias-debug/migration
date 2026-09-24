@@ -271,7 +271,9 @@
       "botonDevolver": "Devolver",
       "confirmarDevolver": "¿Está seguro de devolver la solicitud con estas observaciones?",
       "devuelta": "La solicitud ha sido devuelta con las observaciones registradas.",
-      "borradorGuardado": "Borrador guardado en este equipo. La observación se registra al pulsar «Devolver»."
+      "borradorGuardado": "Borrador guardado en este equipo. La observación se registra al pulsar «Devolver».",
+      "confirmarEnviar": "¿Está seguro de enviar esta respuesta a la DGICP?",
+      "guardeAntesDeDevolver": "Guarde la observación antes de devolver la solicitud."
     },
     "bandeja": {
       "titulo": "Bandeja Preinversión",
@@ -899,5 +901,16 @@
   },
   "pestanas": {
     "pendiente": "con campos pendientes"
+  },
+  "preinversionInicio": {
+    "titulo": "Preinversión",
+    "intro": "Elija el subproceso en el que va a trabajar. Siguen el orden del proceso: se empieza por la asignación del CUP y se avanza hasta la gestión del proyecto.",
+    "asignacionCup": "Crear la solicitud del Código Único de Proyecto y seguir su aprobación.",
+    "creacionRuta": "Definir la ruta de preinversión del proyecto y las etapas que va a desarrollar.",
+    "formulacion": "Formular y evaluar el proyecto: identificación, diagnóstico, estudios y presupuesto.",
+    "programacionProyecto": "Programar el proyecto una vez formulado.",
+    "gestionProyecto": "Gestionar el proyecto a lo largo de su ejecución.",
+    "generico": "Abrir el subproceso.",
+    "sinAcceso": "Su rol no tiene subprocesos de Preinversión habilitados."
   }
 }

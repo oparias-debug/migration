@@ -256,6 +256,9 @@ describe('ProyectoFormPage — Devolver (CU-PRE-01.5-devolver.feature)', () => {
     fireEvent.change(await screen.findByLabelText('Comentarios'), {
       target: { value: 'Falta justificar el monto estimado de inversión.' },
     });
+    // Con la observación sin guardar, "Devolver" está bloqueado: primero se guarda.
+    expect(screen.getByRole('button', { name: 'Devolver' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     fireEvent.click(screen.getByRole('button', { name: 'Devolver' }));
 
     await waitFor(() =>
@@ -577,5 +580,29 @@ describe('ProyectoFormPage — solicitud archivada', () => {
     expect(await screen.findByText(/está archivada/)).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Emitir CUP' })).not.toBeInTheDocument());
     expect(screen.queryByRole('button', { name: 'Devolver' })).not.toBeInTheDocument();
+  });
+
+  // Rocío, 24/09/2026: enviar la respuesta también pide confirmación, como
+  // devolver; antes se enviaba de una.
+  it('enviar la respuesta pide confirmación y no llama al back si se cancela', async () => {
+    rolesActivos = ['TECNICO_URP'];
+    obtenerProyecto.mockResolvedValue({
+      data: proyecto('OBSERVADO_DGICP_REGISTRO', [
+        {
+          idComentario: 1,
+          autor: { idUsuario: 9, nombreCompleto: 'Ana Pérez', rol: 'TECNICO_PRE' },
+          texto: 'Falta justificar el monto.',
+          fechaComentario: '2026-02-11T10:00:00',
+        },
+      ]),
+    });
+    confirmDialog.mockResolvedValue(false);
+
+    renderizar();
+    fireEvent.change(await screen.findByLabelText(/Respuesta/), { target: { value: 'Se corrigió el monto.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+    await waitFor(() => expect(confirmDialog).toHaveBeenCalled());
+    expect(responderObservacionCup).not.toHaveBeenCalled();
   });
 });

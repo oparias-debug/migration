@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -181,6 +181,7 @@ export function ProyectoFormPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
   const navigate = useNavigate();
+  const ubicacion = useLocation();
   const { id } = useParams<{ id: string }>();
   const idProyecto = idDeLaRuta(id);
   const esNuevo = idProyecto === undefined;
@@ -258,6 +259,34 @@ export function ProyectoFormPage() {
     esNuevo,
     estadoActual,
   );
+
+  /**
+   * Deja la pantalla a la altura de los botones de la parte inferior.
+   *
+   * Al crear una solicitud se navega a su ficha, así que la pantalla se vuelve
+   * a montar: en ese caso no basta con desplazarse ahora —el botón todavía no
+   * existe—, hay que hacerlo cuando el proyecto termine de cargar. Para eso
+   * queda la marca `bajarAlCargar`.
+   */
+  const irALasAcciones = () => {
+    // Los catálogos siguen llegando y el formulario crece mientras tanto: si se
+    // desplaza de inmediato, el destino se mueve debajo. Se espera a que la
+    // maquetación se asiente y se baja al final, que es donde están los botones.
+    setTimeout(() => {
+      const acciones = document.querySelector('.acciones-form');
+      if (acciones) acciones.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 350);
+  };
+  // La marca viaja en la navegación, no en una referencia: al pasar de
+  // /nuevo a /:id el componente se monta de nuevo y una referencia se perdería.
+  const bajarAlCargar = Boolean((ubicacion.state as { irAAcciones?: boolean } | null)?.irAAcciones);
+  useEffect(() => {
+    if (cargando || !bajarAlCargar) return;
+    irALasAcciones();
+    // Se limpia el estado para que un refresco no vuelva a desplazar la página.
+    navigate(ubicacion.pathname, { replace: true, state: null });
+  }, [cargando, bajarAlCargar, navigate, ubicacion.pathname]);
 
   const regresar = async () => {
     if (isDirty) {
@@ -359,6 +388,15 @@ export function ProyectoFormPage() {
       return;
     }
     setErrorRespuesta(undefined);
+
+    // "Devolver" pedía confirmación y "Enviar" no: se estandariza
+    // (Rocío, 24/09/2026).
+    const confirmado = await confirmDialog(t('preinversion.revisionPre.confirmarEnviar'), {
+      confirmButtonText: t('common.aceptar'),
+      cancelButtonText: t('common.cancelar'),
+    });
+    if (!confirmado) return;
+
     setGuardando(true);
 
     try {
@@ -454,9 +492,15 @@ export function ProyectoFormPage() {
       if (esNuevo) {
         const { data } = await preinversionApi.registrarProyecto({ proyectoRequest: payload });
         await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
+        // Al guardar por primera vez aparece "Solicitar CUP", al final de un
+        // formulario largo: la pantalla baja hasta los botones en vez de dejar
+        // al usuario buscándolos (Rocío, 24/09/2026).
+
         // Se sigue en la solicitud recién creada, no en el listado: así se puede
         // continuar trabajando y aparece "Solicitar CUP", que necesita el id.
-        navigate(`/preinversion/proyectos/${data.idProyecto}`, { replace: true });
+        // La ficha recién creada se abre ya desplazada hasta los botones, donde
+        // aparece "Solicitar CUP" (Rocío, 24/09/2026).
+        navigate(`/preinversion/proyectos/${data.idProyecto}`, { replace: true, state: { irAAcciones: true } });
         return;
       }
       if (idProyecto !== undefined) {
@@ -466,6 +510,7 @@ export function ProyectoFormPage() {
       // "Solicitar CUP" se habilite sin tener que salir y volver a entrar.
       reset(valores);
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
+      irALasAcciones();
     } catch (error_) {
       await manejarErrorDelBack(error_);
     } finally {

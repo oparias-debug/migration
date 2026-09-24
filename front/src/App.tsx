@@ -4,6 +4,7 @@ import { RequireAuth } from './auth/RequireAuth';
 import { AppLayout } from './layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
+import { PreinversionPage } from './pages/PreinversionPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProyectosPage } from './features/preinversion/proyectos/ProyectosPage';
@@ -61,6 +62,7 @@ export function App() {
             }
           >
             <Route path="/" element={<HomePage />} />
+            <Route path="/preinversion" element={<PreinversionPage />} />
 
             <Route path="/catalogos-generales" element={<CatalogosPage />} />
             <Route path="/catalogos-generales/:codigo" element={<CatalogoDetallePage />} />

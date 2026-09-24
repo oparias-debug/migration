@@ -12,7 +12,7 @@ import { useConteosProyecto } from './useConteosProyecto';
  * consulta por estado. No hay ningún número de ejemplo en pantalla.
  */
 const MODULOS_TARJETA = [
-  { clave: 'preinversion', icono: 'mod-preinversion', texto: 'menu.preinversion', desc: 'mod.preinversion.desc', color: 'var(--preinv-txt)', ruta: '/preinversion/proyectos' },
+  { clave: 'preinversion', icono: 'mod-preinversion', texto: 'menu.preinversion', desc: 'mod.preinversion.desc', color: 'var(--preinv-txt)', ruta: '/preinversion' },
   { clave: 'programacion', icono: 'mod-programacion', texto: 'menu.programacion', desc: 'mod.programacion.desc', color: 'var(--progra)', ruta: '/programacion/priorizacion' },
   { clave: 'ejecucion', icono: 'mod-ejecucion', texto: 'menu.ejecucion', desc: 'mod.ejecucion.desc', color: 'var(--ejec-txt)', ruta: '/ejecucion/actualizaciones' },
   { clave: 'seguimiento', icono: 'mod-seguimiento', texto: 'menu.seguimiento', desc: 'mod.seguimiento.desc', color: 'var(--segui)', ruta: '/seguimiento/proyectos' },
