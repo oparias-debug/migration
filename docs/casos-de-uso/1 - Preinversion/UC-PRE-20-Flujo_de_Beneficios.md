@@ -404,6 +404,8 @@ Técnico URP
 
 **Origen:** Sección "Reglas del Negocio" del documento CU-PRE-20.
 
+> ✅ RESUELTO (DN-02, [docs/decisiones-negocio.md](../../decisiones-negocio.md)): el redondeo se aplica solo a las filas de totales "Flujo de beneficios (precios de mercado)" y "Flujo de beneficios (precios ajustados)" del Anexo A.1, no a cada casilla de "Montos por período" del Anexo A.2. Así se respeta el ejemplo numérico del Anexo A.2 (882.00 / 970.20).
+
 ## RN05
 
 **Descripción:** La cantidad de períodos que se muestran en la tabla "Beneficios del proyecto" será igual a la cantidad de períodos que se muestran en la pantalla "Detalle del beneficio".
@@ -435,6 +437,8 @@ Técnico URP
 **Origen:** Sección "Reglas del Negocio" del documento CU-PRE-20.
 
 > ✅ RESUELTO (RQ-C-03, ronda 3): "usuarios internos" (RN09) y "usuarios centrales" (FA1.1.4, FA2.1.4, Anexo B) son sinónimos. El negocio confirmó que "usuarios internos" / "actores internos" / "usuarios centrales" corresponden a un solo grupo: cualquier usuario que se disponga dentro del Ministerio de Hacienda, independientemente de su rol. Esta misma equivalencia aplica en CU-PRE-17 ("actores internos") y en CU-PRE-21. Adicionalmente, el negocio confirmó que CEPA, CEL, ANDA, INDES e ISTU tienen visibilidad equivalente en CU-PRE-21 porque son instituciones que proyectan ingresos (no beneficios) y deben reportarlos para construir el flujo financiero — no porque pertenezcan al Ministerio de Hacienda; esa adición es propia de CU-PRE-21 y no extiende el grupo definido aquí. Ver entrada de glosario compartido correspondiente (pendiente de incorporación formal por el Analista de Consistencia). El control de visibilidad de precios ajustados definido en RN09 ya puede implementarse conforme a esta definición.
+
+> ⚠️ REEMPLAZADO (DN-01, [docs/decisiones-negocio.md](../../decisiones-negocio.md)): para la implementación, "usuario interno" es cualquier usuario cuyo rol no sea Técnico URP, sin importar su Institución. El Técnico URP nunca ve precios ajustados, FC ni valor de rescate ajustado; el Técnico PRE sí.
 
 ---
 

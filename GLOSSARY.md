@@ -4,7 +4,7 @@
 
 | Término | Definición | Casos de uso donde se usa |
 |---|---|---|
-| Usuarios internos / Usuarios centrales | Cualquier usuario que se disponga dentro del Ministerio de Hacienda, independientemente de su rol. No es un rol adicional distinto de los roles ya definidos (Técnico URP, Técnico PRE, etc.); es una categoría transversal que puede abarcar a cualquiera de ellos. | CU-PRE-17, CU-PRE-20, CU-PRE-21, CU-PRE-29 |
+| Usuarios internos / Usuarios centrales | Cualquier usuario cuyo rol no sea Técnico URP, sin importar su Institución ni su Unidad Ejecutora (decisión de negocio DN-01, ver [docs/decisiones-negocio.md](docs/decisiones-negocio.md); reemplaza la definición anterior de RQ-C-03, "cualquier usuario del Ministerio de Hacienda"). No es un rol adicional; es una categoría transversal. "Actores internos" es sinónimo. | CU-PRE-17, CU-PRE-18, CU-PRE-20, CU-PRE-21, CU-PRE-29 |
 | DGI (División de Gestión de la Inversión) | Nivel jerárquico interno/operativo (roles "Jefe DGI" / "Subjefe DGI"). Distinto y no intercambiable con DGICP. | CU-PRO-17, UC-OYM-01 |
 | DGICP (Dirección General de Inversión y Crédito Público) | Entidad completa a la que pertenece la DGI; nivel de autorización superior al de "Jefe DGI"/"Subjefe DGI". | CU-PRO-17, UC-OYM-01, CU-MPD-01 |
 | Coordinador PRE / Coordinador PRO / Coordinador SYMP | Tres roles de coordinación independientes entre sí (Preinversión / Programación y Análisis / Seguimiento y Monitoreo de Proyectos). Una misma persona puede o no ocuparlos simultáneamente, pero se modelan como tres permisos separados. | CU-PRO-01, CU-PRO-02, y en general todo el módulo de Programación |

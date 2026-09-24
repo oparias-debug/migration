@@ -1,50 +1,45 @@
 package sv.gob.mh.siip.controller;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import sv.gob.mh.siip.model.preinversion.service.BeneficiosProyectoService;
+import sv.gob.mh.siip.model.preinversion.beneficios.api.PreinversinFlujoDeBeneficiosApi;
+import sv.gob.mh.siip.model.preinversion.beneficios.dto.BeneficioDto;
+import sv.gob.mh.siip.model.preinversion.beneficios.dto.BeneficioRequestDto;
+import sv.gob.mh.siip.model.preinversion.beneficios.dto.BeneficiosDelProyectoDto;
+import sv.gob.mh.siip.model.preinversion.beneficios.dto.GuardarBeneficiosProyectoRequestDto;
+import sv.gob.mh.siip.model.preinversion.service.BeneficiosProyectoApiService;
 
-/**
- * Endpoints de CU-PRE-20: Flujo de Beneficios.
- */
+/** Adaptador HTTP del CU-PRE-20 definido por el contrato OpenAPI. */
 @RestController
-@RequestMapping("/proyectos/{idProyecto}/beneficios")
-public class BeneficiosProyectoController {
+public class BeneficiosProyectoController implements PreinversinFlujoDeBeneficiosApi {
 
-    private final BeneficiosProyectoService service;
+    private final BeneficiosProyectoApiService beneficiosProyectoService;
 
-    public BeneficiosProyectoController(BeneficiosProyectoService service) {
-        this.service = service;
+    public BeneficiosProyectoController(BeneficiosProyectoApiService beneficiosProyectoService) {
+        this.beneficiosProyectoService = beneficiosProyectoService;
     }
 
-    @GetMapping
-    public Map<String, Object> obtener(@PathVariable Long idProyecto) {
-        return service.obtenerBeneficios(idProyecto);
+    @Override
+    public ResponseEntity<BeneficiosDelProyectoDto> obtenerBeneficiosProyecto(Long idProyecto) {
+        return ResponseEntity.ok(beneficiosProyectoService.obtener(idProyecto));
     }
 
-    @PostMapping("/detalle")
-    public ResponseEntity<Map<String, Object>> registrar(@PathVariable Long idProyecto, @RequestBody Map<String, Object> request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.registrarBeneficio(idProyecto, request));
+    @Override
+    public ResponseEntity<BeneficioDto> registrarBeneficio(Long idProyecto, BeneficioRequestDto request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(beneficiosProyectoService.registrar(idProyecto, request));
     }
 
-    @DeleteMapping("/detalle/{idBeneficio}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long idProyecto, @PathVariable Long idBeneficio) {
-        service.eliminarBeneficio(idProyecto, idBeneficio);
+    @Override
+    public ResponseEntity<Void> eliminarBeneficio(Long idProyecto, Long idBeneficio) {
+        beneficiosProyectoService.eliminar(idProyecto, idBeneficio);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/guardado")
-    public Map<String, Object> guardar(@PathVariable Long idProyecto, @RequestBody Map<String, Object> request) {
-        return service.guardarConfiguracion(idProyecto, request);
+    @Override
+    public ResponseEntity<BeneficiosDelProyectoDto> guardarBeneficiosProyecto(Long idProyecto,
+            GuardarBeneficiosProyectoRequestDto request) {
+        return ResponseEntity.ok(beneficiosProyectoService.guardar(idProyecto, request));
     }
 }

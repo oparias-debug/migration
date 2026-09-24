@@ -75,7 +75,7 @@ public class PresupuestoOmService {
     public Map<String, Object> obtener(Long idProyecto) {
         Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
         exigirAlcanceUnidadEjecutora(usuario, proyecto(idProyecto));
-        return respuesta(idProyecto, esUsuarioInterno(usuario));
+        return respuesta(idProyecto, ActorContexto.esUsuarioInterno(usuario));
     }
 
     public Map<String, Object> configurar(Long idProyecto, Map<String, Object> r) {
@@ -102,7 +102,7 @@ public class PresupuestoOmService {
         c.setVidaUtil(vidaUtil == null ? null : vidaUtil.intValue());
         c.setTasaCrecimientoCostos(tasa == null ? null : tasa.doubleValue());
         configuraciones.save(c);
-        return respuesta(idProyecto, esUsuarioInterno(usuario));
+        return respuesta(idProyecto, ActorContexto.esUsuarioInterno(usuario));
     }
 
     public ActividadOm registrarActividad(Long idProyecto, String tipoCostoTabla, Map<String, Object> r) {
@@ -165,21 +165,7 @@ public class PresupuestoOmService {
         Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
-        return respuesta(idProyecto, esUsuarioInterno(usuario));
-    }
-
-    /**
-     * RN09: la tabla de precios ajustados solo es visible para "Usuarios Internos". Ese término
-     * nunca heredó en este CU la resolución de negocio ya aplicada en CU-PRE-17/20/21 (RQ-C-03:
-     * "cualquier usuario del Ministerio de Hacienda, independientemente de su rol"), y no existe
-     * un registro de catálogo para identificar esa institución directamente. Se usa como proxy la
-     * misma convención ya aplicada en {@code UsuarioDevSeeder}: los roles centrales (Técnico PRE,
-     * Coordinador PRE, Administrador...) se siembran sin Institución, a diferencia del Técnico
-     * URP, que siempre está adscrito a una. [SUPUESTO] Confirmar con negocio si corresponde
-     * aplicar aquí el mismo criterio literal de RQ-C-03.
-     */
-    private static boolean esUsuarioInterno(Usuario usuario) {
-        return usuario.getInstitucion() == null;
+        return respuesta(idProyecto, ActorContexto.esUsuarioInterno(usuario));
     }
 
     public int vidaUtil(Long idProyecto) {

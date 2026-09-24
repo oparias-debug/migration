@@ -491,7 +491,19 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>generate-administracion-cu01-api</id>
+						<id>generate-preinversion-cu20-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-20.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.beneficios.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.beneficios.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+                        <id>generate-administracion-cu01-api</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>

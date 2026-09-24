@@ -1,0 +1,395 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-20 Flujo de Beneficios
+  version: 1.0.0
+  description: "Fragmento OpenAPI derivado de CU-PRE-20 \"Flujo de Beneficios\" (UC-PRE-20-Flujo_de_Beneficios.md) y sus 5 historias BDD. Actor principal: Técnico URP. Actor secundario de solo lectura: Técnico PRE. \"Usuarios Internos\"/\"usuarios centrales\" (RN09): decisión de negocio DN-01 (docs/decisiones-negocio.md), califica como interno cualquier actor cuyo rol no sea Técnico URP, sin importar su Institución; mismo criterio para todo el sistema (`ActorContexto.esUsuarioInterno`). RN04 (redondeo hacia arriba a múltiplos de 5 o 10): decisión de negocio DN-02, se aplica solo a las filas de totales `flujoBeneficiosPrecioMercadoPorPeriodo`/`flujoBeneficiosPrecioAjustadoPorPeriodo`; los montos por período de cada beneficio conservan 2 decimales, coherente con el ejemplo del Anexo A.2.\n⚠️ Fórmulas parcialmente ilegibles en el documento fuente (pasos FA01 1.4, FA02 2.2/2.3), pero — a diferencia de CU-PRE-18 — el mockup del Anexo A.2 sí trae un ejemplo numérico completo y consistente. Se documentan dos patrones con distinto nivel de confianza, sin confirmarlos como fórmula generalizada (mismo criterio que la propia BDD, que solo reproduce los valores concretos del ejemplo): - `montoPrecioAjustado = montoPrecioMercado × FC`: alta confianza — es\n  el mismo patrón usado sin ambigüedad en CU-PRE-03.5,\
+    \ CU-PRE-11,\n  CU-PRE-17 y CU-PRE-18, y el ejemplo lo confirma exactamente\n  (800×1.10=880, 840×1.10=924, 882×1.10=970.20).\n- Proyección de \"Monto Precios de Mercado\" en modo Automático (Período\n  2 en adelante): patrón de crecimiento compuesto simple sugerido por\n  el ejemplo (800, 840=800×1.05, 882=840×1.05), pero sin el mismo nivel\n  de respaldo cruzado que el anterior — se modela igual como campo\n  calculado, con una nota de confianza menor.\nVer contrato-CU-PRE-20.md para el detalle completo de esta distinción.\n"
+paths:
+  /proyectos/{idProyecto}/beneficios:
+    parameters:
+    - name: idProyecto
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    get:
+      operationId: obtenerBeneficiosProyecto
+      summary: Consultar la pantalla "Beneficios del Proyecto" (Anexo A.1)
+      description: '`vidaUtil` proviene de CU-PRE-18 (solo lectura aquí, RN05). Si no está configurada, el sistema muestra cero períodos. El Técnico PRE consulta proyectos de todas las Unidades Ejecutoras; el Técnico URP queda limitado a la suya. `flujoBeneficiosPrecioAjustadoPorPeriodo`, `fcTipoBien` y `valorRescateAjustado` son `nullable`: el servidor los puebla solo si el actor autenticado califica como "Usuarios Internos"/"usuarios centrales" (RN09, DN-01 — cualquier rol distinto de Técnico URP; en la práctica, el Técnico PRE los recibe y el Técnico URP los ve `null`). Es una regla de visibilidad de campo ortogonal a `x-roles`, mismo criterio que CU-PRE-18. Los totales `flujoBeneficiosPrecio*PorPeriodo` vienen redondeados hacia arriba a múltiplos de 5 (RN04, DN-02).
+
+        '
+      tags:
+      - Preinversión - Flujo de Beneficios
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      - Técnico PRE
+      responses:
+        '200':
+          description: Beneficios del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeneficiosDelProyecto'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '403':
+          description: 'El actor autenticado no es Técnico URP ni Técnico PRE, o (Técnico URP/Técnico PRE) el proyecto no está dentro de su alcance de Unidad Ejecutora (RN01/RN02). Inferido de `x-roles`; sin escenario BDD negativo explícito.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '404':
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /proyectos/{idProyecto}/beneficios/detalle:
+    parameters:
+    - name: idProyecto
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    post:
+      operationId: registrarBeneficio
+      summary: Registrar un beneficio (botón "Agregar Beneficio" + "Guardar" en Anexo A.2, FA01/FA02, FA1.1/FA2.1)
+      description: 'Igual que `registrarMacroactividad` (CU-PRE-17) y `registrarActividad` (CU-PRE-18): cada beneficio se crea de forma individual, no como reemplazo de un array completo. "Guardar" **sí rechaza** con 400 en tres casos confirmados por escenarios BDD explícitos ("el sistema no permite guardar"): falta `parametro`, falta `tipoIngreso`, o (en modo Manual) ningún período tiene `montoPrecioMercado` registrado. El botón "Salir" no tiene endpoint: descarte puro de cliente. RN05: la cantidad de filas de `montosPrecioMercadoPorPeriodo` (modo Manual) corresponde a la "Vida útil" de CU-PRE-18; el servidor rechaza con 400 si se envían más montos que períodos de vida útil. Si la vida útil se reduce después, los montos sobrantes no se muestran ni se suman.
+
+        '
+      tags:
+      - Preinversión - Flujo de Beneficios
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BeneficioRequest'
+      responses:
+        '201':
+          description: 'Beneficio registrado (mensaje "¡Guardado!", Anexo A.3); trasladado a la sección de su Tipo de Beneficio en `obtenerBeneficiosProyecto` (RN08).
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Beneficio'
+        '400':
+          description: 'Falta `parametro`, falta `tipoIngreso`, o (modo Manual) ningún período tiene `montoPrecioMercado` registrado — los tres con escenario BDD explícito, sin mensaje literal documentado. También si se envían más `montosPrecioMercadoPorPeriodo` que períodos de vida útil (RN05).
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '403':
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '404':
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /proyectos/{idProyecto}/beneficios/detalle/{idBeneficio}:
+    parameters:
+    - name: idProyecto
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    - name: idBeneficio
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    delete:
+      operationId: eliminarBeneficio
+      summary: Eliminar una fila de beneficio (RN03)
+      tags:
+      - Preinversión - Flujo de Beneficios
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      responses:
+        '204':
+          description: Beneficio eliminado.
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '403':
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '404':
+          description: El proyecto o el beneficio no existen.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  /proyectos/{idProyecto}/beneficios/guardado:
+    parameters:
+    - name: idProyecto
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    post:
+      operationId: guardarBeneficiosProyecto
+      summary: Guardar la pantalla "Beneficios del Proyecto" (botón "Guardar" en Anexo A.1, FA03)
+      description: 'Cuerpo con los únicos dos campos de Anexo A.1 no gestionados por `registrarBeneficio`/`eliminarBeneficio`: "Valor de rescate" y "Tipo de bien". Sin 400: no hay escenario BDD que exija estos campos como obligatorios a este nivel (a diferencia del modal de Detalle del Beneficio).
+
+        '
+      tags:
+      - Preinversión - Flujo de Beneficios
+      security:
+      - bearerAuth: []
+      x-roles:
+      - Técnico URP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                valorRescate:
+                  type: number
+                  format: double
+                tipoBien:
+                  $ref: '#/components/schemas/TipoBien'
+      responses:
+        '200':
+          description: 'Información guardada (mensaje "¡Guardado! Sus datos han sido guardados exitosamente.", Anexo A.3); el modal y su "Aceptar" son de cliente.
+
+            '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeneficiosDelProyecto'
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '403':
+          description: El actor autenticado no es Técnico URP (inferido de `x-roles`).
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '404':
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TipoBeneficio:
+      type: string
+      description: Catálogo "Tipo de Beneficio", listado fijo, sin nota de administración externa.
+      enum:
+      - BENEFICIOS_DIRECTOS
+      - BENEFICIOS_INDIRECTOS
+      - EXTERNALIDADES
+    TipoIngreso:
+      type: string
+      description: '"Tipo de ingreso" (mockup) / "Proyectada" (paso 4 del Flujo Básico, nomenclatura no unificada por el propio CU). Se usa "Automático", mismo criterio que el propio CU-PRE-20.md.
+
+        '
+      enum:
+      - MANUAL
+      - AUTOMATICO
+    TipoBien:
+      type: string
+      description: 'Catálogo "Tipo de bienes (Valor de rescate)", listado fijo (4 valores, todos con FC=1.00 según el documento), sin nota de administración externa por la DGICP — a diferencia de "Parámetros".
+
+        '
+      enum:
+      - EQUIPOS
+      - EDIFICIOS
+      - TERRENOS
+      - VEHICULOS
+    MontoPeriodoBeneficio:
+      type: object
+      description: 'Monto de un beneficio para un período específico (lectura). `montoPrecioMercado` para Período 1 siempre es un valor conocido (ingresado manualmente, o igual a `montoPeriodo1` en modo Automático); para Período 2 en adelante en modo Automático, es un valor calculado con confianza menor — ver info.description del archivo y contrato-CU-PRE-20.md.
+
+        '
+      properties:
+        periodo:
+          type: integer
+        montoPrecioMercado:
+          type: number
+          format: double
+          nullable: true
+        montoPrecioAjustado:
+          type: number
+          format: double
+          nullable: true
+          description: 'Calculado como montoPrecioMercado × FC del parámetro seleccionado (alta confianza — ver info.description del archivo). Nulo también si el actor no califica como "Usuarios Internos" (RN09, DN-01): siempre nulo para el Técnico URP, también en la respuesta de `registrarBeneficio`. No se redondea a múltiplos de 5 (DN-02: RN04 solo aplica a los totales).
+
+            '
+    BeneficioRequest:
+      type: object
+      description: 'Cuerpo de `registrarBeneficio`. `montoPeriodo1`/ `tasaCrecimientoProyectado` solo aplican si `tipoIngreso` = AUTOMATICO; `montosPrecioMercadoPorPeriodo` solo aplica si `tipoIngreso` = MANUAL (uno por período, según la Vida útil de CU-PRE-18) — el servidor calcula el resto según corresponda.
+
+        '
+      properties:
+        tipoBeneficio:
+          $ref: '#/components/schemas/TipoBeneficio'
+        nombreBeneficio:
+          type: string
+        parametro:
+          type: string
+          description: Código tomado de GET /catalogos/parametros-beneficio.
+        tipoIngreso:
+          $ref: '#/components/schemas/TipoIngreso'
+        montoPeriodo1:
+          type: number
+          format: double
+          description: Solo modo Automático.
+        tasaCrecimientoProyectado:
+          type: number
+          format: double
+          description: Porcentaje. Solo modo Automático.
+        montosPrecioMercadoPorPeriodo:
+          type: array
+          description: Solo modo Manual; uno por período (RN05).
+          items:
+            type: number
+            format: double
+            nullable: true
+    Beneficio:
+      type: object
+      description: Beneficio registrado (lectura).
+      required:
+      - idBeneficio
+      - tipoBeneficio
+      - tipoIngreso
+      - montosPorPeriodo
+      properties:
+        idBeneficio:
+          type: integer
+          format: int64
+        tipoBeneficio:
+          $ref: '#/components/schemas/TipoBeneficio'
+        nombreBeneficio:
+          type: string
+          nullable: true
+        parametro:
+          $ref: '../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/ParametroResumen'
+        tipoIngreso:
+          $ref: '#/components/schemas/TipoIngreso'
+        montoPeriodo1:
+          type: number
+          format: double
+          nullable: true
+        tasaCrecimientoProyectado:
+          type: number
+          format: double
+          nullable: true
+        montosPorPeriodo:
+          type: array
+          items:
+            $ref: '#/components/schemas/MontoPeriodoBeneficio'
+    BeneficiosDelProyecto:
+      type: object
+      description: Beneficios del proyecto (Anexo A.1, lectura).
+      required:
+      - idProyecto
+      - beneficiosDirectos
+      - beneficiosIndirectos
+      - externalidades
+      properties:
+        idProyecto:
+          type: integer
+          format: int64
+        vidaUtil:
+          type: integer
+          nullable: true
+          description: Proveniente de CU-PRE-18 (RN05); solo lectura aquí.
+        beneficiosDirectos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Beneficio'
+        beneficiosIndirectos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Beneficio'
+        externalidades:
+          type: array
+          items:
+            $ref: '#/components/schemas/Beneficio'
+        flujoBeneficiosPrecioMercadoPorPeriodo:
+          type: array
+          description: Total por período de todos los beneficios a precios de mercado, redondeado hacia arriba a múltiplos de 5 (RN04, DN-02). Una posición por período de la vida útil (RN05).
+          items:
+            type: number
+            format: double
+        flujoBeneficiosPrecioAjustadoPorPeriodo:
+          type: array
+          nullable: true
+          description: Total por período a precios ajustados, redondeado hacia arriba a múltiplos de 5 (RN04, DN-02). Nulo si el actor no califica como "Usuarios Internos" (RN09, DN-01 — siempre nulo para el Técnico URP).
+          items:
+            type: number
+            format: double
+        valorRescate:
+          type: number
+          format: double
+          nullable: true
+        tipoBien:
+          type: string
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/TipoBien'
+        fcTipoBien:
+          type: number
+          format: double
+          nullable: true
+          description: Nulo si el actor no califica como "Usuarios Internos" (RN09, DN-01 — siempre nulo para el Técnico URP).
+        valorRescateAjustado:
+          type: number
+          format: double
+          nullable: true
+          description: 'Calculado como valorRescate × fcTipoBien. Nulo también si el actor no califica como "Usuarios Internos" (RN09, DN-01 — siempre nulo para el Técnico URP).
+
+            '

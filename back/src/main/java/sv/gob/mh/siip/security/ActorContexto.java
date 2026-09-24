@@ -65,6 +65,15 @@ public class ActorContexto {
                 "El rol " + usuario.getRol() + " no tiene permiso para realizar esta accion.");
     }
 
+    /**
+     * "Usuarios Internos" / "usuarios centrales" (RN09 de CU-PRE-17/18/20/21, RQ-C-03): decisión de
+     * negocio, cualquier usuario cuyo rol no sea Técnico URP. Controla la visibilidad de precios
+     * ajustados, FC y valor de rescate ajustado.
+     */
+    public static boolean esUsuarioInterno(Usuario usuario) {
+        return usuario.getRol() != RolUsuario.TECNICO_URP;
+    }
+
     private String headerUsuarioActual() {
         try {
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())

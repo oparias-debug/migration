@@ -45,7 +45,9 @@ class PresupuestoOmServiceTest {
         insumosTipo = mock(InsumoTipoRepository.class);
         actor = mock(ActorContexto.class);
         Usuario usuario = Usuario.builder().rol(RolUsuario.TECNICO_URP).build();
-        when(actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE)).thenReturn(usuario);
+        // Consulta como Técnico PRE (usuario interno, RN09) para poder verificar los precios ajustados.
+        when(actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE))
+                .thenReturn(Usuario.builder().rol(RolUsuario.TECNICO_PRE).build());
         when(actor.exigirRol(RolUsuario.TECNICO_URP)).thenReturn(usuario);
         when(proyectos.findById(7L)).thenReturn(Optional.of(Proyecto.builder().id(7L).build()));
         service = new PresupuestoOmService(proyectos, configuraciones, actividades, insumosTipo, actor);
