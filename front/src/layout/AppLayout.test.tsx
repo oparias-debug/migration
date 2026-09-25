@@ -18,12 +18,12 @@ const anchoDe = (px: number) => {
   fireEvent(window, new Event('resize'));
 };
 
-const montar = () =>
+const montar = (ruta = '/') =>
   render(
-    <MemoryRouter initialEntries={['/']}>
+    <MemoryRouter initialEntries={[ruta]}>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<p>contenido</p>} />
+          <Route path="*" element={<p>contenido</p>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -74,5 +74,44 @@ describe('AppLayout · el botón ☰', () => {
   it('el menú lateral conserva su propio botón de contraer', () => {
     montar();
     expect(screen.getAllByRole('button', { name: /Contraer menú/ }).length).toBeGreaterThan(1);
+  });
+});
+
+/**
+ * Rocío, 24/09/2026: desde cualquiera de los cinco subprocesos hay que poder
+ * volver al menú de Preinversión sin usar el "Atrás" del navegador.
+ */
+describe('AppLayout · volver al menú del macroproceso', () => {
+  beforeEach(() => anchoDe(1440));
+
+  it.each([
+    ['1.1 Asignación CUP', '/preinversion/proyectos'],
+    ['1.2 Creación ruta de preinversión', '/preinversion/creacion-ruta'],
+    ['1.3 Formulación y evaluación', '/preinversion/formulacion'],
+    ['1.4 Programación del proyecto', '/preinversion/programacion-proyecto'],
+    ['1.5 Gestión del proyecto', '/preinversion/gestion-proyecto'],
+  ])('%s ofrece la vuelta a Preinversión', (_nombre, ruta) => {
+    montar(ruta);
+    expect(screen.getByRole('link', { name: /Volver a Preinversión/ })).toHaveAttribute('href', '/preinversion');
+  });
+
+  it('también desde un paso de un proyecto, que es donde uno se pierde', () => {
+    montar('/preinversion/proyectos/7/identificacion');
+    expect(screen.getByRole('link', { name: /Volver a Preinversión/ })).toBeInTheDocument();
+  });
+
+  it('la banda de ruta lleva al mismo sitio', () => {
+    montar('/preinversion/creacion-ruta');
+    expect(screen.getByRole('link', { name: 'Preinversión' })).toHaveAttribute('href', '/preinversion');
+  });
+
+  it('en el propio menú de Preinversión no se ofrece volver a sí mismo', () => {
+    montar('/preinversion');
+    expect(screen.queryByRole('link', { name: /Volver a/ })).not.toBeInTheDocument();
+  });
+
+  it('fuera de Preinversión no aparece', () => {
+    montar('/programacion/pap/avance-metas');
+    expect(screen.queryByRole('link', { name: /Volver a/ })).not.toBeInTheDocument();
   });
 });

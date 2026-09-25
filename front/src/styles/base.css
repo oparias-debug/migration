@@ -417,6 +417,13 @@ tbody tr:hover td { background: var(--azul-suave); }
    fila crítica se leía igual que cualquier otra. */
 .e-error  { color: var(--error); }
 
+/* Vuelta al menú del macroproceso. Va suelta sobre el contenido, alineada con
+   él, para que se vea al entrar sin competir con el título de la pantalla. */
+.volver-modulo {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 16px; text-decoration: none;
+}
+
 /* ----------------------------------------------------------------- FILTROS -- */
 .filtros {
   display: flex; gap: 12px; flex-wrap: wrap; padding: 16px;

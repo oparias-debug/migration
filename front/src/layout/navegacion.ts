@@ -60,6 +60,9 @@ export const MODULOS: readonly Modulo[] = [
     clave: 'preinversion',
     icono: 'menu-preinversion',
     texto: 'menu.preinversion',
+    // Tiene pantalla propia (PreinversionPage) además de submenú: es el menú de
+    // los cinco subprocesos, y desde cualquier pantalla de dentro se vuelve a él.
+    ruta: '/preinversion',
     submenu: [
       // 1.1 Asignación CUP: el Técnico URP crea la solicitud (Registro de Proyecto)
       // y la DGICP asigna y aprueba (Bandeja). Cada rol entra por la suya.
@@ -200,7 +203,11 @@ function ubicarComoPaso(pathname: string): UbicacionMenu | null {
         modulo,
         sub,
         titulo: paso.paso.texto,
-        tramos: [{ texto: modulo.texto }, { texto: sub.texto, ruta: sub.ruta }, { texto: paso.paso.texto }],
+        tramos: [
+          { texto: modulo.texto, ruta: modulo.ruta },
+          { texto: sub.texto, ruta: sub.ruta },
+          { texto: paso.paso.texto },
+        ],
       };
     }
   }
@@ -220,7 +227,7 @@ function ubicarComoPantalla(pathname: string): UbicacionMenu | null {
   }
   if (!mejor) return null;
   const { modulo, sub, pantalla } = mejor;
-  const base: Tramo[] = [{ texto: modulo.texto }];
+  const base: Tramo[] = [{ texto: modulo.texto, ruta: modulo.ruta }];
   if (sub.texto !== pantalla.texto) base.push({ texto: sub.texto });
   if (pathname === pantalla.ruta) {
     return { modulo, sub, titulo: pantalla.texto, tramos: [...base, { texto: pantalla.texto }] };
@@ -245,6 +252,9 @@ export function ubicarEnMenu(pathname: string): UbicacionMenu | null {
   if (pathname === '/') return { modulo: inicio, sub: null, titulo: inicio.texto, tramos: [{ texto: inicio.texto }] };
   const ubicacion = ubicarComoPaso(pathname) ?? ubicarComoPantalla(pathname);
   if (ubicacion) return ubicacion;
-  const suelto = MODULOS.find((m) => !m.submenu && m.ruta && m.ruta !== '/' && coincide(pathname, m.ruta));
+  // La pantalla de entrada de un módulo (Preinversión) o un módulo sin submenú
+  // (Banco de Proyectos, Reportes). Va después de las pantallas para que una
+  // ruta de dentro gane sobre la del módulo que la contiene.
+  const suelto = MODULOS.find((m) => m.ruta && m.ruta !== '/' && coincide(pathname, m.ruta));
   return suelto ? { modulo: suelto, sub: null, titulo: suelto.texto, tramos: [{ texto: suelto.texto }] } : null;
 }

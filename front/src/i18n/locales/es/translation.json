@@ -879,7 +879,8 @@
   "ruta": {
     "migas": "Ruta de navegación",
     "nuevo": "Nuevo registro",
-    "detalle": "Detalle"
+    "detalle": "Detalle",
+    "volverA": "Volver a {{modulo}}"
   },
   "inicio": {
     "modulos": "Módulos principales",
