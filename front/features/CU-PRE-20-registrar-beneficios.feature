@@ -62,7 +62,3 @@ Característica: Registrar los beneficios de un proyecto
     Dado que quien consulta es el Técnico URP
     Entonces no se muestran el flujo a precios ajustados, el factor de corrección ni el valor de rescate ajustado
     Pero sí se muestran cuando quien consulta es el Técnico PRE
-
-  # ⚠️ Pendiente con el equipo de backend: el contrato declara `parametro` como el objeto
-  # del catálogo (código, nombre y factor de corrección) y el servidor devuelve solo su
-  # nombre como texto. La pantalla acepta las dos formas para no dejar la columna vacía.

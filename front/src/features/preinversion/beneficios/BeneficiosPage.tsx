@@ -132,12 +132,7 @@ export function BeneficiosPage() {
     }
   };
 
-  /**
-   * El contrato declara `parametro` como el objeto del catálogo (código, nombre
-   * y factor de corrección), pero el servidor devuelve hoy sólo su nombre como
-   * texto. Se acepta cualquiera de las dos formas para que la columna no quede
-   * vacía; reportado a Cristian.
-   */
+  /** Nombre del parámetro, venga como objeto del catálogo o como texto. */
   const nombreParametro = (parametro: Beneficio['parametro']): string =>
     (typeof parametro === 'string' ? parametro : parametro?.nombre) || '—';
 

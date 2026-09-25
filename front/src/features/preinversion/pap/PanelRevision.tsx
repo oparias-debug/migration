@@ -29,9 +29,7 @@ const ROLES_DGICP = ['TECNICO_PRE', 'COORDINADOR_PRE'];
  * edita qué: las observaciones sólo el Técnico o Coordinador PRE, la respuesta
  * sólo el Técnico URP; cada quien ve el texto del otro en sólo lectura.
  *
- * El contrato no expone un GET del recurso de revisión —sólo lo devuelven las
- * propias acciones—, así que el panel arranca vacío y se queda con lo último
- * que respondió el servidor. Pendiente con Cristian.
+ * El panel arranca vacío y se queda con lo último que respondió el servidor.
  */
 export function PanelRevision({ clave, acciones, alCambiar }: PanelProps) {
   const { t } = useTranslation();

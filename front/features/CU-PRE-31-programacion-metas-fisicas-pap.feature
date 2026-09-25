@@ -53,7 +53,3 @@ Característica: Programación por Meta Física Cuatrimestral del PAP
   Escenario: Generar el reporte de metas físicas
     Cuando el actor hace clic en "Generar reporte"
     Entonces el sistema genera el reporte del año para la unidad ejecutora
-
-  # ⚠️ Pendiente con el equipo de backend: el contrato no expone una consulta del recurso de
-  # revisión —las observaciones y la respuesta solo vuelven como resultado de las propias
-  # acciones—, así que al entrar a la pantalla no se puede mostrar lo ya escrito.

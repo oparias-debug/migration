@@ -193,11 +193,9 @@ export function ProyectoFormPage() {
    * La solicitud de CUP de este proyecto está archivada.
    *
    * El Coordinador PRE puede archivar una solicitud (CU-PRE-02) sin que cambie
-   * el estado del proyecto, y `Proyecto` no trae ese dato: la pantalla seguía
-   * ofreciendo "Devolver" y "Emitir CUP" y el back los rechazaba con un
-   * mensaje que contradecía a la franja azul —"archivada" frente a
-   * "Enviado_DGICP"— (Rocío, pruebas del 21/09/2026). Hasta que el contrato lo
-   * exponga, se aprende del 409 y la pantalla lo dice y deja de ofrecerlos.
+   * el estado del proyecto, y `Proyecto` no trae ese dato, así que la pantalla
+   * ofrecía acciones que ya no correspondían (Rocío, pruebas del 21/09/2026).
+   * Se reconoce por el 409 y se dejan de ofrecer.
    */
   const [solicitudArchivada, setSolicitudArchivada] = useState(false);
   const [errorRespuesta, setErrorRespuesta] = useState<string | undefined>();
@@ -319,16 +317,12 @@ export function ProyectoFormPage() {
    */
   const manejarErrorDelBack = async (fallo: unknown) => {
     const error = toErrorApi(fallo);
-    // El servidor rechaza devolver o emitir el CUP cuando la solicitud está
-    // asignada a otro Técnico PRE. Su mensaje es correcto pero no dice qué
-    // hacer; la pantalla no puede saberlo de antemano porque `Proyecto` no trae
-    // a quién está asignada (Rocío, 24/09/2026). Pedido a Cristian ese dato.
+    // Solicitud asignada a otro Técnico PRE: se traduce el rechazo a un aviso
+    // que dice qué hacer (Rocío, 24/09/2026).
     if (/no fue asignada al T[eé]cnico PRE/i.test(error.mensaje ?? '')) {
       await Swal.fire({ icon: 'info', text: t('preinversion.registro.asignadaAOtroTecnico') });
       return;
     }
-    // Se reconoce por el mensaje porque el back usa un único código de
-    // conflicto de estado; pedido a Cristian un dato propio en el contrato.
     if (error.clase === 'conflicto' && /archivad/i.test(error.mensaje ?? '')) setSolicitudArchivada(true);
     const porCampo = erroresPorCampo(error);
 

@@ -37,15 +37,7 @@ interface PantallaProps<D, F extends Record<string, unknown>> {
   readonly pregunta?: string;
   /** Rótulo del total calculado por el servidor. */
   readonly total?: string;
-  /**
-   * Empezar con la pantalla vacía si la consulta falla.
-   *
-   * CU-PRE-14: el servidor responde 500 —una RuntimeException— cuando el
-   * proyecto todavía no tiene análisis ambiental, que es el caso de toda
-   * primera visita; guardar sí lo crea, y a partir de ahí la consulta
-   * funciona. Con esto la pantalla se puede usar; pedido a Cristian que
-   * devuelva un análisis vacío, como hace CU-PRE-16.
-   */
+  /** Empezar con la pantalla vacía si la consulta falla. */
   readonly vacioSiFalla?: boolean;
   /** Acción del botón "Siguiente", si el CU la define. */
   readonly siguiente?: { readonly etiqueta: string; readonly accion: (idProyecto: number) => Promise<void>; readonly destino: string };

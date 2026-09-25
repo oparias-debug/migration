@@ -32,8 +32,3 @@ Característica: Registrar el análisis ambiental de un proyecto
     Dado que el proyecto nunca ha guardado su análisis ambiental
     Cuando el Técnico URP entra a la pantalla
     Entonces el sistema muestra la pantalla vacía y lista para registrar
-
-  # ⚠️ Pendiente con el equipo de backend: la consulta responde 500 —una excepción, no un
-  # análisis vacío— cuando el proyecto todavía no tiene análisis ambiental, que es el caso de
-  # toda primera visita. El frontend lo trata como pantalla vacía para que se pueda registrar;
-  # se pidió que devuelva un análisis vacío, como ya hace CU-PRE-16.

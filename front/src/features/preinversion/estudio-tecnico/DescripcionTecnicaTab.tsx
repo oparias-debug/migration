@@ -50,11 +50,7 @@ const aValores = (datos: DescripcionTecnica): Valores => ({
 
 const vacia = (fila: FilaTecnica) => Object.values(fila).every((v) => v.trim() === '');
 
-/**
- * El contrato no exige ningún campo, pero el back sí: una fila sin componente
- * revienta con 500 (Componente.nombre es @NotBlank). Hasta que eso se corrija,
- * se avisa aquí en vez de dejar que el usuario reciba un error genérico.
- */
+/** Una fila con datos necesita componente: se avisa en el campo, no con un error genérico. */
 const sinComponente = (fila: FilaTecnica) => !vacia(fila) && fila.componente.trim() === '';
 
 const conFilaInicial = (filas: FilaTecnica[], puedeEditar: boolean) =>
