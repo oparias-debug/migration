@@ -18,6 +18,7 @@ import {
   CatlogosBandejaPreinversinApi,
   CatlogosSeleccinYRegistroDeEtapasApi,
   CatlogosDescripcinTcnicaApi,
+  CatlogosFlujoDeBeneficiosApi,
 } from './generated/administracion-catalogos';
 import { PreinversinOperacinYMantenimientoApi } from './generated/preinversion-presupuesto-om';
 import { PreinversinAnlisisAmbientalApi } from './generated/preinversion-analisis-ambiental';
@@ -28,6 +29,7 @@ import { PreinversinProgramacinFinancieraPAPApi } from './generated/preinversion
 import { PreinversinProgramacinDeMetasFsicasPAPApi } from './generated/preinversion-programacion-metas';
 import { PreinversinAvanceFinancieroPAPApi } from './generated/preinversion-avance-financiero';
 import { PreinversinAvanceDeMetasFsicasPAPApi } from './generated/preinversion-avance-metas';
+import { PreinversinFlujoDeBeneficiosApi } from './generated/preinversion-beneficios';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -242,4 +244,17 @@ export type {
   RevisionAvancePAP,
 } from './generated/preinversion-avance-metas';
 export type { EstudioProgramacionPAP } from './generated/preinversion-programacion-financiera';
+
+// CU-PRE-20 (Flujo de Beneficios). El catálogo de parámetros tiene su propio tag
+// en CU-ADM-02, como los insumos de CU-PRE-17.
+export const beneficiosApi = new PreinversinFlujoDeBeneficiosApi(undefined, undefined, preinversionAxios);
+export const catalogoParametrosApi = new CatlogosFlujoDeBeneficiosApi(undefined, undefined, preinversionAxios);
+export { TipoBeneficio, TipoIngreso, TipoBien } from './generated/preinversion-beneficios';
+export type {
+  Beneficio,
+  BeneficioRequest,
+  BeneficiosDelProyecto,
+  MontoPeriodoBeneficio,
+} from './generated/preinversion-beneficios';
+export type { ParametroResumen } from './generated/administracion-catalogos';
 

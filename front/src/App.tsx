@@ -22,6 +22,7 @@ import { IdentificacionPage } from './features/preinversion/identificacion/Ident
 import { PasosProyectoLayout } from './features/preinversion/pasos/PasosProyectoLayout';
 import { PresupuestoPage } from './features/preinversion/presupuesto/PresupuestoPage';
 import { PresupuestoOmPage } from './features/preinversion/presupuesto-om/PresupuestoOmPage';
+import { BeneficiosPage } from './features/preinversion/beneficios/BeneficiosPage';
 import { CatalogosPage } from './features/administracion/catalogos/CatalogosPage';
 import { CatalogoDetallePage } from './features/administracion/catalogos/CatalogoDetallePage';
 import { CalendarioPage } from './features/administracion/calendario/CalendarioPage';
@@ -122,6 +123,7 @@ export function App() {
               <Route path="/preinversion/proyectos/:id/analisis-legal" element={<AnalisisLegalPage />} />
               <Route path="/preinversion/proyectos/:id/presupuesto" element={<PresupuestoPage />} />
               <Route path="/preinversion/proyectos/:id/presupuesto-om" element={<PresupuestoOmPage />} />
+              <Route path="/preinversion/proyectos/:id/beneficios" element={<BeneficiosPage />} />
             </Route>
 
             {PLACEHOLDER_PATHS.map((path) => (

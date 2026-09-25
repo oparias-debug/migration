@@ -837,6 +837,55 @@
         "PAP_REVISADO": "PAP revisado",
         "REVISADO": "Revisado"
       }
+    },
+    "beneficios": {
+      "titulo": "Beneficios del Proyecto",
+      "tipos": {
+        "BENEFICIOS_DIRECTOS": "Beneficios directos",
+        "BENEFICIOS_INDIRECTOS": "Beneficios indirectos",
+        "EXTERNALIDADES": "Externalidades"
+      },
+      "ingresos": {
+        "MANUAL": "Manual",
+        "AUTOMATICO": "Automático"
+      },
+      "bienes": {
+        "EQUIPOS": "Equipos",
+        "EDIFICIOS": "Edificios",
+        "TERRENOS": "Terrenos",
+        "VEHICULOS": "Vehículos"
+      },
+      "columnaBeneficio": "Beneficio",
+      "columnaParametro": "Parámetro",
+      "columnaTipoIngreso": "Tipo de ingreso",
+      "columnaPeriodo": "Período {{numero}}",
+      "sinBeneficios": "Todavía no hay beneficios registrados.",
+      "agregarBeneficio": "Agregar beneficio",
+      "confirmarQuitar": "¿Está seguro de quitar este beneficio?",
+      "flujo": "Flujo de beneficios del proyecto",
+      "concepto": "Concepto",
+      "flujoMercado": "Flujo a precios de mercado",
+      "flujoAjustado": "Flujo a precios ajustados",
+      "rescate": "Valor de rescate",
+      "valorRescate": "Valor de rescate (US$)",
+      "tipoBien": "Tipo de bien",
+      "factorCorreccion": "Factor de corrección",
+      "valorRescateAjustado": "Valor de rescate ajustado",
+      "sinVidaUtil": "Este proyecto todavía no tiene vida útil configurada en el Presupuesto de Operación y Mantenimiento, así que no hay períodos que mostrar.",
+      "nuevoBeneficio": "Detalle del beneficio · {{tipo}}",
+      "nombreBeneficio": "Nombre del beneficio",
+      "parametro": "Parámetro",
+      "tipoIngreso": "Tipo de ingreso",
+      "montoPeriodo1": "Monto del período 1 (US$)",
+      "tasaCrecimiento": "Tasa de crecimiento proyectado (%)",
+      "montoPrecioMercado": "Monto a precios de mercado (US$)",
+      "montoDelPeriodo": "Monto del período {{numero}}",
+      "totalBeneficio": "Total del beneficio",
+      "salir": "Salir",
+      "parametroObligatorio": "Elija el parámetro del beneficio.",
+      "tipoIngresoObligatorio": "Elija el tipo de ingreso.",
+      "algunMontoObligatorio": "Registre el monto de al menos un período.",
+      "tasaAyuda": "En porcentaje: 5 significa 5 % de crecimiento por período."
     }
   },
   "app": {
