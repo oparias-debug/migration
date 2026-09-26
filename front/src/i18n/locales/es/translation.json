@@ -886,6 +886,51 @@
       "tipoIngresoObligatorio": "Elija el tipo de ingreso.",
       "algunMontoObligatorio": "Registre el monto de al menos un período.",
       "tasaAyuda": "En porcentaje: 5 significa 5 % de crecimiento por período."
+    },
+    "viabilidad": {
+      "titulo": "Viabilidad del Proyecto",
+      "columnaCampo": "Campo",
+      "columnaValor": "Información del proyecto",
+      "columnaComentario": "Comentario",
+      "comentarioDe": "Comentario de {{campo}}",
+      "campos": {
+        "OBJETIVO_GENERAL": "Objetivo general",
+        "DESCRIPCION": "Descripción del proyecto",
+        "PRODUCTOS": "Productos",
+        "POBLACION_OBJETIVO": "Población objetivo",
+        "INVERSION_ESTIMADA": "Inversión estimada",
+        "RESUMEN_PRESUPUESTO": "Resumen del presupuesto",
+        "COSTO_OPERACION": "Costo de operación",
+        "COSTO_MANTENIMIENTO": "Costo de mantenimiento",
+        "FUENTE_FINANCIAMIENTO": "Fuente de financiamiento",
+        "INDICADORES_EVALUACION": "Indicadores de evaluación"
+      },
+      "documentos": "Documentos del proyecto",
+      "columnaTipo": "Tipo de documento",
+      "columnaArchivo": "Archivo",
+      "columnaFecha": "Fecha de carga",
+      "tipos": {
+        "DOCUMENTO_PREINVERSION": "Documento de Preinversión",
+        "OTRO_DOCUMENTO": "Otro documento"
+      },
+      "sinDocumentos": "Todavía no hay documentos cargados.",
+      "archivo": "Archivo",
+      "cargarDocumento": "Cargar documento",
+      "elijaArchivo": "Elija el archivo que va a cargar.",
+      "documentoCargado": "El documento se cargó correctamente.",
+      "observaciones": "Observaciones",
+      "observacionesJustificacion": "Observaciones generales / justificación",
+      "solicitar": "Solicitar viabilidad",
+      "confirmarSolicitar": "¿Está seguro de solicitar la viabilidad de este proyecto?",
+      "solicitada": "La viabilidad se solicitó correctamente.",
+      "comentariosGuardados": "Se guardaron los comentarios.",
+      "enviarComentarios": "Enviar comentarios",
+      "confirmarEnviar": "¿Está seguro de enviar los comentarios a la institución?",
+      "comentariosEnviados": "Se enviaron los comentarios.",
+      "emitir": "Emitir viabilidad",
+      "confirmarEmitir": "¿Está seguro de emitir la viabilidad? Después la ficha ya no admite cambios.",
+      "emitida": "La viabilidad se emitió correctamente.",
+      "irAElegibilidad": "Continuar a Elegibilidad"
     }
   },
   "app": {

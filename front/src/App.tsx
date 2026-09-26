@@ -23,6 +23,7 @@ import { PasosProyectoLayout } from './features/preinversion/pasos/PasosProyecto
 import { PresupuestoPage } from './features/preinversion/presupuesto/PresupuestoPage';
 import { PresupuestoOmPage } from './features/preinversion/presupuesto-om/PresupuestoOmPage';
 import { BeneficiosPage } from './features/preinversion/beneficios/BeneficiosPage';
+import { ViabilidadPage } from './features/preinversion/viabilidad/ViabilidadPage';
 import { CatalogosPage } from './features/administracion/catalogos/CatalogosPage';
 import { CatalogoDetallePage } from './features/administracion/catalogos/CatalogoDetallePage';
 import { CalendarioPage } from './features/administracion/calendario/CalendarioPage';
@@ -124,6 +125,7 @@ export function App() {
               <Route path="/preinversion/proyectos/:id/presupuesto" element={<PresupuestoPage />} />
               <Route path="/preinversion/proyectos/:id/presupuesto-om" element={<PresupuestoOmPage />} />
               <Route path="/preinversion/proyectos/:id/beneficios" element={<BeneficiosPage />} />
+              <Route path="/preinversion/proyectos/:id/viabilidad" element={<ViabilidadPage />} />
             </Route>
 
             {PLACEHOLDER_PATHS.map((path) => (

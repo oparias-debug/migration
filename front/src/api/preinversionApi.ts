@@ -30,6 +30,7 @@ import { PreinversinProgramacinDeMetasFsicasPAPApi } from './generated/preinvers
 import { PreinversinAvanceFinancieroPAPApi } from './generated/preinversion-avance-financiero';
 import { PreinversinAvanceDeMetasFsicasPAPApi } from './generated/preinversion-avance-metas';
 import { PreinversinFlujoDeBeneficiosApi } from './generated/preinversion-beneficios';
+import { TecnicoUrpApi, ViabilizadorApi } from './generated/preinversion-viabilidad';
 import { createHttpClient } from './httpClient';
 
 // El cliente generado solo usa el `basePath` que se le pasa en el constructor
@@ -258,3 +259,16 @@ export type {
 } from './generated/preinversion-beneficios';
 export type { ParametroResumen } from './generated/administracion-catalogos';
 
+// CU-PRE-24 (Viabilidad). El contrato reparte las operaciones en dos tags según
+// el actor: el Técnico URP carga documentos y solicita, el Viabilizador comenta,
+// devuelve y emite.
+export const viabilidadUrpApi = new TecnicoUrpApi(undefined, undefined, preinversionAxios);
+export const viabilidadRevisionApi = new ViabilizadorApi(undefined, undefined, preinversionAxios);
+export { TipoDocumentoViabilidad, CampoFichaViabilidad } from './generated/preinversion-viabilidad';
+export type {
+  FichaViabilidadResponse,
+  DocumentoViabilidad,
+  ComentarioCampoViabilidad,
+  IndicadorEvaluacion,
+  AccionesDisponiblesViabilidad,
+} from './generated/preinversion-viabilidad';
