@@ -17,7 +17,8 @@ public class VersionSnapshotListener implements ExecutionListener {
 
     @Override
     public void notify(DelegateExecution execution) {
-        logger.info("[VersionSnapshot] businessKey={} actividad={} evento={}", execution.getProcessInstanceBusinessKey(),
+        logger.info("[VersionSnapshot] businessKey={} actividad={} evento={}",
+                execution.getProcessInstanceBusinessKey(),
                 execution.getCurrentActivityId(), execution.getEventName());
     }
 }

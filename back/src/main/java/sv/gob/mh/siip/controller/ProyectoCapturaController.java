@@ -40,7 +40,8 @@ public class ProyectoCapturaController implements PreinversinCapturaDeProyectosA
     /**
      * Implementación del contrato de la API para el filtrado de proyectos de preinversión.
      *
-     * @see PreinversinCapturaDeProyectosApi#listarProyectosCaptura(String, String, String, IniciativaInversionDto, EstadoProyectoDto, Long, Integer, Integer)
+     * @see PreinversinCapturaDeProyectosApi#listarProyectosCaptura(String, String, String,
+     *      IniciativaInversionDto, EstadoProyectoDto, Long, Integer, Integer)
      */
     @Override
     public ResponseEntity<ProyectosCapturaResponseDto> listarProyectosCaptura(

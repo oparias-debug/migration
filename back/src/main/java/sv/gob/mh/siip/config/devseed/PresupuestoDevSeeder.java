@@ -41,6 +41,8 @@ public class PresupuestoDevSeeder implements DevSeeder {
 
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
     private static final String NOMBRE_PROYECTO = "Proyecto de prueba (Presupuesto CU-PRE-17)";
+    private static final double INVERSION_ESTIMADA = 250000.0;
+    private static final double CANTIDAD_POR_PRODUCTO = 1.0;
 
     private final ProyectoRepository proyectoRepository;
     private final FichaEmergenciaRepository fichaEmergenciaRepository;
@@ -87,11 +89,11 @@ public class PresupuestoDevSeeder implements DevSeeder {
                 .unidadEjecutora(unidadEjecutora)
                 .institucion(institucion)
                 .estado(EstadoProyecto.CUP_ASIGNADO)
-                .cup(siguienteCup())
+                .cup(CupDevSeed.siguiente(proyectoRepository))
                 .fechaIngreso(LocalDateTime.now(ZONA_EL_SALVADOR))
                 .fechaCupAsignado(LocalDateTime.now(ZONA_EL_SALVADOR))
                 .activo(true)
-                .montoEstimadoInversion(250000.0)
+                .montoEstimadoInversion(INVERSION_ESTIMADA)
                 .sector(sector)
                 .ejeTematico(ejeTematico)
                 .esProyectoEmergencia(true)
@@ -107,7 +109,7 @@ public class PresupuestoDevSeeder implements DevSeeder {
                 .productos(List.of("P-01", "P-02"))
                 .distrito("San Salvador Centro")
                 .poblacionObjetivo("Población de prueba (BDD/dev).")
-                .inversionEstimada(250000.0)
+                .inversionEstimada(INVERSION_ESTIMADA)
                 .fuentesFinanciamiento(List.of(FuenteFinanciamiento.FONDO_GENERAL))
                 .fuenteRecursos("Fondo General de la Nación (prueba)")
                 .build());
@@ -120,7 +122,7 @@ public class PresupuestoDevSeeder implements DevSeeder {
                 .nombre("TC-EQUIPAMIENTO")
                 .descripcion("Equipamiento de prueba (BDD/dev).")
                 .codigoProducto("P-01")
-                .cantidad(1.0)
+                .cantidad(CANTIDAD_POR_PRODUCTO)
                 .unidadMedida("Unidad")
                 .build());
         componenteRepository.save(Componente.builder()
@@ -128,17 +130,9 @@ public class PresupuestoDevSeeder implements DevSeeder {
                 .nombre("TC-EQUIPAMIENTO")
                 .descripcion("Equipamiento de prueba (BDD/dev).")
                 .codigoProducto("P-02")
-                .cantidad(1.0)
+                .cantidad(CANTIDAD_POR_PRODUCTO)
                 .unidadMedida("Unidad")
                 .build());
     }
 
-    /** CU-PRE-01.5, RN 2.8.c: siguiente CUP consecutivo de 5 dígitos, partiendo de 10000 — misma
-     *  regla que {@code ProyectoServiceImpl.siguienteCup()} / {@code ProyectoDevSeeder}. */
-    private String siguienteCup() {
-        int siguiente = proyectoRepository.findFirstByCupIsNotNullOrderByCupDesc()
-                .map(p -> Integer.parseInt(p.getCup()) + 1)
-                .orElse(10000);
-        return String.format("%05d", siguiente);
-    }
 }

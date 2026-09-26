@@ -1,15 +1,33 @@
 package sv.gob.mh.siip.model.convenios.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 
 import java.math.BigDecimal;
 
 /** Proyecto vinculado al convenio, con monto comprometido y bandera de Programa Principal. CU-MPD-04. */
 @Entity
-@Table(name = "PROYECTO_CONVENIO", uniqueConstraints = @UniqueConstraint(name = "UK_PROYECTO_CONVENIO", columnNames = {"ID_CONVENIO", "ID_PROYECTO"}))
+@Table(name = "PROYECTO_CONVENIO",
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_PROYECTO_CONVENIO",
+               columnNames = {"ID_CONVENIO", "ID_PROYECTO"}))
 @Getter
 @Setter
 @NoArgsConstructor

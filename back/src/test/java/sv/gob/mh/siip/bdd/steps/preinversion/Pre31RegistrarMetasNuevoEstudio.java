@@ -41,6 +41,7 @@ import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaMetaFisicaPapRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapRevisionService;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
@@ -63,6 +64,7 @@ public class Pre31RegistrarMetasNuevoEstudio {
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
     private final ProgramacionMetasFisicasPapService service;
+    private final ProgramacionMetasFisicasPapRevisionService revisionService;
 
     private UnidadEjecutora unidadEjecutora;
     private Institucion institucion;
@@ -78,7 +80,8 @@ public class Pre31RegistrarMetasNuevoEstudio {
             ProyectoRepository proyectoRepository, EtapaPreinversionRepository etapaPreinversionRepository,
             EtapaMetaFisicaPapRepository etapaMetaRepository, MacroSectorRepository macroSectorRepository,
             SectorActividadRepository sectorActividadRepository, EjeTematicoRepository ejeTematicoRepository,
-            ProgramacionMetasFisicasPapService service) {
+            ProgramacionMetasFisicasPapService service,
+            ProgramacionMetasFisicasPapRevisionService revisionService) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -89,6 +92,7 @@ public class Pre31RegistrarMetasNuevoEstudio {
         this.sectorActividadRepository = sectorActividadRepository;
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.service = service;
+        this.revisionService = revisionService;
     }
 
     @Dado("que el Técnico URP se encuentra en la pantalla \"Programación por Meta Física Cuatrimestral del PAP\" \\(Anexo A.1) nuevo-estudio")
@@ -219,8 +223,9 @@ public class Pre31RegistrarMetasNuevoEstudio {
     private ValidacionNegocioException capturarValidacion(EtapaMetaFisicaRequestDto etapa) {
         GuardarProgramacionMetasEstudioRequestDto request = new GuardarProgramacionMetasEstudioRequestDto()
                 .addEtapasItem(etapa);
+        String cupProyecto = proyecto.getCup();
         return org.junit.jupiter.api.Assertions.assertThrows(ValidacionNegocioException.class,
-                () -> service.guardarProgramacionMetasEstudio(proyecto.getCup(), ANIO, request));
+                () -> service.guardarProgramacionMetasEstudio(cupProyecto, ANIO, request));
     }
 
     private void verificarDetalleDeCampo(String campo) {
@@ -231,7 +236,7 @@ public class Pre31RegistrarMetasNuevoEstudio {
     }
 
     private RevisionProgramacionPAPDto enviarARevision() {
-        return service.enviarProgramacionARevisionDgicp(
+        return revisionService.enviarProgramacionARevisionDgicp(
                 new EnviarProgramacionARevisionDgicpRequestDto(unidadEjecutora.getId(), ANIO));
     }
 

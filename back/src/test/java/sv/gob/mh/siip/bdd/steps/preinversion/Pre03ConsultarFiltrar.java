@@ -271,7 +271,7 @@ public class Pre03ConsultarFiltrar {
         Proyecto proyecto = ProyectoFixtures.nuevoProyecto(
                 nombre + " " + sufijo, estado, unidadEjecutora, institucion, sector, eje);
         proyecto.setIniciativaInversion(iniciativa);
-        proyecto.setCup(String.format("%05d", ThreadLocalRandom.current().nextInt(10000, 100000)));
+        proyecto.setCup(String.format("%05d", ThreadLocalRandom.current().nextInt(10000, 50000)));
         proyecto.setActivo(true);
         proyecto.setFechaCupAsignado(LocalDateTime.now(ZoneId.of("America/El_Salvador")));
 

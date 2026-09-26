@@ -34,7 +34,10 @@ import sv.gob.mh.siip.model.convenios.enums.TipoFinanciamientoConvenio;
  * RN01: Nombre + No. Convenio deben ser unicos en conjunto.
  */
 @Entity
-@Table(name = "CONVENIO", uniqueConstraints = @UniqueConstraint(name = "UK_CONVENIO_NUM_NOMBRE", columnNames = {"NUMERO_CONVENIO", "NOMBRE_CONVENIO"}))
+@Table(name = "CONVENIO",
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_CONVENIO_NUM_NOMBRE",
+               columnNames = {"NUMERO_CONVENIO", "NOMBRE_CONVENIO"}))
 @Getter
 @Setter
 @NoArgsConstructor

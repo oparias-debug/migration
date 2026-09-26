@@ -57,6 +57,7 @@ public class MatrizInteresadosServiceImpl implements MatrizInteresadosService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         List<Interesado> nuevos = reemplazarInteresados(proyecto, request.getInteresados());
         return construirDto(proyecto, nuevos);
@@ -68,7 +69,7 @@ public class MatrizInteresadosServiceImpl implements MatrizInteresadosService {
     }
 
     /** Igual que en AlternativaSolucionServiceImpl/IdentificacionServiceImpl: RN01/RN02. */
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
@@ -90,19 +91,20 @@ public class MatrizInteresadosServiceImpl implements MatrizInteresadosService {
                     .nivelInfluencia(mapear(fila.getNivelInfluencia()))
                     .nivelInteres(mapear(fila.getNivelInteres()))
                     .estrategiaGestion(fila.getEstrategiaGestion())
-                    .orden(orden++)
+                    .orden(orden)
                     .build());
+            orden++;
         }
         return interesadoRepository.saveAll(nuevos);
     }
 
-    private MatrizInteresadosDto construirDto(Proyecto proyecto, List<Interesado> interesados) {
+    private static MatrizInteresadosDto construirDto(Proyecto proyecto, List<Interesado> interesados) {
         return new MatrizInteresadosDto()
                 .idProyecto(proyecto.getId())
-                .interesados(interesados.stream().map(this::toRequestDto).toList());
+                .interesados(interesados.stream().map(MatrizInteresadosServiceImpl::toRequestDto).toList());
     }
 
-    private InteresadoRequestDto toRequestDto(Interesado entidad) {
+    private static InteresadoRequestDto toRequestDto(Interesado entidad) {
         return new InteresadoRequestDto()
                 .nombreInteresado(entidad.getNombreInteresado())
                 .tipo(mapear(entidad.getTipo()))
@@ -111,27 +113,27 @@ public class MatrizInteresadosServiceImpl implements MatrizInteresadosService {
                 .estrategiaGestion(entidad.getEstrategiaGestion());
     }
 
-    private TipoInteresado mapear(TipoInteresadoDto tipo) {
+    private static TipoInteresado mapear(TipoInteresadoDto tipo) {
         return tipo == null ? null : TipoInteresado.valueOf(tipo.name());
     }
 
-    private TipoInteresadoDto mapear(TipoInteresado tipo) {
+    private static TipoInteresadoDto mapear(TipoInteresado tipo) {
         return tipo == null ? null : TipoInteresadoDto.valueOf(tipo.name());
     }
 
-    private NivelInfluencia mapear(NivelInfluenciaDto nivel) {
+    private static NivelInfluencia mapear(NivelInfluenciaDto nivel) {
         return nivel == null ? null : NivelInfluencia.valueOf(nivel.name());
     }
 
-    private NivelInfluenciaDto mapear(NivelInfluencia nivel) {
+    private static NivelInfluenciaDto mapear(NivelInfluencia nivel) {
         return nivel == null ? null : NivelInfluenciaDto.valueOf(nivel.name());
     }
 
-    private NivelInteres mapear(NivelInteresDto nivel) {
+    private static NivelInteres mapear(NivelInteresDto nivel) {
         return nivel == null ? null : NivelInteres.valueOf(nivel.name());
     }
 
-    private NivelInteresDto mapear(NivelInteres nivel) {
+    private static NivelInteresDto mapear(NivelInteres nivel) {
         return nivel == null ? null : NivelInteresDto.valueOf(nivel.name());
     }
 }

@@ -14,7 +14,7 @@ import sv.gob.mh.siip.model.administracion.dto.DuracionPeriodoResponseDto;
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
 import sv.gob.mh.siip.model.administracion.repository.CalendarioRepository;
 import sv.gob.mh.siip.model.administracion.repository.PeriodoRepository;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 
 /** CU-ADM-04-07-consultar-duracion-de-periodo.feature. */
@@ -23,7 +23,7 @@ public class Adm04ConsultarDuracionPeriodo {
     private final UsuarioRepository usuarioRepository;
     private final CalendarioRepository calendarioRepository;
     private final PeriodoRepository periodoRepository;
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
     private final ContextoValidacionBdd contextoValidacion;
 
     private DuracionPeriodoResponseDto ultimoResultado;
@@ -34,7 +34,7 @@ public class Adm04ConsultarDuracionPeriodo {
 
     public Adm04ConsultarDuracionPeriodo(UsuarioRepository usuarioRepository,
             CalendarioRepository calendarioRepository, PeriodoRepository periodoRepository,
-            CalendarioService calendarioService, ContextoValidacionBdd contextoValidacion) {
+            CalendarioConsultaService calendarioService, ContextoValidacionBdd contextoValidacion) {
         this.usuarioRepository = usuarioRepository;
         this.calendarioRepository = calendarioRepository;
         this.periodoRepository = periodoRepository;

@@ -67,7 +67,7 @@ public class IdentificacionController implements PreinversinIdentificacinApi {
         return ResponseEntity.noContent().build();
     }
 
-    private ResponseEntity<org.springframework.core.io.Resource> descargar(ArchivoDescargado archivo) {
+    private static ResponseEntity<org.springframework.core.io.Resource> descargar(ArchivoDescargado archivo) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,

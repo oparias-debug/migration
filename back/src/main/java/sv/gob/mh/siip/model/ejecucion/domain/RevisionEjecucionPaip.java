@@ -3,11 +3,28 @@ package sv.gob.mh.siip.model.ejecucion.domain;
 import sv.gob.mh.siip.model.ejecucion.enums.EstadoRevisionEjecucion;
 import sv.gob.mh.siip.model.ejecucion.enums.TipoRevisionEjecucionPaip;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.programacion.domain.PeriodoProgramacionPaip;
 
@@ -16,7 +33,9 @@ import java.time.LocalDateTime;
 /** Estado de revision del avance mensual del PAIP por institucion. CU-EJE-05. */
 @Entity
 @Table(name = "REVISION_EJECUCION_PAIP",
-       uniqueConstraints = @UniqueConstraint(name = "UK_REVISION_EJEC_PAIP", columnNames = {"ID_INSTITUCION", "ID_PERIODO_PAIP", "MES", "TIPO_REVISION"}))
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_REVISION_EJEC_PAIP",
+               columnNames = {"ID_INSTITUCION", "ID_PERIODO_PAIP", "MES", "TIPO_REVISION"}))
 @Getter
 @Setter
 @NoArgsConstructor

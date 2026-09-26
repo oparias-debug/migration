@@ -48,7 +48,9 @@ public class AnalisisRiesgoController implements PreinversinAnlisisDeRiesgoApi {
      * @author Luis Medrano
      */
     @Override
-    public ResponseEntity<AnalisisRiesgoDto> guardarAnalisisRiesgo(Long idProyecto, AnalisisRiesgoRequestDto analisisRiesgoRequestDto) {
+    public ResponseEntity<AnalisisRiesgoDto> guardarAnalisisRiesgo(
+            Long idProyecto,
+            AnalisisRiesgoRequestDto analisisRiesgoRequestDto) {
         AnalisisRiesgoDto response = analisisRiesgoService.guardarAnalisisRiesgo(idProyecto, analisisRiesgoRequestDto);
         return ResponseEntity.ok(response);
     }

@@ -22,11 +22,29 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 /** Boilerplate común (título, encabezados, paginación) de los generadores de reportes Excel/PDF del PAP. */
 final class ReportePapGeneratorSupport {
 
+    /** Fila (0-based) de la hoja Excel con los encabezados de columna; la fila 1 queda en blanco. */
+    private static final int FILA_ENCABEZADOS = 2;
+    /** Primera fila (0-based) de datos en la hoja Excel. */
+    private static final int PRIMERA_FILA_DATOS = 3;
+
+    /** Coordenada vertical inicial (puntos PDF) del contenido de cada página A4. */
+    private static final float Y_INICIAL_PAGINA = 780F;
+    /** Margen izquierdo (puntos PDF) de todas las líneas. */
+    private static final float MARGEN_IZQUIERDO = 40F;
+    /** Por debajo de esta coordenada vertical se inicia una página nueva. */
+    private static final float Y_MINIMO_PAGINA = 60F;
+    private static final float TAMANIO_FUENTE_TITULO = 12F;
+    private static final float TAMANIO_FUENTE_SUBTITULO = 10F;
+    private static final float TAMANIO_FUENTE_FILA = 8F;
+    private static final float ESPACIO_TRAS_TITULO = 18F;
+    private static final float ESPACIO_TRAS_SUBTITULO = 24F;
+    private static final float INTERLINEADO_FILA = 14F;
+
     private ReportePapGeneratorSupport() {
     }
 
     static double valorODefecto(Double valor) {
-        return valor != null ? valor : 0d;
+        return valor != null ? valor : 0D;
     }
 
     static String valorODefectoTexto(String valor) {
@@ -49,14 +67,15 @@ final class ReportePapGeneratorSupport {
             Row filaTitulo = hoja.createRow(0);
             filaTitulo.createCell(0).setCellValue(titulo);
 
-            Row encabezado = hoja.createRow(2);
+            Row encabezado = hoja.createRow(FILA_ENCABEZADOS);
             for (int i = 0; i < encabezados.length; i++) {
                 encabezado.createCell(i).setCellValue(encabezados[i]);
             }
 
-            int numeroFila = 3;
+            int numeroFila = PRIMERA_FILA_DATOS;
             for (T fila : filas) {
-                Row row = hoja.createRow(numeroFila++);
+                Row row = hoja.createRow(numeroFila);
+                numeroFila++;
                 escritorFila.accept(row, fila);
             }
             if (filaFinal != null) {
@@ -99,34 +118,34 @@ final class ReportePapGeneratorSupport {
             PDPage pagina = new PDPage(PDRectangle.A4);
             documento.addPage(pagina);
             PDPageContentStream contenido = new PDPageContentStream(documento, pagina);
-            float y = 780;
+            float y = Y_INICIAL_PAGINA;
             contenido.beginText();
-            contenido.setFont(fuenteNegrita, 12);
-            contenido.newLineAtOffset(40, y);
+            contenido.setFont(fuenteNegrita, TAMANIO_FUENTE_TITULO);
+            contenido.newLineAtOffset(MARGEN_IZQUIERDO, y);
             contenido.showText(tituloPrincipal);
             contenido.endText();
-            y -= 18;
+            y -= ESPACIO_TRAS_TITULO;
             contenido.beginText();
-            contenido.setFont(fuenteNormal, 10);
-            contenido.newLineAtOffset(40, y);
+            contenido.setFont(fuenteNormal, TAMANIO_FUENTE_SUBTITULO);
+            contenido.newLineAtOffset(MARGEN_IZQUIERDO, y);
             contenido.showText(subtitulo);
             contenido.endText();
-            y -= 24;
+            y -= ESPACIO_TRAS_SUBTITULO;
 
             for (String fila : filas) {
-                if (y < 60) {
+                if (y < Y_MINIMO_PAGINA) {
                     contenido.close();
                     pagina = new PDPage(PDRectangle.A4);
                     documento.addPage(pagina);
                     contenido = new PDPageContentStream(documento, pagina);
-                    y = 780;
+                    y = Y_INICIAL_PAGINA;
                 }
                 contenido.beginText();
-                contenido.setFont(fuenteNormal, 8);
-                contenido.newLineAtOffset(40, y);
+                contenido.setFont(fuenteNormal, TAMANIO_FUENTE_FILA);
+                contenido.newLineAtOffset(MARGEN_IZQUIERDO, y);
                 contenido.showText(fila);
                 contenido.endText();
-                y -= 14;
+                y -= INTERLINEADO_FILA;
             }
             contenido.close();
 

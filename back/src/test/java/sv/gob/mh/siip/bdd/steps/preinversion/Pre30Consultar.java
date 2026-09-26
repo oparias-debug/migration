@@ -23,6 +23,7 @@ import sv.gob.mh.siip.model.common.repository.UnidadEjecutoraRepository;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 import sv.gob.mh.siip.model.preinversion.dto.AgregarEstudioRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProgramacionFinancieraPAPResponseDto;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapAjusteService;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapService;
 
 /**
@@ -39,17 +40,19 @@ public class Pre30Consultar {
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final UsuarioRepository usuarioRepository;
     private final ProgramacionFinancieraPapService service;
+    private final ProgramacionFinancieraPapAjusteService ajusteService;
 
     private UnidadEjecutora unidadEjecutoraPropia;
     private UnidadEjecutora otraUnidadEjecutora;
 
     public Pre30Consultar(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
-            ProgramacionFinancieraPapService service) {
+            ProgramacionFinancieraPapService service, ProgramacionFinancieraPapAjusteService ajusteService) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
         this.service = service;
+        this.ajusteService = ajusteService;
     }
 
     @Cuando("el Técnico PRE accede a la pantalla \"Programación Financiera Cuatrimestral del PAP\"")
@@ -69,7 +72,7 @@ public class Pre30Consultar {
         crearActorYUnidades(RolUsuario.COORDINADOR_PRE);
     }
 
-    @Cuando("accede a la pantalla \"Programación Financiera Cuatrimestral del PAP\"")
+    @Cuando("accede a la pantalla \"Programación Financiera Cuatrimestral del PAP\" consultar")
     public void accede_a_la_pantalla() {
         // La consulta en sí se verifica en el paso siguiente: RN-A.c solo distingue a estos roles
         // por la AUSENCIA de acciones de escritura, no por restricciones de lectura.
@@ -80,7 +83,7 @@ public class Pre30Consultar {
         assertThat(service.listar(unidadEjecutoraPropia.getId(), 2027, null, 0, 20)).isNotNull();
         AgregarEstudioRequestDto request = new AgregarEstudioRequestDto("08040", unidadEjecutoraPropia.getId(), 2027);
         assertThatThrownBy(() -> service.agregarEstudio(request)).isInstanceOf(AccesoDenegadoException.class);
-        assertThatThrownBy(() -> service.desactivarEstudio("08040", 2027)).isInstanceOf(AccesoDenegadoException.class);
+        assertThatThrownBy(() -> ajusteService.desactivarEstudio("08040", 2027)).isInstanceOf(AccesoDenegadoException.class);
     }
 
     @Entonces("solo tiene disponibles los botones \"Generar reporte\" y \"Programación de Metas\" \\(RN-A.c)")

@@ -11,6 +11,6 @@ Característica: Consultar la Programación Financiera Cuatrimestral del PAP
 
   Escenario: Consulta de solo lectura para el resto de actores
     Dado que el actor es Coordinador PRE, Coordinador PRO, Técnico PRO, Jefe DGI o Subjefe DGI
-    Cuando accede a la pantalla "Programación Financiera Cuatrimestral del PAP"
+    Cuando accede a la pantalla "Programación Financiera Cuatrimestral del PAP" consultar
     Entonces no ve ningún ícono de acción en la columna de acciones de la tabla
     Y solo tiene disponibles los botones "Generar reporte" y "Programación de Metas" (RN-A.c)

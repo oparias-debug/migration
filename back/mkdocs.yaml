@@ -1,0 +1,15 @@
+site_name: 'dgicp-siip2-backend-srv'
+
+site_description: 'Backend único del SIIP: catálogos, usuarios, proyectos, workflow y preinversión'
+
+# Nav reducida respecto a la plantilla: back documenta su arquitectura real
+# acá y remite a la documentación operativa que ya existe en la raíz del
+# monorepo siip (SETUP.md, REFERENCE.md, CONTRIBUTING.md) en vez de
+# duplicarla. Ver README.md § Pendientes / por revisar para lo que falta
+# cubrir del resto de la plantilla (pilares, integraciones, despliegue, etc.).
+nav:
+  - Inicio: index.md
+  - Arquitectura: architecture.md
+
+plugins:
+  - techdocs-core

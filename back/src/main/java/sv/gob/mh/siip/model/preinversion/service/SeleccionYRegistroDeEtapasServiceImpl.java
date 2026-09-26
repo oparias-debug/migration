@@ -70,7 +70,9 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
     /** RN04: mismo formato dd/mm/aaaa ya validado a nivel de DTO (`@Pattern`) para fechaInicio/fechaFin. */
     private static final DateTimeFormatter FORMATO_FECHA_ETAPA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    /** Ruta con Diseño, sin Prefactibilidad/Factibilidad (Anexo B.2: "Perfil con Diseño Básico"/"Perfil + Diseño"). */
+    /**
+     * Ruta con Diseño, sin Prefactibilidad/Factibilidad (Anexo B.2: "Perfil con Diseño Básico"/"Perfil + Diseño").
+     */
     private static final List<TipoEtapaPreinversion> RUTA_PERFIL_DISENO = List.of(TipoEtapaPreinversion.PERFIL,
             TipoEtapaPreinversion.DISENO, TipoEtapaPreinversion.EJECUCION);
 
@@ -127,12 +129,15 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
         Proyecto proyecto = buscarProyecto(idProyecto);
         if (proyecto.getIniciativaInversion() != IniciativaInversion.PROYECTO) {
             throw new ConflictoEstadoException(
-                    "El botón \"Ruta de Preinversión\" está desactivado para proyectos que no son de iniciativa PROYECTO (RN07/RN08).");
+                    "El botón \"Ruta de Preinversión\" está desactivado para proyectos que no son de iniciativa"
+                            + " PROYECTO (RN07/RN08).");
         }
         List<TipoEtapaPreinversion> sugeridas = calcularEtapasSugeridas(criterios);
         return new RutaPreinversionSugeridaDto()
                 .criterios(criterios)
-                .etapasSugeridas(sugeridas.stream().map(this::aNombreEtapaDto).toList());
+                .etapasSugeridas(sugeridas.stream()
+                        .map(SeleccionYRegistroDeEtapasServiceImpl::aNombreEtapaDto)
+                        .toList());
     }
 
     @Override
@@ -260,18 +265,19 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
      * responsabilidad visual del cliente (RN19), no entran en esta validación. Rechaza con 400,
      * igual que RN04 (formato de fecha), del cual esta regla es una extensión natural.
      */
-    private void validarConsistenciaFechasEtapas(List<EtapaPreinversion> etapas) {
-        List<ErrorDetalleDto> detalles = new ArrayList<>();
+    private static void validarConsistenciaFechasEtapas(List<EtapaPreinversion> etapas) {
         List<EtapaPreinversion> conFechas = etapas.stream()
                 .filter(etapa -> etapa.getFechaInicio() != null && etapa.getFechaFin() != null)
                 .sorted(Comparator.comparing(EtapaPreinversion::getTipoEtapa))
                 .toList();
+        List<ErrorDetalleDto> detalles = new ArrayList<>();
 
         for (int i = 0; i < conFechas.size(); i++) {
             EtapaPreinversion actual = conFechas.get(i);
             if (actual.getFechaInicio().isAfter(actual.getFechaFin())) {
                 detalles.add(new ErrorDetalleDto().campo(actual.getTipoEtapa().name())
-                        .mensaje("La fecha de inicio no puede ser posterior a la fecha de finalización de la misma etapa."));
+                        .mensaje("La fecha de inicio no puede ser posterior a la fecha de finalización"
+                                + " de la misma etapa."));
             }
             if (i > 0) {
                 EtapaPreinversion previa = conFechas.get(i - 1);
@@ -288,7 +294,8 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
         }
     }
 
-    private LocalDate parsearFechaEtapa(TipoEtapaPreinversion tipoEtapa, String fecha, List<ErrorDetalleDto> detalles) {
+    private static LocalDate parsearFechaEtapa(TipoEtapaPreinversion tipoEtapa, String fecha,
+            List<ErrorDetalleDto> detalles) {
         if (fecha == null) {
             return null;
         }
@@ -412,18 +419,14 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
      * habilitada por defecto (RN09); se agrega aquí para que la sugerencia refleje la ruta
      * completa que terminará en Registro de Etapas.
      */
-    private List<TipoEtapaPreinversion> calcularEtapasSugeridas(CriteriosCalificacionDto criterios) {
+    private static List<TipoEtapaPreinversion> calcularEtapasSugeridas(CriteriosCalificacionDto criterios) {
         if (criterios.getTipoCapital() != TipoCapitalDto.CAPITAL_FISICO) {
             return RUTA_PROGRAMA_ESTUDIO;
         }
-        if (criterios.getTamanioProyecto() == TamanioProyectoDto.PEQUENIO) {
-            return RUTA_PERFIL_DISENO;
-        }
-        if (criterios.getTamanioProyecto() == TamanioProyectoDto.MEDIANO
-                && criterios.getComplejidad() == ComplejidadProyectoDto.BAJA) {
-            return RUTA_PERFIL_DISENO;
-        }
-        return RUTA_COMPLETA;
+        boolean rutaPerfilDiseno = criterios.getTamanioProyecto() == TamanioProyectoDto.PEQUENIO
+                || (criterios.getTamanioProyecto() == TamanioProyectoDto.MEDIANO
+                        && criterios.getComplejidad() == ComplejidadProyectoDto.BAJA);
+        return rutaPerfilDiseno ? RUTA_PERFIL_DISENO : RUTA_COMPLETA;
     }
 
     /** Crea/actualiza las filas de EtapaPreinversion para reflejar la seleccion vigente. */
@@ -433,7 +436,8 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
 
         if (bloquearEmitidasFueraDeSeleccion) {
             for (EtapaPreinversion existente : existentes) {
-                if (!seleccion.contains(existente.getTipoEtapa()) && Boolean.TRUE.equals(existente.getTieneOpinionTecnica())) {
+                if (!seleccion.contains(existente.getTipoEtapa())
+                        && Boolean.TRUE.equals(existente.getTieneOpinionTecnica())) {
                     existente.setBloqueadaPorModificacion(true);
                     etapaPreinversionRepository.save(existente);
                 }
@@ -447,7 +451,7 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
         }
     }
 
-    private EtapaPreinversion nuevaEtapa(Proyecto proyecto, TipoEtapaPreinversion tipoEtapa) {
+    private static EtapaPreinversion nuevaEtapa(Proyecto proyecto, TipoEtapaPreinversion tipoEtapa) {
         // RN09: PERFIL y EJECUCION habilitadas por defecto desde su creacion.
         boolean habilitadaPorDefecto = tipoEtapa == TipoEtapaPreinversion.PERFIL
                 || tipoEtapa == TipoEtapaPreinversion.EJECUCION;
@@ -570,7 +574,7 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
         }
         var catalogo = productoIndicadorCatalogoRepository.findByCodigoProductoIn(codigosProducto);
         return codigosProducto.stream()
-                .map(codigo -> {
+                .map((String codigo) -> {
                     ProductoSeleccionadoDto dto = new ProductoSeleccionadoDto().codigoProducto(codigo);
                     catalogo.stream().filter(p -> p.getCodigoProducto().equals(codigo)).findFirst()
                             .ifPresent(p -> dto.setProducto(p.getProducto()));
@@ -579,7 +583,7 @@ public class SeleccionYRegistroDeEtapasServiceImpl implements SeleccionYRegistro
                 .toList();
     }
 
-    private NombreEtapaDto aNombreEtapaDto(TipoEtapaPreinversion tipoEtapa) {
+    private static NombreEtapaDto aNombreEtapaDto(TipoEtapaPreinversion tipoEtapa) {
         return NombreEtapaDto.valueOf(tipoEtapa.name());
     }
 }

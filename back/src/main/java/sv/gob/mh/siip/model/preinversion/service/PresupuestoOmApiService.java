@@ -1,5 +1,6 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,8 @@ public class PresupuestoOmApiService {
     }
 
     public ActividadDto registrar(Long idProyecto, TipoCostoTablaDto tipoCostoTabla, ActividadRequestDto request) {
-        ActividadOm actividad = service.registrarActividad(idProyecto, tipoCostoTabla.getValue(), mapper.aMapa(request));
+        ActividadOm actividad = service.registrarActividad(idProyecto, tipoCostoTabla.getValue(),
+                mapper.aMapa(request));
         return actividadRegistrada(service.obtener(idProyecto), tipoCostoTabla, actividad.getId());
     }
 
@@ -50,19 +52,22 @@ public class PresupuestoOmApiService {
         return mapper.aDto(respuesta, PresupuestoOMDto.class);
     }
 
-    @SuppressWarnings("unchecked")
     private ActividadDto actividadRegistrada(Map<String, Object> respuesta, TipoCostoTablaDto tipoCostoTabla,
             Long idActividad) {
         String tabla = tipoCostoTabla == TipoCostoTablaDto.OPERACION ? "costosOperacion" : "costosMantenimiento";
-        Map<String, Object> costos = (Map<String, Object>) respuesta.get(tabla);
-        if (costos != null) {
-            List<Map<String, Object>> actividades = (List<Map<String, Object>>) costos.get("actividades");
-            for (Map<String, Object> actividad : actividades) {
-                if (idActividad.equals(actividad.get("idActividad"))) {
-                    return mapper.aDto(actividad, ActividadDto.class);
+        if (respuesta.get(tabla) instanceof Map<?, ?> costos && costos.get("actividades") instanceof List<?> lista) {
+            for (Object item : lista) {
+                if (item instanceof Map<?, ?> actividad && idActividad.equals(actividad.get("idActividad"))) {
+                    return mapper.aDto(comoMapaDeTexto(actividad), ActividadDto.class);
                 }
             }
         }
         throw new IllegalStateException("La actividad registrada no está disponible en el presupuesto del proyecto.");
+    }
+
+    private static Map<String, Object> comoMapaDeTexto(Map<?, ?> valores) {
+        Map<String, Object> resultado = new LinkedHashMap<>();
+        valores.forEach((clave, valor) -> resultado.put((String) clave, valor));
+        return resultado;
     }
 }

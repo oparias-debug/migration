@@ -39,7 +39,7 @@ public class CatalogoServiceImpl implements CatalogoService {
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
 
     /** Orden de despliegue de un CatalogField (Reglas 4 y 5): por `posicion`, nulls al final. */
-    static final Comparator<CampoDefinicion> POR_POSICION = Comparator
+    public static final Comparator<CampoDefinicion> POR_POSICION = Comparator
             .comparing(CampoDefinicion::getPosicion, Comparator.nullsLast(Comparator.naturalOrder()));
 
     private final CatalogoRepository catalogoRepository;
@@ -88,7 +88,9 @@ public class CatalogoServiceImpl implements CatalogoService {
     @Transactional(readOnly = true)
     public CatalogExistenceResponseDto verificarExistencia(String nombre) {
         actorContexto.exigirRol(RolUsuario.ADMINISTRADOR_DE_CATALOGOS);
-        return new CatalogExistenceResponseDto().name(nombre).exists(catalogoRepository.existsByNombreIgnoreCase(nombre));
+        return new CatalogExistenceResponseDto()
+                .name(nombre)
+                .exists(catalogoRepository.existsByNombreIgnoreCase(nombre));
     }
 
     @Override
@@ -103,11 +105,7 @@ public class CatalogoServiceImpl implements CatalogoService {
         actorContexto.exigirRol(RolUsuario.ADMINISTRADOR_DE_CATALOGOS);
         Catalogo catalogo = obtenerPorCodigo(codigoCatalogo);
 
-        if (request.getName() == null && request.getParent() == null && request.getActive() == null
-                && request.getFromDate() == null && request.getToDate() == null) {
-            throw new ValidacionNegocioException("DESCRIPTOR_REQUERIDO", "Debe indicar al menos un descriptor a actualizar.",
-                    null);
-        }
+        exigirAlgunDescriptor(request);
         if (request.getName() != null) {
             catalogo.setNombre(request.getName());
         }
@@ -115,7 +113,7 @@ public class CatalogoServiceImpl implements CatalogoService {
             exigirCatalogoPadreExistente(request.getParent());
             catalogo.setCatalogoPadreCodigo(request.getParent());
         }
-        ActiveStatusDto active = request.getActive(); 
+        ActiveStatusDto active = request.getActive();
         if (active != null) {
             catalogo.setEstado(EstadoVigencia.valueOf(active.getValue()));
         }
@@ -127,6 +125,14 @@ public class CatalogoServiceImpl implements CatalogoService {
         }
 
         return aCatalogDto(catalogoRepository.save(catalogo));
+    }
+
+    private static void exigirAlgunDescriptor(CatalogDescriptorsUpdateRequestDto request) {
+        if (request.getName() == null && request.getParent() == null && request.getActive() == null
+                && request.getFromDate() == null && request.getToDate() == null) {
+            throw new ValidacionNegocioException("DESCRIPTOR_REQUERIDO",
+                    "Debe indicar al menos un descriptor a actualizar.", null);
+        }
     }
 
     @Override
@@ -142,7 +148,8 @@ public class CatalogoServiceImpl implements CatalogoService {
         Catalogo catalogo = obtenerPorCodigo(codigoCatalogo);
 
         if (registroRepository.existsByCatalogo_Codigo(codigoCatalogo)) {
-            throw new ConflictoEstadoException("No se pueden modificar los campos de un catálogo que ya tiene registros.");
+            throw new ConflictoEstadoException(
+                    "No se pueden modificar los campos de un catálogo que ya tiene registros.");
         }
         validarCampoKeyYNombresUnicos(request.getFields());
         reemplazarCampos(catalogo, request.getFields());
@@ -187,13 +194,13 @@ public class CatalogoServiceImpl implements CatalogoService {
     private static void validarCampoKeyYNombresUnicos(List<CatalogFieldDto> campos) {
         boolean tieneKey = campos.stream().anyMatch(campo -> campo.getQualifier() == FieldQualifierDto.KEY);
         if (!tieneKey) {
-            throw new ValidacionNegocioException("CAMPO_KEY_REQUERIDO", "Debe existir al menos un campo con calificador KEY.",
-                    null);
+            throw new ValidacionNegocioException("CAMPO_KEY_REQUERIDO",
+                    "Debe existir al menos un campo con calificador KEY.", null);
         }
         long nombresUnicos = campos.stream().map(CatalogFieldDto::getName).distinct().count();
         if (nombresUnicos < campos.size()) {
-            throw new ValidacionNegocioException("NOMBRES_CAMPO_REPETIDOS", "Los nombres de los campos no deben repetirse.",
-                    null);
+            throw new ValidacionNegocioException("NOMBRES_CAMPO_REPETIDOS",
+                    "Los nombres de los campos no deben repetirse.", null);
         }
     }
 

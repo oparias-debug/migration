@@ -23,7 +23,7 @@ import sv.gob.mh.siip.model.preinversion.dto.EnviarProgramacionARevisionDgicpReq
 import sv.gob.mh.siip.model.preinversion.dto.EstadoPAPDto;
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarObservacionesDgicpRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionProgramacionPAPDto;
-import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapService;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapRevisionService;
 
 /** CU-PRE-31-registrar-observaciones.feature (SF-3, pasos 1-2). */
 public class Pre31RegistrarObservaciones {
@@ -35,14 +35,14 @@ public class Pre31RegistrarObservaciones {
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final UsuarioRepository usuarioRepository;
-    private final ProgramacionMetasFisicasPapService service;
+    private final ProgramacionMetasFisicasPapRevisionService service;
 
     private UnidadEjecutora unidadEjecutora;
     private RevisionProgramacionPAPDto revisionGuardada;
 
     public Pre31RegistrarObservaciones(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
-            ProgramacionMetasFisicasPapService service) {
+            ProgramacionMetasFisicasPapRevisionService service) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;

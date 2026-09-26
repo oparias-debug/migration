@@ -8,7 +8,6 @@ import sv.gob.mh.siip.model.preinversion.dto.FilaAnalisisLegalRequestDto;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Mapper para transformar entre entidades de dominio y DTOs del módulo de Análisis Legal (CU-PRE-16).
@@ -36,16 +35,16 @@ public class AnalisisLegalMapper {
         if (entity.getFilas() != null) {
             filasDto = entity.getFilas().stream()
                     .map(this::toFilaDto)
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         // Cálculo automático del total de costos de entregables por el servidor
         double totalCosto = entity.getFilas().stream()
-                .mapToDouble(f -> f.getCostoEntregable() != null ? f.getCostoEntregable() : 0.0)
+                .mapToDouble(f -> (f.getCostoEntregable() != null) ? f.getCostoEntregable() : 0.0)
                 .sum();
 
         AnalisisLegalDto dto = new AnalisisLegalDto();
-        dto.setIdProyecto(entity.getProyecto() != null ? entity.getProyecto().getId() : null);
+        dto.setIdProyecto((entity.getProyecto() != null) ? entity.getProyecto().getId() : null);
         dto.setRequiereAnalisisLegal(entity.getRequiereAnalisisLegal());
         dto.setFilas(filasDto);
         dto.setTotalCostoEntregables(totalCosto);
@@ -80,7 +79,8 @@ public class AnalisisLegalMapper {
      * @return Entidad AnalsisGestionesLegalesRequeridas construida.
      * @author Luis Medrano
      */
-    public AnalsisGestionesLegalesRequeridas toEntity(FilaAnalisisLegalRequestDto filaDto, AnalisisLegal analisisLegal) {
+    public AnalsisGestionesLegalesRequeridas toEntity(FilaAnalisisLegalRequestDto filaDto,
+            AnalisisLegal analisisLegal) {
         if (filaDto == null) {
             return null;
         }

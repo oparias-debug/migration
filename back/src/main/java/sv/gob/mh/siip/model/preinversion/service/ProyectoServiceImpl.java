@@ -66,6 +66,10 @@ public class ProyectoServiceImpl implements ProyectoService {
     /** Id del proceso {@code Proceso_SIIF.bpmn20.xml} que modela el ciclo de vida del proyecto. */
     private static final String PROCESS_DEFINITION_KEY = "proceso_ciclo_vida_proyecto_siip";
 
+    private static final String CAMPO_OBLIGATORIO = "*Campo obligatorio";
+    private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+    private static final int INTENTOS_MAXIMOS_CUP = 5;
+
     private final ProyectoRepository proyectoRepository;
     private final SolicitudPreinversionRepository solicitudRepository;
     private final ComentarioSolicitudRepository comentarioRepository;
@@ -82,10 +86,6 @@ public class ProyectoServiceImpl implements ProyectoService {
     private final RuntimeService runtimeService;
     private final TaskService taskService;
     private final GeneradorCup generadorCup;
-
-    private static final String CAMPO_OBLIGATORIO = "*Campo obligatorio";
-    private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
-    private static final int INTENTOS_MAXIMOS_CUP = 5;
 
     public ProyectoServiceImpl(ProyectoRepository proyectoRepository,
             SolicitudPreinversionRepository solicitudRepository,
@@ -389,10 +389,10 @@ public class ProyectoServiceImpl implements ProyectoService {
                 .findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(entidad.getId(), TipoSolicitud.CUP)
                 .orElseThrow(() -> new ConflictoEstadoException(
                         "El proyecto no tiene una solicitud de CUP vigente."));
-        Usuario tecnicoAsignado = solicitud.getTecnicoAsignado();
         if (solicitud.getEstado() == EstadoSolicitud.ARCHIVADA) {
             throw new ConflictoEstadoException("La solicitud de CUP está archivada.");
         }
+        Usuario tecnicoAsignado = solicitud.getTecnicoAsignado();
         if (tecnicoAsignado == null || !tecnicoAsignado.getId().equals(actor.getId())) {
             throw new AccesoDenegadoException(
                     "La solicitud de CUP no fue asignada al Técnico PRE autenticado.");
@@ -427,7 +427,7 @@ public class ProyectoServiceImpl implements ProyectoService {
         throw new IllegalStateException("No se pudo asignar el CUP tras " + INTENTOS_MAXIMOS_CUP + " intentos.");
     }
 
-    private void exigirEstadoEditable(Proyecto entidad) {
+    private static void exigirEstadoEditable(Proyecto entidad) {
         if (!ESTADOS_EDITABLES.contains(entidad.getEstado())) {
             throw new ConflictoEstadoException(
                     "El proyecto no se encuentra en un estado que permita esta accion (estado actual: "
@@ -435,7 +435,7 @@ public class ProyectoServiceImpl implements ProyectoService {
         }
     }
 
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto entidad) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto entidad) {
         // Igual que en listar(): solo el Técnico URP está acotado a su propia Unidad Ejecutora.
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(entidad.getUnidadEjecutora().getId())) {
@@ -473,7 +473,7 @@ public class ProyectoServiceImpl implements ProyectoService {
     }
 
     /** Resuelve un id de catálogo obligatorio (idSector/idEjeTematico); agrega un detalle si no existe. */
-    private <T> T resolverCatalogoRequerido(LongFunction<Optional<T>> buscador, Long id,
+    private static <T> T resolverCatalogoRequerido(LongFunction<Optional<T>> buscador, Long id,
             String campo, List<ErrorDetalleDto> detalles) {
         if (id == null) {
             return null;
@@ -486,7 +486,7 @@ public class ProyectoServiceImpl implements ProyectoService {
     }
 
     /** Resuelve un id de catálogo condicional (ejePlanGobierno/planSectorialRegional); null es válido. */
-    private <T> T resolverCatalogoOpcional(LongFunction<Optional<T>> buscador, Long id,
+    private static <T> T resolverCatalogoOpcional(LongFunction<Optional<T>> buscador, Long id,
             String campo, List<ErrorDetalleDto> detalles) {
         if (id == null) {
             return null;
@@ -495,7 +495,7 @@ public class ProyectoServiceImpl implements ProyectoService {
     }
 
 
-    private void validarReglaEmergencia(Proyecto entidad) {
+    private static void validarReglaEmergencia(Proyecto entidad) {
         if (!Boolean.TRUE.equals(entidad.getEsProyectoEmergencia())) {
             return;
         }

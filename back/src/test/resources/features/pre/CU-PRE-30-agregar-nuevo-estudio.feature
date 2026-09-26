@@ -6,7 +6,7 @@ Característica: Agregar un nuevo estudio y registrar su programación
   Quiero agregar un nuevo estudio y registrar su programación cuatrimestral
 
   Antecedentes:
-    Dado que el Técnico URP se encuentra en la pantalla "Programación Financiera Cuatrimestral del PAP" (Anexo A.1)
+    Dado que el Técnico URP se encuentra en la pantalla "Programación Financiera Cuatrimestral del PAP" (Anexo A.1) nuevo-estudio
 
   Escenario: Agregar un nuevo estudio y registrar su programación (camino feliz, SF-2)
     Cuando el Técnico URP hace clic en el botón "Agregar estudio"

@@ -1,6 +1,7 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,10 +34,11 @@ public class CatalogoIndicadoresServiceImpl implements CatalogoIndicadoresServic
         actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         var indicadores = indicadorResultadoRepository.findAllByOrderByNombreAsc();
         if (busqueda != null && !busqueda.isBlank()) {
-            String palabraClave = busqueda.toLowerCase();
+            String palabraClave = busqueda.toLowerCase(Locale.ROOT);
             indicadores = indicadores.stream()
-                    .filter(i -> i.getNombre().toLowerCase().contains(palabraClave)
-                            || (i.getDescripcion() != null && i.getDescripcion().toLowerCase().contains(palabraClave)))
+                    .filter(i -> i.getNombre().toLowerCase(Locale.ROOT).contains(palabraClave)
+                            || (i.getDescripcion() != null
+                                    && i.getDescripcion().toLowerCase(Locale.ROOT).contains(palabraClave)))
                     .toList();
         }
         return indicadores.stream().map(mapper::toResumen).toList();

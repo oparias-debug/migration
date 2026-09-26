@@ -1,10 +1,16 @@
 package sv.gob.mh.siip.model.preinversion.repository;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
+
+import java.util.Locale;
 
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
@@ -59,7 +65,7 @@ public interface ProyectoCapturaRepository
          * @return {@link Specification} con la instrucción de carga anticipada.
          */
         static Specification<Proyecto> fetchUnidadEjecutora() {
-            return (root, query, cb) -> {
+            return (Root<Proyecto> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
                 Class<?> resultType = query.getResultType();
                 if (Long.class.equals(resultType) || boolean.class.equals(resultType)) {
                     return null;
@@ -75,7 +81,7 @@ public interface ProyectoCapturaRepository
          * @return {@link Specification} con la condición lógica.
          */
         static Specification<Proyecto> esValidoParaCaptura() {
-            return (root, query, cb) -> cb.and(
+            return (Root<Proyecto> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb.and(
                     cb.isNotNull(root.get(FIELD_CUP)),
                     cb.isTrue(root.get(FIELD_ACTIVO))
             );
@@ -88,7 +94,8 @@ public interface ProyectoCapturaRepository
          * @return {@link Specification} correspondiente.
          */
         static Specification<Proyecto> byUnidadEjecutora(Long idUnidadEjecutora) {
-            return (root, query, cb) -> idUnidadEjecutora == null ? null :
+            return (Root<Proyecto> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                    (idUnidadEjecutora == null) ? null :
                     cb.equal(root.get(FIELD_UNIDAD_EJECUTORA).get(FIELD_ID), idUnidadEjecutora);
         }
 
@@ -99,17 +106,29 @@ public interface ProyectoCapturaRepository
          * @return {@link Specification} que agrupa la búsqueda.
          */
         static Specification<Proyecto> byBusquedaGeneral(String busqueda) {
-            return (root, query, cb) -> {
-                if (busqueda == null || busqueda.isBlank()) {
-                    return null;
-                }
-                String term = "%" + busqueda.toLowerCase().trim() + "%";
-                return cb.or(
-                        cb.like(cb.lower(root.get(FIELD_CUP)), term),
-                        cb.like(cb.lower(root.get(FIELD_NOMBRE)), term),
-                        cb.like(cb.lower(root.get(FIELD_UNIDAD_EJECUTORA).get(FIELD_NOMBRE)), term)
-                );
-            };
+            return (Root<Proyecto> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                    predicadoBusquedaGeneral(root, cb, busqueda);
+        }
+
+        /**
+         * Construye el predicado de búsqueda coincidencial sobre CUP, nombre del proyecto o nombre de la
+         * unidad ejecutora.
+         *
+         * @param root     raíz de la consulta.
+         * @param cb       constructor de criterios.
+         * @param busqueda término o cadena de texto ingresada.
+         * @return predicado de búsqueda, o {@code null} si no hay término.
+         */
+        private static Predicate predicadoBusquedaGeneral(Root<Proyecto> root, CriteriaBuilder cb, String busqueda) {
+            if (busqueda == null || busqueda.isBlank()) {
+                return null;
+            }
+            String term = "%" + busqueda.toLowerCase(Locale.ROOT).trim() + "%";
+            return cb.or(
+                    cb.like(cb.lower(root.get(FIELD_CUP)), term),
+                    cb.like(cb.lower(root.get(FIELD_NOMBRE)), term),
+                    cb.like(cb.lower(root.get(FIELD_UNIDAD_EJECUTORA).get(FIELD_NOMBRE)), term)
+            );
         }
 
         /**
@@ -119,8 +138,9 @@ public interface ProyectoCapturaRepository
          * @return {@link Specification} correspondiente.
          */
         static Specification<Proyecto> byCup(String cup) {
-            return (root, query, cb) -> (cup == null || cup.isBlank()) ? null :
-                    cb.like(cb.lower(root.get(FIELD_CUP)), "%" + cup.toLowerCase().trim() + "%");
+            return (Root<Proyecto> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                    (cup == null || cup.isBlank()) ? null :
+                    cb.like(cb.lower(root.get(FIELD_CUP)), "%" + cup.toLowerCase(Locale.ROOT).trim() + "%");
         }
 
         /**
@@ -130,8 +150,9 @@ public interface ProyectoCapturaRepository
          * @return {@link Specification} correspondiente.
          */
         static Specification<Proyecto> byNombre(String nombre) {
-            return (root, query, cb) -> (nombre == null || nombre.isBlank()) ? null :
-                    cb.like(cb.lower(root.get(FIELD_NOMBRE)), "%" + nombre.toLowerCase().trim() + "%");
+            return (Root<Proyecto> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                    (nombre == null || nombre.isBlank()) ? null :
+                    cb.like(cb.lower(root.get(FIELD_NOMBRE)), "%" + nombre.toLowerCase(Locale.ROOT).trim() + "%");
         }
 
         /**
@@ -141,17 +162,29 @@ public interface ProyectoCapturaRepository
          * @return {@link Specification} correspondiente.
          */
         static Specification<Proyecto> byIniciativa(String iniciativaValue) {
-            return (root, query, cb) -> {
-                if (iniciativaValue == null || iniciativaValue.isBlank()) {
-                    return null;
-                }
-                try {
-                    IniciativaInversion enumValue = IniciativaInversion.valueOf(iniciativaValue);
-                    return cb.equal(root.get(FIELD_INICIATIVA), enumValue);
-                } catch (IllegalArgumentException ex) {
-                    return cb.disjunction(); // Si el String no coincide con ningún Enum válido, fuerza resultado vacío seguro
-                }
-            };
+            return (Root<Proyecto> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                    predicadoIniciativa(root, cb, iniciativaValue);
+        }
+
+        /**
+         * Construye el predicado de igualdad sobre el enumerado {@link IniciativaInversion}.
+         *
+         * @param root            raíz de la consulta.
+         * @param cb              constructor de criterios.
+         * @param iniciativaValue valor textual del enumerado.
+         * @return predicado de igualdad, disyunción vacía si el valor no es válido, o {@code null} si no hay valor.
+         */
+        private static Predicate predicadoIniciativa(Root<Proyecto> root, CriteriaBuilder cb, String iniciativaValue) {
+            if (iniciativaValue == null || iniciativaValue.isBlank()) {
+                return null;
+            }
+            try {
+                IniciativaInversion enumValue = IniciativaInversion.valueOf(iniciativaValue);
+                return cb.equal(root.get(FIELD_INICIATIVA), enumValue);
+            } catch (IllegalArgumentException ex) {
+                // Si el String no coincide con ningún Enum válido, fuerza resultado vacío seguro
+                return cb.disjunction();
+            }
         }
 
         /**
@@ -161,17 +194,29 @@ public interface ProyectoCapturaRepository
          * @return {@link Specification} correspondiente.
          */
         static Specification<Proyecto> byEstado(String estadoValue) {
-            return (root, query, cb) -> {
-                if (estadoValue == null || estadoValue.isBlank()) {
-                    return null;
-                }
-                try {
-                    EstadoProyecto enumValue = EstadoProyecto.valueOf(estadoValue);
-                    return cb.equal(root.get(FIELD_ESTADO), enumValue);
-                } catch (IllegalArgumentException ex) {
-                    return cb.disjunction(); // Si el String no coincide con ningún Enum válido, fuerza resultado vacío seguro
-                }
-            };
+            return (Root<Proyecto> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                    predicadoEstado(root, cb, estadoValue);
+        }
+
+        /**
+         * Construye el predicado de igualdad sobre el enumerado {@link EstadoProyecto}.
+         *
+         * @param root        raíz de la consulta.
+         * @param cb          constructor de criterios.
+         * @param estadoValue valor textual del enumerado.
+         * @return predicado de igualdad, disyunción vacía si el valor no es válido, o {@code null} si no hay valor.
+         */
+        private static Predicate predicadoEstado(Root<Proyecto> root, CriteriaBuilder cb, String estadoValue) {
+            if (estadoValue == null || estadoValue.isBlank()) {
+                return null;
+            }
+            try {
+                EstadoProyecto enumValue = EstadoProyecto.valueOf(estadoValue);
+                return cb.equal(root.get(FIELD_ESTADO), enumValue);
+            } catch (IllegalArgumentException ex) {
+                // Si el String no coincide con ningún Enum válido, fuerza resultado vacío seguro
+                return cb.disjunction();
+            }
         }
     }
 }

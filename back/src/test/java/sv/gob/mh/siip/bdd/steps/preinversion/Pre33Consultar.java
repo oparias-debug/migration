@@ -27,6 +27,7 @@ import sv.gob.mh.siip.model.preinversion.dto.FinalizarRevisionAvanceRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.GuardarAvanceMetasEstudioRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarRespuestaInstitucionAvanceRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionAvancePAPDto;
+import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapRevisionService;
 import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapService;
 
 /**
@@ -46,16 +47,18 @@ public class Pre33Consultar {
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final UsuarioRepository usuarioRepository;
     private final AvanceMetasFisicasPapService service;
+    private final AvanceMetasFisicasPapRevisionService revisionService;
 
     private UnidadEjecutora unidadEjecutora;
 
     public Pre33Consultar(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
-            AvanceMetasFisicasPapService service) {
+            AvanceMetasFisicasPapService service, AvanceMetasFisicasPapRevisionService revisionService) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
         this.service = service;
+        this.revisionService = revisionService;
     }
 
     @Cuando("el actor accede a la pantalla \"Avance de la ejecución Cuatrimestral de Metas del PAP\"")
@@ -86,12 +89,12 @@ public class Pre33Consultar {
         FinalizarRevisionAvanceRequestDto request = new FinalizarRevisionAvanceRequestDto(unidadEjecutora.getId(), ANIO,
                 CuatrimestreDto.CUATRIMESTRE_I).comentarioReporteFinancieroDgicp("Comentario financiero (BDD).")
                 .comentarioReporteMetasFisicasDgicp("Comentario de metas físicas (BDD).");
-        RevisionAvancePAPDto comoInterno = service.finalizarRevisionAvance(request);
+        RevisionAvancePAPDto comoInterno = revisionService.finalizarRevisionAvance(request);
         assertThat(comoInterno.getComentarioReporteFinancieroDgicp()).isNotNull();
         assertThat(comoInterno.getComentarioReporteMetasFisicasDgicp()).isNotNull();
 
         crearActorYAutenticarMismaUnidad(RolUsuario.TECNICO_URP);
-        RevisionAvancePAPDto comoUrp = service.registrarRespuestaInstitucionAvance(
+        RevisionAvancePAPDto comoUrp = revisionService.registrarRespuestaInstitucionAvance(
                 new RegistrarRespuestaInstitucionAvanceRequestDto(unidadEjecutora.getId(), ANIO,
                         CuatrimestreDto.CUATRIMESTRE_I, "Respuesta institucional (BDD)."));
         assertThat(comoUrp.getComentarioReporteFinancieroDgicp()).isNull();

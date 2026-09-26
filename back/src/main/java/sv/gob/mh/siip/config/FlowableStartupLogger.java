@@ -19,7 +19,7 @@ public class FlowableStartupLogger {
 			final RuntimeService runtimeService,
 			final TaskService taskService) {
 
-		return strings -> {
+		return (String[] strings) -> {
 			logger.info("Number of process definitions : {}",repositoryService.createProcessDefinitionQuery().count());
 			logger.info("Number of tasks : {}", taskService.createTaskQuery().count());
 		};

@@ -78,7 +78,10 @@ try {
 
     foreach ($service in $services) {
         $image = "$registry/siip-$($service):$Tag"
-        Invoke-Step -Name "docker build $service -> $image" -Action { & docker build -t $image "./$service" }
+        # back/Dockerfile es el del ambiente de la entidad (imagen base en el registry
+        # interno de MH); fuera de esa red se usa back/Dockerfile.local.
+        $dockerfile = if ($service -eq 'back') { "./$service/Dockerfile.local" } else { "./$service/Dockerfile" }
+        Invoke-Step -Name "docker build $service -> $image" -Action { & docker build -t $image -f $dockerfile "./$service" }
 
         if (-not $SkipPush) {
             Invoke-Step -Name "docker push $image" -Action { & docker push $image }

@@ -30,7 +30,8 @@ public class RegistroCatalogoController implements CatalogRecordApi {
     @Override
     public ResponseEntity<CatalogRecordDto> crearRegistroCatalogo(String code,
             CatalogRecordCreateRequestDto catalogRecordCreateRequestDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(registroService.crear(code, catalogRecordCreateRequestDto));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(registroService.crear(code, catalogRecordCreateRequestDto));
     }
 
     @Override

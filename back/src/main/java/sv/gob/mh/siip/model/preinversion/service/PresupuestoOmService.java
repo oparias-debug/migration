@@ -56,7 +56,16 @@ public class PresupuestoOmService {
     public static final String TIPO_COSTO_MANTENIMIENTO = "MANTENIMIENTO";
     private static final String TIPO_COSTO_O_M = "O_M";
     private static final String TIPO_COSTO_NO_APLICA = "NO_APLICA";
-    private static final List<String> TIPOS_COSTO_VALIDOS = List.of(TIPO_COSTO_OPERACION, TIPO_COSTO_MANTENIMIENTO, TIPO_COSTO_O_M, TIPO_COSTO_NO_APLICA);
+    private static final List<String> TIPOS_COSTO_VALIDOS = List.of(TIPO_COSTO_OPERACION, TIPO_COSTO_MANTENIMIENTO,
+            TIPO_COSTO_O_M, TIPO_COSTO_NO_APLICA);
+    /** Tasa de crecimiento de costos máxima permitida (porcentaje). */
+    private static final double TASA_CRECIMIENTO_MAXIMA = 3D;
+    /** Los totales se redondean hacia arriba al múltiplo de este valor. */
+    private static final double MULTIPLO_REDONDEO_TOTAL = 5D;
+    /** Divisor para convertir un porcentaje (ej. 5 = 5%) en fracción. */
+    private static final double PORCENTAJE_TOTAL = 100D;
+    /** Factor para redondear montos a centavos (2 decimales). */
+    private static final double FACTOR_REDONDEO_CENTAVOS = 100D;
 
     private final ProyectoRepository proyectos;
     private final PresupuestoOmConfiguracionRepository configuraciones;
@@ -64,7 +73,8 @@ public class PresupuestoOmService {
     private final InsumoTipoRepository insumosTipo;
     private final ActorContexto actor;
 
-    public PresupuestoOmService(ProyectoRepository p, PresupuestoOmConfiguracionRepository c, ActividadOmRepository a, InsumoTipoRepository insumosTipo, ActorContexto ac) {
+    public PresupuestoOmService(ProyectoRepository p, PresupuestoOmConfiguracionRepository c, ActividadOmRepository a,
+            InsumoTipoRepository insumosTipo, ActorContexto ac) {
         proyectos = p;
         configuraciones = c;
         actividades = a;
@@ -82,22 +92,14 @@ public class PresupuestoOmService {
         Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto p = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, p);
+        EdicionFormulacion.exigirEditable(p);
         String tipoCosto = (String) r.get("tipoCosto");
-        if (tipoCosto == null || TIPOS_COSTO_VALIDOS.stream().noneMatch(t -> t.equalsIgnoreCase(tipoCosto))) {
-            throw new ValidacionNegocioException("Tipo de costo inválido", List.of());
-        }
+        validarTipoCosto(tipoCosto);
         Number vidaUtil = (Number) r.get("vidaUtil");
         Number tasa = (Number) r.get("tasaCrecimientoCostos");
-        // RN04: "Vida útil"/"Tasa de crecimiento" solo se muestran (y son obligatorios) cuando se
-        // selecciona un tipo de costo distinto de "No aplica"; con "No aplica" el Sistema no
-        // despliega esos campos, así que no se exigen.
-        if (!TIPO_COSTO_NO_APLICA.equalsIgnoreCase(tipoCosto) && (vidaUtil == null || tasa == null)) {
-            throw new ValidacionNegocioException("Vida útil y tasa de crecimiento de costos son obligatorios", List.of());
-        }
-        if (tasa != null && (tasa.doubleValue() < 0D || tasa.doubleValue() > 3D)) {
-            throw new ValidacionNegocioException("La tasa de crecimiento de costos debe estar entre 0% y 3%", List.of());
-        }
-        PresupuestoOmConfiguracion c = configuraciones.findByProyectoId(idProyecto).orElseGet(() -> PresupuestoOmConfiguracion.builder().proyecto(p).build());
+        validarVidaUtilYTasa(tipoCosto, vidaUtil, tasa);
+        PresupuestoOmConfiguracion c = configuraciones.findByProyectoId(idProyecto)
+                .orElseGet(() -> PresupuestoOmConfiguracion.builder().proyecto(p).build());
         c.setTipoCosto(tipoCosto);
         c.setVidaUtil(vidaUtil == null ? null : vidaUtil.intValue());
         c.setTasaCrecimientoCostos(tasa == null ? null : tasa.doubleValue());
@@ -105,10 +107,31 @@ public class PresupuestoOmService {
         return respuesta(idProyecto, ActorContexto.esUsuarioInterno(usuario));
     }
 
+    private static void validarTipoCosto(String tipoCosto) {
+        if (tipoCosto == null || TIPOS_COSTO_VALIDOS.stream().noneMatch(t -> t.equalsIgnoreCase(tipoCosto))) {
+            throw new ValidacionNegocioException("Tipo de costo inválido", List.of());
+        }
+    }
+
+    private static void validarVidaUtilYTasa(String tipoCosto, Number vidaUtil, Number tasa) {
+        // RN04: "Vida útil"/"Tasa de crecimiento" solo se muestran (y son obligatorios) cuando se
+        // selecciona un tipo de costo distinto de "No aplica"; con "No aplica" el Sistema no
+        // despliega esos campos, así que no se exigen.
+        if (!TIPO_COSTO_NO_APLICA.equalsIgnoreCase(tipoCosto) && (vidaUtil == null || tasa == null)) {
+            throw new ValidacionNegocioException("Vida útil y tasa de crecimiento de costos son obligatorios",
+                    List.of());
+        }
+        if (tasa != null && (tasa.doubleValue() < 0D || tasa.doubleValue() > TASA_CRECIMIENTO_MAXIMA)) {
+            throw new ValidacionNegocioException("La tasa de crecimiento de costos debe estar entre 0% y 3%",
+                    List.of());
+        }
+    }
+
     public ActividadOm registrarActividad(Long idProyecto, String tipoCostoTabla, Map<String, Object> r) {
         Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
         String n = (String) r.get("nombreActividad");
         if (n == null || n.isBlank()) {
             throw new ValidacionNegocioException("Actividad inválida", List.of());
@@ -154,7 +177,8 @@ public class PresupuestoOmService {
     public void eliminarActividad(Long idProyecto, String tipoCostoTabla, Long idActividad) {
         Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
         exigirAlcanceUnidadEjecutora(usuario, proyecto(idProyecto));
-        ActividadOm a = actividades.findByIdAndProyectoId(idActividad, idProyecto).orElseThrow(() -> new RecursoNoEncontradoException("Actividad no encontrada"));
+        ActividadOm a = actividades.findByIdAndProyectoId(idActividad, idProyecto)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Actividad no encontrada"));
         if (!a.getTipoCostoTabla().equalsIgnoreCase(tipoCostoTabla)) {
             throw new RecursoNoEncontradoException("Actividad no encontrada");
         }
@@ -169,7 +193,9 @@ public class PresupuestoOmService {
     }
 
     public int vidaUtil(Long idProyecto) {
-        return configuraciones.findByProyectoId(idProyecto).map(c -> c.getVidaUtil() == null ? 0 : c.getVidaUtil()).orElse(0);
+        return configuraciones.findByProyectoId(idProyecto)
+                .map(c -> c.getVidaUtil() == null ? 0 : c.getVidaUtil())
+                .orElse(0);
     }
 
     public CostosPorTipo costosPorTipo(Long idProyecto, String tipoCostoTabla) {
@@ -198,30 +224,22 @@ public class PresupuestoOmService {
             respuesta.put("costosMantenimiento", tabla(mantenimiento, incluirAjustado));
         }
         if (!TIPO_COSTO_NO_APLICA.equalsIgnoreCase(tipoCosto)) {
-            respuesta.put("totalInversionPrecioMercado", monto(sumarPeriodos(operacion.mercado(), mantenimiento.mercado())));
+            respuesta.put("totalInversionPrecioMercado",
+                    monto(sumarPeriodos(operacion.mercado(), mantenimiento.mercado())));
             if (incluirAjustado) {
-                respuesta.put("totalInversionPrecioAjustado", monto(sumarPeriodos(operacion.ajustado(), mantenimiento.ajustado())));
+                respuesta.put("totalInversionPrecioAjustado",
+                        monto(sumarPeriodos(operacion.ajustado(), mantenimiento.ajustado())));
             }
         }
         return respuesta;
     }
 
-    private Map<String, Object> tabla(CostosPorTipo costos, boolean incluirAjustado) {
-        Map<String, Object> tabla = new LinkedHashMap<>();
+    private static Map<String, Object> tabla(CostosPorTipo costos, boolean incluirAjustado) {
         List<Map<String, Object>> actividadesDto = new ArrayList<>();
         for (int i = 0; i < costos.actividades().size(); i++) {
             ActividadOm actividad = costos.actividades().get(i);
-            List<Map<String, Object>> insumosDto = actividad.getInsumos().stream().map(insumo -> {
-                Map<String, Object> insumoDto = new LinkedHashMap<>();
-                insumoDto.put("tipoInsumo", Map.of("codigo", insumo.getInsumoTipoCodigo(), "nombre", insumo.getInsumoTipoNombre(),
-                        "factorCorreccion", insumo.getFactorCorreccion()));
-                insumoDto.put("costoPeriodo1PrecioMercado", insumo.getCostoPeriodo1PrecioMercado());
-                if (incluirAjustado) {
-                    insumoDto.put("costoPeriodo1PrecioAjustado", r(insumo.getCostoPeriodo1PrecioMercado()
-                            * insumo.getFactorCorreccion()));
-                }
-                return insumoDto;
-            }).toList();
+            List<Map<String, Object>> insumosDto = actividad.getInsumos().stream()
+                    .map((InsumoActividad insumo) -> insumoDto(insumo, incluirAjustado)).toList();
             Map<String, Object> actividadDto = new LinkedHashMap<>();
             actividadDto.put("idActividad", actividad.getId());
             actividadDto.put("numero", i + 1);
@@ -233,12 +251,26 @@ public class PresupuestoOmService {
             }
             actividadesDto.add(actividadDto);
         }
+        Map<String, Object> tabla = new LinkedHashMap<>();
         tabla.put("actividades", actividadesDto);
         tabla.put("totalPorPeriodoPrecioMercado", monto(costos.mercado()));
         if (incluirAjustado) {
             tabla.put("totalPorPeriodoPrecioAjustado", monto(costos.ajustado()));
         }
         return tabla;
+    }
+
+    private static Map<String, Object> insumoDto(InsumoActividad insumo, boolean incluirAjustado) {
+        Map<String, Object> insumoDto = new LinkedHashMap<>();
+        insumoDto.put("tipoInsumo", Map.of("codigo", insumo.getInsumoTipoCodigo(),
+                "nombre", insumo.getInsumoTipoNombre(),
+                "factorCorreccion", insumo.getFactorCorreccion()));
+        insumoDto.put("costoPeriodo1PrecioMercado", insumo.getCostoPeriodo1PrecioMercado());
+        if (incluirAjustado) {
+            insumoDto.put("costoPeriodo1PrecioAjustado", r(insumo.getCostoPeriodo1PrecioMercado()
+                    * insumo.getFactorCorreccion()));
+        }
+        return insumoDto;
     }
 
     private static boolean incluyeOperacion(String tipoCosto) {
@@ -265,13 +297,14 @@ public class PresupuestoOmService {
     }
 
     private static double redondearHaciaArribaMultiploDeCinco(double valor) {
-        return Math.ceil(valor / 5D) * 5D;
+        return Math.ceil(valor / MULTIPLO_REDONDEO_TOTAL) * MULTIPLO_REDONDEO_TOTAL;
     }
 
-    private CostosPorTipo costosPorTipo(Long idProyecto, String tipoCostoTabla, PresupuestoOmConfiguracion configuracion) {
+    private CostosPorTipo costosPorTipo(Long idProyecto, String tipoCostoTabla,
+            PresupuestoOmConfiguracion configuracion) {
         List<ActividadOm> filtradas = actividades.findByProyectoId(idProyecto).stream()
                 .filter(a -> tipoCostoTabla.equalsIgnoreCase(a.getTipoCostoTabla())).toList();
-        int vidaUtil = configuracion == null || configuracion.getVidaUtil() == null ? 0 : configuracion.getVidaUtil();
+        int vidaUtil = (configuracion == null || configuracion.getVidaUtil() == null) ? 0 : configuracion.getVidaUtil();
         List<Double> mercado = ceros(vidaUtil);
         List<Double> ajustado = ceros(vidaUtil);
         if (vidaUtil > 0) {
@@ -279,7 +312,8 @@ public class PresupuestoOmService {
             // quedado en 0 arriba).
             double baseMercado = filtradas.stream().mapToDouble(ActividadOm::getCostoPeriodo1PrecioMercado).sum();
             double baseAjustado = filtradas.stream().mapToDouble(ActividadOm::getCostoPeriodo1PrecioAjustado).sum();
-            double tasa = configuracion.getTasaCrecimientoCostos() == null ? 0D : configuracion.getTasaCrecimientoCostos() / 100D;
+            double tasa = configuracion.getTasaCrecimientoCostos() == null
+                    ? 0D : (configuracion.getTasaCrecimientoCostos() / PORCENTAJE_TOTAL);
             mercado.set(0, r(baseMercado));
             ajustado.set(0, r(baseAjustado));
             for (int i = 1; i < vidaUtil; i++) {
@@ -313,7 +347,7 @@ public class PresupuestoOmService {
     }
 
     private static double r(double x) {
-        return Math.round(x * 100D) / 100D;
+        return Math.round(x * FACTOR_REDONDEO_CENTAVOS) / FACTOR_REDONDEO_CENTAVOS;
     }
 
     public record CostosPorTipo(List<ActividadOm> actividades, List<Double> mercado, List<Double> ajustado) {

@@ -69,7 +69,7 @@ class ReporteAvanceFinancieroPapGeneratorTest {
             assertThat(total.getCell(6).getNumericCellValue()).isEqualTo(6000d);
             assertThat(total.getCell(9).getNumericCellValue()).isEqualTo(3000d);
             // Los porcentajes no se totalizan (RN-E "Total General" solo aplica a montos).
-            assertThat(total.getCell(8) == null).isTrue();
+            assertThat(total.getCell(8)).isNull();
 
             Row comentarios = hoja.getRow(7);
             assertThat(comentarios.getCell(0).getStringCellValue())
@@ -88,7 +88,9 @@ class ReporteAvanceFinancieroPapGeneratorTest {
         try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
             XSSFSheet hoja = workbook.getSheetAt(0);
             assertThat(hoja.getRow(4).getCell(1).getStringCellValue()).isEqualTo("TOTAL");
-            assertThat(hoja.getRow(6) == null).isTrue();
+            // Declarada como Row: XSSFRow es Iterable y Comparable a la vez y assertThat(...) quedaría ambiguo.
+            Row filaSiguiente = hoja.getRow(6);
+            assertThat(filaSiguiente).isNull();
         }
     }
 

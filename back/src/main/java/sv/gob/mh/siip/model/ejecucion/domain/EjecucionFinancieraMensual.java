@@ -2,11 +2,30 @@ package sv.gob.mh.siip.model.ejecucion.domain;
 
 import sv.gob.mh.siip.model.ejecucion.enums.EstadoEjecucionFinanciera;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 
 import java.math.BigDecimal;
@@ -14,7 +33,9 @@ import java.math.BigDecimal;
 /** Avance financiero mensual del proyecto en el PAIP. CU-EJE-01. */
 @Entity
 @Table(name = "EJECUCION_FINANCIERA_MENSUAL",
-       uniqueConstraints = @UniqueConstraint(name = "UK_EJEC_FIN_MENSUAL", columnNames = {"ID_PROYECTO", "ANIO", "MES"}))
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_EJEC_FIN_MENSUAL",
+               columnNames = {"ID_PROYECTO", "ANIO", "MES"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -64,7 +85,11 @@ public class EjecucionFinancieraMensual {
     @Column(name = "ESTADO", nullable = false, length = 20)
     private EstadoEjecucionFinanciera estado;
 
-    @OneToMany(mappedBy = "ejecucionFinancieraMensual", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "ejecucionFinancieraMensual",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     @Builder.Default
     private java.util.List<ObservacionEjecucionFinanciera> observaciones = new java.util.ArrayList<>();
 }

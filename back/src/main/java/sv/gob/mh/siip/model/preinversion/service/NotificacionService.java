@@ -24,7 +24,10 @@ public interface NotificacionService {
     /** RN-4: alerta de posible eliminacion tras 3 meses sin solicitar el CUP. */
     void notificarAlertaEliminacion(Proyecto proyecto, Usuario destinatario);
 
-    /** Anexo A.3.2 (CU-PRE-01.5): notifica al Tecnico URP cuando el Tecnico PRE devuelve la solicitud con observaciones. */
+    /**
+     * Anexo A.3.2 (CU-PRE-01.5): notifica al Tecnico URP cuando el Tecnico PRE devuelve la solicitud
+     * con observaciones.
+     */
     void notificarDevolucionSolicitud(Proyecto proyecto, Usuario destinatario);
 
     /** Anexo A.3.4 (CU-PRE-01.5): notifica al Tecnico URP cuando el Tecnico PRE emite el CUP. */
@@ -40,9 +43,25 @@ public interface NotificacionService {
     void notificarRespuestaInstitucion(Long idUnidadEjecutora, Integer anio, List<Usuario> destinatarios);
 
     /** CU-PRE-33 SF-2 pasos 1-3: notifica al Tecnico URP que se registraron observaciones DGICP sobre el avance. */
-    void notificarObservacionesAvance(Long idUnidadEjecutora, Integer anio, String periodo, List<Usuario> destinatarios);
+    void notificarObservacionesAvance(Long idUnidadEjecutora, Integer anio, String periodo,
+            List<Usuario> destinatarios);
 
     /** CU-PRE-33 SF-2 pasos 4-5: notifica al Tecnico PRE que el Tecnico URP respondio sobre el avance. */
     void notificarRespuestaInstitucionAvance(Long idUnidadEjecutora, Integer anio, String periodo,
             List<Usuario> destinatarios);
+
+    /**
+     * CU-PRE-24 FB1 paso 6 y FB2 paso 1: notifica a los Viabilizadores que les llegó una solicitud de
+     * Viabilidad, con el link al formulario del Anexo A.1.
+     */
+    void notificarSolicitudViabilidad(Proyecto proyecto, List<Usuario> destinatarios);
+
+    /**
+     * CU-PRE-24 FA01 paso 1.5: notifica al Tecnico URP que el Viabilizador envió comentarios a la
+     * información registrada, para su ajuste.
+     */
+    void notificarComentariosViabilidad(Proyecto proyecto, Usuario destinatario);
+
+    /** CU-PRE-24 FA02 paso 2.5: notifica al Tecnico URP que se emitió la Viabilidad del proyecto. */
+    void notificarEmisionViabilidad(Proyecto proyecto, Usuario destinatario);
 }

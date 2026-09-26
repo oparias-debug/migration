@@ -29,7 +29,7 @@ import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaMetaFisicaPapRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
-import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapService;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapAjusteService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
@@ -37,7 +37,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
  * CU-PRE-31-sincronizacion-automatica.feature (SF-4/SF-5). Ejercita directamente
- * {@link ProgramacionFinancieraPapService} (CU-PRE-30, actor "Sistema", sin endpoint propio en
+ * {@link ProgramacionFinancieraPapAjusteService} (CU-PRE-30, actor "Sistema", sin endpoint propio en
  * este documento) y verifica el efecto colateral en la Programación de Metas Físicas (CU-PRE-31),
  * mismo criterio que {@code Pre30EliminarDesactivar} usa para ejercitar esas mismas acciones desde
  * el lado de CU-PRE-30.
@@ -56,7 +56,7 @@ public class Pre31SincronizacionAutomatica {
     private final MacroSectorRepository macroSectorRepository;
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
-    private final ProgramacionFinancieraPapService financieraService;
+    private final ProgramacionFinancieraPapAjusteService financieraService;
 
     private Proyecto proyecto;
     private EtapaPreinversion etapa;
@@ -66,7 +66,7 @@ public class Pre31SincronizacionAutomatica {
             ProyectoRepository proyectoRepository, EtapaPreinversionRepository etapaPreinversionRepository,
             EtapaMetaFisicaPapRepository etapaMetaRepository, MacroSectorRepository macroSectorRepository,
             SectorActividadRepository sectorActividadRepository, EjeTematicoRepository ejeTematicoRepository,
-            ProgramacionFinancieraPapService financieraService) {
+            ProgramacionFinancieraPapAjusteService financieraService) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;

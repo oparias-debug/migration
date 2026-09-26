@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,10 +18,10 @@ import lombok.experimental.SuperBuilder;
 @MappedSuperclass
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@SuperBuilder
-public abstract class CatalogoConFactorCorreccion {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder(builderMethodName = "")
+public class CatalogoConFactorCorreccion {
 
     @NotBlank
     @Column(name = "CODIGO", nullable = false, length = 100, unique = true)

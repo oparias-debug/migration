@@ -24,6 +24,7 @@ import sv.gob.mh.siip.model.administracion.dto.RecurrenciaUnaVezDto;
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
 import sv.gob.mh.siip.model.administracion.repository.CalendarioRepository;
 import sv.gob.mh.siip.model.administracion.repository.PeriodoRepository;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 import sv.gob.mh.siip.model.administracion.service.CalendarioService;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
@@ -35,6 +36,7 @@ public class Adm04EditarDefinicionCalendario {
     private final CalendarioRepository calendarioRepository;
     private final PeriodoRepository periodoRepository;
     private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioConsultaService;
     private final ContextoValidacionBdd contextoValidacion;
 
     // Real codigo del calendario creado por el Dado (distinto del literal del .feature): ver nota en
@@ -47,11 +49,13 @@ public class Adm04EditarDefinicionCalendario {
 
     public Adm04EditarDefinicionCalendario(UsuarioRepository usuarioRepository,
             CalendarioRepository calendarioRepository, PeriodoRepository periodoRepository,
-            CalendarioService calendarioService, ContextoValidacionBdd contextoValidacion) {
+            CalendarioService calendarioService, CalendarioConsultaService calendarioConsultaService,
+            ContextoValidacionBdd contextoValidacion) {
         this.usuarioRepository = usuarioRepository;
         this.calendarioRepository = calendarioRepository;
         this.periodoRepository = periodoRepository;
         this.calendarioService = calendarioService;
+        this.calendarioConsultaService = calendarioConsultaService;
         this.contextoValidacion = contextoValidacion;
     }
 
@@ -74,7 +78,7 @@ public class Adm04EditarDefinicionCalendario {
         String nombreUsuario = "actor.calendario.bdd." + CalendarioFixtures.nuevoSufijo();
         usuarioRepository.save(CalendarioFixtures.nuevoUsuarioConRol(nombreUsuario, RolUsuario.valueOf(rol)));
         CalendarioFixtures.autenticarComo(nombreUsuario);
-        definicionAntes = calendarioService.recuperarDefinicion(codigoCalendarioReal);
+        definicionAntes = calendarioConsultaService.recuperarDefinicion(codigoCalendarioReal);
     }
 
     @Cuando("^el actor \"([^\"]*)\" el CalendarItem \"([^\"]*)\" del calendario \"([^\"]*)\"$")
@@ -136,7 +140,7 @@ public class Adm04EditarDefinicionCalendario {
     public void el_actor_intenta_recuperar_para_edicion_un_calendario_inexistente(
             String codigoCalendarioLiteral) {
         try {
-            calendarioService.recuperarDefinicion(codigoCalendarioLiteral);
+            calendarioConsultaService.recuperarDefinicion(codigoCalendarioLiteral);
             contextoValidacion.setUltimaExcepcion(null);
         } catch (RuntimeException ex) {
             contextoValidacion.setUltimaExcepcion(ex);

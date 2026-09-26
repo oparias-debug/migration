@@ -40,6 +40,7 @@ import sv.gob.mh.siip.model.preinversion.repository.EtapaMetaFisicaPapRepository
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.RevisionProgramacionPapRepository;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapRevisionService;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
@@ -66,6 +67,7 @@ public class Pre31ResponderAjustes {
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
     private final ProgramacionMetasFisicasPapService service;
+    private final ProgramacionMetasFisicasPapRevisionService revisionService;
 
     private UnidadEjecutora unidadEjecutora;
     private Institucion institucion;
@@ -77,7 +79,8 @@ public class Pre31ResponderAjustes {
             ProyectoRepository proyectoRepository, EtapaPreinversionRepository etapaPreinversionRepository,
             EtapaMetaFisicaPapRepository etapaMetaRepository, RevisionProgramacionPapRepository revisionRepository,
             MacroSectorRepository macroSectorRepository, SectorActividadRepository sectorActividadRepository,
-            EjeTematicoRepository ejeTematicoRepository, ProgramacionMetasFisicasPapService service) {
+            EjeTematicoRepository ejeTematicoRepository, ProgramacionMetasFisicasPapService service,
+            ProgramacionMetasFisicasPapRevisionService revisionService) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -89,15 +92,16 @@ public class Pre31ResponderAjustes {
         this.sectorActividadRepository = sectorActividadRepository;
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.service = service;
+        this.revisionService = revisionService;
     }
 
     @Dado("que el Técnico PRE o el Coordinador PRE registraron observaciones")
     public void que_registraron_observaciones() {
         crearInsumosYAutenticarComoUrp();
         autenticarComo(crearUsuario(RolUsuario.TECNICO_PRE, "pre.31j"));
-        service.registrarObservacionesDgicp(
+        revisionService.registrarObservacionesDgicp(
                 new RegistrarObservacionesDgicpRequestDto(unidadEjecutora.getId(), ANIO, OBSERVACIONES));
-        service.enviarObservacionesDgicp(new EnviarProgramacionARevisionDgicpRequestDto(unidadEjecutora.getId(), ANIO));
+        revisionService.enviarObservacionesDgicp(new EnviarProgramacionARevisionDgicpRequestDto(unidadEjecutora.getId(), ANIO));
         autenticarComo(nombreUsuarioUrp);
     }
 
@@ -109,13 +113,13 @@ public class Pre31ResponderAjustes {
 
     @Y("registra información en el campo \"Respuesta Institución\"")
     public void registra_informacion_en_respuesta_institucion() {
-        service.registrarRespuestaInstitucion(
+        revisionService.registrarRespuestaInstitucion(
                 new RegistrarRespuestaInstitucionRequestDto(unidadEjecutora.getId(), ANIO, RESPUESTA));
     }
 
     @Entonces("el sistema guarda la información con la fecha de registro respuesta")
     public void el_sistema_guarda_la_informacion_con_fecha_de_registro() {
-        revisionGuardada = service
+        revisionGuardada = revisionService
                 .enviarRespuestaInstitucion(new EnviarProgramacionARevisionDgicpRequestDto(unidadEjecutora.getId(), ANIO));
         assertThat(revisionGuardada.getRespuestaInstitucion()).isEqualTo(RESPUESTA);
         assertThat(revisionGuardada.getFechaRespuesta()).isNotNull();
@@ -157,13 +161,13 @@ public class Pre31ResponderAjustes {
     public void el_tecnico_urp_puede_visualizar_pero_no_editar_observaciones() {
         que_registraron_observaciones();
 
-        RevisionProgramacionPAPDto revision = service.registrarRespuestaInstitucion(
+        RevisionProgramacionPAPDto revision = revisionService.registrarRespuestaInstitucion(
                 new RegistrarRespuestaInstitucionRequestDto(unidadEjecutora.getId(), ANIO, RESPUESTA));
         assertThat(revision.getObservacionesDgicp()).isEqualTo(OBSERVACIONES);
 
         RegistrarObservacionesDgicpRequestDto otraObservacion = new RegistrarObservacionesDgicpRequestDto(
                 unidadEjecutora.getId(), ANIO, "otro texto");
-        assertThatThrownBy(() -> service.registrarObservacionesDgicp(otraObservacion))
+        assertThatThrownBy(() -> revisionService.registrarObservacionesDgicp(otraObservacion))
                 .isInstanceOf(AccesoDenegadoException.class);
         RequestContextHolder.resetRequestAttributes();
     }

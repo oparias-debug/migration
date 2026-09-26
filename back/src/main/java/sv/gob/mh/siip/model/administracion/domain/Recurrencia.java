@@ -11,6 +11,7 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,9 +27,9 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorColumn(name = "TIPO_RECURRENCIA", discriminatorType = DiscriminatorType.STRING, length = 20)
 @Getter
 @Setter
-@NoArgsConstructor
-@SuperBuilder
-public abstract class Recurrencia {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder(builderMethodName = "")
+public class Recurrencia {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "recurrencia_seq")

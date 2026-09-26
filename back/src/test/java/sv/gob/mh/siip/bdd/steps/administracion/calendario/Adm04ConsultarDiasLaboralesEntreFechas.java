@@ -16,21 +16,21 @@ import sv.gob.mh.siip.model.administracion.dto.DiasLaboralesEntreFechasResponseD
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
 import sv.gob.mh.siip.model.administracion.repository.CalendarioRepository;
 import sv.gob.mh.siip.model.administracion.repository.PeriodoRepository;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 
 /** CU-ADM-04-09-consultar-dias-laboral-entre-fechas.feature. */
 public class Adm04ConsultarDiasLaboralesEntreFechas {
 
     private final CalendarioRepository calendarioRepository;
     private final PeriodoRepository periodoRepository;
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
     private final ContextoCalendarioBdd contextoCalendario;
     private final ContextoValidacionBdd contextoValidacion;
 
     private DiasLaboralesEntreFechasResponseDto ultimoResultado;
 
     public Adm04ConsultarDiasLaboralesEntreFechas(CalendarioRepository calendarioRepository,
-            PeriodoRepository periodoRepository, CalendarioService calendarioService,
+            PeriodoRepository periodoRepository, CalendarioConsultaService calendarioService,
             ContextoCalendarioBdd contextoCalendario, ContextoValidacionBdd contextoValidacion) {
         this.calendarioRepository = calendarioRepository;
         this.periodoRepository = periodoRepository;

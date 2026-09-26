@@ -3,32 +3,42 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>sv.gob.mh</groupId>
+	<artifactId>dgicp-siip2-backend-srv</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Back</name>
+	<description>componente para sistemas de inversion publica</description>
+
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.5.16</version>
 		<relativePath /> <!-- usa el repo central -->
 	</parent>
-	<groupId>sv.gob.mh.siip</groupId>
-	<artifactId>back</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>Back</name>
-	<description>Backend unico: catalogos, calendario, usuarios, proyectos, workflow y preinversion</description>
 
 	<properties>
+		<java.version>21</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>21</java.version>
+		<springdoc.version>2.9.0</springdoc.version>
+		<oracle.version>23.7.0.25.01</oracle.version>
+
+		<!-- SonarQube properties -->
+		<sonar.projectKey>dgicp-siip2-backend-srv</sonar.projectKey>
+		<sonar.projectName>dgicp-siip2-backend-srv</sonar.projectName>
+		<sonar.host.url>http://alcm.mh.gob.sv</sonar.host.url>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
+		<sonar.coverage.exclusions>**/model/*/api/**,**/model/*/dto/**</sonar.coverage.exclusions>
+		<sonar.java.source>21</sonar.java.source>
+		<sonar.exclusions>**/target/**</sonar.exclusions>
+		<sonar.maven.plugin.version>3.10.0.2594</sonar.maven.plugin.version>
+
 		<lombok.version>1.18.46</lombok.version>
 		<mockito.version>5.18.0</mockito.version>
 		<cucumber.version>7.22.1</cucumber.version>
 		<openapi-generator.version>7.25.0</openapi-generator.version>
-		<sonar.projectKey>dgicp-siip2-backend-srv</sonar.projectKey>
-		<sonar.projectName>dgicp-siip2-backend-srv</sonar.projectName>
-		<sonar.host.url>http://alcm.mh.gob.sv/e/sonar</sonar.host.url>
-		<sonar.exclusions>Dockerfile,**/model/*/api/**,**/model/*/dto/**</sonar.exclusions>
-		<sonar.coverage.exclusions>**/model/*/api/**,**/model/*/dto/**</sonar.coverage.exclusions>
-		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 	<dependencies>
 		<!-- Antes heredada del pom.xml raíz del reactor; ver nota de "POM aplanado" arriba. -->
@@ -61,6 +71,7 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
+			<version>42.7.12</version>
 		</dependency>
 		<!-- Driver Oracle (producción). Convive con el de Postgres (local);
 		     cuál se usa lo decide DB_DRIVER_CLASS_NAME en cada ambiente. -->
@@ -68,6 +79,7 @@
 			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc11</artifactId>
 			<scope>runtime</scope>
+			<version>${oracle.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>
@@ -101,7 +113,7 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.8.9</version>
+			<version>${springdoc.version}</version>
 		</dependency>
 		<!-- Generacion del reporte Excel de CU-PRE-30 (Anexo A.8) -->
 		<dependency>
@@ -161,6 +173,8 @@
 		</dependency>
 	</dependencies>
 	<build>
+		<!-- Nombre fijo: el Dockerfile copia target/app.jar -->
+		<finalName>app</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -176,7 +190,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<argLine>@{argLine} -XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true</argLine>
+					<argLine>@{argLine} -XX:+EnableDynamicAgentLoading
+						-Djdk.attach.allowAttachSelf=true</argLine>
 				</configuration>
 			</plugin>
 			<!-- Antes heredado del pom.xml raíz del reactor; ver nota de "POM aplanado"
@@ -203,7 +218,7 @@
 					</execution>
 					<execution>
 						<id>report</id>
-						<phase>verify</phase>
+						<phase>test</phase>
 						<goals>
 							<goal>report</goal>
 						</goals>
@@ -485,7 +500,8 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-18.openapi.yaml</inputSpec>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-18.openapi.yaml</inputSpec>
 							<apiPackage>sv.gob.mh.siip.model.preinversion.om.api</apiPackage>
 							<modelPackage>sv.gob.mh.siip.model.preinversion.om.dto</modelPackage>
 						</configuration>
@@ -497,35 +513,38 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-20.openapi.yaml</inputSpec>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-20.openapi.yaml</inputSpec>
 							<apiPackage>sv.gob.mh.siip.model.preinversion.beneficios.api</apiPackage>
 							<modelPackage>sv.gob.mh.siip.model.preinversion.beneficios.dto</modelPackage>
 						</configuration>
 					</execution>
 					<execution>
-                        <id>generate-administracion-cu01-api</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/administracion/catalogo/CU-ADM-01-administracion-de-catalogos.openapi.yaml</inputSpec>
-                            <apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
-                            <modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
-                        </configuration>
-                    </execution>
-                   <execution>
-                        <id>generate-administracion-cu04-api</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/administracion/calendario/CU-ADM-04-gestion-de-calendario.openapi.yaml</inputSpec>
-                            <apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
-                            <modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
-                        </configuration>
-                    </execution>
+						<id>generate-administracion-cu01-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/administracion/catalogo/CU-ADM-01-administracion-de-catalogos.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-administracion-cu04-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/administracion/calendario/CU-ADM-04-gestion-de-calendario.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
+						</configuration>
+					</execution>
 					<execution>
 						<id>generate-preinversion-cu29-api</id>
 						<phase>generate-sources</phase>
@@ -630,16 +649,24 @@
                             <modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
                         </configuration>
                     </execution>
+					<execution>
+                        <id>generate-preinversion-cu24-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-24.openapi.yaml</inputSpec>
+                            <apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+                            <modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+                        </configuration>
+                    </execution>
 				</executions>
 			</plugin>
 		</plugins>
 	</build>
 
-	<!-- Perfil activado automáticamente cuando existe la variable de entorno
-	     SONAR_HOST_URL (ver .env en la raíz del repo + CONTRIBUTING.md): permite
-	     apuntar el análisis a un SonarQube local (docker-compose) sin tocar el
-	     valor institucional de arriba, que sigue siendo el default para el
-	     pipeline de Tekton/Developer Hub (donde esa env var no está definida). -->
 	<profiles>
 		<profile>
 			<id>sonar-host-desde-env</id>
@@ -651,6 +678,104 @@
 			<properties>
 				<sonar.host.url>${env.SONAR_HOST_URL}</sonar.host.url>
 			</properties>
+		</profile>
+		<!-- Perfil: Pruebas de integración (Karate) contra servicio desplegado -->
+		<profile>
+			<id>integration-tests</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>3.5.3</version>
+						<configuration>
+							<includes>
+								<include>**/IntegrationTestRunner.java</include>
+								<include>**/HealthRunner.java</include>
+								<include>**/SecurityRunner.java</include>
+							</includes>
+							<excludes combine.self="override" />
+							<systemPropertyVariables>
+								<karate.env>${karate.env}</karate.env>
+								<!-- karate-config.js exige base.url y oauth2.token.url en cualquier
+                                     ambiente que no sea local. Surefire FORKEA el JVM, asi que
+                                     un -D de la linea de comandos no llega a las pruebas: hay
+                                     que reenviarlo aqui o Karate aborta con "-Dbase.url es
+                                     obligatoria" antes de probar nada. -->
+								<base.url>${base.url}</base.url>
+								<oauth2.token.url>${oauth2.token.url}</oauth2.token.url>
+								<oauth2.client.id>${oauth2.client.id}</oauth2.client.id>
+								<oauth2.client.secret>${oauth2.client.secret}</oauth2.client.secret>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<!-- Perfil: Smoke tests post-despliegue -->
+		<profile>
+			<id>smoke-tests</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>3.5.3</version>
+						<configuration>
+							<includes>
+								<include>**/SmokeTestRunner.java</include>
+							</includes>
+							<excludes combine.self="override" />
+							<systemPropertyVariables>
+								<karate.env>${karate.env}</karate.env>
+								<!-- karate-config.js exige base.url y oauth2.token.url en cualquier
+                                     ambiente que no sea local. Surefire FORKEA el JVM, asi que
+                                     un -D de la linea de comandos no llega a las pruebas: hay
+                                     que reenviarlo aqui o Karate aborta con "-Dbase.url es
+                                     obligatoria" antes de probar nada. -->
+								<base.url>${base.url}</base.url>
+								<oauth2.token.url>${oauth2.token.url}</oauth2.token.url>
+								<oauth2.client.id>${oauth2.client.id}</oauth2.client.id>
+								<oauth2.client.secret>${oauth2.client.secret}</oauth2.client.secret>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<!-- Perfil: Pruebas de stress/carga (Karate paralelo) -->
+		<profile>
+			<id>stress-tests</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>3.5.3</version>
+						<configuration>
+							<includes>
+								<include>**/StressTestRunner.java</include>
+							</includes>
+							<excludes combine.self="override" />
+							<systemPropertyVariables>
+								<karate.env>${karate.env}</karate.env>
+								<!-- karate-config.js exige base.url y oauth2.token.url en cualquier
+                                     ambiente que no sea local. Surefire FORKEA el JVM, asi que
+                                     un -D de la linea de comandos no llega a las pruebas: hay
+                                     que reenviarlo aqui o Karate aborta con "-Dbase.url es
+                                     obligatoria" antes de probar nada. -->
+								<base.url>${base.url}</base.url>
+								<oauth2.token.url>${oauth2.token.url}</oauth2.token.url>
+								<oauth2.client.id>${oauth2.client.id}</oauth2.client.id>
+								<oauth2.client.secret>${oauth2.client.secret}</oauth2.client.secret>
+								<stress.threads>${stress.threads}</stress.threads>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 	</profiles>
 </project>

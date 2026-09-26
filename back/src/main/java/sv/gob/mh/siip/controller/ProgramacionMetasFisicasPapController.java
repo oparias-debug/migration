@@ -15,6 +15,7 @@ import sv.gob.mh.siip.model.preinversion.dto.ProgramacionMetasFisicasPAPResponse
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarObservacionesDgicpRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarRespuestaInstitucionRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionProgramacionPAPDto;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapRevisionService;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapService;
 
 /** Expone la Programación Cuatrimestral de Metas Físicas de la Preinversión (CU-PRE-31). */
@@ -22,9 +23,12 @@ import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapServ
 public class ProgramacionMetasFisicasPapController implements PreinversinProgramacinDeMetasFsicasPapApi {
 
     private final ProgramacionMetasFisicasPapService service;
+    private final ProgramacionMetasFisicasPapRevisionService revisionService;
 
-    public ProgramacionMetasFisicasPapController(ProgramacionMetasFisicasPapService service) {
+    public ProgramacionMetasFisicasPapController(ProgramacionMetasFisicasPapService service,
+            ProgramacionMetasFisicasPapRevisionService revisionService) {
         this.service = service;
+        this.revisionService = revisionService;
     }
 
     @Override
@@ -48,37 +52,40 @@ public class ProgramacionMetasFisicasPapController implements PreinversinProgram
     @Override
     public ResponseEntity<RevisionProgramacionPAPDto> enviarProgramacionARevisionDgicp(
             EnviarProgramacionARevisionDgicpRequestDto enviarProgramacionARevisionDgicpRequestDto) {
-        return ResponseEntity.ok(service.enviarProgramacionARevisionDgicp(enviarProgramacionARevisionDgicpRequestDto));
+        return ResponseEntity
+                .ok(revisionService.enviarProgramacionARevisionDgicp(enviarProgramacionARevisionDgicpRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionProgramacionPAPDto> registrarObservacionesDgicp(
             RegistrarObservacionesDgicpRequestDto registrarObservacionesDgicpRequestDto) {
-        return ResponseEntity.ok(service.registrarObservacionesDgicp(registrarObservacionesDgicpRequestDto));
+        return ResponseEntity.ok(revisionService.registrarObservacionesDgicp(registrarObservacionesDgicpRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionProgramacionPAPDto> enviarObservacionesDgicp(
             EnviarProgramacionARevisionDgicpRequestDto enviarProgramacionARevisionDgicpRequestDto) {
-        return ResponseEntity.ok(service.enviarObservacionesDgicp(enviarProgramacionARevisionDgicpRequestDto));
+        return ResponseEntity.ok(revisionService.enviarObservacionesDgicp(enviarProgramacionARevisionDgicpRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionProgramacionPAPDto> registrarRespuestaInstitucion(
             RegistrarRespuestaInstitucionRequestDto registrarRespuestaInstitucionRequestDto) {
-        return ResponseEntity.ok(service.registrarRespuestaInstitucion(registrarRespuestaInstitucionRequestDto));
+        return ResponseEntity
+                .ok(revisionService.registrarRespuestaInstitucion(registrarRespuestaInstitucionRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionProgramacionPAPDto> enviarRespuestaInstitucion(
             EnviarProgramacionARevisionDgicpRequestDto enviarProgramacionARevisionDgicpRequestDto) {
-        return ResponseEntity.ok(service.enviarRespuestaInstitucion(enviarProgramacionARevisionDgicpRequestDto));
+        return ResponseEntity
+                .ok(revisionService.enviarRespuestaInstitucion(enviarProgramacionARevisionDgicpRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionProgramacionPAPDto> finalizarRevision(
             FinalizarRevisionRequestDto finalizarRevisionRequestDto) {
-        return ResponseEntity.ok(service.finalizarRevision(finalizarRevisionRequestDto));
+        return ResponseEntity.ok(revisionService.finalizarRevision(finalizarRevisionRequestDto));
     }
 
     @Override

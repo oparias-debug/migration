@@ -17,7 +17,7 @@ import sv.gob.mh.siip.model.administracion.dto.PeriodoNoLaboralDto;
 import sv.gob.mh.siip.model.administracion.enums.TipoExcepcion;
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
 import sv.gob.mh.siip.model.administracion.repository.CalendarioRepository;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 
 /** CU-ADM-04-12-recuperar-definicion-completa.feature. */
@@ -25,7 +25,7 @@ public class Adm04RecuperarDefinicionCompleta {
 
     private final UsuarioRepository usuarioRepository;
     private final CalendarioRepository calendarioRepository;
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
     private final ContextoValidacionBdd contextoValidacion;
 
     private CalendarioDto ultimoResultado;
@@ -37,7 +37,7 @@ public class Adm04RecuperarDefinicionCompleta {
     private String codigoCalendarioReal;
 
     public Adm04RecuperarDefinicionCompleta(UsuarioRepository usuarioRepository,
-            CalendarioRepository calendarioRepository, CalendarioService calendarioService,
+            CalendarioRepository calendarioRepository, CalendarioConsultaService calendarioService,
             ContextoValidacionBdd contextoValidacion) {
         this.usuarioRepository = usuarioRepository;
         this.calendarioRepository = calendarioRepository;

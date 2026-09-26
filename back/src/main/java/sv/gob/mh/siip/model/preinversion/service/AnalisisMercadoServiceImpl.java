@@ -29,6 +29,9 @@ import sv.gob.mh.siip.security.ActorContexto;
 @Transactional
 public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
 
+    /** Las tasas de demanda y oferta se registran en porcentaje. */
+    private static final double PORCENTAJE_TOTAL = 100D;
+
     private final ProyectoRepository proyectoRepository;
     private final AnalisisMercadoRepository analisisMercadoRepository;
     private final ProductoIndicadorCatalogoRepository productoRepository;
@@ -59,10 +62,11 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
-        List<FilaAnalisisMercadoRequestDto> filas = request == null || request.getFilas() == null
+        List<FilaAnalisisMercadoRequestDto> filas = (request == null || request.getFilas() == null)
                 ? List.of() : request.getFilas();
-        if (filas.stream().noneMatch(this::estaCompleta)) {
+        if (filas.stream().noneMatch(AnalisisMercadoServiceImpl::estaCompleta)) {
             throw new ValidacionNegocioException("ANALISIS_MERCADO_SIN_FILA_COMPLETA",
                     "Debe existir al menos una fila de análisis de mercado completamente diligenciada.", null);
         }
@@ -74,7 +78,7 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
         return construirDto(proyecto, analisis.getFilas());
     }
 
-    private boolean estaCompleta(FilaAnalisisMercadoRequestDto fila) {
+    private static boolean estaCompleta(FilaAnalisisMercadoRequestDto fila) {
         ProductoSeleccionadoDto producto = fila == null ? null : fila.getProducto();
         return producto != null
             && producto.getCodigoProducto() != null
@@ -100,7 +104,7 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
                 .build();
     }
 
-    private String nombreEnviado(FilaAnalisisMercadoRequestDto fila) {
+    private static String nombreEnviado(FilaAnalisisMercadoRequestDto fila) {
         ProductoSeleccionadoDto producto = fila.getProducto();
         return producto == null ? null : producto.getProducto();
     }
@@ -112,7 +116,7 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
         return productoRepository.findByCodigoProductoIn(List.of(codigo)).stream().findFirst().orElse(null);
     }
 
-    private AnalisisMercadoDto construirDto(Proyecto proyecto, List<FilaAnalisisMercado> filas) {
+    private static AnalisisMercadoDto construirDto(Proyecto proyecto, List<FilaAnalisisMercado> filas) {
         List<FilaAnalisisMercadoDto> resultado = new ArrayList<>();
         for (FilaAnalisisMercado fila : filas) {
             ProductoSeleccionadoDto producto = new ProductoSeleccionadoDto()
@@ -136,13 +140,13 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
         return new AnalisisMercadoDto().idProyecto(proyecto.getId()).filas(resultado);
     }
 
-    private Double calcularDeficit(Double demanda, Double oferta) {
-        return demanda == null || oferta == null ? null : demanda - oferta;
+    private static Double calcularDeficit(Double demanda, Double oferta) {
+        return (demanda == null || oferta == null) ? null : (demanda - oferta);
     }
 
-    private Double proyectar(Double base, Double tasa, Integer anios) {
-        return base == null || tasa == null || anios == null
-                ? null : base * Math.pow(1.0 + tasa / 100.0, anios);
+    private static Double proyectar(Double base, Double tasa, Integer anios) {
+        return (base == null || tasa == null || anios == null)
+                ? null : (base * Math.pow(1.0 + (tasa / PORCENTAJE_TOTAL), anios));
     }
 
     private Proyecto buscarProyecto(Long idProyecto) {
@@ -150,7 +154,7 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("El proyecto " + idProyecto + " no existe."));
     }
 
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(

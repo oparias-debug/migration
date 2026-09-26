@@ -1,0 +1,139 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Documento 1 · Component — el servicio
+# ═══════════════════════════════════════════════════════════════════════════
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: dgicp-siip2-backend-srv
+  title: dgicp-siip2-backend-srv
+  description: componente para sistemas de inversion publica
+
+  # Tags para clasificación y búsqueda
+  tags:
+    - spring-boot
+    - dgicp
+    - dgicp-siip2
+
+  # Labels para metadata adicional
+  labels:
+    direction: dgicp
+    project-tuleap: dgicp-siip2
+    project-gerrit: backend-srv
+    technology: spring-boot
+
+  # Anotaciones con referencias a sistemas externos
+  annotations:
+    # Repositorios de código
+    gerrit.mh.gob.sv/repo-app: dgicp-siip2/backend-srv
+    gerrit.mh.gob.sv/repo-config: dgicp-siip2/backend-srv-config
+    gerrit.mh.gob.sv/repo-ci: dgicp-microservicio/tekton
+
+    # URLs de Gerrit
+    gerrit.mh.gob.sv/app-url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-siip2/backend-srv
+    gerrit.mh.gob.sv/config-url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-siip2/backend-srv-config
+
+    # ArgoCD
+    argocd/app-selector: backstage-argocd-selector=dgicp-siip2-backend-srv
+    argocd/instance-name: gitops-server
+
+    # Tekton
+    janus-idp.io/tekton: dgicp-siip2-backend-srv
+
+    # OpenShift
+    openshift.io/app-name: dgicp-siip2-backend-srv
+
+    backstage.io/kubernetes-id: dgicp-siip2-backend-srv
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/name=dgicp-siip2-backend-srv
+
+    # Quay.io Registry
+    quay.io/repository: mh-dgicp-siip2/backend-srv
+
+    # SonarQube
+    sonarqube.org/project-key: dgicp-siip2-backend-srv
+
+    # Tuleap
+    tuleap.org/project: dgicp-siip2
+
+    # Backstage integrations — proxy catalog-srv (techdocs-ref gitiles para readTree; source-location api/v1)
+    backstage.io/techdocs-ref: url:https://catalog-srv-gitiles-mh-dev-dinafi-usi-devhub.apps.gcp-op-desa.cloud.mh.gob.sv/gitiles/dgicp-siip2/backend-srv/+/refs/heads/dev/
+    backstage.io/source-location: url:https://catalog-srv-mh-dev-dinafi-usi-devhub.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/dgicp-siip2/backend-srv/dev/
+
+  # Enlaces a recursos y herramientas
+  links:
+    - url: https://backend-srv-mh-dev-dgicp-siip2.apps.gcp-op-desa.cloud.mh.gob.sv
+      title: Aplicación en OpenShift
+      icon: web
+    - url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-siip2/backend-srv
+      title: Repositorio Aplicación (Gerrit)
+      icon: code
+    - url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-siip2/backend-srv-config
+      title: Repositorio Configuración (Gerrit)
+      icon: settings
+    - url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-microservicio/tekton
+      title: Repositorio CI/CD (Gerrit)
+      icon: build
+    - url: https://openshift-gitops-server-openshift-gitops.apps.gcp-op-desa.cloud.mh.gob.sv/applications?labels=backstage-argocd-selector%3Ddgicp-siip2-backend-srv
+      title: ArgoCD Application
+      icon: dashboard
+    - url: https://console-openshift-console.apps.gcp-op-desa.cloud.mh.gob.sv/k8s/cluster/projects/mh-dev-dgicp-siip2
+      title: OpenShift Project
+      icon: cloud
+    - url: https://console-openshift-console.apps.gcp-op-desa.cloud.mh.gob.sv/topology/ns/mh-dev-dgicp-siip2
+      title: OpenShift Topology
+      icon: web
+    - url: https://quay-registry-quay-quay-enterprise.apps.gcp-op-desa.cloud.mh.gob.sv/repository/mh-dgicp-siip2/backend-srv
+      title: Quay Container Registry
+      icon: storage
+    - url: https://alcm.mh.gob.sv/projects/dgicp-siip2
+      title: Proyecto Tuleap
+      icon: web
+    - url: http://el-dgicp-siip2.apps.gcp-op-desa.cloud.mh.gob.sv
+      title: Tekton EventListener
+      icon: webhook
+
+# Especificación del componente
+spec:
+  type: service
+  lifecycle: development
+  owner: dgicp
+
+  # Pertenencia a la aplicación (System) que representa el proyecto Tuleap
+  system: dgicp-siip2
+
+  # APIs que expone este componente (resueltas como entidades kind: API)
+  providesApis:
+    - dgicp-siip2-backend-srv-api
+
+  # Información de la aplicación
+  profile:
+    displayName: backend-srv
+    application: dgicp-siip2
+    direction: dgicp
+---
+# ═══════════════════════════════════════════════════════════════════════════
+# Documento 2 · API — contrato OpenAPI del servicio
+#   La definición (spec.definition.$text) se resuelve por el catalog-srv desde
+#   api/openapi.yaml del repositorio (endpoint .../api/{ruta} del proxy).
+# ═══════════════════════════════════════════════════════════════════════════
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: dgicp-siip2-backend-srv-api
+  title: backend-srv API
+  description: API REST de backend-srv
+  tags:
+    - spring-boot
+    - dgicp
+    - dgicp-siip2
+    - openapi
+  links:
+    - url: https://backend-srv-mh-dev-dgicp-siip2.apps.gcp-op-desa.cloud.mh.gob.sv/q/swagger-ui
+      title: Swagger UI
+      icon: web
+spec:
+  type: openapi
+  lifecycle: development
+  owner: dgicp
+  system: dgicp-siip2
+  definition:
+    $text: https://catalog-srv-mh-dev-dinafi-usi-devhub.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/dgicp-siip2/backend-srv/dev/api/openapi.yaml

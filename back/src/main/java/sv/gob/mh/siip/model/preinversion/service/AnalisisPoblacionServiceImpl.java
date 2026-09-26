@@ -30,6 +30,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
 
     private static final String CODIGO_AFECTADA_MAYOR_REFERENCIA = "POBLACION_AFECTADA_MAYOR_QUE_REFERENCIA";
     private static final String CODIGO_OBJETIVO_MAYOR_AFECTADA = "POBLACION_OBJETIVO_MAYOR_QUE_AFECTADA";
+    private static final double PORCENTAJE_TOTAL = 100D;
 
     private final ProyectoRepository proyectoRepository;
     private final AnalisisPoblacionRepository analisisPoblacionRepository;
@@ -59,15 +60,18 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         List<CeldaUbicacionRequestDto> ubicacionesReferencia = ubicacionesDe(request.getPoblacionReferencia());
         List<CeldaUbicacionRequestDto> ubicacionesAfectada = ubicacionesDe(request.getPoblacionAfectada());
         List<CeldaUbicacionRequestDto> ubicacionesObjetivo = ubicacionesDe(request.getPoblacionObjetivo());
 
         exigirNoExcede(ubicacionesReferencia, ubicacionesAfectada, CODIGO_AFECTADA_MAYOR_REFERENCIA,
-                "La cantidad de población afectada no puede ser mayor que la registrada en la población de referencia.");
+                "La cantidad de población afectada no puede ser mayor que la registrada "
+                        + "en la población de referencia.");
         exigirNoExcede(ubicacionesAfectada, ubicacionesObjetivo, CODIGO_OBJETIVO_MAYOR_AFECTADA,
-                "El número de personas de la Población Objetivo no puede superar el número de personas de la Población Afectada.");
+                "El número de personas de la Población Objetivo no puede superar el número de personas "
+                        + "de la Población Afectada.");
 
         AnalisisPoblacion entidad = analisisPoblacionRepository.findByProyectoId(idProyecto)
                 .orElseGet(() -> AnalisisPoblacion.builder().proyecto(proyecto).build());
@@ -89,7 +93,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
     }
 
     /** Igual que en MatrizInteresadosServiceImpl/AlternativaSolucionServiceImpl: RN01/RN02. */
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
@@ -97,14 +101,14 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
         }
     }
 
-    private List<CeldaUbicacionRequestDto> ubicacionesDe(FilaPoblacionRequestDto fila) {
+    private static List<CeldaUbicacionRequestDto> ubicacionesDe(FilaPoblacionRequestDto fila) {
         if (fila == null || fila.getUbicaciones() == null) {
             return List.of();
         }
         return fila.getUbicaciones();
     }
 
-    private String descripcionDe(FilaPoblacionRequestDto fila) {
+    private static String descripcionDe(FilaPoblacionRequestDto fila) {
         return fila == null ? null : fila.getDescripcion();
     }
 
@@ -113,7 +117,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
      * {@code menor}. Solo se valida cuando ambos valores de la pareja estan presentes: un valor
      * faltante es responsabilidad visual de RN07, no de esta regla de negocio.
      */
-    private void exigirNoExcede(List<CeldaUbicacionRequestDto> menor, List<CeldaUbicacionRequestDto> mayor,
+    private static void exigirNoExcede(List<CeldaUbicacionRequestDto> menor, List<CeldaUbicacionRequestDto> mayor,
             String codigo, String mensaje) {
         int tamanio = Math.max(menor.size(), mayor.size());
         for (int i = 0; i < tamanio; i++) {
@@ -125,11 +129,11 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
         }
     }
 
-    private Integer numeroPersonasEn(List<CeldaUbicacionRequestDto> celdas, int indice) {
+    private static Integer numeroPersonasEn(List<CeldaUbicacionRequestDto> celdas, int indice) {
         return indice < celdas.size() ? celdas.get(indice).getNumeroPersonas() : null;
     }
 
-    private List<CeldaUbicacionPoblacion> mapearCeldas(List<CeldaUbicacionRequestDto> celdas) {
+    private static List<CeldaUbicacionPoblacion> mapearCeldas(List<CeldaUbicacionRequestDto> celdas) {
         List<CeldaUbicacionPoblacion> resultado = new ArrayList<>();
         for (CeldaUbicacionRequestDto celda : celdas) {
             resultado.add(new CeldaUbicacionPoblacion(celda.getUbicacion(), celda.getNumeroPersonas()));
@@ -137,7 +141,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
         return resultado;
     }
 
-    private AnalisisPoblacionDto construirDto(Proyecto proyecto, AnalisisPoblacion entidad) {
+    private static AnalisisPoblacionDto construirDto(Proyecto proyecto, AnalisisPoblacion entidad) {
         List<CeldaUbicacionPoblacion> referencia = entidad != null ? entidad.getUbicacionesReferencia() : List.of();
         List<CeldaUbicacionPoblacion> afectada = entidad != null ? entidad.getUbicacionesAfectada() : List.of();
         List<CeldaUbicacionPoblacion> objetivo = entidad != null ? entidad.getUbicacionesObjetivo() : List.of();
@@ -153,7 +157,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
     }
 
     /** RN04: "Población de Referencia" nunca tiene porcentaje, ni por celda ni en el total. */
-    private FilaPoblacionDto construirFilaReferencia(List<CeldaUbicacionPoblacion> celdas) {
+    private static FilaPoblacionDto construirFilaReferencia(List<CeldaUbicacionPoblacion> celdas) {
         List<CeldaUbicacionDto> ubicaciones = celdas.stream()
                 .map(celda -> new CeldaUbicacionDto().ubicacion(celda.getUbicacion())
                         .numeroPersonas(celda.getNumeroPersonas()).porcentaje(null))
@@ -166,20 +170,21 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
     }
 
     /** "Población Afectada": porcentaje constante en 100, por celda y en el total. */
-    private FilaPoblacionDto construirFilaConstante100(List<CeldaUbicacionPoblacion> celdas, String descripcion) {
+    private static FilaPoblacionDto construirFilaConstante100(List<CeldaUbicacionPoblacion> celdas,
+            String descripcion) {
         List<CeldaUbicacionDto> ubicaciones = celdas.stream()
                 .map(celda -> new CeldaUbicacionDto().ubicacion(celda.getUbicacion())
-                        .numeroPersonas(celda.getNumeroPersonas()).porcentaje(100.0))
+                        .numeroPersonas(celda.getNumeroPersonas()).porcentaje(PORCENTAJE_TOTAL))
                 .toList();
         return new FilaPoblacionDto()
                 .descripcion(descripcion)
                 .ubicaciones(ubicaciones)
                 .totalNumeroPersonas(sumar(celdas))
-                .totalPorcentaje(100.0);
+                .totalPorcentaje(PORCENTAJE_TOTAL);
     }
 
     /** "Población Objetivo": porcentaje = (Objetivo / Afectada) × 100, por celda y en el total. */
-    private FilaPoblacionDto construirFilaObjetivo(List<CeldaUbicacionPoblacion> objetivo,
+    private static FilaPoblacionDto construirFilaObjetivo(List<CeldaUbicacionPoblacion> objetivo,
             List<CeldaUbicacionPoblacion> afectada, String descripcion) {
         List<CeldaUbicacionDto> ubicaciones = new ArrayList<>();
         for (int i = 0; i < objetivo.size(); i++) {
@@ -202,7 +207,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
      * "Población en Espera": nunca se persiste, 100% calculada (RN05: ubicación siempre nula). N°
      * de personas = Afectada − Objetivo; % = %Afectada (100) − %Objetivo.
      */
-    private FilaPoblacionDto construirFilaEspera(List<CeldaUbicacionPoblacion> afectada,
+    private static FilaPoblacionDto construirFilaEspera(List<CeldaUbicacionPoblacion> afectada,
             List<CeldaUbicacionPoblacion> objetivo) {
         int tamanio = Math.max(afectada.size(), objetivo.size());
         List<CeldaUbicacionDto> ubicaciones = new ArrayList<>();
@@ -212,7 +217,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
             Double porcentajeObjetivo = calcularPorcentaje(numeroObjetivo, numeroAfectada);
             ubicaciones.add(new CeldaUbicacionDto().ubicacion(null)
                     .numeroPersonas(valorOCero(numeroAfectada) - valorOCero(numeroObjetivo))
-                    .porcentaje(porcentajeObjetivo == null ? null : 100.0 - porcentajeObjetivo));
+                    .porcentaje((porcentajeObjetivo == null) ? null : (PORCENTAJE_TOTAL - porcentajeObjetivo)));
         }
         Integer totalAfectada = sumar(afectada);
         Integer totalObjetivo = sumar(objetivo);
@@ -221,21 +226,22 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
                 .descripcion(null)
                 .ubicaciones(ubicaciones)
                 .totalNumeroPersonas(totalAfectada - totalObjetivo)
-                .totalPorcentaje(totalPorcentajeObjetivo == null ? null : 100.0 - totalPorcentajeObjetivo);
+                .totalPorcentaje((totalPorcentajeObjetivo == null)
+                        ? null : (PORCENTAJE_TOTAL - totalPorcentajeObjetivo));
     }
 
-    private Double calcularPorcentaje(Integer numerador, Integer denominador) {
+    private static Double calcularPorcentaje(Integer numerador, Integer denominador) {
         if (denominador == null || denominador == 0) {
             return null;
         }
-        return 100.0 * valorOCero(numerador) / denominador;
+        return PORCENTAJE_TOTAL * valorOCero(numerador) / denominador;
     }
 
-    private int valorOCero(Integer valor) {
+    private static int valorOCero(Integer valor) {
         return valor == null ? 0 : valor;
     }
 
-    private int sumar(List<CeldaUbicacionPoblacion> celdas) {
+    private static int sumar(List<CeldaUbicacionPoblacion> celdas) {
         return celdas.stream().mapToInt(celda -> valorOCero(celda.getNumeroPersonas())).sum();
     }
 }

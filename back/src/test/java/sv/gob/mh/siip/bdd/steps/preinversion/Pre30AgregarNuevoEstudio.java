@@ -97,7 +97,7 @@ public class Pre30AgregarNuevoEstudio {
         this.service = service;
     }
 
-    @Dado("que el Técnico URP se encuentra en la pantalla \"Programación Financiera Cuatrimestral del PAP\" \\(Anexo A.1)")
+    @Dado("que el Técnico URP se encuentra en la pantalla \"Programación Financiera Cuatrimestral del PAP\" \\(Anexo A.1) nuevo-estudio")
     public void que_el_tecnico_urp_se_encuentra_en_la_pantalla_anexo_a1() {
         crearInsumosYAutenticar();
         etapaPerfil = Pre30Fixtures.nuevaEtapa(etapaPreinversionRepository, proyecto, TipoEtapaPreinversion.PERFIL, 10000.0);

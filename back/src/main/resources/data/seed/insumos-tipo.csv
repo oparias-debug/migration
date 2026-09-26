@@ -1,0 +1,11 @@
+# Catálogo "Insumo Tipo" con su Factor de Corrección (CU-ADM-02, Anexo D.1 de CU-PRE-09).
+# Datos de prueba razonables, no el catálogo oficial de la DGICP (ver CatalogoPresupuestoDevSeeder).
+nombre;factor_correccion
+Mano de obra calificada;0.86
+Mano de obra no calificada;0.62
+Materiales de construcción (origen nacional);0.92
+Materiales de construcción (origen importado);0.83
+Maquinaria y equipo (origen nacional);0.90
+Maquinaria y equipo (origen importado);0.80
+Combustibles y lubricantes;0.75
+Consultoría y servicios profesionales;1.00

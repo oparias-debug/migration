@@ -53,6 +53,25 @@ class LoggingNotificacionServiceTest {
     }
 
     @Test
+    void notificarSolicitudViabilidad_incluyeElLinkAlAnexoA1YLosCorreosDeLosViabilizadores() {
+        service.notificarSolicitudViabilidad(proyecto(), List.of(usuario("viab@test.com")));
+
+        assertThat(ultimoMensaje()).contains("Proyecto Test", "/preinversion/proyectos/1/viabilidad", "viab@test.com");
+    }
+
+    @Test
+    void notificarComentariosYEmisionDeViabilidad_incluyenAlTecnicoUrpOIndicanQueNoSeResolvio() {
+        service.notificarComentariosViabilidad(proyecto(), usuario("urp@test.com"));
+        assertThat(ultimoMensaje()).contains("comentarios", "urp@test.com");
+
+        service.notificarEmisionViabilidad(proyecto(), usuario("urp@test.com"));
+        assertThat(ultimoMensaje()).contains("emitió la Viabilidad", "urp@test.com");
+
+        service.notificarEmisionViabilidad(proyecto(), null);
+        assertThat(ultimoMensaje()).contains("sin usuario resuelto");
+    }
+
+    @Test
     void notificarSolicitudCup_indicaSinDestinatarios_cuandoListaVacia() {
         service.notificarSolicitudCup(proyecto(), List.of());
 

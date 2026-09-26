@@ -35,6 +35,7 @@ import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapAjusteService;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
@@ -60,6 +61,7 @@ public class Pre30HabilitarModificacionesFueraPlazo {
     private final EjeTematicoRepository ejeTematicoRepository;
     private final CalendarioEventoRepository calendarioEventoRepository;
     private final ProgramacionFinancieraPapService service;
+    private final ProgramacionFinancieraPapAjusteService ajusteService;
 
     private UnidadEjecutora unidadEjecutora;
     private Institucion institucion;
@@ -73,7 +75,7 @@ public class Pre30HabilitarModificacionesFueraPlazo {
             ProyectoRepository proyectoRepository, EtapaPreinversionRepository etapaPreinversionRepository,
             MacroSectorRepository macroSectorRepository, SectorActividadRepository sectorActividadRepository,
             EjeTematicoRepository ejeTematicoRepository, CalendarioEventoRepository calendarioEventoRepository,
-            ProgramacionFinancieraPapService service) {
+            ProgramacionFinancieraPapService service, ProgramacionFinancieraPapAjusteService ajusteService) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -84,6 +86,7 @@ public class Pre30HabilitarModificacionesFueraPlazo {
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.calendarioEventoRepository = calendarioEventoRepository;
         this.service = service;
+        this.ajusteService = ajusteService;
     }
 
     @Dado("que el Coordinador PRE solicitó la modificación del PAP con nota de solicitud remitida por la Institución")
@@ -94,7 +97,7 @@ public class Pre30HabilitarModificacionesFueraPlazo {
     @Cuando("el Administrador del Sistema habilita el sistema")
     public void el_administrador_habilita_el_sistema() {
         autenticarComo(crearUsuario(RolUsuario.ADMINISTRADOR, "admin.30h"));
-        service.habilitarModificacionesFueraPlazo(
+        ajusteService.habilitarModificacionesFueraPlazo(
                 new HabilitarModificacionesFueraPlazoRequestDto(unidadEjecutora.getId(), 2033));
         RequestContextHolder.resetRequestAttributes();
     }

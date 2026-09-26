@@ -39,6 +39,7 @@ import sv.gob.mh.siip.security.ActorContexto;
 public class IdentificacionServiceImpl implements IdentificacionService {
 
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+    private static final String MENSAJE_SIN_ARCHIVO_ARBOL = "No hay ningun archivo cargado en el arbol de ";
 
     /** Nombre fijo del archivo en disco por proyecto/árbol: cargar uno nuevo reemplaza al anterior (RNB-1/RNB-2). */
     private enum TipoArbol {
@@ -93,6 +94,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         Identificacion entidad = obtenerOCrearEntidad(proyecto);
         entidad.setAntecedentes(request.getAntecedentes());
@@ -141,6 +143,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
         validarFormatoPdf(archivo);
 
         Identificacion entidad = obtenerOCrearEntidad(proyecto);
@@ -171,17 +174,17 @@ public class IdentificacionServiceImpl implements IdentificacionService {
 
         Identificacion entidad = identificacionRepository.findByProyectoId(idProyecto)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No hay ningun archivo cargado en el arbol de " + tipo.etiqueta + "."));
+                        MENSAJE_SIN_ARCHIVO_ARBOL + tipo.etiqueta + "."));
         String ruta = tipo == TipoArbol.PROBLEMAS ? entidad.getRutaArchivoArbolProblemas()
                 : entidad.getRutaArchivoArbolObjetivos();
         if (ruta == null) {
             throw new RecursoNoEncontradoException(
-                    "No hay ningun archivo cargado en el arbol de " + tipo.etiqueta + ".");
+                    MENSAJE_SIN_ARCHIVO_ARBOL + tipo.etiqueta + ".");
         }
         Resource recurso = new FileSystemResource(ruta);
         if (!recurso.exists()) {
             throw new RecursoNoEncontradoException(
-                    "No hay ningun archivo cargado en el arbol de " + tipo.etiqueta + ".");
+                    MENSAJE_SIN_ARCHIVO_ARBOL + tipo.etiqueta + ".");
         }
         String nombre = tipo == TipoArbol.PROBLEMAS ? entidad.getNombreArchivoArbolProblemas()
                 : entidad.getNombreArchivoArbolObjetivos();
@@ -192,15 +195,16 @@ public class IdentificacionServiceImpl implements IdentificacionService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         Identificacion entidad = identificacionRepository.findByProyectoId(idProyecto)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No hay ningun archivo cargado en el arbol de " + tipo.etiqueta + " para eliminar."));
+                        MENSAJE_SIN_ARCHIVO_ARBOL + tipo.etiqueta + " para eliminar."));
         String ruta = tipo == TipoArbol.PROBLEMAS ? entidad.getRutaArchivoArbolProblemas()
                 : entidad.getRutaArchivoArbolObjetivos();
         if (ruta == null) {
             throw new RecursoNoEncontradoException(
-                    "No hay ningun archivo cargado en el arbol de " + tipo.etiqueta + " para eliminar.");
+                    MENSAJE_SIN_ARCHIVO_ARBOL + tipo.etiqueta + " para eliminar.");
         }
         eliminarBytes(ruta);
 
@@ -231,7 +235,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
      * Internos/Externos, según credenciales): igual que en {@code ProyectoServiceImpl}, solo se
      * acota por Unidad Ejecutora cuando el actor autenticado tiene una asignada.
      */
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
@@ -239,7 +243,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
         }
     }
 
-    private void reemplazarObjetivosEspecificos(Identificacion entidad, List<String> nuevosObjetivos) {
+    private static void reemplazarObjetivosEspecificos(Identificacion entidad, List<String> nuevosObjetivos) {
         entidad.getObjetivosEspecificos().clear();
         List<String> valores = nuevosObjetivos == null ? List.of() : nuevosObjetivos;
         int orden = 0;
@@ -247,12 +251,13 @@ public class IdentificacionServiceImpl implements IdentificacionService {
             entidad.getObjetivosEspecificos().add(ObjetivoEspecifico.builder()
                     .identificacion(entidad)
                     .descripcion(descripcion)
-                    .orden(orden++)
+                    .orden(orden)
                     .build());
+            orden++;
         }
     }
 
-    private void validarFormatoPdf(MultipartFile archivo) {
+    private static void validarFormatoPdf(MultipartFile archivo) {
         String contentType = archivo.getContentType();
         String nombre = archivo.getOriginalFilename();
         boolean esPdf = "application/pdf".equalsIgnoreCase(contentType)
@@ -266,7 +271,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
         return Path.of(directorioBase, "identificacion", String.valueOf(idProyecto), tipo.archivoEnDisco);
     }
 
-    private void guardarBytes(Path ruta, MultipartFile archivo) {
+    private static void guardarBytes(Path ruta, MultipartFile archivo) {
         try {
             Files.createDirectories(ruta.getParent());
             archivo.transferTo(ruta);
@@ -275,7 +280,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
         }
     }
 
-    private void eliminarBytes(String ruta) {
+    private static void eliminarBytes(String ruta) {
         try {
             Files.deleteIfExists(Path.of(ruta));
         } catch (IOException ex) {
@@ -314,7 +319,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
         return dto;
     }
 
-    private OffsetDateTime map(LocalDateTime fecha) {
+    private static OffsetDateTime map(LocalDateTime fecha) {
         return fecha == null ? null : fecha.atZone(ZONA_EL_SALVADOR).toOffsetDateTime();
     }
 }

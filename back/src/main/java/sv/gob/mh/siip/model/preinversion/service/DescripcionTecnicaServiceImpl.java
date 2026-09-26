@@ -1,6 +1,5 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sv.gob.mh.siip.model.preinversion.domain.Componente;
@@ -12,6 +11,7 @@ import sv.gob.mh.siip.model.preinversion.domain.UnidadMedida;
 import sv.gob.mh.siip.model.preinversion.dto.DescripcionTecnicaDto;
 import sv.gob.mh.siip.model.preinversion.dto.DescripcionTecnicaRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.FilaDescripcionTecnicaDto;
+import sv.gob.mh.siip.model.preinversion.dto.FilaDescripcionTecnicaRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProductoSeleccionadoDto;
 import sv.gob.mh.siip.model.preinversion.dto.TipoCostoResumenDto;
 import sv.gob.mh.siip.model.preinversion.dto.TipoUnidadMedidaDto;
@@ -61,7 +61,8 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
      * @param proyectoRepository Repositorio JPA para entidades de Proyecto.
      * @param componenteRepository Repositorio JPA para las filas de Componentes.
      * @param descripcionTecnicaMapper Componente Mapper para transformaciones DTO-Entidad.
-     * @param productoIndicadorCatalogoRepository Resuelve el nombre de "Producto" (catálogo C.6) a partir de su código.
+     * @param productoIndicadorCatalogoRepository Resuelve el nombre de "Producto" (catálogo C.6) a partir de
+     *        su código.
      * @param unidadMedidaRepository Resuelve "Unidad de Medida" (CU-ADM-02) a partir de su nombre/código.
      * @param actorContexto Resuelve el actor autenticado y valida su rol (x-roles del contrato OpenAPI).
      */
@@ -101,20 +102,10 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new NoSuchElementException("Proyecto no encontrado con ID: " + idProyecto));
 
-        // 1. Obtener entidad persistida o resolver autocompletado jerárquico (RN03: Opinión Técnica / O.T. > Proyecto)
+        // 1. Obtener entidad persistida o resolver autocompletado jerárquico
+        // (RN03: Opinión Técnica / O.T. > Proyecto)
         DescripcionTecnica entity = descripcionTecnicaRepository.findByProyectoId(idProyecto)
-                .orElseGet(() -> {
-                    DescripcionTecnica nueva = new DescripcionTecnica();
-                    nueva.setProyecto(proyecto);
-
-                    // Fallback RN03: Si hay O.T. (OpinionTecnica), se toman sus observaciones; si no, la descripción del proyecto
-                    String descripcionAutocompletada = opinionTecnicaRepository.findFirstByProyectoIdOrderByFechaEmisionDesc(idProyecto)
-                            .map(OpinionTecnica::getObservaciones)
-                            .orElseGet(proyecto::getDescripcionProyecto);
-
-                    nueva.setDescripcion(descripcionAutocompletada);
-                    return nueva;
-                });
+                .orElseGet(() -> crearDescripcionAutocompletada(proyecto, idProyecto));
 
         DescripcionTecnicaDto dto = descripcionTecnicaMapper.toDto(entity);
         dto.setIdProyecto(idProyecto);
@@ -123,10 +114,7 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
         if (entity.getDescripcion() != null && !entity.getDescripcion().isBlank()) {
             dto.setDescripcionProyecto(entity.getDescripcion());
         } else {
-            String descripcionFallback = opinionTecnicaRepository.findFirstByProyectoIdOrderByFechaEmisionDesc(idProyecto)
-                    .map(OpinionTecnica::getObservaciones)
-                    .orElseGet(proyecto::getDescripcionProyecto);
-            dto.setDescripcionProyecto(descripcionFallback);
+            dto.setDescripcionProyecto(resolverDescripcionAutocompletada(proyecto, idProyecto));
         }
 
         // 2. Mapear componentes/filas si existen
@@ -134,33 +122,54 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
 
         if (!componentes.isEmpty()) {
             List<FilaDescripcionTecnicaDto> filas = componentes.stream()
-                    .map(comp -> {
-                        FilaDescripcionTecnicaDto fila = descripcionTecnicaMapper.toFilaDto(comp);
-
-                        if (fila.getComponente() == null) {
-                            TipoCostoResumenDto tipoCosto = new TipoCostoResumenDto();
-                            tipoCosto.setCodigo("3");
-                            tipoCosto.setNombre(comp.getNombre());
-                            fila.setComponente(tipoCosto);
-                        }
-
-                        fila.setDescripcionProducto(comp.getDescripcion());
-                        if (comp.getCodigoProducto() != null) {
-                            fila.setProducto(new ProductoSeleccionadoDto()
-                                    .codigoProducto(comp.getCodigoProducto())
-                                    .producto(resolverNombreProducto(comp.getCodigoProducto())));
-                        }
-                        if (comp.getUnidadMedida() != null) {
-                            fila.setUnidadMedida(resolverUnidadMedida(comp.getUnidadMedida()));
-                        }
-                        return fila;
-                    })
+                    .map(this::toFilaDescripcionTecnicaDto)
                     .toList();
 
             dto.setFilas(filas);
         }
 
         return dto;
+    }
+
+    /** Crea la cabecera volátil (no persistida) con la descripción autocompletada según RN03. */
+    private DescripcionTecnica crearDescripcionAutocompletada(Proyecto proyecto, Long idProyecto) {
+        DescripcionTecnica nueva = new DescripcionTecnica();
+        nueva.setProyecto(proyecto);
+        nueva.setDescripcion(resolverDescripcionAutocompletada(proyecto, idProyecto));
+        return nueva;
+    }
+
+    /**
+     * Fallback RN03: si hay O.T. (OpinionTecnica) se toman sus observaciones, y en caso contrario
+     * la descripción del proyecto.
+     */
+    private String resolverDescripcionAutocompletada(Proyecto proyecto, Long idProyecto) {
+        return opinionTecnicaRepository
+                .findFirstByProyectoIdOrderByFechaEmisionDesc(idProyecto)
+                .map(OpinionTecnica::getObservaciones)
+                .orElseGet(proyecto::getDescripcionProyecto);
+    }
+
+    private FilaDescripcionTecnicaDto toFilaDescripcionTecnicaDto(Componente comp) {
+        FilaDescripcionTecnicaDto fila = descripcionTecnicaMapper.toFilaDto(comp);
+
+        if (fila.getComponente() == null) {
+            TipoCostoResumenDto tipoCosto = new TipoCostoResumenDto();
+            tipoCosto.setCodigo("3");
+            tipoCosto.setNombre(comp.getNombre());
+            fila.setComponente(tipoCosto);
+        }
+
+        fila.setDescripcionProducto(comp.getDescripcion());
+        if (comp.getCodigoProducto() != null) {
+            fila.setProducto(new ProductoSeleccionadoDto()
+                    .codigoProducto(comp.getCodigoProducto())
+                    .producto(resolverNombreProducto(comp.getCodigoProducto())));
+        }
+        if (comp.getUnidadMedida() != null) {
+            fila.setUnidadMedida(resolverUnidadMedida(comp.getUnidadMedida()));
+        }
+        return fila;
     }
 
     /**
@@ -177,10 +186,11 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
 
         Proyecto proyecto = proyectoRepository.findById(idProyecto)
                 .orElseThrow(() -> new NoSuchElementException("Proyecto no encontrado con ID: " + idProyecto));
+        EdicionFormulacion.exigirEditable(proyecto);
 
         // 1. Guardar o actualizar cabecera
         DescripcionTecnica entity = descripcionTecnicaRepository.findByProyectoId(idProyecto)
-                .map(existente -> {
+                .map((DescripcionTecnica existente) -> {
                     descripcionTecnicaMapper.updateEntityFromDto(requestDto, existente);
                     if (requestDto.getDescripcionProyecto() != null) {
                         existente.setDescripcion(requestDto.getDescripcionProyecto());
@@ -205,10 +215,11 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
 
         if (requestDto.getFilas() != null && !requestDto.getFilas().isEmpty()) {
             List<Componente> nuevosComponentes = requestDto.getFilas().stream()
-                    .map(filaDto -> {
+                    .map((FilaDescripcionTecnicaRequestDto filaDto) -> {
                         Componente comp = descripcionTecnicaMapper.toComponenteEntity(filaDto);
                         comp.setProyecto(proyecto);
-                        // Asegura el mapeo explicito de la propiedad 'componente' (String) del RequestDto al @NotBlank 'nombre' de la Entidad
+                        // Asegura el mapeo explicito de la propiedad 'componente' (String) del RequestDto
+                        // al campo obligatorio 'nombre' (NotBlank) de la Entidad
                         comp.setNombre(filaDto.getComponente());
                         comp.setDescripcion(filaDto.getDescripcionProducto());
                         return comp;
@@ -228,17 +239,19 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
 
     /**
      * Resuelve "Unidad de Medida" (CU-ADM-02) a partir de su nombre. Construye directamente el DTO
-     * del paquete {@code preinversion.dto} (y no {@link sv.gob.mh.siip.model.administracion.dto.UnidadMedidaResumenDto},
+     * del paquete {@code preinversion.dto}
+     * (y no {@link sv.gob.mh.siip.model.administracion.dto.UnidadMedidaResumenDto},
      * usado por {@code CatalogosAdministracionMapper}): el generador de OpenAPI produce una clase
      * distinta por cada modelPackage que referencia el esquema, así que ambas son incompatibles en
      * tiempo de compilación pese a tener la misma forma — mismo criterio ya aplicado a
      * {@code TipoCostoResumenDto} en este mismo servicio.
      */
     private UnidadMedidaResumenDto resolverUnidadMedida(String nombre) {
-        return unidadMedidaRepository.findFirstByNombre(nombre).map(this::toUnidadMedidaResumenDto).orElse(null);
+        return unidadMedidaRepository.findFirstByNombre(nombre)
+                .map(DescripcionTecnicaServiceImpl::toUnidadMedidaResumenDto).orElse(null);
     }
 
-    private UnidadMedidaResumenDto toUnidadMedidaResumenDto(UnidadMedida u) {
+    private static UnidadMedidaResumenDto toUnidadMedidaResumenDto(UnidadMedida u) {
         return new UnidadMedidaResumenDto().tipo(TipoUnidadMedidaDto.valueOf(u.getTipo().name()))
                 .categoria(u.getCategoria()).unidadMedida(u.getNombre()).descripcion(u.getDescripcion());
     }

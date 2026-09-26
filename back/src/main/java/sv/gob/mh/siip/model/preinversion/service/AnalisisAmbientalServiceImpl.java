@@ -23,7 +23,6 @@ import sv.gob.mh.siip.security.ActorContexto;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implementación de la lógica de negocio para el Análisis Ambiental y Permisos Requeridos (CU-PRE-14).
@@ -68,7 +67,8 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
         AnalisisAmbiental analisis = analisisAmbientalRepository.findByProyectoId(idProyecto)
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("El análisis ambiental no existe para el proyecto seleccionado"));
+                .orElseThrow(() -> new RuntimeException(
+                        "El análisis ambiental no existe para el proyecto seleccionado"));
 
         // 2. Mapeamos la cabecera al DTO principal
         AnalisisAmbientalDto dto = new AnalisisAmbientalDto();
@@ -80,8 +80,8 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
             List<FilaImpactoAmbientalRequestDto> filasDto = new ArrayList<>();
             if (analisis.getImpactosAmbientales() != null) {
                 filasDto = analisis.getImpactosAmbientales().stream()
-                        .map(impacto -> analisisAmbientalMapper.toFilaDto(impacto)) // <--- Actualizado a toFilaDto
-                        .collect(Collectors.toList());
+                        .map(analisisAmbientalMapper::toFilaDto)
+                        .toList();
             }
             dto.setFilas(filasDto);
 
@@ -107,6 +107,7 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         // 1. Buscamos si ya existe la cabecera previa para actualizarla, o creamos una nueva
         AnalisisAmbiental analisis = analisisAmbientalRepository.findByProyectoId(idProyecto)
@@ -134,12 +135,12 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
 
         if (tieneImpactos && requestDto.getFilas() != null && !requestDto.getFilas().isEmpty()) {
             List<ImpactosAmbientales> nuevosImpactos = requestDto.getFilas().stream()
-                    .map(filaDto -> {
+                    .map((FilaImpactoAmbientalRequestDto filaDto) -> {
                         ImpactosAmbientales impacto = analisisAmbientalMapper.toFilaEntity(filaDto);
                         impacto.setAnalisisAmbiental(analisis);
                         return impacto;
                     })
-                    .toList(); // <-- Aquí cambias el collect(Collectors.toList()) por .toList()
+                    .toList();
 
             analisis.getImpactosAmbientales().addAll(nuevosImpactos);
         }
@@ -156,7 +157,7 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
     }
 
     /** RN01/RN02: mismo criterio que el resto de la serie CU-PRE-06 a CU-PRE-14. */
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(

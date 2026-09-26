@@ -16,6 +16,7 @@ import sv.gob.mh.siip.model.preinversion.dto.GuardarAvanceMetasEstudioRequestDto
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarObservacionesAvanceDgicpRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarRespuestaInstitucionAvanceRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionAvancePAPDto;
+import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapRevisionService;
 import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapService;
 
 /** Expone el Avance Cuatrimestral por Metas Físicas del PAP (CU-PRE-33). */
@@ -23,9 +24,12 @@ import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapService;
 public class AvanceMetasFisicasPapController implements PreinversinAvanceDeMetasFsicasPapApi {
 
     private final AvanceMetasFisicasPapService service;
+    private final AvanceMetasFisicasPapRevisionService revisionService;
 
-    public AvanceMetasFisicasPapController(AvanceMetasFisicasPapService service) {
+    public AvanceMetasFisicasPapController(AvanceMetasFisicasPapService service,
+            AvanceMetasFisicasPapRevisionService revisionService) {
         this.service = service;
+        this.revisionService = revisionService;
     }
 
     @Override
@@ -44,37 +48,42 @@ public class AvanceMetasFisicasPapController implements PreinversinAvanceDeMetas
     @Override
     public ResponseEntity<AvanceMetasEstudioDto> guardarAvanceMetasEstudio(String cup, Integer anio,
             CuatrimestreDto periodo, GuardarAvanceMetasEstudioRequestDto guardarAvanceMetasEstudioRequestDto) {
-        return ResponseEntity.ok(service.guardarAvanceMetasEstudio(cup, anio, periodo, guardarAvanceMetasEstudioRequestDto));
+        return ResponseEntity.ok(
+                service.guardarAvanceMetasEstudio(cup, anio, periodo, guardarAvanceMetasEstudioRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionAvancePAPDto> registrarObservacionesAvanceDgicp(
             RegistrarObservacionesAvanceDgicpRequestDto registrarObservacionesAvanceDgicpRequestDto) {
-        return ResponseEntity.ok(service.registrarObservacionesAvanceDgicp(registrarObservacionesAvanceDgicpRequestDto));
+        return ResponseEntity.ok(
+                revisionService.registrarObservacionesAvanceDgicp(registrarObservacionesAvanceDgicpRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionAvancePAPDto> enviarObservacionesAvanceDgicp(
             EnviarObservacionesAvanceDgicpRequestDto enviarObservacionesAvanceDgicpRequestDto) {
-        return ResponseEntity.ok(service.enviarObservacionesAvanceDgicp(enviarObservacionesAvanceDgicpRequestDto));
+        return ResponseEntity.ok(
+                revisionService.enviarObservacionesAvanceDgicp(enviarObservacionesAvanceDgicpRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionAvancePAPDto> registrarRespuestaInstitucionAvance(
             RegistrarRespuestaInstitucionAvanceRequestDto registrarRespuestaInstitucionAvanceRequestDto) {
-        return ResponseEntity.ok(service.registrarRespuestaInstitucionAvance(registrarRespuestaInstitucionAvanceRequestDto));
+        return ResponseEntity.ok(
+                revisionService.registrarRespuestaInstitucionAvance(registrarRespuestaInstitucionAvanceRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionAvancePAPDto> enviarRespuestaInstitucionAvance(
             EnviarObservacionesAvanceDgicpRequestDto enviarObservacionesAvanceDgicpRequestDto) {
-        return ResponseEntity.ok(service.enviarRespuestaInstitucionAvance(enviarObservacionesAvanceDgicpRequestDto));
+        return ResponseEntity.ok(
+                revisionService.enviarRespuestaInstitucionAvance(enviarObservacionesAvanceDgicpRequestDto));
     }
 
     @Override
     public ResponseEntity<RevisionAvancePAPDto> finalizarRevisionAvance(
             FinalizarRevisionAvanceRequestDto finalizarRevisionAvanceRequestDto) {
-        return ResponseEntity.ok(service.finalizarRevisionAvance(finalizarRevisionAvanceRequestDto));
+        return ResponseEntity.ok(revisionService.finalizarRevisionAvance(finalizarRevisionAvanceRequestDto));
     }
 
     @Override

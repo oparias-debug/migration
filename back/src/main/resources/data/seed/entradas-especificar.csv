@@ -1,0 +1,12 @@
+# Entradas de los catálogos "Especificar" de elegibilidad (CU-PRE-25/26.5). tipo = valor de
+# TipoCatalogoEspecificar.
+# Datos de prueba razonables, no el catálogo oficial (ver CatalogoConsolidadoDevSeeder).
+tipo;codigo;nombre
+ODS;ODS-01;ODS 1: Fin de la pobreza
+ODS;ODS-03;ODS 3: Salud y bienestar
+ODS;ODS-04;ODS 4: Educación de calidad
+COMPONENTE_MEDIO_AMBIENTE;CMA-01;Recurso hídrico
+COMPONENTE_MEDIO_AMBIENTE;CMA-02;Calidad del aire
+GRUPO_POBLACIONAL_VULNERABLE;GPV-01;Niñez y adolescencia
+GRUPO_POBLACIONAL_VULNERABLE;GPV-02;Personas con discapacidad
+MEJORA_CALIDAD_VIDA;MCV-01;Reducción del tiempo de traslado

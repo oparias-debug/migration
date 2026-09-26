@@ -24,7 +24,7 @@ import sv.gob.mh.siip.model.preinversion.dto.EnviarObservacionesAvanceDgicpReque
 import sv.gob.mh.siip.model.preinversion.dto.EstadoRevisionAvancePAPDto;
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarObservacionesAvanceDgicpRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionAvancePAPDto;
-import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapService;
+import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapRevisionService;
 
 /** CU-PRE-33-registrar-observaciones.feature (SF-2, pasos 1-3). */
 public class Pre33RegistrarObservaciones {
@@ -36,14 +36,14 @@ public class Pre33RegistrarObservaciones {
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final UsuarioRepository usuarioRepository;
-    private final AvanceMetasFisicasPapService service;
+    private final AvanceMetasFisicasPapRevisionService service;
 
     private UnidadEjecutora unidadEjecutora;
     private RevisionAvancePAPDto revisionGuardada;
 
     public Pre33RegistrarObservaciones(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
-            AvanceMetasFisicasPapService service) {
+            AvanceMetasFisicasPapRevisionService service) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;

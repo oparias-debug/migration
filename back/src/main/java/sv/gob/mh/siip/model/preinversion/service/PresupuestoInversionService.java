@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,21 +64,36 @@ public class PresupuestoInversionService {
     return dto(buscar(id), obtenerOCrear(buscar(id)));
   }
 
+  /**
+   * Presupuesto del proyecto en modo consulta, para los CU que lo muestran sin editarlo (p.ej. la
+   * ficha de CU-PRE-24 "Viabilidad"). A diferencia de {@link #obtener(Long)}, no exige rol (el CU que
+   * lo invoca aplica sus propias credenciales) y no crea el presupuesto si todavía no existe.
+   *
+   * @param id identificador del proyecto
+   * @return el presupuesto calculado, o vacío si el proyecto aún no tiene presupuesto registrado
+   */
+  @Transactional(readOnly = true)
+  public Optional<PresupuestoDto> consultarSoloLectura(Long id) {
+    return presupuestos.findByProyectoId(id).map(p -> dto(buscar(id), p));
+  }
+
   public PresupuestoDto periodos(Long id, ConfigurarPeriodosEjecucionRequestDto req) {
     actor.exigirRol(RolUsuario.TECNICO_URP);
-    PresupuestoProyecto p = obtenerOCrear(buscar(id));
+    PresupuestoProyecto p = obtenerOCrear(buscarEditable(id));
     p.setPeriodosEstimados(req.getPeriodosEstimados());
     return dto(buscar(id), p);
   }
 
   public MacroactividadDto registrar(Long id, Integer producto, MacroactividadRequestDto req) {
     actor.exigirRol(RolUsuario.TECNICO_URP);
-    Proyecto proyecto = buscar(id);
+    Proyecto proyecto = buscarEditable(id);
     PresupuestoProyecto p = obtenerOCrear(proyecto);
-    if (req.getNombreMacroactividad().isBlank())
+    if (req.getNombreMacroactividad().isBlank()) {
       throw invalido("nombreMacroactividad");
-    if (!tieneCosto(req))
+    }
+    if (!tieneCosto(req)) {
       throw invalido("insumos");
+    }
     try {
       MacroactividadPresupuesto m = macros.save(MacroactividadPresupuesto.builder().presupuesto(p)
           .numeroProducto(producto).nombre(req.getNombreMacroactividad().trim())
@@ -93,9 +109,11 @@ public class PresupuestoInversionService {
     Proyecto proyecto = buscar(id);
     PresupuestoProyecto p = obtenerOCrear(proyecto);
     long totalProductos = componentes.findByProyectoIdOrderByIdAsc(id).size();
-    for (int i = 1; i <= totalProductos; i++)
-      if (macros.countByPresupuestoIdAndNumeroProducto(p.getId(), i) == 0)
+    for (int i = 1; i <= totalProductos; i++) {
+      if (macros.countByPresupuestoIdAndNumeroProducto(p.getId(), i) == 0) {
         throw invalido("macroactividades");
+      }
+    }
     return dto(proyecto, p);
   }
 
@@ -106,11 +124,13 @@ public class PresupuestoInversionService {
 
   public FuentesFinanciamientoRequestDto guardarFuentes(Long id, FuentesFinanciamientoRequestDto req) {
     actor.exigirRol(RolUsuario.TECNICO_URP);
-    if (req.getFuentesFinanciamiento() == null || req.getFuentesFinanciamiento().isEmpty())
+    if (req.getFuentesFinanciamiento() == null || req.getFuentesFinanciamiento().isEmpty()) {
       throw invalido("fuentesFinanciamiento");
+    }
     String fuenteRecuros = req.getFuenteRecursos();
-    if (fuenteRecuros == null || fuenteRecuros.isBlank())
+    if (fuenteRecuros == null || fuenteRecuros.isBlank()) {
       throw invalido("fuenteRecursos");
+    }
     PresupuestoProyecto p = obtenerOCrear(buscar(id));
     p.setFuentesFinanciamiento(
         req.getFuentesFinanciamiento().stream().map(x -> FuenteFinanciamiento.valueOf(x.name())).toList());
@@ -123,22 +143,29 @@ public class PresupuestoInversionService {
     return proyectos.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
   }
 
+  /** Como {@link #buscar(Long)}, pero rechaza la operacion si la formulacion esta bloqueada (CU-PRE-24 RN04). */
+  private Proyecto buscarEditable(Long id) {
+    Proyecto proyecto = buscar(id);
+    EdicionFormulacion.exigirEditable(proyecto);
+    return proyecto;
+  }
+
   private PresupuestoProyecto obtenerOCrear(Proyecto proyecto) {
     return presupuestos.findByProyectoId(proyecto.getId())
         .orElseGet(() -> presupuestos.save(PresupuestoProyecto.builder().proyecto(proyecto).build()));
   }
 
-  private ValidacionNegocioException invalido(String campo) {
+  private static ValidacionNegocioException invalido(String campo) {
     return new ValidacionNegocioException("Validación de presupuesto",
         List.of(new ErrorDetalleDto().campo(campo).mensaje("Campo obligatorio")));
   }
 
-  private boolean tieneCosto(MacroactividadRequestDto req) {
+  private static boolean tieneCosto(MacroactividadRequestDto req) {
     return req.getInsumos() != null && req.getInsumos().stream()
         .anyMatch(i -> i.getCostosPorPeriodo() != null && i.getCostosPorPeriodo().stream().anyMatch(Objects::nonNull));
   }
 
-  private FuentesFinanciamientoRequestDto fuentesDto(PresupuestoProyecto p) {
+  private static FuentesFinanciamientoRequestDto fuentesDto(PresupuestoProyecto p) {
     return new FuentesFinanciamientoRequestDto().fuenteRecursos(p.getFuenteRecursos()).fuentesFinanciamiento(
         p.getFuentesFinanciamiento().stream().map(x -> FuenteFinanciamientoDto.valueOf(x.name())).toList());
   }
@@ -146,8 +173,9 @@ public class PresupuestoInversionService {
   private PresupuestoDto dto(Proyecto proyecto, PresupuestoProyecto p) {
     List<MacroactividadPresupuesto> ms = macros.findByPresupuestoIdOrderByNumeroProductoAscIdAsc(p.getId());
     Map<Integer, List<MacroactividadDto>> porProducto = new LinkedHashMap<>();
-    for (MacroactividadPresupuesto m : ms)
+    for (MacroactividadPresupuesto m : ms) {
       porProducto.computeIfAbsent(m.getNumeroProducto(), k -> new ArrayList<>()).add(macroDto(m));
+    }
     // Productos desde CU-PRE-11 (Descripción Técnica, RN16, solo lectura aquí) — no desde
     // FichaEmergencia, que solo existe para proyectos de emergencia (CU-PRE-03.5).
     List<Componente> filas = componentes.findByProyectoIdOrderByIdAsc(proyecto.getId());
@@ -177,35 +205,39 @@ public class PresupuestoInversionService {
     }
   }
 
-  private List<Double> totales(List<MacroactividadDto> xs) {
+  private static List<Double> totales(List<MacroactividadDto> xs) {
     int n = xs.stream().mapToInt(x -> x.getTotalPeriodoPrecioMercado().size()).max().orElse(0);
     List<Double> r = new ArrayList<>();
     for (int i = 0; i < n; i++) {
       double s = 0;
-      for (MacroactividadDto x : xs)
-        if (i < x.getTotalPeriodoPrecioMercado().size())
+      for (MacroactividadDto x : xs) {
+        if (i < x.getTotalPeriodoPrecioMercado().size()) {
           s += x.getTotalPeriodoPrecioMercado().get(i);
+        }
+      }
       r.add(s);
     }
     return r;
   }
 
-  private List<Double> totalesInsumos(List<MacroactividadInsumoRequestDto> xs) {
+  private static List<Double> totalesInsumos(List<MacroactividadInsumoRequestDto> xs) {
     int n = xs.stream().filter(x -> x.getCostosPorPeriodo() != null).mapToInt(x -> x.getCostosPorPeriodo().size()).max()
         .orElse(0);
     List<Double> r = new ArrayList<>();
     for (int i = 0; i < n; i++) {
       double s = 0;
-      for (var x : xs)
+      for (var x : xs) {
         if (x.getCostosPorPeriodo() != null && i < x.getCostosPorPeriodo().size()
-            && x.getCostosPorPeriodo().get(i) != null)
+            && x.getCostosPorPeriodo().get(i) != null) {
           s += x.getCostosPorPeriodo().get(i);
+        }
+      }
       r.add(s);
     }
     return r;
   }
 
-  private double sum(List<Double> x) {
+  private static double sum(List<Double> x) {
     return x.stream().mapToDouble(Double::doubleValue).sum();
   }
 }

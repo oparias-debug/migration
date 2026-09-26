@@ -145,7 +145,7 @@ public class Pre30BloqueoFueraCalendario {
 
     @Entonces("el sistema permite el ingreso de información, asumiendo el período abierto \\(RN-A.b)")
     public void el_sistema_permite_el_ingreso_asumiendo_periodo_abierto() {
-        // [SUPUESTO] documentado en ProgramacionFinancieraPapServiceImpl#verificarPeriodoAbierto.
+        // [SUPUESTO] documentado en ProgramacionPapCalendario#verificarPeriodoAbierto.
         assertThat(estudioAgregado).isNotNull();
         assertThat(estudioAgregado.getCup()).isEqualTo(proyecto.getCup());
         RequestContextHolder.resetRequestAttributes();

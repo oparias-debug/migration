@@ -14,7 +14,7 @@ import sv.gob.mh.siip.model.administracion.domain.Calendario;
 import sv.gob.mh.siip.model.administracion.dto.DiasRestantesResponseDto;
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
 import sv.gob.mh.siip.model.administracion.repository.CalendarioRepository;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 
 /** CU-ADM-04-08-consultar-dias-restantes-periodo-laboral.feature. */
@@ -22,7 +22,7 @@ public class Adm04ConsultarDiasRestantesPeriodoLaboral {
 
     private final UsuarioRepository usuarioRepository;
     private final CalendarioRepository calendarioRepository;
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
     private final ContextoValidacionBdd contextoValidacion;
 
     private DiasRestantesResponseDto ultimoResultado;
@@ -32,7 +32,7 @@ public class Adm04ConsultarDiasRestantesPeriodoLaboral {
     private String codigoCalendarioReal;
 
     public Adm04ConsultarDiasRestantesPeriodoLaboral(UsuarioRepository usuarioRepository,
-            CalendarioRepository calendarioRepository, CalendarioService calendarioService,
+            CalendarioRepository calendarioRepository, CalendarioConsultaService calendarioService,
             ContextoValidacionBdd contextoValidacion) {
         this.usuarioRepository = usuarioRepository;
         this.calendarioRepository = calendarioRepository;

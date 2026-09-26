@@ -77,6 +77,6 @@ public interface ProyectoMapper {
     PlanSectorialRegionalResumenDto toResumen(PlanSectorialRegional planSectorialRegional);
 
     default OffsetDateTime map(LocalDateTime fecha) {
-        return fecha == null ? null : fecha.atZone(ZONA_EL_SALVADOR).toOffsetDateTime();
+        return (fecha == null) ? null : fecha.atZone(ZONA_EL_SALVADOR).toOffsetDateTime();
     }
 }

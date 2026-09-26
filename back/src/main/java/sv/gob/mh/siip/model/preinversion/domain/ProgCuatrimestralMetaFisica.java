@@ -4,9 +4,26 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Porcentaje programado por cuatrimestre para una {@link EtapaMetaFisicaPap} en un año determinado
@@ -18,7 +35,9 @@ import lombok.*;
  */
 @Entity
 @Table(name = "PROG_CUATRIMESTRAL_META_FISICA",
-       uniqueConstraints = @UniqueConstraint(name = "UK_PROG_CUATRI_META_FIS", columnNames = {"ID_ETAPA_META_FISICA", "ANIO"}))
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_PROG_CUATRI_META_FIS",
+               columnNames = {"ID_ETAPA_META_FISICA", "ANIO"}))
 @Getter
 @Setter
 @NoArgsConstructor

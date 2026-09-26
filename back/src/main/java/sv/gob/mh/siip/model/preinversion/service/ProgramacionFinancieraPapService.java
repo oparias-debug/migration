@@ -5,11 +5,12 @@ import org.springframework.core.io.Resource;
 import sv.gob.mh.siip.model.preinversion.dto.AgregarEstudioRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.EstudioProgramacionPAPDto;
 import sv.gob.mh.siip.model.preinversion.dto.GuardarProgramacionEstudioRequestDto;
-import sv.gob.mh.siip.model.preinversion.dto.HabilitarModificacionesFueraPlazoRequestDto;
-import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProgramacionFinancieraPAPResponseDto;
 
-/** Programación Financiera Cuatrimestral del PAP (CU-PRE-30). */
+/**
+ * Programación Financiera Cuatrimestral del PAP (CU-PRE-30): listado, reporte y registro de estudios. Las
+ * bajas y la habilitación fuera de plazo están en {@link ProgramacionFinancieraPapAjusteService}.
+ */
 public interface ProgramacionFinancieraPapService {
 
     ProgramacionFinancieraPAPResponseDto listar(Long idUnidadEjecutora, Integer anio, String busqueda, Integer pagina,
@@ -21,14 +22,6 @@ public interface ProgramacionFinancieraPapService {
 
     EstudioProgramacionPAPDto guardarProgramacionEstudio(String cup, Integer anio,
             GuardarProgramacionEstudioRequestDto request);
-
-    void desactivarEstudio(String cup, Integer anio);
-
-    void eliminarEtapaProgramacion(String cup, NombreEtapaDto etapa, Integer anio);
-
-    void eliminarFuenteFinanciamiento(String cup, NombreEtapaDto etapa, Long idFuente, Integer anio);
-
-    void habilitarModificacionesFueraPlazo(HabilitarModificacionesFueraPlazoRequestDto request);
 
     Resource generarReporte(Long idUnidadEjecutora, Integer anio, String formato);
 }

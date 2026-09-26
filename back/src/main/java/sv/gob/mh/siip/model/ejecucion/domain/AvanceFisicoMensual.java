@@ -1,10 +1,25 @@
 package sv.gob.mh.siip.model.ejecucion.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import sv.gob.mh.siip.model.programacion.domain.IndicadorProducto;
 
 import java.math.BigDecimal;
@@ -12,7 +27,9 @@ import java.math.BigDecimal;
 /** Avance fisico mensual de un indicador de producto. CU-EJE-02. */
 @Entity
 @Table(name = "AVANCE_FISICO_MENSUAL",
-       uniqueConstraints = @UniqueConstraint(name = "UK_AVANCE_FISICO_MENSUAL", columnNames = {"ID_INDICADOR_PRODUCTO", "ANIO", "MES"}))
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_AVANCE_FISICO_MENSUAL",
+               columnNames = {"ID_INDICADOR_PRODUCTO", "ANIO", "MES"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,7 +40,10 @@ public class AvanceFisicoMensual {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "avance_fisico_mensual_seq")
-    @SequenceGenerator(name = "avance_fisico_mensual_seq", sequenceName = "AVANCE_FISICO_MENSUAL_SEQ", allocationSize = 1)
+    @SequenceGenerator(
+            name = "avance_fisico_mensual_seq",
+            sequenceName = "AVANCE_FISICO_MENSUAL_SEQ",
+            allocationSize = 1)
     @Column(name = "ID_AVANCE_FISICO_MENSUAL")
     private Long id;
 

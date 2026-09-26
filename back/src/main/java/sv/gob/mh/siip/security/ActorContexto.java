@@ -74,7 +74,7 @@ public class ActorContexto {
         return usuario.getRol() != RolUsuario.TECNICO_URP;
     }
 
-    private String headerUsuarioActual() {
+    private static String headerUsuarioActual() {
         try {
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
                     .getRequest();

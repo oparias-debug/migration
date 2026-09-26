@@ -219,7 +219,8 @@ public class Pre31RegistrarMetasProyectoMixto {
     }
 
     private ValidacionNegocioException capturarValidacion(GuardarProgramacionMetasEstudioRequestDto request) {
+        String cupProyecto = proyecto.getCup();
         return org.junit.jupiter.api.Assertions.assertThrows(ValidacionNegocioException.class,
-                () -> service.guardarProgramacionMetasEstudio(proyecto.getCup(), ANIO, request));
+                () -> service.guardarProgramacionMetasEstudio(cupProyecto, ANIO, request));
     }
 }

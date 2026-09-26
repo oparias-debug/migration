@@ -22,7 +22,6 @@ import sv.gob.mh.siip.model.administracion.repository.CalendarioEventoRepository
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
 import sv.gob.mh.siip.model.common.domain.Usuario;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
-import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 import sv.gob.mh.siip.model.preinversion.domain.AvanceCuatriMetaFisica;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaMetaFisicaPap;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
@@ -40,7 +39,6 @@ import sv.gob.mh.siip.model.preinversion.repository.EtapaMetaFisicaPapRepository
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProgCuatrimestralMetaFisicaRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
-import sv.gob.mh.siip.model.preinversion.repository.RevisionAvancePapRepository;
 import sv.gob.mh.siip.security.ActorContexto;
 
 /** CU-PRE-33: RN-C.b (tope "Programado en el Año"), RN-B.b, RN-B.d, RN-B.c y alcance del reporte (SF-4). */
@@ -55,14 +53,11 @@ class AvanceMetasFisicasPapServiceImplTest {
     private final ProgCuatrimestralMetaFisicaRepository progRepository = mock(ProgCuatrimestralMetaFisicaRepository.class);
     private final AvanceCuatriMetaFisicaRepository avanceRepository = mock(AvanceCuatriMetaFisicaRepository.class);
     private final CalendarioEventoRepository calendarioEventoRepository = mock(CalendarioEventoRepository.class);
-    private final RevisionAvancePapRepository revisionRepository = mock(RevisionAvancePapRepository.class);
-    private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
-    private final NotificacionService notificacionService = mock(NotificacionService.class);
     private final ActorContexto actorContexto = mock(ActorContexto.class);
 
     private final AvanceMetasFisicasPapServiceImpl service = new AvanceMetasFisicasPapServiceImpl(proyectoRepository,
             etapaPreinversionRepository, etapaMetaRepository, progRepository, avanceRepository,
-            calendarioEventoRepository, revisionRepository, usuarioRepository, notificacionService, actorContexto);
+            calendarioEventoRepository, actorContexto);
 
     private final List<AvanceCuatriMetaFisica> avances = new ArrayList<>();
     private EtapaMetaFisicaPap etapaMeta;

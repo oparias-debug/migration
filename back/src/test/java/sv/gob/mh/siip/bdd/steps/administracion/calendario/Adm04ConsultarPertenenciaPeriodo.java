@@ -13,7 +13,7 @@ import sv.gob.mh.siip.model.administracion.domain.Calendario;
 import sv.gob.mh.siip.model.administracion.dto.PertenenciaPeriodoResponseDto;
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
 import sv.gob.mh.siip.model.administracion.repository.CalendarioRepository;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 
 /** CU-ADM-04-06-consultar-pertenencia-a-periodo.feature. */
@@ -21,7 +21,7 @@ public class Adm04ConsultarPertenenciaPeriodo {
 
     private final UsuarioRepository usuarioRepository;
     private final CalendarioRepository calendarioRepository;
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
     private final ContextoValidacionBdd contextoValidacion;
 
     private PertenenciaPeriodoResponseDto ultimoResultado;
@@ -31,7 +31,7 @@ public class Adm04ConsultarPertenenciaPeriodo {
     private String codigoCalendarioReal;
 
     public Adm04ConsultarPertenenciaPeriodo(UsuarioRepository usuarioRepository,
-            CalendarioRepository calendarioRepository, CalendarioService calendarioService,
+            CalendarioRepository calendarioRepository, CalendarioConsultaService calendarioService,
             ContextoValidacionBdd contextoValidacion) {
         this.usuarioRepository = usuarioRepository;
         this.calendarioRepository = calendarioRepository;

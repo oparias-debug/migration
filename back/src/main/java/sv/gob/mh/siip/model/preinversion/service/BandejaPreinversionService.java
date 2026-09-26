@@ -5,6 +5,10 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -43,6 +47,8 @@ import sv.gob.mh.siip.security.ActorContexto;
 @Transactional
 public class BandejaPreinversionService {
     private static final String ESTADO = "estado";
+    private static final int TAMANIO_PAGINA_POR_DEFECTO = 20;
+    private static final int TAMANIO_PAGINA_MAXIMO = 200;
     private final SolicitudPreinversionRepository solicitudes;
     private final UsuarioRepository usuarios;
     private final ActorContexto actores;
@@ -66,7 +72,8 @@ public class BandejaPreinversionService {
         Usuario actor = actores.exigirRol(RolUsuario.COORDINADOR_PRE, RolUsuario.TECNICO_PRE);
         Specification<SolicitudPreinversion> filtro = activasSpec().and(tipoSpec(tipo));
         if (actor.getRol() == RolUsuario.TECNICO_PRE) {
-            filtro = filtro.and((root, query, cb) -> cb.equal(root.get("tecnicoAsignado").get("id"), actor.getId()));
+            filtro = filtro.and((Root<SolicitudPreinversion> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                    cb.equal(root.get("tecnicoAsignado").get("id"), actor.getId()));
         }
         Page<SolicitudPreinversion> resultado = solicitudes.findAll(filtro, pagina(pagina, tamanio));
         // El contrato exige conteos globales, independientes de filtro y paginación.
@@ -79,7 +86,8 @@ public class BandejaPreinversionService {
                 .sorted(java.util.Comparator.comparing(Usuario::getNombreCompleto))
                 .map(tecnico -> new ConteoTecnicoPreDto().tecnico(mapper.toResumen(tecnico))
                         .cantidadCup(Math.toIntExact(porId.get(tecnico.getId()).getCantidadCup()))
-                        .cantidadOpinionTecnica(Math.toIntExact(porId.get(tecnico.getId()).getCantidadOpinionTecnica())))
+                        .cantidadOpinionTecnica(
+                                Math.toIntExact(porId.get(tecnico.getId()).getCantidadOpinionTecnica())))
                 .toList();
         return new SolicitudesActivasResponseDto().contenido(resultado.map(this::activa).getContent())
                 .paginacion(metadata(resultado)).conteoPorTecnico(conteos);
@@ -88,9 +96,11 @@ public class BandejaPreinversionService {
     @Transactional(readOnly = true)
     public SolicitudesArchivadasResponseDto archivadas(TipoSolicitudDto tipo, Integer pagina, Integer tamanio) {
         actores.exigirRol(RolUsuario.COORDINADOR_PRE);
-        Specification<SolicitudPreinversion> filtro = (root, query, cb) ->
-                cb.equal(root.get(ESTADO), EstadoSolicitud.ARCHIVADA);
-        Page<SolicitudPreinversion> resultado = solicitudes.findAll(filtro.and(tipoSpec(tipo)), pagina(pagina, tamanio));
+        Specification<SolicitudPreinversion> filtro =
+                (Root<SolicitudPreinversion> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                        cb.equal(root.get(ESTADO), EstadoSolicitud.ARCHIVADA);
+        Page<SolicitudPreinversion> resultado = solicitudes.findAll(filtro.and(tipoSpec(tipo)),
+                pagina(pagina, tamanio));
         return new SolicitudesArchivadasResponseDto().contenido(resultado.map(this::archivada).getContent())
                 .paginacion(metadata(resultado));
     }
@@ -104,7 +114,8 @@ public class BandejaPreinversionService {
         Usuario tecnico = usuarios.findById(request.getIdTecnicoAsignado())
                 .filter(u -> u.getRol() == RolUsuario.TECNICO_PRE && Boolean.TRUE.equals(u.getActivo()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("Técnico PRE no encontrado."));
-        if (solicitud.getTecnicoAsignado() == null || !Objects.equals(solicitud.getTecnicoAsignado().getId(), tecnico.getId())) {
+        if (solicitud.getTecnicoAsignado() == null
+                || !Objects.equals(solicitud.getTecnicoAsignado().getId(), tecnico.getId())) {
             solicitud.setTecnicoAsignado(tecnico);
             solicitud.setFechaAsignacion(LocalDateTime.now(ZoneId.of("America/El_Salvador")));
             solicitudes.save(solicitud);
@@ -151,7 +162,9 @@ public class BandejaPreinversionService {
     @Transactional(readOnly = true)
     public List<UsuarioResumenDto> tecnicos() {
         actores.exigirRol(RolUsuario.COORDINADOR_PRE);
-        return usuarios.findByRolAndActivoTrue(RolUsuario.TECNICO_PRE).stream().map(catalogosMapper::toResumen).toList();
+        return usuarios.findByRolAndActivoTrue(RolUsuario.TECNICO_PRE).stream()
+                .map(catalogosMapper::toResumen)
+                .toList();
     }
 
     private SolicitudPreinversion buscar(Long id) {
@@ -159,29 +172,30 @@ public class BandejaPreinversionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Solicitud no encontrada."));
     }
 
-    private Specification<SolicitudPreinversion> activasSpec() {
-        return (root, query, cb) -> cb.and(
+    private static Specification<SolicitudPreinversion> activasSpec() {
+        return (Root<SolicitudPreinversion> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb.and(
                 cb.isTrue(root.get("proyecto").get("activo")),
                 root.get(ESTADO).in(EstadoSolicitud.ARCHIVADA, EstadoSolicitud.APROBADA).not(),
                 root.get("proyecto").get(ESTADO).in(
                         EstadoProyecto.ENVIADO_DGICP_REGISTRO, EstadoProyecto.OBSERVADO_DGICP_REGISTRO));
     }
 
-    private Specification<SolicitudPreinversion> tipoSpec(TipoSolicitudDto tipo) {
-        return (root, query, cb) -> tipo == null ? cb.conjunction()
+    private static Specification<SolicitudPreinversion> tipoSpec(TipoSolicitudDto tipo) {
+        return (Root<SolicitudPreinversion> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> tipo == null
+                ? cb.conjunction()
                 : cb.equal(root.get("tipoSolicitud"), TipoSolicitud.valueOf(tipo.name()));
     }
 
-    private PageRequest pagina(Integer pagina, Integer tamanio) {
+    private static PageRequest pagina(Integer pagina, Integer tamanio) {
         int p = pagina == null ? 0 : pagina;
-        int t = tamanio == null ? 20 : tamanio;
-        if (p < 0 || t < 1 || t > 200) {
+        int t = tamanio == null ? TAMANIO_PAGINA_POR_DEFECTO : tamanio;
+        if (p < 0 || t < 1 || t > TAMANIO_PAGINA_MAXIMO) {
             throw new ValidacionNegocioException("Paginación inválida.", List.of());
         }
         return PageRequest.of(p, t, Sort.by(Sort.Direction.DESC, "fechaSolicitud", "id"));
     }
 
-    private PaginacionMetadataDto metadata(Page<?> page) {
+    private static PaginacionMetadataDto metadata(Page<?> page) {
         return new PaginacionMetadataDto().pagina(page.getNumber()).tamanio(page.getSize())
                 .totalElementos(page.getTotalElements()).totalPaginas(page.getTotalPages());
     }

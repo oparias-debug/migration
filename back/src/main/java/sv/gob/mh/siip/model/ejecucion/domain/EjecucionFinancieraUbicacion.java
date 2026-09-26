@@ -33,7 +33,9 @@ import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 /** Avance financiero por ubicacion geografica del proyecto. CU-EJE-03. */
 @Entity
 @Table(name = "EJECUCION_FINANCIERA_UBICACION",
-       uniqueConstraints = @UniqueConstraint(name = "UK_EJEC_FIN_UBICACION", columnNames = {"ID_PROYECTO", "ID_MUNICIPIO", "ANIO", "MES"}))
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_EJEC_FIN_UBICACION",
+               columnNames = {"ID_PROYECTO", "ID_MUNICIPIO", "ANIO", "MES"}))
 @Getter
 @Setter
 @NoArgsConstructor

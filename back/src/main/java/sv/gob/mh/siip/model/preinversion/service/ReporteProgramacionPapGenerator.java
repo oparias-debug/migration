@@ -1,6 +1,8 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -19,6 +21,10 @@ final class ReporteProgramacionPapGenerator {
             "Años posteriores"
     };
 
+    private static final int COL_CUP = 0;
+    private static final int COL_NOMBRE_PROYECTO = 1;
+    private static final int COL_ETAPA = 2;
+    private static final int COL_FUENTE_FINANCIAMIENTO = 3;
     /** Primera columna de montos (Costo de la etapa); las siguientes 7 columnas también son montos totalizables. */
     private static final int PRIMERA_COLUMNA_MONTO = 4;
 
@@ -30,21 +36,10 @@ final class ReporteProgramacionPapGenerator {
                 + idUnidadEjecutora + " - Año " + anio;
         double[] totales = new double[ENCABEZADOS.length - PRIMERA_COLUMNA_MONTO];
         return ReportePapGeneratorSupport.generarExcel("Programacion Financiera PAP", titulo, ENCABEZADOS, filas,
-                (row, fila) -> {
-                    row.createCell(0).setCellValue(fila.getCup());
-                    row.createCell(1).setCellValue(fila.getNombreProyecto());
-                    row.createCell(2).setCellValue(fila.getEtapa() != null ? fila.getEtapa().getValue() : "");
-                    FuenteFinanciamientoDto fuenteFinanciamiento = fila.getFuenteFinanciamiento();
-                    row.createCell(3).setCellValue(fuenteFinanciamiento != null ? fuenteFinanciamiento.getValue() : "");
-                    Double[] montos = montos(fila);
-                    for (int i = 0; i < montos.length; i++) {
-                        ReportePapGeneratorSupport.escribirMonto(row.createCell(PRIMERA_COLUMNA_MONTO + i), montos[i]);
-                        totales[i] += ReportePapGeneratorSupport.valorODefecto(montos[i]);
-                    }
-                },
+                (Row row, EstudioFilaListaPAPDto fila) -> escribirFilaExcel(row, fila, totales),
                 (XSSFSheet hoja, int numeroFila) -> {
                     Row totalRow = hoja.createRow(numeroFila);
-                    totalRow.createCell(1).setCellValue("TOTAL");
+                    totalRow.createCell(COL_NOMBRE_PROYECTO).setCellValue("TOTAL");
                     for (int i = 0; i < totales.length; i++) {
                         totalRow.createCell(PRIMERA_COLUMNA_MONTO + i).setCellValue(totales[i]);
                     }
@@ -52,23 +47,41 @@ final class ReporteProgramacionPapGenerator {
                 "No se pudo generar el reporte Excel de la Programación Financiera del PAP.");
     }
 
+    /** Escribe una fila de datos y acumula en {@code totales} sus montos. */
+    private static void escribirFilaExcel(Row row, EstudioFilaListaPAPDto fila, double[] totales) {
+        row.createCell(COL_CUP).setCellValue(fila.getCup());
+        row.createCell(COL_NOMBRE_PROYECTO).setCellValue(fila.getNombreProyecto());
+        row.createCell(COL_ETAPA)
+                .setCellValue(Optional.ofNullable(fila.getEtapa()).map(NombreEtapaDto::getValue).orElse(""));
+        FuenteFinanciamientoDto fuenteFinanciamiento = fila.getFuenteFinanciamiento();
+        row.createCell(COL_FUENTE_FINANCIAMIENTO)
+                .setCellValue(fuenteFinanciamiento != null ? fuenteFinanciamiento.getValue() : "");
+        Double[] montos = montos(fila);
+        for (int i = 0; i < montos.length; i++) {
+            ReportePapGeneratorSupport.escribirMonto(row.createCell(PRIMERA_COLUMNA_MONTO + i), montos[i]);
+            totales[i] += ReportePapGeneratorSupport.valorODefecto(montos[i]);
+        }
+    }
+
     static byte[] generarPdf(Long idUnidadEjecutora, Integer anio, List<EstudioFilaListaPAPDto> filas) {
         String subtitulo = "Unidad Ejecutora: " + idUnidadEjecutora + "   Año: " + anio;
         return ReportePapGeneratorSupport.generarPdf("PROGRAMACIÓN FINANCIERA DE LA PREINVERSIÓN PÚBLICA", subtitulo,
                 filas,
-                fila -> {
-                    NombreEtapaDto etapa = fila.getEtapa();
-                    FuenteFinanciamientoDto fuenteFinanciamiento = fila.getFuenteFinanciamiento();
-                    StringBuilder linea = new StringBuilder(String.format("%s | %s | %s | %s",
-                            fila.getCup(), fila.getNombreProyecto(),
-                            etapa != null ? etapa.getValue() : "",
-                            fuenteFinanciamiento != null ? fuenteFinanciamiento.getValue() : ""));
-                    for (Double monto : montos(fila)) {
-                        linea.append(String.format(" | %.2f", ReportePapGeneratorSupport.valorODefecto(monto)));
-                    }
-                    return linea.toString();
-                },
+                ReporteProgramacionPapGenerator::formatearLineaPdf,
                 "No se pudo generar el reporte PDF de la Programación Financiera del PAP.");
+    }
+
+    private static String formatearLineaPdf(EstudioFilaListaPAPDto fila) {
+        NombreEtapaDto etapa = fila.getEtapa();
+        FuenteFinanciamientoDto fuenteFinanciamiento = fila.getFuenteFinanciamiento();
+        StringBuilder linea = new StringBuilder(String.format(Locale.ROOT, "%s | %s | %s | %s",
+                fila.getCup(), fila.getNombreProyecto(),
+                Optional.ofNullable(etapa).map(NombreEtapaDto::getValue).orElse(""),
+                fuenteFinanciamiento != null ? fuenteFinanciamiento.getValue() : ""));
+        for (Double monto : montos(fila)) {
+            linea.append(String.format(Locale.ROOT, " | %.2f", ReportePapGeneratorSupport.valorODefecto(monto)));
+        }
+        return linea.toString();
     }
 
     /** Columnas de monto en el orden de {@link #ENCABEZADOS} (desde "Costo de la etapa"). */

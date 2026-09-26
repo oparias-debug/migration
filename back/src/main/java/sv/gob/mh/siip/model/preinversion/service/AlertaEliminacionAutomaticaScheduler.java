@@ -113,7 +113,7 @@ public class AlertaEliminacionAutomaticaScheduler {
     }
 
     /** Cuenta dias habiles (excluye sabado/domingo) entre dos instantes; no considera feriados. */
-    private long diasHabilesEntre(LocalDateTime desde, LocalDateTime hasta) {
+    private static long diasHabilesEntre(LocalDateTime desde, LocalDateTime hasta) {
         long diasHabiles = 0;
         LocalDateTime cursor = desde.toLocalDate().atStartOfDay();
         LocalDateTime limite = hasta.toLocalDate().atStartOfDay();

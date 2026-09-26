@@ -18,17 +18,20 @@ import sv.gob.mh.siip.model.preinversion.dto.GuardarProgramacionEstudioRequestDt
 import sv.gob.mh.siip.model.preinversion.dto.HabilitarModificacionesFueraPlazoRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProgramacionFinancieraPAPResponseDto;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapAjusteService;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapService;
 
 class ProgramacionFinancieraPapControllerTest {
 
     private ProgramacionFinancieraPapService service;
+    private ProgramacionFinancieraPapAjusteService ajusteService;
     private ProgramacionFinancieraPapController controller;
 
     @BeforeEach
     void setUp() {
         service = mock(ProgramacionFinancieraPapService.class);
-        controller = new ProgramacionFinancieraPapController(service);
+        ajusteService = mock(ProgramacionFinancieraPapAjusteService.class);
+        controller = new ProgramacionFinancieraPapController(service, ajusteService);
     }
 
     @Test
@@ -85,7 +88,7 @@ class ProgramacionFinancieraPapControllerTest {
         ResponseEntity<Void> respuesta = controller.desactivarEstudio("08040", 2027);
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(service).desactivarEstudio("08040", 2027);
+        verify(ajusteService).desactivarEstudio("08040", 2027);
     }
 
     @Test
@@ -93,7 +96,7 @@ class ProgramacionFinancieraPapControllerTest {
         ResponseEntity<Void> respuesta = controller.eliminarEtapaProgramacion("08040", NombreEtapaDto.PERFIL, 2027);
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(service).eliminarEtapaProgramacion("08040", NombreEtapaDto.PERFIL, 2027);
+        verify(ajusteService).eliminarEtapaProgramacion("08040", NombreEtapaDto.PERFIL, 2027);
     }
 
     @Test
@@ -102,7 +105,7 @@ class ProgramacionFinancieraPapControllerTest {
                 2027);
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(service).eliminarFuenteFinanciamiento("08040", NombreEtapaDto.PERFIL, 5L, 2027);
+        verify(ajusteService).eliminarFuenteFinanciamiento("08040", NombreEtapaDto.PERFIL, 5L, 2027);
     }
 
     @Test
@@ -113,7 +116,7 @@ class ProgramacionFinancieraPapControllerTest {
         ResponseEntity<Void> respuesta = controller.habilitarModificacionesFueraPlazo(request);
 
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(service).habilitarModificacionesFueraPlazo(request);
+        verify(ajusteService).habilitarModificacionesFueraPlazo(request);
     }
 
     @Test

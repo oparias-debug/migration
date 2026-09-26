@@ -27,7 +27,10 @@ import sv.gob.mh.siip.model.convenios.enums.EstadoCondicionPrevia;
 
 /** Condicion previa de desembolso del convenio, con numeracion correlativa. CU-MPD-01, CU-MPD-04. */
 @Entity
-@Table(name = "CONDICION_PREVIA", uniqueConstraints = @UniqueConstraint(name = "UK_CONDICION_PREVIA_NUM", columnNames = {"ID_CONVENIO", "NUMERO"}))
+@Table(name = "CONDICION_PREVIA",
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_CONDICION_PREVIA_NUM",
+               columnNames = {"ID_CONVENIO", "NUMERO"}))
 @Getter
 @Setter
 @NoArgsConstructor

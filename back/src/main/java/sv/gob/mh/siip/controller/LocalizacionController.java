@@ -43,7 +43,9 @@ public class LocalizacionController implements PreinversinLocalizacinApi {
      * {@inheritDoc}
      */
     @Override
-    public ResponseEntity<LocalizacionDto> guardarLocalizacion(Long idProyecto, LocalizacionRequestDto localizacionRequestDto) {
+    public ResponseEntity<LocalizacionDto> guardarLocalizacion(
+            Long idProyecto,
+            LocalizacionRequestDto localizacionRequestDto) {
         LocalizacionDto response = localizacionService.guardarLocalizacion(idProyecto, localizacionRequestDto);
         return ResponseEntity.ok(response);
     }

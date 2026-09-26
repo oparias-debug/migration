@@ -1,0 +1,14 @@
+# Catálogos de medidas (catálogo oficial), tipo = valor de TipoMedidaCatalogo:
+#   GRD: Gestión de Riesgo de Desastres (Anexo C.1 de CU-PRE-01; reutilizado en CU-PRE-25 Anexo C.4)
+#   GRC: Gestión de Riesgo Climático (Anexo C.1.5 de CU-PRE-01)
+#   ACC: Adaptación al Cambio Climático (Anexo C.2 de CU-PRE-01; reutilizado en CU-PRE-25 Anexo C.5)
+tipo;codigo;descripcion
+GRD;1;Reducción del riesgo existente
+GRD;2;Prospectivos para evitar nuevos riesgos y generación de conocimiento
+GRD;3;Preparación
+GRD;4;Respuesta y Recuperación
+GRC;1;Prevención
+GRC;2;Preparación
+GRC;3;Gestión de desastres
+ACC;1;Mitigación
+ACC;2;Adaptación

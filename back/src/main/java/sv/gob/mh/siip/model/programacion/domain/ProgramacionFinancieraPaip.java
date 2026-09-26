@@ -2,11 +2,29 @@ package sv.gob.mh.siip.model.programacion.domain;
 
 import sv.gob.mh.siip.model.programacion.enums.EstadoProgramacionFinanciera;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import sv.gob.mh.siip.model.common.domain.FuenteFinanciamiento;
 import sv.gob.mh.siip.model.convenios.domain.Convenio;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
@@ -64,7 +82,11 @@ public class ProgramacionFinancieraPaip {
     @Column(name = "ESTADO", nullable = false, length = 20)
     private EstadoProgramacionFinanciera estado;
 
-    @OneToMany(mappedBy = "programacionFinancieraPaip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "programacionFinancieraPaip",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     @Builder.Default
     private java.util.List<ProvisionFinanciera> provisiones = new java.util.ArrayList<>();
 }

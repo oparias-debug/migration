@@ -3,6 +3,7 @@ package sv.gob.mh.siip.model.preinversion.service;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
@@ -34,6 +35,12 @@ public class BeneficiosProyectoService {
     private static final String TIPO_INGRESO_MANUAL = "MANUAL";
     private static final String TIPO_INGRESO_AUTOMATICO = "AUTOMATICO";
     private static final List<String> TIPOS_BIEN = List.of("EQUIPOS", "EDIFICIOS", "TERRENOS", "VEHICULOS");
+    /** RN04: las filas de totales se redondean hacia arriba a múltiplos de 5. */
+    private static final double MULTIPLO_REDONDEO_TOTALES = 5D;
+    /** La tasa de crecimiento proyectado se registra en porcentaje. */
+    private static final double PORCENTAJE_TOTAL = 100D;
+    /** Factor para redondear montos a 2 decimales. */
+    private static final double FACTOR_DOS_DECIMALES = 100D;
 
     private final ProyectoRepository proyectos;
     private final BeneficioProyectoRepository beneficios;
@@ -43,7 +50,8 @@ public class BeneficiosProyectoService {
     private final ActorContexto actor;
 
     public BeneficiosProyectoService(ProyectoRepository proyectos, BeneficioProyectoRepository beneficios,
-            BeneficiosProyectoConfiguracionRepository configuraciones, PresupuestoOmConfiguracionRepository presupuestoOm,
+            BeneficiosProyectoConfiguracionRepository configuraciones,
+            PresupuestoOmConfiguracionRepository presupuestoOm,
             ParametroRepository parametros, ActorContexto actor) {
         this.proyectos = proyectos;
         this.beneficios = beneficios;
@@ -66,6 +74,7 @@ public class BeneficiosProyectoService {
         Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
         String parametro = texto(request, "parametro");
         String tipoIngreso = texto(request, "tipoIngreso");
         String tipoBeneficio = texto(request, "tipoBeneficio");
@@ -74,15 +83,7 @@ public class BeneficiosProyectoService {
         }
         List<Double> montos = montos(request.get("montosPrecioMercadoPorPeriodo"));
         Double montoPeriodo1 = numero(request.get("montoPeriodo1"));
-        if (TIPO_INGRESO_MANUAL.equalsIgnoreCase(tipoIngreso) && montos.stream().allMatch(m -> m == null)) {
-            invalido();
-        }
-        if (TIPO_INGRESO_AUTOMATICO.equalsIgnoreCase(tipoIngreso) && montoPeriodo1 == null) {
-            invalido();
-        }
-        if (!TIPO_INGRESO_MANUAL.equalsIgnoreCase(tipoIngreso) && !TIPO_INGRESO_AUTOMATICO.equalsIgnoreCase(tipoIngreso)) {
-            invalido();
-        }
+        validarTipoIngreso(tipoIngreso, montos, montoPeriodo1);
         int vidaUtil = vidaUtil(idProyecto);
         if (montos.size() > vidaUtil) {
             // RN05: los períodos del detalle son los de la "Vida útil" de CU-PRE-18.
@@ -94,7 +95,7 @@ public class BeneficiosProyectoService {
                 .orElseThrow(() -> new ValidacionNegocioException("Parámetro no encontrado: " + parametro, List.of()));
         BeneficioProyecto beneficio = BeneficioProyecto.builder().proyecto(proyecto)
                 .tipoBeneficio(tipoBeneficio).nombreBeneficio(texto(request, "nombreBeneficio"))
-                .parametro(parametro).tipoIngreso(tipoIngreso.toUpperCase()).montoPeriodo1(montoPeriodo1)
+                .parametro(parametro).tipoIngreso(tipoIngreso.toUpperCase(Locale.ROOT)).montoPeriodo1(montoPeriodo1)
                 .tasaCrecimientoProyectado(numero(request.get("tasaCrecimientoProyectado")))
                 .factorCorreccion(parametroCatalogo.getFactorCorreccion())
                 .montosPrecioMercadoPorPeriodo(montos).build();
@@ -102,9 +103,24 @@ public class BeneficiosProyectoService {
         return detalle(guardado, vidaUtil, ActorContexto.esUsuarioInterno(usuario));
     }
 
+    private static void validarTipoIngreso(String tipoIngreso, List<Double> montos, Double montoPeriodo1) {
+        if (TIPO_INGRESO_MANUAL.equalsIgnoreCase(tipoIngreso) && montos.stream().allMatch(m -> m == null)) {
+            invalido();
+        }
+        if (TIPO_INGRESO_AUTOMATICO.equalsIgnoreCase(tipoIngreso) && montoPeriodo1 == null) {
+            invalido();
+        }
+        if (!TIPO_INGRESO_MANUAL.equalsIgnoreCase(tipoIngreso)
+                && !TIPO_INGRESO_AUTOMATICO.equalsIgnoreCase(tipoIngreso)) {
+            invalido();
+        }
+    }
+
     public void eliminarBeneficio(Long idProyecto, Long idBeneficio) {
         Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        exigirAlcanceUnidadEjecutora(usuario, proyecto(idProyecto));
+        Proyecto proyecto = proyecto(idProyecto);
+        exigirAlcanceUnidadEjecutora(usuario, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
         beneficios.delete(beneficios.findByIdAndProyectoId(idBeneficio, idProyecto)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Beneficio no encontrado")));
     }
@@ -113,7 +129,8 @@ public class BeneficiosProyectoService {
         Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
-        BeneficiosProyectoConfiguracion configuracion = configuraciones.findByProyectoId(idProyecto)
+        EdicionFormulacion.exigirEditable(proyecto);
+        BeneficiosProyectoConfiguracion configuracion =configuraciones.findByProyectoId(idProyecto)
                 .orElseGet(() -> BeneficiosProyectoConfiguracion.builder().proyecto(proyecto).build());
         String tipoBien = texto(request, "tipoBien");
         if (tipoBien != null && !TIPOS_BIEN.contains(tipoBien)) {
@@ -156,23 +173,29 @@ public class BeneficiosProyectoService {
         resultado.put("externalidades", externalidades);
         resultado.put("flujoBeneficiosPrecioMercadoPorPeriodo", mercado);
         resultado.put("flujoBeneficiosPrecioAjustadoPorPeriodo", incluirPreciosAjustados ? ajustado : null);
+        agregarConfiguracion(resultado, configuracion, incluirPreciosAjustados);
+        return resultado;
+    }
+
+    /** Campos de la configuración (valor de rescate y tipo de bien) de la respuesta. */
+    private static void agregarConfiguracion(Map<String, Object> resultado,
+            BeneficiosProyectoConfiguracion configuracion, boolean incluirPreciosAjustados) {
         resultado.put("valorRescate", configuracion == null ? null : configuracion.getValorRescate());
         resultado.put("tipoBien", configuracion == null ? null : configuracion.getTipoBien());
         Double fc = configuracion == null ? null : configuracion.getFactorCorreccionTipoBien();
         resultado.put("fcTipoBien", incluirPreciosAjustados ? fc : null);
-        resultado.put("valorRescateAjustado", incluirPreciosAjustados && configuracion != null
-                && configuracion.getValorRescate() != null && fc != null
+        resultado.put("valorRescateAjustado", (incluirPreciosAjustados && configuracion != null
+                && configuracion.getValorRescate() != null && fc != null)
                         ? redondear(configuracion.getValorRescate() * fc) : null);
-        return resultado;
     }
 
-    @SuppressWarnings("unchecked")
     private static void acumularTotales(Map<String, Object> detalleCalculo, List<Double> mercado,
             List<Double> ajustado) {
-        List<Map<String, Object>> periodos = (List<Map<String, Object>>) detalleCalculo.get("montosPorPeriodo");
+        List<?> periodos = (List<?>) detalleCalculo.get("montosPorPeriodo");
         for (int i = 0; i < periodos.size(); i++) {
-            mercado.set(i, redondear(mercado.get(i) + (Double) periodos.get(i).get("montoPrecioMercado")));
-            ajustado.set(i, redondear(ajustado.get(i) + (Double) periodos.get(i).get("montoPrecioAjustado")));
+            Map<?, ?> periodo = (Map<?, ?>) periodos.get(i);
+            mercado.set(i, redondear(mercado.get(i) + (Double) periodo.get("montoPrecioMercado")));
+            ajustado.set(i, redondear(ajustado.get(i) + (Double) periodo.get("montoPrecioAjustado")));
         }
     }
 
@@ -201,7 +224,9 @@ public class BeneficiosProyectoService {
             anterior = 0D;
         }
         for (int i = 0; i < periodos; i++) {
-            Double montoManual = i < beneficio.getMontosPrecioMercadoPorPeriodo().size() ? beneficio.getMontosPrecioMercadoPorPeriodo().get(i) : null;
+            Double montoManual = i < beneficio.getMontosPrecioMercadoPorPeriodo().size()
+                    ? beneficio.getMontosPrecioMercadoPorPeriodo().get(i)
+                    : null;
             double mercado;
             if (TIPO_INGRESO_AUTOMATICO.equals(beneficio.getTipoIngreso())) {
                 if (i > 0) {
@@ -233,7 +258,9 @@ public class BeneficiosProyectoService {
     }
 
     private int vidaUtil(Long idProyecto) {
-        return presupuestoOm.findByProyectoId(idProyecto).map(c -> c.getVidaUtil() == null ? 0 : c.getVidaUtil()).orElse(0);
+        return presupuestoOm.findByProyectoId(idProyecto)
+                .map(c -> c.getVidaUtil() == null ? 0 : c.getVidaUtil())
+                .orElse(0);
     }
 
     private Proyecto proyecto(Long id) {
@@ -260,7 +287,7 @@ public class BeneficiosProyectoService {
 
     private static String texto(Map<String, Object> r, String campo) {
         Object v = r.get(campo);
-        return v instanceof String s && !s.isBlank() ? s : null;
+        return (v instanceof String s && !s.isBlank()) ? s : null;
     }
 
     private static Double numero(Object valor) {
@@ -268,15 +295,16 @@ public class BeneficiosProyectoService {
     }
 
     private static double tasa(BeneficioProyecto beneficio) {
-        return beneficio.getTasaCrecimientoProyectado() == null ? 0D : beneficio.getTasaCrecimientoProyectado() / 100D;
+        return (beneficio.getTasaCrecimientoProyectado() == null)
+                ? 0D : (beneficio.getTasaCrecimientoProyectado() / PORCENTAJE_TOTAL);
     }
 
     private static double redondear(double valor) {
-        return Math.round(valor * 100D) / 100D;
+        return Math.round(valor * FACTOR_DOS_DECIMALES) / FACTOR_DOS_DECIMALES;
     }
 
     private static double redondearHaciaArribaMultiploDeCinco(double valor) {
-        return Math.ceil(redondear(valor) / 5D) * 5D;
+        return Math.ceil(redondear(valor) / MULTIPLO_REDONDEO_TOTALES) * MULTIPLO_REDONDEO_TOTALES;
     }
 
     private static List<Double> ceros(int cantidad) {

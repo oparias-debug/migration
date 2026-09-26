@@ -34,7 +34,7 @@ import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.FuenteFinanciamientoEtapaPapRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProgCuatrimestralFinancieraRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
-import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapService;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapAjusteService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
@@ -60,7 +60,7 @@ public class Pre30EliminarDesactivar {
     private final MacroSectorRepository macroSectorRepository;
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
-    private final ProgramacionFinancieraPapService service;
+    private final ProgramacionFinancieraPapAjusteService service;
 
     private Proyecto proyecto;
     private EtapaPreinversion etapa;
@@ -74,7 +74,7 @@ public class Pre30EliminarDesactivar {
             FuenteFinanciamientoEtapaPapRepository fuenteRepository,
             ProgCuatrimestralFinancieraRepository progRepository, MacroSectorRepository macroSectorRepository,
             SectorActividadRepository sectorActividadRepository, EjeTematicoRepository ejeTematicoRepository,
-            ProgramacionFinancieraPapService service) {
+            ProgramacionFinancieraPapAjusteService service) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;

@@ -1,6 +1,7 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,10 +61,12 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         areaInfluenciaRepository.deleteAll(areaInfluenciaRepository.findByProyectoIdOrderByIdAsc(idProyecto));
-        List<AreaInfluenciaFilaRequestDto> filas = request == null || request.getFilas() == null
-                ? List.of() : request.getFilas();
+        List<AreaInfluenciaFilaRequestDto> filas = Optional.ofNullable(request)
+                .map(AreaInfluenciaRequestDto::getFilas)
+                .orElse(List.of());
         for (AreaInfluenciaFilaRequestDto fila : filas) {
             Municipio municipio = buscarMunicipio(fila.getDistrito());
             areaInfluenciaRepository.save(AreaInfluencia.builder()
@@ -81,6 +84,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         AnalisisPoblacion analisis = analisisPoblacionRepository.findByProyectoId(idProyecto).orElse(null);
         if (analisis == null) {
@@ -117,7 +121,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
                         "El distrito " + distrito + " no existe en el catalogo geografico."));
     }
 
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
@@ -125,7 +129,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
         }
     }
 
-    private AreaInfluenciaDto construirDto(Proyecto proyecto, List<AreaInfluencia> filas) {
+    private static AreaInfluenciaDto construirDto(Proyecto proyecto, List<AreaInfluencia> filas) {
         List<AreaInfluenciaFilaDto> dtoFilas = filas.stream()
                 .map(fila -> new AreaInfluenciaFilaDto()
                         .region(fila.getDepartamento().getRegion())

@@ -24,7 +24,7 @@ import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 import sv.gob.mh.siip.model.preinversion.dto.EstadoPAPDto;
 import sv.gob.mh.siip.model.preinversion.dto.FinalizarRevisionRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionProgramacionPAPDto;
-import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapService;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapRevisionService;
 
 /** CU-PRE-31-finalizar-revision.feature (SF-6, RN-D, RN-E). */
 public class Pre31FinalizarRevision {
@@ -37,14 +37,14 @@ public class Pre31FinalizarRevision {
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final UsuarioRepository usuarioRepository;
-    private final ProgramacionMetasFisicasPapService service;
+    private final ProgramacionMetasFisicasPapRevisionService service;
 
     private UnidadEjecutora unidadEjecutora;
     private RevisionProgramacionPAPDto revisionGuardada;
 
     public Pre31FinalizarRevision(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
-            ProgramacionMetasFisicasPapService service) {
+            ProgramacionMetasFisicasPapRevisionService service) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;

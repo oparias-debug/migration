@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.domain.Componente;
 import sv.gob.mh.siip.model.preinversion.domain.MacroactividadPresupuesto;
@@ -31,6 +33,7 @@ import sv.gob.mh.siip.model.preinversion.dto.FuentesFinanciamientoRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.MacroactividadInsumoRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.MacroactividadRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.PresupuestoDto;
+import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.FuenteFinanciamiento;
 import sv.gob.mh.siip.model.preinversion.repository.ComponenteRepository;
 import sv.gob.mh.siip.model.preinversion.repository.MacroactividadPresupuestoRepository;
@@ -86,6 +89,26 @@ class PresupuestoInversionServiceTest {
 
     assertThat(response).isNotNull();
     verify(presupuestos).save(any(PresupuestoProyecto.class));
+  }
+
+  @Test
+  void consultaSoloLecturaSinExigirRolNiCrearElPresupuesto() {
+    assertThat(service.consultarSoloLectura(1L)).get()
+        .satisfies(dto -> assertThat(dto.getProductos()).hasSize(2));
+
+    when(presupuestos.findByProyectoId(1L)).thenReturn(Optional.empty());
+    assertThat(service.consultarSoloLectura(1L)).isEmpty();
+    verify(presupuestos, never()).save(any(PresupuestoProyecto.class));
+    verifyNoInteractions(actor);
+  }
+
+  @Test
+  void conLaFormulacionBloqueadaPorViabilidadNoAdmiteCambios() {
+    proyecto.setEstado(EstadoProyecto.EN_VIABILIDAD);
+    ConfigurarPeriodosEjecucionRequestDto request = new ConfigurarPeriodosEjecucionRequestDto(6);
+
+    assertThatThrownBy(() -> service.periodos(1L, request)).isInstanceOf(ConflictoEstadoException.class);
+    assertThat(presupuesto.getPeriodosEstimados()).isEqualTo(3);
   }
 
   @Test

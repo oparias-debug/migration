@@ -801,7 +801,7 @@ public class Pre11RegistrarDescripcionTecnica {
                 unidadEjecutora, institucion, sector, eje);
 
 
-        int cupRandom = java.util.concurrent.ThreadLocalRandom.current().nextInt(10000, 100000);
+        int cupRandom = java.util.concurrent.ThreadLocalRandom.current().nextInt(10000, 50000);
         proyecto.setCup(String.format("%05d", cupRandom));
         proyecto.setActivo(true);
         proyecto.setDescripcionProyecto("Descripcion de prueba CU-11");

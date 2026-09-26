@@ -24,7 +24,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import sv.gob.mh.siip.model.administracion.enums.EstadoVigencia;
 
-/** Catalogo maestro del catalogMaster (CU-ADM-01): codigo, nombre, padre opcional, vigencia y sus campos (FIELD/KEY). */
+/**
+ * Catalogo maestro del catalogMaster (CU-ADM-01): codigo, nombre, padre opcional, vigencia y sus campos (FIELD/KEY).
+ */
 @Entity
 @Table(name = "CATALOGO")
 @Getter

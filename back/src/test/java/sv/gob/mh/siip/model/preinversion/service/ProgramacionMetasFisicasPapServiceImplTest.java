@@ -72,8 +72,11 @@ class ProgramacionMetasFisicasPapServiceImplTest {
 
     private final ProgramacionMetasFisicasPapServiceImpl service = new ProgramacionMetasFisicasPapServiceImpl(
             proyectoRepository, etapaPreinversionRepository, etapaMetaRepository, progRepository,
-            habilitacionRepository, calendarioEventoRepository, revisionRepository, usuarioRepository,
-            notificacionService, actorContexto);
+            habilitacionRepository, calendarioEventoRepository, revisionRepository, actorContexto);
+
+    private final ProgramacionMetasFisicasPapRevisionServiceImpl revisionService =
+            new ProgramacionMetasFisicasPapRevisionServiceImpl(revisionRepository, usuarioRepository,
+                    notificacionService, habilitacionRepository, calendarioEventoRepository, actorContexto);
 
     private void mockActor(Usuario actor) {
         when(actorContexto.exigirRol(any(RolUsuario[].class))).thenReturn(actor);
@@ -192,8 +195,9 @@ class ProgramacionMetasFisicasPapServiceImplTest {
         mockActor(Usuario.builder().rol(RolUsuario.TECNICO_URP).build());
         proyectoMixto();
 
+        GuardarProgramacionMetasEstudioRequestDto request = requestMixto(60, 60, 50);
         ValidacionNegocioException ex = org.junit.jupiter.api.Assertions.assertThrows(ValidacionNegocioException.class,
-                () -> service.guardarProgramacionMetasEstudio("08041", 2027, requestMixto(60, 60, 50)));
+                () -> service.guardarProgramacionMetasEstudio("08041", 2027, request));
 
         assertThat(ex.getCodigo()).isEqualTo("MONTO_SUPERA_100_NUEVO");
     }
@@ -203,8 +207,9 @@ class ProgramacionMetasFisicasPapServiceImplTest {
         mockActor(Usuario.builder().rol(RolUsuario.TECNICO_URP).build());
         proyectoMixto();
 
+        GuardarProgramacionMetasEstudioRequestDto request = requestMixto(70, 80, 0);
         ValidacionNegocioException ex = org.junit.jupiter.api.Assertions.assertThrows(ValidacionNegocioException.class,
-                () -> service.guardarProgramacionMetasEstudio("08041", 2027, requestMixto(70, 80, 0)));
+                () -> service.guardarProgramacionMetasEstudio("08041", 2027, request));
 
         assertThat(ex.getCodigo()).isEqualTo("PORCENTAJE_SUPERA_100_ARRASTRE");
     }
@@ -249,8 +254,9 @@ class ProgramacionMetasFisicasPapServiceImplTest {
         mockActor(Usuario.builder().rol(RolUsuario.TECNICO_URP).build());
         proyectoConEstudio("08040", 5L);
 
+        GuardarProgramacionMetasEstudioRequestDto request = requestConPorcentajes(0, 0, 0);
         ValidacionNegocioException ex = org.junit.jupiter.api.Assertions.assertThrows(ValidacionNegocioException.class,
-                () -> service.guardarProgramacionMetasEstudio("08040", 2027, requestConPorcentajes(0, 0, 0)));
+                () -> service.guardarProgramacionMetasEstudio("08040", 2027, request));
 
         assertThat(ex.getDetalles()).extracting(ErrorDetalleDto::getCampo)
                 .containsExactly("PERFIL.programacionCuatrimestral");
@@ -261,8 +267,9 @@ class ProgramacionMetasFisicasPapServiceImplTest {
         mockActor(Usuario.builder().rol(RolUsuario.TECNICO_URP).build());
         proyectoConEstudio("08040", 5L);
 
+        GuardarProgramacionMetasEstudioRequestDto request = requestConPorcentajes(-10, 20, 120);
         ValidacionNegocioException ex = org.junit.jupiter.api.Assertions.assertThrows(ValidacionNegocioException.class,
-                () -> service.guardarProgramacionMetasEstudio("08040", 2027, requestConPorcentajes(-10, 20, 120)));
+                () -> service.guardarProgramacionMetasEstudio("08040", 2027, request));
 
         assertThat(ex.getDetalles()).extracting(ErrorDetalleDto::getCampo)
                 .containsExactly("PERFIL.montoCuatrimestre1", "PERFIL.montoCuatrimestre3");
@@ -293,8 +300,9 @@ class ProgramacionMetasFisicasPapServiceImplTest {
         mockActor(Usuario.builder().rol(RolUsuario.TECNICO_PRE).build());
         periodoCerrado(2027);
 
+        FinalizarRevisionRequestDto request = new FinalizarRevisionRequestDto(5L, 2027);
         ConflictoEstadoException ex = org.junit.jupiter.api.Assertions.assertThrows(ConflictoEstadoException.class,
-                () -> service.finalizarRevision(new FinalizarRevisionRequestDto(5L, 2027)));
+                () -> revisionService.finalizarRevision(request));
 
         assertThat(ex.getCodigo()).isEqualTo("PERIODO_CERRADO");
         verify(revisionRepository, never()).save(any());
@@ -308,7 +316,8 @@ class ProgramacionMetasFisicasPapServiceImplTest {
                 .thenReturn(Optional.of(HabilitacionModificacionMetasPap.builder().idUnidadEjecutora(5L).anio(2027).build()));
         when(revisionRepository.save(any(RevisionProgramacionPap.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        RevisionProgramacionPAPDto respuesta = service.finalizarRevision(new FinalizarRevisionRequestDto(5L, 2027));
+        RevisionProgramacionPAPDto respuesta = revisionService
+                .finalizarRevision(new FinalizarRevisionRequestDto(5L, 2027));
 
         assertThat(respuesta.getEstadoPap()).isEqualTo(EstadoPAPDto.PAP_REVISADO);
     }
@@ -318,9 +327,10 @@ class ProgramacionMetasFisicasPapServiceImplTest {
         mockActor(Usuario.builder().rol(RolUsuario.TECNICO_URP).build());
         periodoCerrado(2027);
 
+        RegistrarRespuestaInstitucionRequestDto request =
+                new RegistrarRespuestaInstitucionRequestDto(5L, 2027, "Ajustes realizados.");
         ConflictoEstadoException ex = org.junit.jupiter.api.Assertions.assertThrows(ConflictoEstadoException.class,
-                () -> service.registrarRespuestaInstitucion(
-                        new RegistrarRespuestaInstitucionRequestDto(5L, 2027, "Ajustes realizados.")));
+                () -> revisionService.registrarRespuestaInstitucion(request));
 
         assertThat(ex.getCodigo()).isEqualTo("PERIODO_CERRADO");
         verify(revisionRepository, never()).save(any());
@@ -331,8 +341,9 @@ class ProgramacionMetasFisicasPapServiceImplTest {
         mockActor(Usuario.builder().rol(RolUsuario.TECNICO_URP).build());
         periodoCerrado(2027);
 
+        EnviarProgramacionARevisionDgicpRequestDto request = new EnviarProgramacionARevisionDgicpRequestDto(5L, 2027);
         ConflictoEstadoException ex = org.junit.jupiter.api.Assertions.assertThrows(ConflictoEstadoException.class,
-                () -> service.enviarRespuestaInstitucion(new EnviarProgramacionARevisionDgicpRequestDto(5L, 2027)));
+                () -> revisionService.enviarRespuestaInstitucion(request));
 
         assertThat(ex.getCodigo()).isEqualTo("PERIODO_CERRADO");
         verify(notificacionService, never()).notificarRespuestaInstitucion(any(), any(), any());
@@ -378,7 +389,7 @@ class ProgramacionMetasFisicasPapServiceImplTest {
         when(revisionRepository.save(any(RevisionProgramacionPap.class))).thenAnswer(inv -> inv.getArgument(0));
         when(usuarioRepository.findByRolAndActivoTrue(RolUsuario.TECNICO_PRE)).thenReturn(List.of());
 
-        RevisionProgramacionPAPDto respuesta = service
+        RevisionProgramacionPAPDto respuesta = revisionService
                 .enviarProgramacionARevisionDgicp(new EnviarProgramacionARevisionDgicpRequestDto(5L, 2027));
 
         assertThat(respuesta.getEstadoPap()).isEqualTo(EstadoPAPDto.ENVIADO_A_REVISION_DGICP);
@@ -393,7 +404,8 @@ class ProgramacionMetasFisicasPapServiceImplTest {
                         .estadoPap(EstadoPap.ENVIADO_A_REVISION_DGICP).build()));
         when(revisionRepository.save(any(RevisionProgramacionPap.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        RevisionProgramacionPAPDto respuesta = service.finalizarRevision(new FinalizarRevisionRequestDto(5L, 2027)
+        RevisionProgramacionPAPDto respuesta = revisionService
+                .finalizarRevision(new FinalizarRevisionRequestDto(5L, 2027)
                 .comentariosReporteFinancieroDgicp("Sin observaciones.")
                 .comentariosReporteMetasFisicasDgicp("Sin observaciones."));
 

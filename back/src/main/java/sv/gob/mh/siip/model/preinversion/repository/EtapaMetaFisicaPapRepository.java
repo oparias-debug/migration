@@ -20,7 +20,8 @@ public interface EtapaMetaFisicaPapRepository extends JpaRepository<EtapaMetaFis
     List<EtapaMetaFisicaPap> findByEtapaPreinversionProyectoId(Long idProyecto);
 
     /** Metas físicas activas de una Unidad Ejecutora, sin paginar (Anexo A.5, reporte). */
-    List<EtapaMetaFisicaPap> findByEtapaPreinversion_Proyecto_UnidadEjecutora_IdAndActivoTrueOrderByEtapaPreinversion_Proyecto_CupAsc(
+    List<EtapaMetaFisicaPap>
+            findByEtapaPreinversion_Proyecto_UnidadEjecutora_IdAndActivoTrueOrderByEtapaPreinversion_Proyecto_CupAsc(
             Long idUnidadEjecutora);
 
     /** Anexo A.1: solo metas activas; las desactivadas por SF-4/SF-5 no se listan. */

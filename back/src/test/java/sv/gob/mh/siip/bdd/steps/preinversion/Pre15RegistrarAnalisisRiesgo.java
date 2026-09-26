@@ -382,7 +382,7 @@ public class Pre15RegistrarAnalisisRiesgo {
         EjeTematico ejeTematico = ejeTematicoRepository
                 .save(ProyectoFixtures.nuevoEjeTematico("EJE-RIESGOS-" + sufijo, "Eje temático de prueba"));
 
-        int cupRandom = java.util.concurrent.ThreadLocalRandom.current().nextInt(10000, 100000);
+        int cupRandom = java.util.concurrent.ThreadLocalRandom.current().nextInt(10000, 50000);
         Proyecto proyectoTemporal = ProyectoFixtures.nuevoProyecto(
                 "Proyecto de Análisis de Riesgo",
                 EstadoProyecto.CUP_ASIGNADO,

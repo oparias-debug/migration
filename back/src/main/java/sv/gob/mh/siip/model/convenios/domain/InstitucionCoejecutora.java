@@ -22,7 +22,10 @@ import sv.gob.mh.siip.model.common.domain.Institucion;
 
 /** Institucion coejecutora adicional de un convenio (N:M). CU-MPD-01, RN09. */
 @Entity
-@Table(name = "INSTITUCION_COEJECUTORA", uniqueConstraints = @UniqueConstraint(name = "UK_INST_COEJECUTORA", columnNames = {"ID_CONVENIO", "ID_INSTITUCION"}))
+@Table(name = "INSTITUCION_COEJECUTORA",
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_INST_COEJECUTORA",
+               columnNames = {"ID_CONVENIO", "ID_INSTITUCION"}))
 @Getter
 @Setter
 @NoArgsConstructor

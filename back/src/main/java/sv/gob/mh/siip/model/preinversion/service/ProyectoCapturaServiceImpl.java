@@ -38,6 +38,9 @@ import sv.gob.mh.siip.security.ActorContexto;
 @Transactional
 public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
 
+    /** Tamaño de página usado cuando la petición no indica uno válido. */
+    private static final int TAMANIO_PAGINA_POR_DEFECTO = 20;
+
     /** Repositorio de acceso a datos para proyectos en captura. */
     private final ProyectoCapturaRepository proyectoCapturaRepository;
 
@@ -63,7 +66,8 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
     }
 
     /**
-     * Ejecuta la consulta de proyectos delegando las especificaciones a {@link Specs} y gestionando el objeto {@link Pageable}.
+     * Ejecuta la consulta de proyectos delegando las especificaciones a {@link Specs} y gestionando
+     * el objeto {@link Pageable}.
      * RN01/RN02: el Técnico URP solo ve los proyectos de su propia Unidad Ejecutora; el resto de
      * los roles (Viabilizador, Técnico PRE, Coordinador PRE) ve todos
      * los proyectos sin restricción de Unidad Ejecutora.
@@ -96,7 +100,7 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
 
         Pageable pageable = PageRequest.of(
                 (pagina != null && pagina >= 0) ? pagina : 0,
-                (tamanio != null && tamanio > 0) ? tamanio : 20
+                (tamanio != null && tamanio > 0) ? tamanio : TAMANIO_PAGINA_POR_DEFECTO
         );
 
         Page<Proyecto> paginaEntidades = proyectoCapturaRepository.findAll(spec, pageable);
@@ -136,7 +140,7 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
      * @param entidad instancia de la entidad persistida.
      * @return DTO transformado.
      */
-    private ProyectoCapturaItemDto toItemDto(Proyecto entidad, NombreEtapaDto etapaActual) {
+    private static ProyectoCapturaItemDto toItemDto(Proyecto entidad, NombreEtapaDto etapaActual) {
         ProyectoCapturaItemDto dto = new ProyectoCapturaItemDto();
         dto.setIdProyecto(entidad.getId());
         dto.setCup(entidad.getCup());

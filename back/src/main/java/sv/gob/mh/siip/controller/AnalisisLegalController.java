@@ -15,7 +15,8 @@ import sv.gob.mh.siip.model.preinversion.service.AnalisisLegalService;
  * por parte de los perfiles autorizados (Técnico URP / Técnico PRE bajo las reglas de alcance RN01/RN02).
  *
  * <p>Este componente gestiona las peticiones sobre la ruta base {@code /proyectos/{idProyecto}/analisis-legal},
- * asegurando la delegación limpia hacia la capa de servicios y el retorno estructurado de los DTOs correspondientes.</p>
+ * asegurando la delegación limpia hacia la capa de servicios y el retorno estructurado de los DTOs
+ * correspondientes.</p>
  *
  * @author Luis Medrano
  * @since 2026-09
@@ -41,7 +42,8 @@ public class AnalisisLegalController implements PreinversinAnlisisLegalApi {
      * @param idProyecto Identificador único del proyecto pasado como parámetro de ruta en la URL (requerido).
      * @return {@link ResponseEntity} con código HTTP 200 (OK) y un cuerpo que contiene el {@link AnalisisLegalDto}
      *         con la información legal actual y el total de costos de los entregables calculado por el servidor.
-     * @throws jakarta.persistence.EntityNotFoundException con código HTTP 404 si el identificador del proyecto no existe.
+     * @throws jakarta.persistence.EntityNotFoundException con código HTTP 404 si el identificador del proyecto
+     *         no existe.
      * @author Luis Medrano
      */
     @Override
@@ -60,7 +62,8 @@ public class AnalisisLegalController implements PreinversinAnlisisLegalApi {
      *   <li>El campo {@code costoEntregable} en las filas es opcional según los requerimientos de negocio.</li>
      *   <li>El campo {@code totalCostoEntregables} nunca se recibe desde el cliente; es calculado de forma estricta
      *       y automática por el servidor mediante la sumatoria de todas las filas enviadas.</li>
-     *   <li>Se aplica una estrategia de reemplazo completo de las gestiones a través del borrado en cascada (orphanRemoval).</li>
+     *   <li>Se aplica una estrategia de reemplazo completo de las gestiones a través del borrado en cascada
+     *       (orphanRemoval).</li>
      * </ul>
      *
      * @param idProyecto              Identificador único del proyecto obtenido desde la ruta URL (requerido).
@@ -72,7 +75,9 @@ public class AnalisisLegalController implements PreinversinAnlisisLegalApi {
      * @author Luis Medrano
      */
     @Override
-    public ResponseEntity<AnalisisLegalDto> guardarAnalisisLegal(Long idProyecto, AnalisisLegalRequestDto analisisLegalRequestDto) {
+    public ResponseEntity<AnalisisLegalDto> guardarAnalisisLegal(
+            Long idProyecto,
+            AnalisisLegalRequestDto analisisLegalRequestDto) {
         AnalisisLegalDto response = analisisLegalService.guardarAnalisisLegal(idProyecto, analisisLegalRequestDto);
         return ResponseEntity.ok(response);
     }

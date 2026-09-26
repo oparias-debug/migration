@@ -17,21 +17,21 @@ import sv.gob.mh.siip.model.administracion.enums.TipoExcepcion;
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
 import sv.gob.mh.siip.model.administracion.repository.ExcepcionRepository;
 import sv.gob.mh.siip.model.administracion.repository.PeriodoRepository;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 
 /** CU-ADM-04-05-consultar-tipo-de-dia.feature. */
 public class Adm04ConsultarTipoDia {
 
     private final PeriodoRepository periodoRepository;
     private final ExcepcionRepository excepcionRepository;
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
     private final ContextoCalendarioBdd contextoCalendario;
     private final ContextoValidacionBdd contextoValidacion;
 
     private TipoDiaResponseDto ultimoResultado;
 
     public Adm04ConsultarTipoDia(PeriodoRepository periodoRepository, ExcepcionRepository excepcionRepository,
-            CalendarioService calendarioService, ContextoCalendarioBdd contextoCalendario,
+            CalendarioConsultaService calendarioService, ContextoCalendarioBdd contextoCalendario,
             ContextoValidacionBdd contextoValidacion) {
         this.periodoRepository = periodoRepository;
         this.excepcionRepository = excepcionRepository;

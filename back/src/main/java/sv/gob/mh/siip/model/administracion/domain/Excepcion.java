@@ -23,7 +23,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import sv.gob.mh.siip.model.administracion.enums.TipoExcepcion;
 
-/** Reclasificacion puntual de una fecha dentro de un {@link Calendario}, con prioridad sobre sus periodos (CU-ADM-04). */
+/**
+ * Reclasificacion puntual de una fecha dentro de un {@link Calendario}, con prioridad sobre sus periodos (CU-ADM-04).
+ */
 @Entity
 @Table(name = "EXCEPCION", uniqueConstraints = @UniqueConstraint(name = "UK_EXCEPCION_CALENDARIO_FECHA",
         columnNames = { "CALENDARIO_ID", "FECHA" }))

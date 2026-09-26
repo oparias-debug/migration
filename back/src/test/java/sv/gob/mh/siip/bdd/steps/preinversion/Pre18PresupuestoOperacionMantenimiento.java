@@ -373,7 +373,9 @@ public class Pre18PresupuestoOperacionMantenimiento {
         assertThat(tipoCostoSeleccionado == null || tipoCostoSeleccionado != null).isTrue();
     }
 
-    @Dado("que el Técnico URP se encuentra en la pantalla {string} \\(Anexo A.{int}\\)")
+    // El sufijo identifica CU-PRE-18: Cucumber registra todos los steps globalmente y esta
+    // frase genérica antes coincidía con escenarios de CU-PRE-30.
+    @Dado("que el Técnico URP se encuentra en la pantalla {string} \\(Anexo A.{int}\\) - presupuesto-om")
     public void abrirPresupuestoOm(String pantalla, Integer anexo) {
         crearContextoAutenticado();
         pantallaActual = pantalla;
@@ -471,7 +473,8 @@ public class Pre18PresupuestoOperacionMantenimiento {
         assertThat(grupo).isEqualTo("Usuarios Internos");
     }
 
-    @Cuando("accede a la pantalla {string}")
+    // Se agrega el sufijo por la misma razón: evita colisión con la consulta de CU-PRE-30.
+    @Cuando("accede a la pantalla {string} - presupuesto-om")
     public void accederPantalla(String pantalla) {
         pantallaActual = pantalla;
     }

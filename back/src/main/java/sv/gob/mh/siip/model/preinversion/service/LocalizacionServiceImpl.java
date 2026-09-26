@@ -8,8 +8,13 @@ import sv.gob.mh.siip.model.common.domain.Municipio;
 import sv.gob.mh.siip.model.common.domain.Usuario;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.common.repository.MunicipioRepository;
-import sv.gob.mh.siip.model.preinversion.domain.*;
-import sv.gob.mh.siip.model.preinversion.dto.*;
+import sv.gob.mh.siip.model.preinversion.domain.Localizacion;
+import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
+import sv.gob.mh.siip.model.preinversion.dto.AreaInfluenciaDto;
+import sv.gob.mh.siip.model.preinversion.dto.AreaInfluenciaFilaDto;
+import sv.gob.mh.siip.model.preinversion.dto.FilaLocalizacionRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.LocalizacionDto;
+import sv.gob.mh.siip.model.preinversion.dto.LocalizacionRequestDto;
 import sv.gob.mh.siip.model.preinversion.mapper.LocalizacionMapper;
 import sv.gob.mh.siip.model.preinversion.repository.LocalizacionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
@@ -89,6 +94,9 @@ public class LocalizacionServiceImpl implements LocalizacionService {
     @Override
     @Transactional
     public LocalizacionDto guardarLocalizacion(Long idProyecto, LocalizacionRequestDto localizacionRequestDto) {
+        // CU-PRE-24 RN04: con la formulación bloqueada no se admiten cambios.
+        proyectoRepository.findById(idProyecto).ifPresent(EdicionFormulacion::exigirEditable);
+
         // Reemplazo completo de filas para el proyecto
         localizacionRepository.deleteByProyectoId(idProyecto);
 
@@ -128,6 +136,7 @@ public class LocalizacionServiceImpl implements LocalizacionService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         // 2. Consulta de el área influencia registrada previamente (CU-PRE-08)
         AreaInfluenciaDto areaInfluencia = areaInfluenciaService.autocompletarDesdePoblacionObjetivo(proyecto.getId());
@@ -152,7 +161,8 @@ public class LocalizacionServiceImpl implements LocalizacionService {
                 .departamento(municipio.getDepartamento().getNombre())
                 .distrito(municipio.getNombre())
                 .direccionEspecifica(area.getUbicacionEspecifica())
-                .coordenadas(null); // Ajusta aquí si la celda trae las coordenadas mapeadas a CoordenadasDto
+                // Ajusta aquí si la celda trae las coordenadas mapeadas a CoordenadasDto
+                .coordenadas(null);
     }
 
     private Proyecto buscarProyecto(Long idProyecto) {
@@ -160,7 +170,7 @@ public class LocalizacionServiceImpl implements LocalizacionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("El proyecto " + idProyecto + " no existe."));
     }
 
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
@@ -168,7 +178,7 @@ public class LocalizacionServiceImpl implements LocalizacionService {
         }
     }
 
-    private LocalizacionDto construirDto(Proyecto proyecto, List<FilaLocalizacionRequestDto> filas) {
+    private static LocalizacionDto construirDto(Proyecto proyecto, List<FilaLocalizacionRequestDto> filas) {
         List<FilaLocalizacionRequestDto> dtoFilas = filas.stream()
                 .map(fila -> new FilaLocalizacionRequestDto()
                         .departamento(fila.getDepartamento())
@@ -193,7 +203,7 @@ public class LocalizacionServiceImpl implements LocalizacionService {
                         "El distrito " + distrito + " no existe en el catalogo geografico."));
     }
 
-    private LocalizacionDto construirDtoVacio(Proyecto proyecto) {
+    private static LocalizacionDto construirDtoVacio(Proyecto proyecto) {
         return new LocalizacionDto()
                 .idProyecto(proyecto.getId())
                 .filas(new ArrayList<>());

@@ -45,14 +45,17 @@ public class ActividadOm {
 
     /** Total (Precios de Mercado) de "Detalle de Actividad": suma de los insumos, Período 1. */
     public double getCostoPeriodo1PrecioMercado() {
-        return insumos.stream().mapToDouble(i -> i.getCostoPeriodo1PrecioMercado() == null ? 0D : i.getCostoPeriodo1PrecioMercado()).sum();
+        return insumos.stream()
+                .mapToDouble(i -> (i.getCostoPeriodo1PrecioMercado() == null)
+                        ? 0D : i.getCostoPeriodo1PrecioMercado())
+                .sum();
     }
 
     /** Total (Precios Ajustados) de "Detalle de Actividad": Periodo_1_ajustado = insumo × FC (RN07), sumado. */
     public double getCostoPeriodo1PrecioAjustado() {
-        return insumos.stream().mapToDouble(i -> {
-            double costo = i.getCostoPeriodo1PrecioMercado() == null ? 0D : i.getCostoPeriodo1PrecioMercado();
-            double factor = i.getFactorCorreccion() == null ? 1D : i.getFactorCorreccion();
+        return insumos.stream().mapToDouble((InsumoActividad i) -> {
+            double costo = (i.getCostoPeriodo1PrecioMercado() == null) ? 0D : i.getCostoPeriodo1PrecioMercado();
+            double factor = (i.getFactorCorreccion() == null) ? 1D : i.getFactorCorreccion();
             return costo * factor;
         }).sum();
     }

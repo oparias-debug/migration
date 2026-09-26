@@ -1,0 +1,11 @@
+# Escala de calificación que se siembra para cada subcriterio (CU-PRE-25/26.5).
+# valor = valor de ValorCalificacion.
+# Datos de prueba razonables, no el catálogo oficial (ver CatalogoConsolidadoDevSeeder).
+valor;descripcion
+NO_APLICA;El subcriterio no aplica a este proyecto.
+CERO;No cumple con el subcriterio.
+UNO;Cumple mínimamente con el subcriterio.
+DOS;Cumple parcialmente con el subcriterio.
+TRES;Cumple aceptablemente con el subcriterio.
+CUATRO;Cumple satisfactoriamente con el subcriterio.
+CINCO;Cumple plenamente con el subcriterio.

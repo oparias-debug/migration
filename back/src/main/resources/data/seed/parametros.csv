@@ -1,0 +1,8 @@
+# Catálogo "Parámetros" (CU-PRE-20). El propio contrato aclara que el catálogo real (no el
+# mockup) lista 1.00 para todos.
+# Datos de prueba razonables, no el catálogo oficial (ver CatalogoConsolidadoDevSeeder).
+nombre;factor_correccion
+Valor social del tiempo;1.00
+Valor social de la mano de obra;1.00
+Tasa social de descuento;1.00
+Precio social de la divisa;1.00

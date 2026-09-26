@@ -333,12 +333,20 @@ public class Pre29ConsultarBuscar {
         int digitosLibres = 5 - valor.length();
         int limite = (int) Math.pow(10, digitosLibres);
         for (int prefijo = 0; prefijo < limite; prefijo++) {
-            String cup = (digitosLibres == 0 ? "" : String.format("%0" + digitosLibres + "d", prefijo)) + valor;
+            String prefijoTexto = Integer.toString(prefijo);
+            String cup = (digitosLibres == 0 ? "" : "0".repeat(digitosLibres - prefijoTexto.length()) + prefijoTexto)
+                    + valor;
             if (proyectoRepository.findByCup(cup).isEmpty()) {
                 return cup;
             }
         }
         throw new IllegalStateException("No queda ningún CUP libre que contenga " + valor);
+    }
+
+    /** {@code numero} con ceros a la izquierda hasta completar {@code digitos} caracteres. */
+    private static String conCerosALaIzquierda(int numero, int digitos) {
+        String texto = Integer.toString(numero);
+        return "0".repeat(Math.max(0, digitos - texto.length())) + texto;
     }
 
     private void prepararUnidades() {

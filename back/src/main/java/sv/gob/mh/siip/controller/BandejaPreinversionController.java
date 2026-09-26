@@ -6,7 +6,12 @@ import org.springframework.web.bind.annotation.RestController;
 import sv.gob.mh.siip.model.preinversion.bandeja.api.PreinversinBandejaPreinversinApi;
 import sv.gob.mh.siip.model.administracion.api.CatlogosBandejaPreinversinApi;
 import sv.gob.mh.siip.model.administracion.dto.UsuarioResumenDto;
-import sv.gob.mh.siip.model.preinversion.dto.*;
+import sv.gob.mh.siip.model.preinversion.dto.AsignacionTecnicoPreRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.SolicitudActivaItemDto;
+import sv.gob.mh.siip.model.preinversion.dto.SolicitudArchivadaItemDto;
+import sv.gob.mh.siip.model.preinversion.dto.SolicitudesActivasResponseDto;
+import sv.gob.mh.siip.model.preinversion.dto.SolicitudesArchivadasResponseDto;
+import sv.gob.mh.siip.model.preinversion.dto.TipoSolicitudDto;
 import sv.gob.mh.siip.model.preinversion.service.BandejaPreinversionService;
 
 @RestController
@@ -27,7 +32,9 @@ public class BandejaPreinversionController implements PreinversinBandejaPreinver
     }
 
     @Override
-    public ResponseEntity<SolicitudActivaItemDto> asignarTecnicoPre(Long idSolicitud, AsignacionTecnicoPreRequestDto request) {
+    public ResponseEntity<SolicitudActivaItemDto> asignarTecnicoPre(
+            Long idSolicitud,
+            AsignacionTecnicoPreRequestDto request) {
         return ResponseEntity.ok(service.asignar(idSolicitud, request));
     }
 

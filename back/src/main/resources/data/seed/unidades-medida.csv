@@ -1,0 +1,14 @@
+# Catálogo "Unidad de Medida" (CU-ADM-02, Anexo C.1 de CU-PRE-09).
+# tipo: valor de TipoUnidadMedida (BIEN, SERVICIO, MIXTA). descripcion vacía = sin descripción.
+# Datos de prueba razonables, no el catálogo oficial de la DGICP (ver CatalogoPresupuestoDevSeeder).
+tipo;categoria;unidad_medida;descripcion
+MIXTA;Longitud;Metro lineal;
+BIEN;Superficie;Metro cuadrado;
+BIEN;Volumen;Metro cúbico;
+BIEN;Peso;Kilogramo;
+BIEN;Volumen;Litro;
+MIXTA;Cantidad;Unidad;
+SERVICIO;Tiempo;Hora;
+SERVICIO;Tiempo;Mes;
+SERVICIO;Alcance;Global;Todo el alcance del contrato/servicio, sin desagregar por unidad física.
+MIXTA;Cantidad;Lote;

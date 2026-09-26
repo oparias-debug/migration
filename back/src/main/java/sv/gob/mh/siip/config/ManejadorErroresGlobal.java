@@ -17,6 +17,7 @@ import sv.gob.mh.siip.exception.InconsistenciaFechaException;
 import sv.gob.mh.siip.exception.NoAutenticadoException;
 import sv.gob.mh.siip.exception.OperacionNoPermitidaException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
+import sv.gob.mh.siip.exception.ReglaNegocioException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
 import sv.gob.mh.siip.model.preinversion.dto.ErrorDto;
@@ -28,7 +29,8 @@ public class ManejadorErroresGlobal {
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ErrorDto> manejarNoEncontrado(RecursoNoEncontradoException ex) {
-        return respuesta(HttpStatus.NOT_FOUND, "RECURSO_NO_ENCONTRADO", ex.getMessage(), null);
+        String codigo = ex.getCodigo() != null ? ex.getCodigo() : "RECURSO_NO_ENCONTRADO";
+        return respuesta(HttpStatus.NOT_FOUND, codigo, ex.getMessage(), null);
     }
 
     @ExceptionHandler(NoAutenticadoException.class)
@@ -64,6 +66,12 @@ public class ManejadorErroresGlobal {
         return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, codigo, ex.getMessage(), null);
     }
 
+    @ExceptionHandler(ReglaNegocioException.class)
+    public ResponseEntity<ErrorDto> manejarReglaNegocio(ReglaNegocioException ex) {
+        String codigo = ex.getCodigo() != null ? ex.getCodigo() : "REGLA_NEGOCIO";
+        return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, codigo, ex.getMessage(), null);
+    }
+
     @ExceptionHandler(OperacionNoPermitidaException.class)
     public ResponseEntity<ErrorDto> manejarOperacionNoPermitida(OperacionNoPermitidaException ex) {
         return respuesta(HttpStatus.METHOD_NOT_ALLOWED, "OPERACION_NO_PERMITIDA", ex.getMessage(), null);
@@ -74,11 +82,12 @@ public class ManejadorErroresGlobal {
         List<ErrorDetalleDto> detalles = ex.getBindingResult().getFieldErrors().stream()
                 .map(err -> new ErrorDetalleDto().campo(err.getField()).mensaje(err.getDefaultMessage()))
                 .toList();
-        return respuesta(HttpStatus.BAD_REQUEST, "VALIDACION_NEGOCIO", "Existen campos obligatorios sin completar o inconsistencias de validacion.",
+        return respuesta(HttpStatus.BAD_REQUEST, "VALIDACION_NEGOCIO",
+                "Existen campos obligatorios sin completar o inconsistencias de validacion.",
                 detalles);
     }
 
-    private ResponseEntity<ErrorDto> respuesta(HttpStatus status, String codigo, String mensaje,
+    private static ResponseEntity<ErrorDto> respuesta(HttpStatus status, String codigo, String mensaje,
             List<ErrorDetalleDto> detalles) {
         ErrorDto error = new ErrorDto()
                 .codigo(codigo)

@@ -1,0 +1,7 @@
+# Catálogo "Indicadores de Resultado" (CU-PRE-23). descripcion vacía = sin descripción.
+# Datos de prueba razonables, no el catálogo oficial (ver CatalogoConsolidadoDevSeeder).
+codigo;nombre;descripcion;unidad_medida
+IND-01;Número de beneficiarios directos;Personas que reciben un beneficio directo del proyecto.;Personas
+IND-02;Metros cuadrados construidos;;Metro cuadrado
+IND-03;Kilómetros de vía rehabilitados;;Kilómetro
+IND-04;Cobertura del servicio ampliada;Porcentaje de la población objetivo que queda cubierta por el servicio.;Porcentaje

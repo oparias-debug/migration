@@ -1,0 +1,10 @@
+# Criterios de elegibilidad (CU-PRE-25/26.5). tipo_especificar = valor de TipoEspecificar;
+# catalogo_especificar = valor de TipoCatalogoEspecificar (vacío si no aplica).
+# Datos de prueba razonables, no el catálogo oficial (ver CatalogoConsolidadoDevSeeder).
+codigo;dimension;criterio;tipo_especificar;catalogo_especificar;permite_seleccion_multiple
+ELEG-01;Alineación estratégica;¿El proyecto contribuye a algún Objetivo de Desarrollo Sostenible (ODS)?;CATALOGO;ODS;true
+ELEG-02;Alineación estratégica;¿El proyecto está alineado a un Eje del Plan de Gobierno?;CATALOGO;EJE_PLAN_GOBIERNO;false
+ELEG-03;Impacto social;¿El proyecto beneficia a algún grupo poblacional vulnerable?;CATALOGO;GRUPO_POBLACIONAL_VULNERABLE;true
+ELEG-04;Impacto ambiental;¿El proyecto incorpora medidas de Gestión de Riesgo de Desastres?;CATALOGO;MEDIDA_GRD;true
+ELEG-05;Elegibilidad general;¿El proyecto cuenta con Ficha Técnica completa?;SI_NO;;false
+ELEG-06;Elegibilidad general;Justificación adicional de elegibilidad (si aplica).;TEXTO_LIBRE;;false

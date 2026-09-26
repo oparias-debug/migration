@@ -16,6 +16,9 @@ public interface AvanceCuatriMetaFisicaRepository extends JpaRepository<AvanceCu
     /** Todos los avances (los 3 cuatrimestres) registrados para una programación de meta (etapa + año). */
     List<AvanceCuatriMetaFisica> findByProgramacionMetaId(Long idProgramacionMeta);
 
-    /** Histórico completo de una etapa de meta física (todos los años), para acumular "Ejecutado años anteriores" (RN-F). */
+    /**
+     * Histórico completo de una etapa de meta física (todos los años), para acumular
+     * "Ejecutado años anteriores" (RN-F).
+     */
     List<AvanceCuatriMetaFisica> findByProgramacionMeta_EtapaMetaFisica_Id(Long idEtapaMetaFisica);
 }

@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,32 +19,17 @@ import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.BancoProyectosResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.PaginacionMetadataDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectoBancoItemDto;
-import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.PriorizacionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoCapturaRepository;
-import sv.gob.mh.siip.model.preinversion.repository.ProyectoCapturaRepository.Specs;
 import sv.gob.mh.siip.security.ActorContexto;
 
 @Service
 @Transactional
 public class BancoProyectosServiceImpl implements BancoProyectosService {
 
-    /**
-     * FB paso 1 (CU-PRE-29): "viabilizados, priorizados, con Opinión Técnica para Ejecución, en
-     * ejecución y finalizados". Se incluyen además OBSERVADO y EN_OT porque el mockup del Anexo A.1
-     * muestra filas "Observado" y "En proceso de OT".
-     */
-    private static final List<EstadoProyecto> ESTADOS_BANCO = List.of(
-            EstadoProyecto.OBSERVADO,
-            EstadoProyecto.VIABLE,
-            EstadoProyecto.ELEGIBLE,
-            EstadoProyecto.PRIORIZADO,
-            EstadoProyecto.EN_OT,
-            EstadoProyecto.PROYECTO_CON_OT,
-            EstadoProyecto.EN_EJECUCION,
-            EstadoProyecto.FINALIZADO);
+    private static final int TAMANIO_PAGINA_POR_DEFECTO = 20;
 
     private final ProyectoCapturaRepository proyectoRepository;
     private final EtapaPreinversionRepository etapaRepository;
@@ -74,16 +58,11 @@ public class BancoProyectosServiceImpl implements BancoProyectosService {
                 ? actor.getUnidadEjecutora().getId()
                 : idUnidadEjecutora;
 
-        Specification<Proyecto> specification = Specs.fetchUnidadEjecutora()
-                .and(Specs.esValidoParaCaptura())
-                .and((root, query, criteriaBuilder) -> root.get("estado").in(ESTADOS_BANCO))
-                .and(Specs.byUnidadEjecutora(unidadEjecutoraFiltro))
-                .and(esBusquedaPorCodigoONombre(busqueda));
-
         Pageable pageable = PageRequest.of(
-                pagina != null && pagina >= 0 ? pagina : 0,
-                tamanio != null && tamanio > 0 ? tamanio : 20);
-        Page<Proyecto> resultado = proyectoRepository.findAll(specification, pageable);
+                (pagina != null && pagina >= 0) ? pagina : 0,
+                (tamanio != null && tamanio > 0) ? tamanio : TAMANIO_PAGINA_POR_DEFECTO);
+        Page<Proyecto> resultado = proyectoRepository.findAll(
+                BancoProyectosSpecs.listado(unidadEjecutoraFiltro, busqueda), pageable);
         Map<Long, TipoEtapaPreinversion> etapas = etapasPorProyecto(resultado.getContent());
         Map<Long, BigDecimal> prioridades = prioridadesPorProyecto(resultado.getContent());
 
@@ -97,16 +76,6 @@ public class BancoProyectosServiceImpl implements BancoProyectosService {
                 .totalElementos(resultado.getTotalElements())
                 .totalPaginas(resultado.getTotalPages());
         return new BancoProyectosResponseDto(contenido, paginacion);
-    }
-
-    private Specification<Proyecto> esBusquedaPorCodigoONombre(String busqueda) {
-        if (busqueda == null || busqueda.isBlank()) {
-            return null;
-        }
-        String termino = "%" + busqueda.trim().toLowerCase() + "%";
-        return (root, query, criteriaBuilder) -> criteriaBuilder.or(
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("cup")), termino),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("nombre")), termino));
     }
 
     /** Etapa más avanzada de la Ruta de Preinversión de cada proyecto (orden del enum, no alfabético). */
@@ -136,7 +105,7 @@ public class BancoProyectosServiceImpl implements BancoProyectosService {
                         (masReciente, anterior) -> masReciente));
     }
 
-    private ProyectoBancoItemDto toItem(Proyecto proyecto, TipoEtapaPreinversion etapa, BigDecimal prioridad) {
+    private static ProyectoBancoItemDto toItem(Proyecto proyecto, TipoEtapaPreinversion etapa, BigDecimal prioridad) {
         return new ProyectoBancoItemDto(
                 proyecto.getId(),
                 proyecto.getCup(),

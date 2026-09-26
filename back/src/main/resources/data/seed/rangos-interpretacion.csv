@@ -1,0 +1,7 @@
+# Rangos de Interpretación de la priorización (CU-PRE-25/26.5).
+# Datos de prueba razonables, no el catálogo oficial (ver CatalogoConsolidadoDevSeeder).
+categoria;puntaje_minimo;puntaje_maximo;implicacion
+Baja prioridad;0;25;El proyecto requiere una revisión sustancial antes de continuar.
+Prioridad media;26;50;El proyecto es viable pero requiere ajustes.
+Prioridad alta;51;75;El proyecto está en buena posición para avanzar.
+Prioridad muy alta;76;100;El proyecto es prioritario para su ejecución inmediata.

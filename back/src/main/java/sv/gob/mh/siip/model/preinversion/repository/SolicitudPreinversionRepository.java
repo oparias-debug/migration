@@ -14,7 +14,8 @@ public interface SolicitudPreinversionRepository extends JpaRepository<Solicitud
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select s from SolicitudPreinversion s where s.id = :id")
-    Optional<SolicitudPreinversion> buscarParaActualizar(@org.springframework.data.repository.query.Param("id") Long id);
+    Optional<SolicitudPreinversion> buscarParaActualizar(
+            @org.springframework.data.repository.query.Param("id") Long id);
 
     interface ConteoTecnico {
         Long getTecnicoId();
@@ -24,15 +25,18 @@ public interface SolicitudPreinversionRepository extends JpaRepository<Solicitud
 
     @org.springframework.data.jpa.repository.Query("""
         select s.tecnicoAsignado.id as tecnicoId,
-          sum(case when s.tipoSolicitud = sv.gob.mh.siip.model.preinversion.enums.TipoSolicitud.CUP then 1 else 0 end) as cantidadCup,
-          sum(case when s.tipoSolicitud = sv.gob.mh.siip.model.preinversion.enums.TipoSolicitud.OPINION_TECNICA then 1 else 0 end) as cantidadOpinionTecnica
+          sum(case when s.tipoSolicitud = sv.gob.mh.siip.model.preinversion.enums.TipoSolicitud.CUP
+            then 1 else 0 end) as cantidadCup,
+          sum(case when s.tipoSolicitud = sv.gob.mh.siip.model.preinversion.enums.TipoSolicitud.OPINION_TECNICA
+            then 1 else 0 end) as cantidadOpinionTecnica
         from SolicitudPreinversion s
         where s.proyecto.activo = true and s.proyecto.estado in :estados
           and s.estado not in :excluidos and s.tecnicoAsignado is not null
         group by s.tecnicoAsignado.id
         """)
     List<ConteoTecnico> conteosActivos(
-        @org.springframework.data.repository.query.Param("estados") List<sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto> estados,
+        @org.springframework.data.repository.query.Param("estados")
+        List<sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto> estados,
         @org.springframework.data.repository.query.Param("excluidos") List<EstadoSolicitud> excluidos);
 
     /** CU-PRE-02: pantalla "Solicitudes Activas". */

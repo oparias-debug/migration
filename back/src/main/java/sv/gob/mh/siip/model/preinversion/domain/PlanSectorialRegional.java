@@ -1,8 +1,19 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Catalogo de Planes Sectoriales/Regionales (Anexo C.4), fuente del listado seleccionable
@@ -21,7 +32,10 @@ public class PlanSectorialRegional {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "plan_sectorial_regional_seq")
-    @SequenceGenerator(name = "plan_sectorial_regional_seq", sequenceName = "PLAN_SECTORIAL_REGIONAL_SEQ", allocationSize = 1)
+    @SequenceGenerator(
+            name = "plan_sectorial_regional_seq",
+            sequenceName = "PLAN_SECTORIAL_REGIONAL_SEQ",
+            allocationSize = 1)
     @Column(name = "ID_PLAN_SECTORIAL_REGIONAL")
     private Long id;
 

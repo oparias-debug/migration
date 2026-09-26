@@ -16,14 +16,14 @@ import sv.gob.mh.siip.model.administracion.dto.FechaLaboralResultanteResponseDto
 import sv.gob.mh.siip.model.administracion.enums.TipoPeriodo;
 import sv.gob.mh.siip.model.administracion.repository.CalendarioRepository;
 import sv.gob.mh.siip.model.administracion.repository.PeriodoRepository;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 
 /** CU-ADM-04-10-calcular-fecha-laboral-resultante.feature. */
 public class Adm04CalcularFechaLaboralResultante {
 
     private final CalendarioRepository calendarioRepository;
     private final PeriodoRepository periodoRepository;
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
     private final ContextoCalendarioBdd contextoCalendario;
     private final ContextoValidacionBdd contextoValidacion;
 
@@ -31,7 +31,7 @@ public class Adm04CalcularFechaLaboralResultante {
     private FechaLaboralResultanteResponseDto ultimoResultado;
 
     public Adm04CalcularFechaLaboralResultante(CalendarioRepository calendarioRepository,
-            PeriodoRepository periodoRepository, CalendarioService calendarioService,
+            PeriodoRepository periodoRepository, CalendarioConsultaService calendarioService,
             ContextoCalendarioBdd contextoCalendario, ContextoValidacionBdd contextoValidacion) {
         this.calendarioRepository = calendarioRepository;
         this.periodoRepository = periodoRepository;

@@ -130,6 +130,12 @@ La primera vez tarda un par de minutos en arrancar (Elasticsearch embebido). Si 
 
 Una vez arriba, entrar a http://localhost:9000 (usuario/clave por defecto `admin`/`admin`, pide cambiarla al primer login), crear un token de usuario (**My Account → Security**, tipo *User Token*) y ponerlo en `SONAR_TOKEN` en el `.env` de la raíz (reemplaza cualquier valor previo — un token de otro servidor/organización no sirve acá).
 
+**Mismas reglas que la entidad**: el Sonar de la entidad usa un perfil Java más estricto que el *Sonar way* (líneas ≤ 120, sin imports con `*`, `package-info.java` por paquete, etc.) y un quality gate con coverage ≥ 95 %. Como no hay backup de su perfil, las reglas están reconstruidas a partir de sus incidencias en `sonar/reglas-entidad.json`. El servicio `sonarqube-init` las aplica al Sonar local (perfil "Entidad MH", que hereda de *Sonar way*, y quality gate "Entidad MH", ambos como default) y verifica regla por regla que quedaron activas:
+
+1. Poner en el `.env` la clave del usuario `admin` del Sonar local (`SONAR_ADMIN_PASSWORD=...`) o un token de ese usuario (`SONAR_ADMIN_TOKEN=...`). El `SONAR_TOKEN` de un usuario común no puede administrar perfiles.
+2. `docker compose up sonarqube-init`. Termina con "aplicados y verificados", o con la lista de lo que no coincide.
+3. Cuando la entidad reporte una regla nueva, agregar su clave (`java:Sxxx`, visible en el detalle de la incidencia) a `sonar/reglas-entidad.json` y volver a correr el paso 2.
+
 > **Sobre la versión y la autenticación**: `sonarqube:community` (Community Build, release rolling) acepta autenticación Bearer con `sonar.token`/`SONAR_TOKEN` sin workarounds — los comandos de abajo ya lo usan así. Ojo con el scanner de `front` (`@sonar/scan`): si no encuentra `sonar.host.url` apunta por defecto a **SonarCloud** y falla con `403` — por eso `front/sonar-project.properties` lo fija explícitamente a `http://localhost:9000`; si alguna vez corrés esto contra otro servidor, hay que cambiarlo ahí (no alcanza con `SONAR_HOST_URL`, ese env var no lo lee ninguno de los dos scanners).
 >
 > El análisis, sobre todo la primera vez (JVM en frío, sin caché de análisis, `@sonar/scan` sin el scanner-cli descargado), puede tardar varios minutos reales — no está colgado, `mvn`/`npx` simplemente no imprimen nada mientras el analizador Java/TS procesa los archivos. Dejalo correr en background si vas a hacer otra cosa mientras tanto.

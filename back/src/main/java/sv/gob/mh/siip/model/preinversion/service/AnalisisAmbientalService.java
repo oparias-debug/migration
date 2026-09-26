@@ -27,5 +27,6 @@ public interface AnalisisAmbientalService {
      * @param analisisAmbientalRequestDto DTO con la estructura plana y las filas de la matriz a guardar.
      * @return {@link AnalisisAmbientalDto} con el resultado guardado exitosamente.
      */
-    AnalisisAmbientalDto guardarAnalisisAmbiental(Long idProyecto, AnalisisAmbientalRequestDto analisisAmbientalRequestDto);
+    AnalisisAmbientalDto guardarAnalisisAmbiental(Long idProyecto,
+            AnalisisAmbientalRequestDto analisisAmbientalRequestDto);
 }

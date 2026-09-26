@@ -27,12 +27,17 @@ public class PresupuestoInversionController implements PreinversinPresupuestoDeI
     }
 
     @Override 
-    public ResponseEntity<PresupuestoDto> configurarPeriodosEjecucion(Long id, ConfigurarPeriodosEjecucionRequestDto r) {
+    public ResponseEntity<PresupuestoDto> configurarPeriodosEjecucion(
+            Long id,
+            ConfigurarPeriodosEjecucionRequestDto r) {
         return ResponseEntity.ok(s.periodos(id, r));
     }
 
     @Override 
-    public ResponseEntity<MacroactividadDto> registrarMacroactividad(Long id, Integer producto, MacroactividadRequestDto r) {
+    public ResponseEntity<MacroactividadDto> registrarMacroactividad(
+            Long id,
+            Integer producto,
+            MacroactividadRequestDto r) {
         return ResponseEntity.status(HttpStatus.CREATED).body(s.registrar(id, producto, r));
     }
 
@@ -47,7 +52,9 @@ public class PresupuestoInversionController implements PreinversinPresupuestoDeI
     }
 
     @Override 
-    public ResponseEntity<FuentesFinanciamientoRequestDto> guardarFuentesFinanciamiento(Long id, FuentesFinanciamientoRequestDto r) {
+    public ResponseEntity<FuentesFinanciamientoRequestDto> guardarFuentesFinanciamiento(
+            Long id,
+            FuentesFinanciamientoRequestDto r) {
         return ResponseEntity.ok(s.guardarFuentes(id, r));
     }
 }

@@ -1,8 +1,25 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,7 +36,9 @@ import sv.gob.mh.siip.model.preinversion.enums.Cuatrimestre;
  */
 @Entity
 @Table(name = "AVANCE_CUATRI_META_FISICA",
-       uniqueConstraints = @UniqueConstraint(name = "UK_AVANCE_META_FIS_CUATRI", columnNames = {"ID_PROG_CUATRI_META_FIS", "CUATRIMESTRE"}))
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_AVANCE_META_FIS_CUATRI",
+               columnNames = {"ID_PROG_CUATRI_META_FIS", "CUATRIMESTRE"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,7 +49,10 @@ public class AvanceCuatriMetaFisica {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "avance_meta_fis_cuatri_seq")
-    @SequenceGenerator(name = "avance_meta_fis_cuatri_seq", sequenceName = "AVANCE_META_FIS_CUATRI_SEQ", allocationSize = 1)
+    @SequenceGenerator(
+            name = "avance_meta_fis_cuatri_seq",
+            sequenceName = "AVANCE_META_FIS_CUATRI_SEQ",
+            allocationSize = 1)
     @Column(name = "ID_AVANCE_META_FIS_CUATRI")
     private Long id;
 

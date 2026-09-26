@@ -28,7 +28,7 @@ import sv.gob.mh.siip.model.preinversion.dto.FinalizarRevisionAvanceRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarObservacionesAvanceDgicpRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarRespuestaInstitucionAvanceRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionAvancePAPDto;
-import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapService;
+import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapRevisionService;
 
 /** CU-PRE-33-responder-observaciones.feature (SF-2, pasos 4-5, RN-A.b). */
 public class Pre33ResponderObservaciones {
@@ -43,7 +43,7 @@ public class Pre33ResponderObservaciones {
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final UsuarioRepository usuarioRepository;
-    private final AvanceMetasFisicasPapService service;
+    private final AvanceMetasFisicasPapRevisionService service;
 
     private UnidadEjecutora unidadEjecutora;
     private Institucion institucion;
@@ -52,7 +52,7 @@ public class Pre33ResponderObservaciones {
 
     public Pre33ResponderObservaciones(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, UsuarioRepository usuarioRepository,
-            AvanceMetasFisicasPapService service) {
+            AvanceMetasFisicasPapRevisionService service) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;

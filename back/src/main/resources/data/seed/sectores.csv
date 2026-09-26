@@ -1,0 +1,22 @@
+# Catálogo de Sectores y Macrosectores (Anexo C.5 de CU-PRE-01; referenciado parcialmente,
+# como ejemplos no exhaustivos, en CU-PRO-05, CU-PRO-06 y CU-PRO-10). Catálogo oficial.
+# No hay código corto oficial: el código del macrosector es su nombre y el del sector es
+# "<macrosector>::<sector>".
+macrosector;sector
+Desarrollo Social;Previsión social
+Desarrollo Social;Deporte y recreación
+Desarrollo Social;Vivienda
+Desarrollo Social;Medio Ambiente
+Desarrollo Social;Asistencia social
+Desarrollo Social;Agua potable y alcantarillado
+Desarrollo Social;Multisectorial
+Desarrollo Social;Salud
+Desarrollo Social;Desarrollo urbano y comunal
+Desarrollo Social;Educación y cultura
+Desarrollo Económico;Energía
+Desarrollo Económico;Industria/comercio y turismo
+Desarrollo Económico;Silvoagropecuario
+Desarrollo Económico;Comunicación
+Desarrollo Económico;Transporte y almacenaje
+Seguridad Pública y Justicia;Seguridad
+Seguridad Pública y Justicia;Justicia

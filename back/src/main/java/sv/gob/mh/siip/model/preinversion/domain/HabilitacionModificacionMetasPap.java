@@ -1,7 +1,18 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -13,7 +24,9 @@ import lombok.experimental.SuperBuilder;
  */
 @Entity
 @Table(name = "HABILITACION_MODIF_METAS_PAP",
-       uniqueConstraints = @UniqueConstraint(name = "UK_HABILITACION_MOD_METAS_PAP", columnNames = {"ID_UNIDAD_EJECUTORA", "ANIO"}))
+       uniqueConstraints = @UniqueConstraint(
+               name = "UK_HABILITACION_MOD_METAS_PAP",
+               columnNames = {"ID_UNIDAD_EJECUTORA", "ANIO"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,7 +37,10 @@ public class HabilitacionModificacionMetasPap extends HabilitacionModificacionPa
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "habilitacion_mod_metas_pap_seq")
-    @SequenceGenerator(name = "habilitacion_mod_metas_pap_seq", sequenceName = "HABILITACION_MOD_METAS_PAP_SEQ", allocationSize = 1)
+    @SequenceGenerator(
+            name = "habilitacion_mod_metas_pap_seq",
+            sequenceName = "HABILITACION_MOD_METAS_PAP_SEQ",
+            allocationSize = 1)
     @Column(name = "ID_HABILITACION_MOD_METAS_PAP")
     private Long id;
 }

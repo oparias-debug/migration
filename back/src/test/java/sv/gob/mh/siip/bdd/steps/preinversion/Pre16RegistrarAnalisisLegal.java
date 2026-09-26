@@ -320,7 +320,7 @@ public class Pre16RegistrarAnalisisLegal {
         EjeTematico ejeTematico = ejeTematicoRepository
                 .save(ProyectoFixtures.nuevoEjeTematico("EJE-LEGAL-" + sufijo, "Eje temático de prueba"));
 
-        int cupRandom = java.util.concurrent.ThreadLocalRandom.current().nextInt(10000, 100000);
+        int cupRandom = java.util.concurrent.ThreadLocalRandom.current().nextInt(10000, 50000);
         Proyecto proyectoTemporal = ProyectoFixtures.nuevoProyecto(
                 "Proyecto de Análisis Legal",
                 EstadoProyecto.CUP_ASIGNADO,

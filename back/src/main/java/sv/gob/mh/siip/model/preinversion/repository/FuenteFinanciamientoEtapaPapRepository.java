@@ -18,7 +18,8 @@ public interface FuenteFinanciamientoEtapaPapRepository extends JpaRepository<Fu
     List<FuenteFinanciamientoEtapaPap> findByEtapaPreinversionProyectoId(Long idProyecto);
 
     /** Todas las fuentes de una Unidad Ejecutora, sin paginar (Anexo A.8, reporte). */
-    List<FuenteFinanciamientoEtapaPap> findByEtapaPreinversion_Proyecto_UnidadEjecutora_IdOrderByEtapaPreinversion_Proyecto_CupAsc(
+    List<FuenteFinanciamientoEtapaPap>
+            findByEtapaPreinversion_Proyecto_UnidadEjecutora_IdOrderByEtapaPreinversion_Proyecto_CupAsc(
             Long idUnidadEjecutora);
 
     @Query("""

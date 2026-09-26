@@ -33,7 +33,22 @@ public enum EstadoProyecto {
     // (p.ej. "En Formulación", "Proyecto con Opinión Técnica"). PRIORIZADO/EN_EJECUCION/FINALIZADO/ARCHIVADO quedan
     // fuera de RN04 (ciclo de vida posterior a CU-PRE-03) y su etiqueta no esta confirmada.
     public String getEtiquetaUi() {
-        return etiquetaUi != null ? etiquetaUi : name();
+        return (etiquetaUi != null) ? etiquetaUi : name();
+    }
+
+    /**
+     * Indica si en este estado la información de formulación (pantallas de CU-PRE-04
+     * "Identificación" a CU-PRE-23 "Indicadores del Proyecto") queda bloqueada para edición.
+     *
+     * <p>Hoy solo lo bloquea la solicitud de Viabilidad en curso (CU-PRE-24, RN04); al devolver el
+     * proyecto pasa a {@link #OBSERVADO} y vuelve a ser editable (RN05). Si otro CU (p.ej. CU-PRE-25
+     * o CU-PRE-26) necesita bloquear la formulación en sus estados, basta con agregarlos aquí: los
+     * servicios de CU-PRE-04 a CU-PRE-23 consultan este método y no conocen los estados.
+     *
+     * @return {@code true} si la formulación no admite cambios en este estado
+     */
+    public boolean bloqueaFormulacion() {
+        return this == EN_VIABILIDAD;
     }
 
     public static EstadoProyecto fromEtiquetaUi(String etiquetaUi) {

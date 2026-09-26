@@ -66,6 +66,7 @@ public class AlternativaSolucionServiceImpl implements AlternativaSolucionServic
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         List<AlternativaSolucion> nuevas = reemplazarAlternativas(proyecto, request.getAlternativas());
 
@@ -104,7 +105,7 @@ public class AlternativaSolucionServiceImpl implements AlternativaSolucionServic
     }
 
     /** Igual que en IdentificacionServiceImpl/ProyectoServiceImpl: RN1-1/RN1-2/RN1-3. */
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
@@ -127,21 +128,22 @@ public class AlternativaSolucionServiceImpl implements AlternativaSolucionServic
                     .montoAlternativa(fila.getMontoAlternativa())
                     .descripcionAlternativa(fila.getDescripcionAlternativa())
                     .seleccionada(fila.getSeleccionada())
-                    .orden(orden++)
+                    .orden(orden)
                     .build());
+            orden++;
         }
         return alternativaSolucionRepository.saveAll(nuevas);
     }
 
-    private RegistroAlternativasDto construirDto(Proyecto proyecto, List<AlternativaSolucion> alternativas) {
+    private static RegistroAlternativasDto construirDto(Proyecto proyecto, List<AlternativaSolucion> alternativas) {
         return new RegistroAlternativasDto()
                 .idProyecto(proyecto.getId())
-                .alternativas(alternativas.stream().map(this::toRequestDto).toList())
+                .alternativas(alternativas.stream().map(AlternativaSolucionServiceImpl::toRequestDto).toList())
                 .justificacion(proyecto.getJustificacionAlternativasSolucion())
                 .fechaUltimoGuardado(map(proyecto.getFechaUltimoGuardadoAlternativasSolucion()));
     }
 
-    private AlternativaSolucionRequestDto toRequestDto(AlternativaSolucion entidad) {
+    private static AlternativaSolucionRequestDto toRequestDto(AlternativaSolucion entidad) {
         return new AlternativaSolucionRequestDto()
                 .nombreAlternativa(entidad.getNombreAlternativa())
                 .montoAlternativa(entidad.getMontoAlternativa())
@@ -149,7 +151,7 @@ public class AlternativaSolucionServiceImpl implements AlternativaSolucionServic
                 .seleccionada(entidad.getSeleccionada());
     }
 
-    private OffsetDateTime map(LocalDateTime fecha) {
+    private static OffsetDateTime map(LocalDateTime fecha) {
         return fecha == null ? null : fecha.atZone(ZONA_EL_SALVADOR).toOffsetDateTime();
     }
 }

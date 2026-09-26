@@ -1,0 +1,93 @@
+{
+  "_comentario": [
+    "Reglas del SonarQube de la entidad (MH) reconstruidas a partir de las incidencias que",
+    "reporta su pipeline: no hay backup de su perfil. El perfil hereda de 'Sonar way' y le",
+    "agrega estas reglas. Para sumar una regla: copiar su clave (java:Sxxx) desde el detalle",
+    "de la incidencia en el Sonar de la entidad y, si el mensaje muestra un umbral distinto",
+    "al default, ponerlo en 'params'. Se aplica con: docker compose up sonarqube-init"
+  ],
+  "perfil": {
+    "nombre": "Entidad MH",
+    "lenguaje": "java",
+    "hereda_de": "Sonar way",
+    "reglas": [
+      { "regla": "java:S103",  "params": { "maximumLineLength": "120" }, "nota": "Split this N characters long line" },
+      { "regla": "java:S113",  "nota": "Add a new line at the end of this file" },
+      { "regla": "java:S1228", "nota": "Add a 'package-info.java' file" },
+      { "regla": "java:S2208", "nota": "Explicitly import the specific classes needed" },
+      { "regla": "java:S2211", "nota": "Specify a type for: 'x' (lambdas con bloque)" },
+      { "regla": "java:S139",  "nota": "Move this trailing comment on the previous empty line" },
+      { "regla": "java:S818",  "nota": "Upper-case this literal 'd' suffix" },
+      { "regla": "java:S109",  "params": { "Authorized numbers": "-1,0,1" }, "nota": "Assign this magic number N to a well-named constant" },
+      { "regla": "java:S2325", "nota": "Make 'x' a 'static' method" },
+      { "regla": "java:S1541", "params": { "Threshold": "10" }, "nota": "The Cyclomatic Complexity of this method is N" },
+      { "regla": "java:S1200", "params": { "max": "20" }, "nota": "Split this class ... dependencies from N to 20" },
+      { "regla": "java:S118",  "params": { "format": "^Abstract[A-Z][a-zA-Z0-9]*$" }, "nota": "Rename this abstract class name" },
+      { "regla": "java:S1694", "nota": "Convert this abstract class to a concrete class with a private constructor" },
+      { "regla": "java:S2039", "nota": "Explicitly declare the visibility for 'X'" },
+      { "regla": "java:S1192", "params": { "threshold": "3" }, "nota": "Define a constant instead of duplicating this literal 'x' N times" },
+      { "regla": "java:S135",  "nota": "Reduce the total number of break and continue statements in this loop to use at most one" },
+      { "regla": "java:S1698", "nota": "Use the 'equals' method if value comparison was intended" },
+      { "regla": "java:S5612", "params": { "Max": "10" }, "nota": "Reduce this lambda expression number of lines from N to at most 10" },
+      { "regla": "java:S121",  "nota": "Missing curly brace" },
+      { "regla": "java:S1941", "nota": "Move the declaration of 'x' closer to the code that uses it" },
+      { "regla": "java:S1142", "params": { "max": "3" }, "nota": "This method has N returns, which is more than the 3 allowed" },
+      { "regla": "java:S1449", "nota": "Define the locale to be used in this String operation" },
+      { "regla": "java:S125",  "nota": "This block of commented-out lines of code should be removed" },
+      { "regla": "java:S1309", "nota": "Suppressing warnings is not allowed" },
+      { "regla": "java:S864",  "nota": "Add parentheses to make the operator precedence explicit" },
+      { "regla": "java:S1448", "params": { "maximumMethodThreshold": "35", "countNonpublicMethods": "true" }, "nota": "class 'X' has N methods, which is greater than the 35 authorized" },
+      { "regla": "java:S1641", "nota": "Convert this Set to an EnumSet" },
+      { "regla": "java:S126",  "nota": "'if ... else if' constructs should end with 'else' clauses" },
+      { "regla": "java:S1213", "nota": "Move this static variable to comply with Java Code Conventions" },
+      { "regla": "java:S4276", "nota": "Refactor this code to use the more specialised Functional Interface" },
+      { "regla": "java:S4248", "nota": "Refactor this code to use a 'static final' Pattern" },
+      { "regla": "java:S881",  "nota": "Extract this increment or decrement operator into a dedicated statement" },
+      { "regla": "java:S3252", "nota": "Use static access with 'X' for 'builder'" },
+      { "regla": "java:S6880", "nota": "Replace the chain of if/else with a switch expression" },
+      { "regla": "java:S1612", "nota": "Replace this lambda with method reference 'x::y'" },
+      { "regla": "java:S6204", "nota": "Replace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'" },
+      { "regla": "java:S2589", "nota": "Change this condition so that it does not always evaluate to 'true' / Remove this expression which always evaluates to 'false'" },
+      { "regla": "java:S107",  "params": { "max": "7", "constructorMax": "7" }, "nota": "Constructor has N parameters, which is greater than 7 authorized" },
+      { "regla": "java:S1135", "nota": "Complete the task associated to this 'TODO' comment" },
+      { "regla": "java:S3457", "nota": "Format specifiers should be used instead of string concatenation (también en tests)" },
+      { "regla": "java:S5778", "nota": "Refactor the code of the lambda to have only one invocation possibly throwing a runtime exception (tests)" },
+      { "regla": "java:S4144", "nota": "Update this method so that its implementation is not identical to 'x' (tests)" },
+      { "regla": "java:S5838", "nota": "Use assertThat(actual).isNull() instead (tests)" }
+    ]
+  },
+  "perfiles_adicionales": [
+    {
+      "nombre": "Entidad MH",
+      "lenguaje": "xml",
+      "hereda_de": "Sonar way",
+      "reglas": [
+        { "regla": "xml:S1135", "nota": "Complete the task associated to this 'TODO' comment (pom.xml; ojo: también detecta la palabra española 'todo')" }
+      ]
+    }
+  ],
+  "no_disponibles_en_community": {
+    "_comentario": [
+      "Reglas que la entidad aplica a los .sql con el analizador PL/SQL, que solo existe en las",
+      "ediciones comerciales de SonarQube: sonarqube:community no tiene ningún lenguaje SQL, así",
+      "que no se pueden activar en el Sonar local. Quedan acá documentadas por su mensaje; si algún",
+      "día se usa una edición con PL/SQL, completar la clave (plsql:Sxxx, visible en el detalle de",
+      "la incidencia en el Sonar de la entidad) y moverlas a un perfil con lenguaje 'plsql'."
+    ],
+    "reglas": [
+      { "lenguaje": "plsql", "nota": "File 'x.sql' has N lines, which is greater than 1000 authorized" },
+      { "lenguaje": "plsql", "nota": "The line length is greater than 150 authorized" },
+      { "lenguaje": "plsql", "nota": "Lowercase the reserved word 'X'" },
+      { "lenguaje": "plsql", "nota": "Lowercase the identifier 'X'" },
+      { "lenguaje": "plsql", "nota": "Rename this constraint 'X' to match the regular expression 'pk_[a-zA-Z]++' / 'fk_[a-zA-Z]++' / 'uk_[a-zA-Z]++'" },
+      { "lenguaje": "plsql", "nota": "Add a primary key constraint to this table" },
+      { "lenguaje": "plsql", "nota": "Use the 'PLS_INTEGER' type here; it's more performant" }
+    ]
+  },
+  "quality_gate": {
+    "nombre": "Entidad MH",
+    "condiciones": [
+      { "metric": "coverage", "op": "LT", "error": "95", "nota": "Coverage Required >= 95.0%" }
+    ]
+  }
+}

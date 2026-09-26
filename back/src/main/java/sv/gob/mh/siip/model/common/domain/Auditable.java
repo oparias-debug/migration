@@ -1,6 +1,8 @@
 package sv.gob.mh.siip.model.common.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
@@ -20,7 +22,7 @@ import java.time.LocalDateTime;
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class Auditable {
+public class Auditable {
 
     @CreatedDate
     @Column(name = "FECHA_CREACION", updatable = false)
@@ -37,4 +39,8 @@ public abstract class Auditable {
     @LastModifiedBy
     @Column(name = "USUARIO_MODIFICACION", length = 100)
     private String usuarioModificacion;
+
+    /** Solo para las entidades que heredan de esta clase: no se instancia sola. */
+    protected Auditable() {
+    }
 }

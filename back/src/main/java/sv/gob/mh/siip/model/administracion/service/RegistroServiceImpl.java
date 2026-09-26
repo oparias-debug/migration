@@ -49,7 +49,8 @@ public class RegistroServiceImpl implements RegistroService {
         for (CampoDefinicion campo : catalogo.getCampos()) {
             if (!valoresSolicitados.containsKey(campo.getNombre())) {
                 throw new ValidacionNegocioException("VALOR_CAMPO_REQUERIDO",
-                        "Debe proveer un valor para cada campo definido en el catálogo, incluyendo el campo KEY.", null);
+                        "Debe proveer un valor para cada campo definido en el catálogo, incluyendo el campo KEY.",
+                        null);
             }
         }
         String clave = valoresSolicitados.get(nombreCampoKey(catalogo));
@@ -113,7 +114,8 @@ public class RegistroServiceImpl implements RegistroService {
     public void eliminar(String codigoCatalogo, String key) {
         actorContexto.exigirRol(RolUsuario.ADMINISTRADOR_DE_CATALOGOS);
         throw new ValidacionNegocioException("ELIMINACION_NO_PERMITIDA",
-                "Un registro no puede eliminarse, solo inactivarse. Use POST /catalogos/{code}/registros/{key}/inactivacion.",
+                "Un registro no puede eliminarse, solo inactivarse. "
+                        + "Use POST /catalogos/{code}/registros/{key}/inactivacion.",
                 null);
     }
 
@@ -166,7 +168,8 @@ public class RegistroServiceImpl implements RegistroService {
         List<String> nombresDefinidos = catalogo.getCampos().stream().map(CampoDefinicion::getNombre).toList();
         for (String campo : campos) {
             if (!nombresDefinidos.contains(campo)) {
-                throw new RecursoNoEncontradoException("Alguno de los nombres de campo solicitados no existe en el catálogo.");
+                throw new RecursoNoEncontradoException(
+                        "Alguno de los nombres de campo solicitados no existe en el catálogo.");
             }
         }
     }
@@ -182,7 +185,10 @@ public class RegistroServiceImpl implements RegistroService {
     }
 
     /** Regla 12: si el catálogo esta INACTIVE, el registro se retorna siempre como INACTIVE. */
-    private static CatalogRecordDto aCatalogRecordDtoFiltrado(Catalogo catalogo, Registro registro, List<String> campos) {
+    private static CatalogRecordDto aCatalogRecordDtoFiltrado(
+            Catalogo catalogo,
+            Registro registro,
+            List<String> campos) {
         ActiveStatusDto estadoEfectivo = catalogo.getEstado() == EstadoVigencia.INACTIVE ? ActiveStatusDto.INACTIVE
                 : ActiveStatusDto.fromValue(registro.getEstado().name());
 

@@ -8,7 +8,8 @@ import sv.gob.mh.siip.model.preinversion.dto.DescripcionTecnicaRequestDto;
 import sv.gob.mh.siip.model.preinversion.service.DescripcionTecnicaService;
 
 /**
- * Controlador REST que implementa la interfaz de endpoints autogenerada por OpenAPI ({@link PreinversinDescripcinTcnicaApi})
+ * Controlador REST que implementa la interfaz de endpoints autogenerada por OpenAPI
+ * ({@link PreinversinDescripcinTcnicaApi})
  * para la gestión de la Descripción Técnica en la fase de Preinversión (CU-PRE-11).
  *
  * Expone servicios HTTP RESTful para las operaciones de consulta y actualización protegidas por roles.
@@ -55,7 +56,8 @@ public class DescripcionTecnicaController implements PreinversinDescripcinTcnica
     public ResponseEntity<DescripcionTecnicaDto> guardarDescripcionTecnica(
             Long idProyecto,
             DescripcionTecnicaRequestDto descripcionTecnicaRequestDto) {
-        DescripcionTecnicaDto response = descripcionTecnicaService.guardarDescripcionTecnica(idProyecto, descripcionTecnicaRequestDto);
+        DescripcionTecnicaDto response =
+                descripcionTecnicaService.guardarDescripcionTecnica(idProyecto, descripcionTecnicaRequestDto);
         return ResponseEntity.ok(response);
     }
 }

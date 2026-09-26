@@ -45,6 +45,7 @@ public class ProyectoDevSeeder implements DevSeeder {
 
     private static final String PROCESS_DEFINITION_KEY = "proceso_ciclo_vida_proyecto_siip";
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+    private static final double MONTO_ESTIMADO_INVERSION = 100000.0;
 
     private final ProyectoRepository proyectoRepository;
     private final SolicitudPreinversionRepository solicitudRepository;
@@ -164,7 +165,7 @@ public class ProyectoDevSeeder implements DevSeeder {
 
         Proyecto proyecto = nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico);
         proyecto.setEstado(EstadoProyecto.CUP_ASIGNADO);
-        proyecto.setCup(siguienteCup());
+        proyecto.setCup(CupDevSeed.siguiente(proyectoRepository));
         proyecto.setFechaCupAsignado(LocalDateTime.now(ZONA_EL_SALVADOR));
         proyecto = proyectoRepository.save(proyecto);
 
@@ -184,14 +185,6 @@ public class ProyectoDevSeeder implements DevSeeder {
         taskService.complete(tareaEnElaboracion.getId());
     }
 
-    /** CU-PRE-01.5, RN 2.8.c: siguiente CUP consecutivo de 5 dígitos, partiendo de 10000 — misma
-     *  regla que {@code ProyectoServiceImpl.siguienteCup()}. */
-    private String siguienteCup() {
-        int siguiente = proyectoRepository.findFirstByCupIsNotNullOrderByCupDesc()
-                .map(p -> Integer.parseInt(p.getCup()) + 1)
-                .orElse(10000);
-        return String.format("%05d", siguiente);
-    }
 
     private void crearProyectoEnElaboracion(String nombre, UnidadEjecutora unidadEjecutora, Institucion institucion,
             SectorActividad sector, EjeTematico ejeTematico) {
@@ -226,7 +219,7 @@ public class ProyectoDevSeeder implements DevSeeder {
         taskService.complete(tareaEnElaboracion.getId());
     }
 
-    private Proyecto nuevoProyectoBase(String nombre, UnidadEjecutora unidadEjecutora, Institucion institucion,
+    private static Proyecto nuevoProyectoBase(String nombre, UnidadEjecutora unidadEjecutora, Institucion institucion,
             SectorActividad sector, EjeTematico ejeTematico) {
         return Proyecto.builder()
                 .nombre(nombre)
@@ -236,7 +229,7 @@ public class ProyectoDevSeeder implements DevSeeder {
                 .estado(EstadoProyecto.EN_REGISTRO)
                 .fechaIngreso(LocalDateTime.now(ZONA_EL_SALVADOR))
                 .activo(true)
-                .montoEstimadoInversion(100000.0)
+                .montoEstimadoInversion(MONTO_ESTIMADO_INVERSION)
                 .sector(sector)
                 .ejeTematico(ejeTematico)
                 .descripcionProyecto("Proyecto de prueba sembrado para pruebas locales de CU-PRE-01/CU-PRE-01.5.")

@@ -35,9 +35,12 @@ Módulo procesado: **Preinversión (WBS M-01 a M-08, 32 casos de uso, prefijo `P
 | `FlujoCajaFinanciero` | `FLUJO_CAJA_FINANCIERO` | M-05 | CU-PRE-21.5 |
 | `ProgramacionFinPreinversion` | `PROGRAMACION_FIN_PREINVERSION` | M-05 | CU-PRE-22.1 |
 | `IndicadorEvaluacion` | `INDICADOR_EVALUACION` | M-05 | CU-PRE-21, CU-PRE-23 |
-| `Viabilidad` | `VIABILIDAD` | M-06 | CU-PRE-24 |
+| `Viabilidad` | `VIABILIDAD` | M-06 | CU-PRE-24 (resultado de cada cierre de revisión: `OBSERVADO` al devolver, `VIABLE` al emitir) |
+| `RevisionViabilidad` + `ComentarioCampoViabilidad` (embebido) | `REVISION_VIABILIDAD` / `COMENTARIO_REVISION_VIABILIDAD` | M-06 | CU-PRE-24 (una revisión por solicitud; comentarios por campo y justificación; historial de devoluciones, RN10) |
+| `DocumentoViabilidad` | `DOCUMENTO_VIABILIDAD` | M-06 | CU-PRE-24 (Documento de Preinversión y otros documentos, RN02) |
 | `Elegibilidad` | `ELEGIBILIDAD` | M-06 | CU-PRE-25 |
 | `OpinionTecnica` | `OPINION_TECNICA` | M-06 | CU-PRE-26 |
+| `ComentarioOpinionTecnica` | `COMENTARIO_OPINION_TECNICA` | M-06 | CU-PRE-26 (modelo mínimo creado desde CU-PRE-24 para validar RN11; CU-PRE-26 es su dueño funcional) |
 | `Priorizacion` | `PRIORIZACION` | M-06 | CU-PRE-26.5 |
 | `VW_BANCO_PROYECTOS` (vista, sin entidad JPA propia) | vista sobre `PROYECTO` | M-07 | CU-PRE-29 **[SUPUESTO — validar]** |
 | `ProgCuatrimestralFinanciera` | `PROG_CUATRIMESTRAL_FINANCIERA` | M-08 | CU-PRE-30 |
@@ -51,7 +54,12 @@ Módulo procesado: **Preinversión (WBS M-01 a M-08, 32 casos de uso, prefijo `P
 2. **Opinión Técnica (CU-PRE-26)** se vinculó a un `Proyecto` existente. El documento menciona una pantalla "Definición del proyecto" propia de este CU — si en la práctica permite crear proyectos *sin pasar por CU-PRE-01* (solo para Opinión Técnica, sin CUP), se debe revisar si `Proyecto.cup` debe manejarse como verdaderamente opcional (ya está nullable) y si se requieren reglas adicionales de validación a nivel de servicio.
 3. **Localización (CU-PRE-12) y Área de Influencia (CU-PRE-08)** se modelaron como colecciones 1:N independientes (pueden abarcar varios municipios/departamentos). Si en la práctica un proyecto tiene una única ubicación puntual, se puede simplificar a relación 1:1.
 4. **Auditoría**: las entidades transversales (`Institucion`, `UnidadEjecutora`, `Usuario`) y `Proyecto` heredan de `Auditable` (Spring Data JPA Auditing). El resto de entidades hijas de `Proyecto` (formulación, estudios, financiero) usan campos de auditoría mínimos o ninguno, asumiendo que su ciclo de vida sigue al de `Proyecto`. Confirmar si se requiere auditoría completa en todas.
-5. Los roles de usuario (`RolUsuario`) se derivaron de los actores mencionados en los 32 CU (Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador, etc.) — deben contrastarse contra el catálogo real de roles/permisos del sistema (Anexo C, no incluido como archivo separado).
+5. **Viabilidad (CU-PRE-24)**:
+   - Solicitar Viabilidad pasa el proyecto a "En viabilidad" (el CU no indica el estado, Observación 4). Ese estado bloquea la formulación (CU-PRE-04 a CU-PRE-23, RN04): la regla vive en `EstadoProyecto#bloqueaFormulacion()` y la aplica `EdicionFormulacion.exigirEditable(...)` en las operaciones que modifican datos de esos servicios, con error 409 `FORMULACION_BLOQUEADA`. Si CU-PRE-25/26 necesitan bloquear la formulación en sus estados, basta con agregarlos en `bloqueaFormulacion()`.
+   - La solicitud responde a una observación de la OT (RN11) cuando la última `OpinionTecnica` del proyecto quedó `OBSERVADO`. Tras emitir la Viabilidad, la ficha solo vuelve a admitir solicitud si esa OT observada es posterior a la emisión (RN03).
+   - No se valida el "registro completo de CU-PRE-04 a CU-PRE-23" (FB1 paso 4): el CU no define qué se exige ni el mensaje.
+   - Los proyectos de emergencia que CU-PRE-03.5 pasa a "En viabilidad" no abren una revisión de CU-PRE-24; queda pendiente definir cómo entran al flujo del Viabilizador.
+6. Los roles de usuario (`RolUsuario`) se derivaron de los actores mencionados en los 32 CU (Técnico URP, Técnico PRE, Coordinador PRE, Viabilizador, etc.) — deben contrastarse contra el catálogo real de roles/permisos del sistema (Anexo C, no incluido como archivo separado).
 
 ## Pendiente para siguiente iteración
 

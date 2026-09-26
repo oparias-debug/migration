@@ -38,6 +38,7 @@ import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapRevisionService;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
@@ -66,6 +67,7 @@ public class Pre31BloqueoFueraCalendario {
     private final EjeTematicoRepository ejeTematicoRepository;
     private final CalendarioEventoRepository calendarioEventoRepository;
     private final ProgramacionMetasFisicasPapService service;
+    private final ProgramacionMetasFisicasPapRevisionService revisionService;
 
     private Institucion institucion;
     private UnidadEjecutora unidadEjecutora;
@@ -80,7 +82,8 @@ public class Pre31BloqueoFueraCalendario {
             ProyectoRepository proyectoRepository, EtapaPreinversionRepository etapaPreinversionRepository,
             MacroSectorRepository macroSectorRepository, SectorActividadRepository sectorActividadRepository,
             EjeTematicoRepository ejeTematicoRepository, CalendarioEventoRepository calendarioEventoRepository,
-            ProgramacionMetasFisicasPapService service) {
+            ProgramacionMetasFisicasPapService service,
+            ProgramacionMetasFisicasPapRevisionService revisionService) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -91,6 +94,7 @@ public class Pre31BloqueoFueraCalendario {
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.calendarioEventoRepository = calendarioEventoRepository;
         this.service = service;
+        this.revisionService = revisionService;
     }
 
     @Dado("que la fecha actual está fuera del período establecido en el Calendario de Eventos del PAP \\(CU-ADM-04)")
@@ -145,12 +149,14 @@ public class Pre31BloqueoFueraCalendario {
 
     @Cuando("el Técnico URP intenta registrar o enviar la \"Respuesta Institución\" fuera del período metas-fisicas")
     public void el_tecnico_urp_intenta_registrar_o_enviar_la_respuesta() {
+        RegistrarRespuestaInstitucionRequestDto respuesta = new RegistrarRespuestaInstitucionRequestDto(
+                unidadEjecutora.getId(), ANIO, "Ajustes realizados.");
         excepcionCapturada = org.junit.jupiter.api.Assertions.assertThrows(ConflictoEstadoException.class,
-                () -> service.registrarRespuestaInstitucion(new RegistrarRespuestaInstitucionRequestDto(
-                        unidadEjecutora.getId(), ANIO, "Ajustes realizados.")));
+                () -> revisionService.registrarRespuestaInstitucion(respuesta));
+        EnviarProgramacionARevisionDgicpRequestDto envio =
+                new EnviarProgramacionARevisionDgicpRequestDto(unidadEjecutora.getId(), ANIO);
         excepcionEnvioRespuesta = org.junit.jupiter.api.Assertions.assertThrows(ConflictoEstadoException.class,
-                () -> service.enviarRespuestaInstitucion(
-                        new EnviarProgramacionARevisionDgicpRequestDto(unidadEjecutora.getId(), ANIO)));
+                () -> revisionService.enviarRespuestaInstitucion(envio));
     }
 
     @Entonces("el sistema rechaza ambas acciones con el mensaje \"Periodo de ingreso de información ha finalizado\" \\(Anexo A.3)")
@@ -163,14 +169,15 @@ public class Pre31BloqueoFueraCalendario {
     @Cuando("el Técnico PRE intenta finalizar la revisión fuera del período metas-fisicas")
     public void el_tecnico_pre_intenta_finalizar_la_revision() {
         autenticarComo(crearUsuario(RolUsuario.TECNICO_PRE, "pre.31c"));
+        FinalizarRevisionRequestDto request = new FinalizarRevisionRequestDto(unidadEjecutora.getId(), ANIO);
         excepcionCapturada = org.junit.jupiter.api.Assertions.assertThrows(ConflictoEstadoException.class,
-                () -> service.finalizarRevision(new FinalizarRevisionRequestDto(unidadEjecutora.getId(), ANIO)));
+                () -> revisionService.finalizarRevision(request));
     }
 
     @Entonces("el sistema rechaza la finalización con el mensaje \"Periodo de ingreso de información ha finalizado\" \\(Anexo A.3)")
     public void el_sistema_rechaza_la_finalizacion() {
-        verificarPeriodoCerrado(excepcionCapturada);
-        RequestContextHolder.resetRequestAttributes();
+        // Misma verificación que "todas las acciones ... permanecen deshabilitadas".
+        todas_las_acciones_permanecen_deshabilitadas();
     }
 
     @Y("el Administrador del Sistema habilitó modificaciones fuera de plazo para la Unidad Ejecutora metas-fisicas")
@@ -183,12 +190,12 @@ public class Pre31BloqueoFueraCalendario {
     @Cuando("el Técnico URP envía la \"Respuesta Institución\" y el Técnico PRE finaliza la revisión metas-fisicas")
     public void el_tecnico_urp_envia_respuesta_y_el_tecnico_pre_finaliza() {
         autenticarComo(nombreUsuarioUrp);
-        service.registrarRespuestaInstitucion(
+        revisionService.registrarRespuestaInstitucion(
                 new RegistrarRespuestaInstitucionRequestDto(unidadEjecutora.getId(), ANIO, "Ajustes realizados."));
-        service.enviarRespuestaInstitucion(new EnviarProgramacionARevisionDgicpRequestDto(unidadEjecutora.getId(), ANIO));
+        revisionService.enviarRespuestaInstitucion(new EnviarProgramacionARevisionDgicpRequestDto(unidadEjecutora.getId(), ANIO));
 
         autenticarComo(crearUsuario(RolUsuario.TECNICO_PRE, "pre.31c"));
-        revisionFinal = service.finalizarRevision(new FinalizarRevisionRequestDto(unidadEjecutora.getId(), ANIO));
+        revisionFinal = revisionService.finalizarRevision(new FinalizarRevisionRequestDto(unidadEjecutora.getId(), ANIO));
     }
 
     @Entonces("el sistema permite ambas acciones y el estado queda en \"PAP Revisado\"")

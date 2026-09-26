@@ -1,5 +1,7 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
+import java.util.Locale;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +46,6 @@ class GeneradorCup {
         int siguiente = proyectoRepository.findFirstByCupIsNotNullOrderByCupDesc()
                 .map(p -> Integer.parseInt(p.getCup()) + 1)
                 .orElse(CUP_INICIAL);
-        return String.format("%05d", siguiente);
+        return String.format(Locale.ROOT, "%05d", siguiente);
     }
 }

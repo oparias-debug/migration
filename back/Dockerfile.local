@@ -1,0 +1,9 @@
+# Imagen para desarrollo local (docker-compose.yml en la raíz) y para
+# scripts/publish-images.ps1. El Dockerfile de al lado es el del ambiente de
+# la entidad: su imagen base vive en el registry interno de MH y no se puede
+# descargar fuera de esa red.
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+COPY target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -14,6 +14,7 @@ import sv.gob.mh.siip.model.preinversion.dto.GuardarProgramacionEstudioRequestDt
 import sv.gob.mh.siip.model.preinversion.dto.HabilitarModificacionesFueraPlazoRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProgramacionFinancieraPAPResponseDto;
+import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapAjusteService;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapService;
 
 /** Expone la Programación Financiera Cuatrimestral del PAP (CU-PRE-30). */
@@ -21,9 +22,12 @@ import sv.gob.mh.siip.model.preinversion.service.ProgramacionFinancieraPapServic
 public class ProgramacionFinancieraPapController implements PreinversinProgramacinFinancieraPapApi {
 
     private final ProgramacionFinancieraPapService service;
+    private final ProgramacionFinancieraPapAjusteService ajusteService;
 
-    public ProgramacionFinancieraPapController(ProgramacionFinancieraPapService service) {
+    public ProgramacionFinancieraPapController(ProgramacionFinancieraPapService service,
+            ProgramacionFinancieraPapAjusteService ajusteService) {
         this.service = service;
+        this.ajusteService = ajusteService;
     }
 
     @Override
@@ -51,27 +55,27 @@ public class ProgramacionFinancieraPapController implements PreinversinProgramac
 
     @Override
     public ResponseEntity<Void> desactivarEstudio(String cup, Integer anio) {
-        service.desactivarEstudio(cup, anio);
+        ajusteService.desactivarEstudio(cup, anio);
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<Void> eliminarEtapaProgramacion(String cup, NombreEtapaDto etapa, Integer anio) {
-        service.eliminarEtapaProgramacion(cup, etapa, anio);
+        ajusteService.eliminarEtapaProgramacion(cup, etapa, anio);
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<Void> eliminarFuenteFinanciamiento(String cup, NombreEtapaDto etapa, Long idFuente,
             Integer anio) {
-        service.eliminarFuenteFinanciamiento(cup, etapa, idFuente, anio);
+        ajusteService.eliminarFuenteFinanciamiento(cup, etapa, idFuente, anio);
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<Void> habilitarModificacionesFueraPlazo(
             HabilitarModificacionesFueraPlazoRequestDto habilitarModificacionesFueraPlazoRequestDto) {
-        service.habilitarModificacionesFueraPlazo(habilitarModificacionesFueraPlazoRequestDto);
+        ajusteService.habilitarModificacionesFueraPlazo(habilitarModificacionesFueraPlazoRequestDto);
         return ResponseEntity.ok().build();
     }
 

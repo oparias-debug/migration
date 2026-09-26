@@ -9,18 +9,18 @@ import io.cucumber.java.es.Entonces;
 import sv.gob.mh.siip.bdd.support.ContextoCalendarioBdd;
 import sv.gob.mh.siip.bdd.support.ContextoValidacionBdd;
 import sv.gob.mh.siip.model.administracion.dto.RangoFechasCalendarioResponseDto;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 
 /** CU-ADM-04-11-consultar-fecha-desde-fecha-hasta.feature. */
 public class Adm04ConsultarRangoFechasCalendario {
 
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
     private final ContextoCalendarioBdd contextoCalendario;
     private final ContextoValidacionBdd contextoValidacion;
 
     private RangoFechasCalendarioResponseDto ultimoResultado;
 
-    public Adm04ConsultarRangoFechasCalendario(CalendarioService calendarioService,
+    public Adm04ConsultarRangoFechasCalendario(CalendarioConsultaService calendarioService,
             ContextoCalendarioBdd contextoCalendario, ContextoValidacionBdd contextoValidacion) {
         this.calendarioService = calendarioService;
         this.contextoCalendario = contextoCalendario;

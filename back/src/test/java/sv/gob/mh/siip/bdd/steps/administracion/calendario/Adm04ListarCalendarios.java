@@ -14,7 +14,7 @@ import sv.gob.mh.siip.model.administracion.dto.CalendarioResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.EstadoCalendarioDto;
 import sv.gob.mh.siip.model.administracion.enums.EstadoCalendario;
 import sv.gob.mh.siip.model.administracion.repository.CalendarioRepository;
-import sv.gob.mh.siip.model.administracion.service.CalendarioService;
+import sv.gob.mh.siip.model.administracion.service.CalendarioConsultaService;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 
 /** CU-ADM-04-13-listar-calendarios.feature. */
@@ -22,7 +22,7 @@ public class Adm04ListarCalendarios {
 
     private final UsuarioRepository usuarioRepository;
     private final CalendarioRepository calendarioRepository;
-    private final CalendarioService calendarioService;
+    private final CalendarioConsultaService calendarioService;
 
     private List<CalendarioResumenDto> ultimoResultado;
 
@@ -32,7 +32,7 @@ public class Adm04ListarCalendarios {
     private final Map<String, String> codigosReales = new HashMap<>();
 
     public Adm04ListarCalendarios(UsuarioRepository usuarioRepository, CalendarioRepository calendarioRepository,
-            CalendarioService calendarioService) {
+            CalendarioConsultaService calendarioService) {
         this.usuarioRepository = usuarioRepository;
         this.calendarioRepository = calendarioRepository;
         this.calendarioService = calendarioService;

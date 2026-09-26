@@ -1,7 +1,22 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import sv.gob.mh.siip.model.common.domain.Auditable;
 
 @Entity
@@ -10,7 +25,10 @@ import sv.gob.mh.siip.model.common.domain.Auditable;
 @EqualsAndHashCode(callSuper = false, of = "id")
 public class MacroactividadPresupuesto extends Auditable {
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "macroactividad_presupuesto_seq")
-    @SequenceGenerator(name = "macroactividad_presupuesto_seq", sequenceName = "MACROACTIVIDAD_PRESUPUESTO_SEQ", allocationSize = 1)
+    @SequenceGenerator(
+            name = "macroactividad_presupuesto_seq",
+            sequenceName = "MACROACTIVIDAD_PRESUPUESTO_SEQ",
+            allocationSize = 1)
     @Column(name = "ID_MACROACTIVIDAD_PRESUPUESTO") private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "ID_PRESUPUESTO_PROYECTO", nullable = false)
     private PresupuestoProyecto presupuesto;

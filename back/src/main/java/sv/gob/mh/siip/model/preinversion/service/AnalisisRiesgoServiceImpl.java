@@ -10,7 +10,12 @@ import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.preinversion.domain.AnalisisRiesgo;
 import sv.gob.mh.siip.model.preinversion.domain.RiesgosDesastresInminentes;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
-import sv.gob.mh.siip.model.preinversion.dto.*;
+import sv.gob.mh.siip.model.preinversion.dto.AnalisisRiesgoDto;
+import sv.gob.mh.siip.model.preinversion.dto.AnalisisRiesgoRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.CalificacionRiesgoDto;
+import sv.gob.mh.siip.model.preinversion.dto.FilaRiesgoRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.ImpactoRiesgoDto;
+import sv.gob.mh.siip.model.preinversion.dto.ProbabilidadDto;
 import sv.gob.mh.siip.model.preinversion.mapper.AnalisisRiesgoMapper;
 import sv.gob.mh.siip.model.preinversion.repository.AnalisisRiesgoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
@@ -32,12 +37,15 @@ import java.math.RoundingMode;
 @Transactional
 public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
 
+    private static final int DECIMALES_MONTO = 2;
+
     private final AnalisisRiesgoRepository analisisRiesgoRepository;
     private final ProyectoRepository proyectoRepository;
     private final AnalisisRiesgoMapper analisisRiesgoMapper;
     private final ActorContexto actorContexto;
 
-    public AnalisisRiesgoServiceImpl(AnalisisRiesgoRepository analisisRiesgoRepository, ProyectoRepository proyectoRepository,
+    public AnalisisRiesgoServiceImpl(AnalisisRiesgoRepository analisisRiesgoRepository,
+            ProyectoRepository proyectoRepository,
             AnalisisRiesgoMapper analisisRiesgoMapper, ActorContexto actorContexto) {
         this.analisisRiesgoRepository = analisisRiesgoRepository;
         this.proyectoRepository = proyectoRepository;
@@ -60,7 +68,8 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
         AnalisisRiesgo analisis = analisisRiesgoRepository.findByProyectoId(idProyecto)
                 .orElseGet(() -> AnalisisRiesgo.builder()
                         .proyecto(proyecto)
-                        .tieneRiesgosDesastres(false) // Asegurar valores por defecto no nulos si aplica
+                        // Asegurar valores por defecto no nulos si aplica
+                        .tieneRiesgosDesastres(false)
                         .totalAccionesMitigacion(0.0)
                         .build());
 
@@ -78,6 +87,7 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         AnalisisRiesgo analisis = analisisRiesgoRepository.findByProyectoId(idProyecto)
                 .orElseGet(() -> AnalisisRiesgo.builder()
@@ -143,11 +153,13 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
                         || fila.getCalificacionRiesgo() == CalificacionRiesgoDto.MUY_ALTO;
 
                 if (esAltoOMuyAlto) {
-                    boolean accionIncompleta = fila.getAccionMitigacion() == null || fila.getAccionMitigacion().isBlank();
+                    boolean accionIncompleta = fila.getAccionMitigacion() == null
+                            || fila.getAccionMitigacion().isBlank();
                     boolean costoIncompleto = fila.getCostoAccionMitigacion() == null;
 
                     if (accionIncompleta || costoIncompleto) {
-                        throw new ValidacionNegocioException("VALIDACION_NEGOCIO", "Se requiere completar los campos obligatorios", null);
+                        throw new ValidacionNegocioException("VALIDACION_NEGOCIO",
+                                "Se requiere completar los campos obligatorios", null);
                     }
                 }
             }
@@ -162,7 +174,7 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
     }
 
     /** RN01/RN02: mismo criterio que el resto de la serie CU-PRE-06 a CU-PRE-14. */
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
@@ -175,7 +187,7 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
      * la calificación del riesgo de forma automática mediante descomposición de métodos.
      * Sin probabilidad e impacto no hay calificación calculable (queda null, no "Bajo").
      */
-    private CalificacionRiesgoDto calcularCalificacionMatrizC(ProbabilidadDto prob, ImpactoRiesgoDto impacto) {
+    private static CalificacionRiesgoDto calcularCalificacionMatrizC(ProbabilidadDto prob, ImpactoRiesgoDto impacto) {
         if (prob == null || impacto == null) {
             return null;
         }
@@ -188,28 +200,34 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
         };
     }
 
-    private CalificacionRiesgoDto evaluarImprobable(ImpactoRiesgoDto impacto) {
+    private static CalificacionRiesgoDto evaluarImprobable(ImpactoRiesgoDto impacto) {
         return impacto == ImpactoRiesgoDto.EXTREMO ? CalificacionRiesgoDto.MEDIO : CalificacionRiesgoDto.BAJO;
     }
 
-    private CalificacionRiesgoDto evaluarProbable(ImpactoRiesgoDto impacto) {
-        if (impacto == ImpactoRiesgoDto.EXTREMO) return CalificacionRiesgoDto.ALTO;
-        if (impacto == ImpactoRiesgoDto.ALTO || impacto == ImpactoRiesgoDto.MODERADO) return CalificacionRiesgoDto.MEDIO;
-        return CalificacionRiesgoDto.BAJO;
+    private static CalificacionRiesgoDto evaluarProbable(ImpactoRiesgoDto impacto) {
+        return switch (impacto) {
+            case EXTREMO -> CalificacionRiesgoDto.ALTO;
+            case ALTO, MODERADO -> CalificacionRiesgoDto.MEDIO;
+            default -> CalificacionRiesgoDto.BAJO;
+        };
     }
 
-    private CalificacionRiesgoDto evaluarMuyProbable(ImpactoRiesgoDto impacto) {
-        if (impacto == ImpactoRiesgoDto.EXTREMO) return CalificacionRiesgoDto.MUY_ALTO;
-        if (impacto == ImpactoRiesgoDto.ALTO || impacto == ImpactoRiesgoDto.MODERADO) return CalificacionRiesgoDto.ALTO;
-        if (impacto == ImpactoRiesgoDto.BAJO) return CalificacionRiesgoDto.MEDIO;
-        return CalificacionRiesgoDto.BAJO;
+    private static CalificacionRiesgoDto evaluarMuyProbable(ImpactoRiesgoDto impacto) {
+        return switch (impacto) {
+            case EXTREMO -> CalificacionRiesgoDto.MUY_ALTO;
+            case ALTO, MODERADO -> CalificacionRiesgoDto.ALTO;
+            case BAJO -> CalificacionRiesgoDto.MEDIO;
+            default -> CalificacionRiesgoDto.BAJO;
+        };
     }
 
-    private CalificacionRiesgoDto evaluarCasiSeguro(ImpactoRiesgoDto impacto) {
-        if (impacto == ImpactoRiesgoDto.EXTREMO || impacto == ImpactoRiesgoDto.ALTO) return CalificacionRiesgoDto.MUY_ALTO;
-        if (impacto == ImpactoRiesgoDto.MODERADO) return CalificacionRiesgoDto.ALTO;
-        if (impacto == ImpactoRiesgoDto.BAJO) return CalificacionRiesgoDto.MEDIO;
-        return CalificacionRiesgoDto.BAJO;
+    private static CalificacionRiesgoDto evaluarCasiSeguro(ImpactoRiesgoDto impacto) {
+        return switch (impacto) {
+            case EXTREMO, ALTO -> CalificacionRiesgoDto.MUY_ALTO;
+            case MODERADO -> CalificacionRiesgoDto.ALTO;
+            case BAJO -> CalificacionRiesgoDto.MEDIO;
+            default -> CalificacionRiesgoDto.BAJO;
+        };
     }
 
     
@@ -217,9 +235,9 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
     /**
      * Utilidad para redondear montos monetarios a dos decimales de manera segura.
      */
-    private double redondear(double valor) {
+    private static double redondear(double valor) {
         return BigDecimal.valueOf(valor)
-                .setScale(2, RoundingMode.HALF_UP)
+                .setScale(DECIMALES_MONTO, RoundingMode.HALF_UP)
                 .doubleValue();
     }
 }

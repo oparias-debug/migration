@@ -1,0 +1,598 @@
+openapi: 3.0.3
+info:
+  title: SIIP v2 — Fragmento CU-PRE-24 Viabilidad
+  version: 0.1.0
+  description: |
+    Fragmento de contrato generado a partir de CU-PRE-24 "Viabilidad" (v1.0) y sus historias
+    HU-PRE-24-01 (solicitar), HU-PRE-24-02 (enviar comentarios) y HU-PRE-24-03 (emitir).
+    Standalone: se mezcla después con el contrato consolidado del proyecto.
+  x-caso-uso: CU-PRE-24
+tags:
+  - name: tecnico-urp
+    description: Operaciones cuyo actor principal es el Técnico URP (provisional — módulo/WBS no definido).
+  - name: viabilizador
+    description: Operaciones cuyo actor principal es el Viabilizador (provisional — módulo/WBS no definido).
+paths:
+  /proyectos/{proyectoId}/viabilidad:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    get:
+      tags: [viabilizador]
+      operationId: consultarFichaViabilidad
+      summary: Consultar la ficha de Viabilidad del proyecto (Anexo A.1)
+      description: |
+        Devuelve la ficha del proyecto en modo consulta (campos de CU-PRE-01 a CU-PRE-23), los
+        documentos cargados, los comentarios del Viabilizador y las acciones disponibles para el
+        usuario autenticado. Trazabilidad: FB2 paso 5; HU-PRE-24-02 "Campos de la ficha del proyecto
+        en modo consulta"; estado de botones de HU-PRE-24-01/02/03.
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP, VIABILIZADOR]
+      responses:
+        '200':
+          description: Ficha de Viabilidad del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FichaViabilidadResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/AccesoDenegado'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+  /proyectos/{proyectoId}/viabilidad/documentos:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [tecnico-urp]
+      operationId: cargarDocumentoViabilidad
+      summary: Cargar el Documento de Preinversión u otros documentos del proyecto
+      description: |
+        FB1 paso 1; RN02. Cargar `DOCUMENTO_PREINVERSION` reemplaza el vigente (uno por proyecto);
+        `OTRO_DOCUMENTO` se agrega a la lista. La respuesta incluye las acciones disponibles para que
+        el cliente habilite "Solicitar Viabilidad" (HU-PRE-24-01 "Se habilita 'Solicitar Viabilidad'
+        al cargar el documento de Preinversión").
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CargarDocumentoViabilidadRequest'
+      responses:
+        '201':
+          description: Documento cargado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CargarDocumentoViabilidadResponse'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/AccesoDenegado'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '409':
+          description: |
+            Los documentos no admiten cambios mientras el Viabilizador revisa el proyecto ni tras la
+            emisión (RN04; FA02 paso 2.5):
+            - `SOLICITUD_VIABILIDAD_EN_CURSO` — hay una solicitud de Viabilidad en curso.
+            - `FICHA_VIABILIDAD_DESHABILITADA` — la Viabilidad ya fue emitida.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+              examples:
+                fichaDeshabilitada:
+                  $ref: '#/components/examples/FichaViabilidadDeshabilitada'
+  /proyectos/{proyectoId}/viabilidad/comentarios:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    put:
+      tags: [viabilizador]
+      operationId: guardarComentariosViabilidad
+      summary: Guardar los comentarios del Viabilizador y las Observaciones Generales/Justificación
+      description: |
+        FA01 pasos 1.1–1.2; FA02 paso 2.1; botón "Guardar". Reemplaza el borrador vigente de la
+        revisión en curso. La respuesta incluye las acciones disponibles para que el cliente habilite
+        "Emitir Viabilidad" (HU-PRE-24-03 "'Emitir Viabilidad' se habilita al registrar y guardar la
+        justificación").
+      security:
+        - bearerAuth: []
+      x-roles: [VIABILIZADOR]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardarComentariosViabilidadRequest'
+      responses:
+        '200':
+          description: Comentarios guardados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuardarComentariosViabilidadResponse'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/AccesoDenegado'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '409':
+          description: |
+            El estado de la gestión no permite guardar comentarios:
+            - `FICHA_VIABILIDAD_DESHABILITADA` — la Viabilidad ya fue emitida (FA02 paso 2.5;
+              HU-PRE-24-03 "el Sistema deshabilita la pantalla del Anexo A.1").
+            - `SOLICITUD_VIABILIDAD_NO_VIGENTE` — no hay una revisión en curso (el Técnico URP aún no
+              ha solicitado Viabilidad), por lo que no existe borrador que reemplazar.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+              examples:
+                solicitudNoVigente:
+                  value:
+                    codigo: SOLICITUD_VIABILIDAD_NO_VIGENTE
+                    mensaje: El proyecto no cuenta con una solicitud de Viabilidad vigente.
+                    timestamp: '2026-09-25T10:15:30Z'
+                fichaDeshabilitada:
+                  $ref: '#/components/examples/FichaViabilidadDeshabilitada'
+  /proyectos/{proyectoId}/viabilidad/solicitudes:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [tecnico-urp]
+      operationId: solicitarViabilidad
+      summary: Solicitar Viabilidad del proyecto
+      description: |
+        FB1 pasos 3–6; RN02, RN04, RN06, RN11. Efectos: bloquea para edición CU-PRE-04 a CU-PRE-23,
+        deshabilita "Solicitar Viabilidad", activa "Enviar comentarios" para el Viabilizador y le envía
+        notificación. Sin cuerpo: los documentos ya fueron cargados con `cargarDocumentoViabilidad`.
+        El mensaje de confirmación lo muestra el cliente.
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP]
+      responses:
+        '204':
+          description: Solicitud de Viabilidad enviada.
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/AccesoDenegado'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '409':
+          description: |
+            El estado de la gestión no permite solicitar Viabilidad:
+            - `SOLICITUD_VIABILIDAD_EN_CURSO` — ya existe una solicitud de Viabilidad en curso; el
+              botón queda deshabilitado tras solicitar (RN04).
+            - `FICHA_VIABILIDAD_DESHABILITADA` — la Viabilidad ya fue emitida y la OT no ha devuelto
+              el proyecto para ajustes (FA02 paso 2.5; RN03, RN11).
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+              examples:
+                solicitudEnCurso:
+                  value:
+                    codigo: SOLICITUD_VIABILIDAD_EN_CURSO
+                    mensaje: El proyecto ya cuenta con una solicitud de Viabilidad en curso.
+                    timestamp: '2026-09-25T10:15:30Z'
+                fichaDeshabilitada:
+                  $ref: '#/components/examples/FichaViabilidadDeshabilitada'
+        '422':
+          description: |
+            Regla de negocio incumplida:
+            - `DOCUMENTO_PREINVERSION_REQUERIDO` — no se ha cargado el Documento de Preinversión
+              (RN02; HU-PRE-24-01 "'Solicitar Viabilidad' no se habilita sin el documento de Preinversión").
+            - `COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER` — la solicitud responde a una observación de OT
+              y no se respondieron todos los comentarios en "Justificación Institución" de CU-PRE-26
+              (RN11; HU-PRE-24-01 "Rechazo de la solicitud con comentarios de OT sin responder").
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+              examples:
+                documentoPreinversionRequerido:
+                  value:
+                    codigo: DOCUMENTO_PREINVERSION_REQUERIDO
+                    mensaje: Debe cargar el Documento de Preinversión antes de solicitar Viabilidad.
+                    timestamp: '2026-09-25T10:15:30Z'
+                comentariosOpinionTecnicaSinResponder:
+                  value:
+                    codigo: COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER
+                    mensaje: Es necesario responder los comentarios de la Opinión Técnica previo a la solicitud de viabilidad
+                    timestamp: '2026-09-25T10:15:30Z'
+  /proyectos/{proyectoId}/viabilidad/devoluciones:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [viabilizador]
+      operationId: enviarComentariosViabilidad
+      summary: Enviar comentarios al Técnico URP (devolver el proyecto)
+      description: |
+        FA01 pasos 1.3–1.5; RN05, RN07, RN10. Registra una devolución con los comentarios guardados,
+        cambia el estado del proyecto a "Observado", habilita para edición CU-PRE-04 a CU-PRE-23 y el
+        botón "Solicitar Viabilidad", y notifica al Técnico URP. Los comentarios de cada devolución se
+        conservan (RN10). Sin cuerpo: los comentarios ya fueron guardados con `guardarComentariosViabilidad`.
+      security:
+        - bearerAuth: []
+      x-roles: [VIABILIZADOR]
+      responses:
+        '200':
+          description: Comentarios enviados; proyecto devuelto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnviarComentariosViabilidadResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/AccesoDenegado'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '409':
+          description: |
+            El estado de la gestión no permite enviar comentarios:
+            - `SOLICITUD_VIABILIDAD_NO_VIGENTE` — el Técnico URP aún no ha solicitado Viabilidad
+              (Anexo B.1; HU-PRE-24-02 "'Enviar comentarios' no está activo antes de la solicitud de Viabilidad").
+            - `FICHA_VIABILIDAD_DESHABILITADA` — la Viabilidad ya fue emitida (FA02 paso 2.5).
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+              examples:
+                solicitudNoVigente:
+                  value:
+                    codigo: SOLICITUD_VIABILIDAD_NO_VIGENTE
+                    mensaje: El proyecto no cuenta con una solicitud de Viabilidad vigente.
+                    timestamp: '2026-09-25T10:15:30Z'
+                fichaDeshabilitada:
+                  $ref: '#/components/examples/FichaViabilidadDeshabilitada'
+  /proyectos/{proyectoId}/viabilidad/emisiones:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [viabilizador]
+      operationId: emitirViabilidad
+      summary: Emitir la Viabilidad del proyecto
+      description: |
+        FA02 pasos 2.2–2.6; RN02, RN03, RN07. Cambia el estado a "Proyecto Viable", notifica al
+        Técnico URP y deshabilita la ficha. Si es la primera gestión de Viabilidad habilita la edición
+        de "Elegibilidad" (CU-PRE-25); si el proyecto ya contaba con Elegibilidad, no la habilita.
+        `elegibilidadHabilitada` indica al cliente qué variante del mensaje (Anexo A.2) mostrar.
+        Sin cuerpo: la justificación ya fue guardada con `guardarComentariosViabilidad`.
+      security:
+        - bearerAuth: []
+      x-roles: [VIABILIZADOR]
+      responses:
+        '200':
+          description: Viabilidad emitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmitirViabilidadResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/AccesoDenegado'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '409':
+          description: |
+            El estado de la gestión no permite emitir Viabilidad:
+            - `SOLICITUD_VIABILIDAD_NO_VIGENTE` — el Técnico URP aún no ha solicitado Viabilidad.
+            - `FICHA_VIABILIDAD_DESHABILITADA` — la Viabilidad ya fue emitida (FA02 paso 2.5).
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+              examples:
+                solicitudNoVigente:
+                  value:
+                    codigo: SOLICITUD_VIABILIDAD_NO_VIGENTE
+                    mensaje: El proyecto no cuenta con una solicitud de Viabilidad vigente.
+                    timestamp: '2026-09-25T10:15:30Z'
+                fichaDeshabilitada:
+                  $ref: '#/components/examples/FichaViabilidadDeshabilitada'
+        '422':
+          description: |
+            No se ha registrado y guardado "Observaciones Generales/Justificación de la Viabilidad"
+            (Anexo B.1; HU-PRE-24-03 "'Emitir Viabilidad' no se habilita sin la justificación registrada").
+            Código: `JUSTIFICACION_VIABILIDAD_REQUERIDA`.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+              examples:
+                justificacionRequerida:
+                  value:
+                    codigo: JUSTIFICACION_VIABILIDAD_REQUERIDA
+                    mensaje: Debe registrar y guardar las Observaciones Generales/Justificación de la Viabilidad antes de emitirla.
+                    timestamp: '2026-09-25T10:15:30Z'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ProyectoId:
+      name: proyectoId
+      in: path
+      required: true
+      description: Identificador interno del Proyecto (tipo pendiente de confirmar contra el modelo de dominio).
+      schema:
+        type: integer
+        format: int64
+  examples:
+    FichaViabilidadDeshabilitada:
+      value:
+        codigo: FICHA_VIABILIDAD_DESHABILITADA
+        mensaje: La Viabilidad del proyecto ya fue emitida; la ficha no admite cambios.
+        timestamp: '2026-09-25T10:15:30Z'
+  responses:
+    SolicitudInvalida:
+      description: Solicitud mal formada o con campos inválidos. Código `SOLICITUD_INVALIDA`.
+      content:
+        application/json:
+          schema:
+            $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+    NoAutenticado:
+      description: Token ausente o inválido. Código `NO_AUTENTICADO`.
+      content:
+        application/json:
+          schema:
+            $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+    AccesoDenegado:
+      description: |
+        El rol del usuario no está autorizado para la operación (ver `x-roles`; RN06, RN07).
+        Código `ACCESO_DENEGADO`.
+      content:
+        application/json:
+          schema:
+            $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+    ProyectoNoEncontrado:
+      description: El proyecto no existe. Código `PROYECTO_NO_ENCONTRADO`.
+      content:
+        application/json:
+          schema:
+            $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+  schemas:
+    TipoDocumentoViabilidad:
+      type: string
+      description: Tipo de documento que el Técnico URP carga en la sección Viabilidad (Anexo B.1).
+      enum: [DOCUMENTO_PREINVERSION, OTRO_DOCUMENTO]
+    CampoFichaViabilidad:
+      type: string
+      description: Filas de la tabla "FICHA DEL PROYECTO" que admiten comentario del Viabilizador (Anexo A.1).
+      enum:
+        - OBJETIVO_GENERAL
+        - DESCRIPCION
+        - PRODUCTOS
+        - POBLACION_OBJETIVO
+        - INVERSION_ESTIMADA
+        - RESUMEN_PRESUPUESTO
+        - COSTO_OPERACION
+        - COSTO_MANTENIMIENTO
+        - FUENTE_FINANCIAMIENTO
+        - INDICADORES_EVALUACION
+    DocumentoViabilidad:
+      type: object
+      required: [documentoId, tipoDocumento, nombreArchivo, fechaCarga]
+      properties:
+        documentoId:
+          type: integer
+          format: int64
+        tipoDocumento:
+          $ref: '#/components/schemas/TipoDocumentoViabilidad'
+        nombreArchivo:
+          type: string
+        fechaCarga:
+          type: string
+          format: date-time
+    ComentarioCampoViabilidad:
+      type: object
+      required: [campo, comentario]
+      properties:
+        campo:
+          $ref: '#/components/schemas/CampoFichaViabilidad'
+        comentario:
+          type: string
+    IndicadorEvaluacion:
+      type: object
+      description: Indicador calculado en CU-PRE-21 (el mockup muestra VAN, TIR, R B/C; catálogo completo en CU-PRE-21).
+      required: [nombre]
+      properties:
+        nombre:
+          type: string
+          example: VAN
+        valor:
+          type: number
+          nullable: true
+    ResumenPresupuesto:
+      type: object
+      description: |
+        PENDIENTE — Tabla del Anexo A.4 de CU-PRE-17. Su estructura no está en CU-PRE-24; debe
+        sustituirse por el schema que defina el fragmento de CU-PRE-17.
+      additionalProperties: true
+      x-pendiente: true
+    FuenteFinanciamientoViabilidad:
+      type: object
+      description: |
+        PENDIENTE — Tabla del Anexo A.5 de CU-PRE-17. Su estructura no está en CU-PRE-24; debe
+        sustituirse por el schema que defina el fragmento de CU-PRE-17.
+      additionalProperties: true
+      x-pendiente: true
+    AccionesDisponiblesViabilidad:
+      type: object
+      description: |
+        Acciones habilitadas para el usuario autenticado según su rol y el estado de la gestión.
+        Refleja los escenarios de habilitación de botones; el backend vuelve a validar en cada operación.
+      required: [solicitarViabilidad, guardarComentarios, enviarComentarios, emitirViabilidad, irAElegibilidad]
+      properties:
+        solicitarViabilidad:
+          type: boolean
+          description: Solo Técnico URP, con Documento de Preinversión cargado y sin solicitud en curso (RN02, RN04, RN06).
+        guardarComentarios:
+          type: boolean
+          description: Solo Viabilizador, mientras la ficha no esté deshabilitada por emisión (RN01, FA02 2.5).
+        enviarComentarios:
+          type: boolean
+          description: Solo Viabilizador, con solicitud de Viabilidad vigente (Anexo B.1, RN07).
+        emitirViabilidad:
+          type: boolean
+          description: Solo Viabilizador, con la justificación registrada y guardada (Anexo B.1, RN07).
+        irAElegibilidad:
+          type: boolean
+          description: Solo Viabilizador, tras emitir Viabilidad por primera vez (RN02, RN03, RN07).
+    FichaViabilidadResponse:
+      type: object
+      required:
+        - proyectoId
+        - cup
+        - nombreProyecto
+        - estadoProyecto
+        - documentos
+        - comentariosViabilizador
+        - accionesDisponibles
+      properties:
+        proyectoId:
+          type: integer
+          format: int64
+        cup:
+          type: string
+          description: Código Único de Proyecto emitido en CU-PRE-01 (numérico; se transporta como texto).
+        nombreProyecto:
+          type: string
+          description: Origen CU-PRE-01.
+        estadoProyecto:
+          type: string
+          description: |
+            Estado actual del Proyecto. Valores mencionados en el CU: "Proyecto Formulado", "Observado",
+            "Proyecto Viable". El catálogo completo pertenece al modelo de dominio.
+        objetivoGeneral:
+          type: string
+          description: Origen CU-PRE-04.
+        descripcion:
+          type: string
+          description: Origen CU-PRE-11 ("Descripción del proyecto").
+        productos:
+          type: array
+          description: Nombres de producto, origen CU-PRE-23.
+          items:
+            type: string
+        poblacionObjetivo:
+          type: integer
+          format: int64
+          description: N° de personas, origen CU-PRE-07.
+        inversionEstimada:
+          type: number
+          description: Total de inversión (a precios de mercado), origen CU-PRE-17. El separador de miles es de presentación.
+        resumenPresupuesto:
+          $ref: '#/components/schemas/ResumenPresupuesto'
+        costoOperacion:
+          type: number
+          description: Total (P.M.) del Año 1 de Costos de Operación, origen CU-PRE-18.
+        costoMantenimiento:
+          type: number
+          description: Total (P.M.) del Año 1 de Costos de Mantenimiento, origen CU-PRE-18.
+        fuenteFinanciamiento:
+          $ref: '#/components/schemas/FuenteFinanciamientoViabilidad'
+        indicadoresEvaluacion:
+          type: array
+          description: Origen CU-PRE-21.
+          items:
+            $ref: '#/components/schemas/IndicadorEvaluacion'
+        documentos:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentoViabilidad'
+        comentariosViabilizador:
+          type: array
+          description: Comentarios de la revisión en curso, uno por campo de la ficha.
+          items:
+            $ref: '#/components/schemas/ComentarioCampoViabilidad'
+        observacionesGeneralesJustificacion:
+          type: string
+          nullable: true
+          description: Observaciones Generales/Justificación de la Viabilidad (revisión en curso).
+        accionesDisponibles:
+          $ref: '#/components/schemas/AccionesDisponiblesViabilidad'
+    CargarDocumentoViabilidadRequest:
+      type: object
+      required: [tipoDocumento, archivo]
+      properties:
+        tipoDocumento:
+          $ref: '#/components/schemas/TipoDocumentoViabilidad'
+        archivo:
+          type: string
+          format: binary
+    CargarDocumentoViabilidadResponse:
+      type: object
+      required: [documento, accionesDisponibles]
+      properties:
+        documento:
+          $ref: '#/components/schemas/DocumentoViabilidad'
+        accionesDisponibles:
+          $ref: '#/components/schemas/AccionesDisponiblesViabilidad'
+    GuardarComentariosViabilidadRequest:
+      type: object
+      required: [comentariosViabilizador]
+      properties:
+        comentariosViabilizador:
+          type: array
+          description: Reemplaza los comentarios por campo de la revisión en curso.
+          items:
+            $ref: '#/components/schemas/ComentarioCampoViabilidad'
+        observacionesGeneralesJustificacion:
+          type: string
+          nullable: true
+          description: Obligatorio para emitir Viabilidad (se valida en `emitirViabilidad`), no para guardar.
+    GuardarComentariosViabilidadResponse:
+      type: object
+      required: [comentariosViabilizador, accionesDisponibles]
+      properties:
+        comentariosViabilizador:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComentarioCampoViabilidad'
+        observacionesGeneralesJustificacion:
+          type: string
+          nullable: true
+        accionesDisponibles:
+          $ref: '#/components/schemas/AccionesDisponiblesViabilidad'
+    EnviarComentariosViabilidadResponse:
+      type: object
+      required: [proyectoId, estadoProyecto]
+      properties:
+        proyectoId:
+          type: integer
+          format: int64
+        estadoProyecto:
+          type: string
+          example: Observado
+    EmitirViabilidadResponse:
+      type: object
+      required: [proyectoId, estadoProyecto, elegibilidadHabilitada]
+      properties:
+        proyectoId:
+          type: integer
+          format: int64
+        estadoProyecto:
+          type: string
+          example: Proyecto Viable
+        elegibilidadHabilitada:
+          type: boolean
+          description: |
+            true si es la primera gestión de Viabilidad y se habilitó CU-PRE-25 "Elegibilidad"
+            (mensaje con "Es necesario continuar con la gestión de Elegibilidad" y botones
+            "Ir a Elegibilidad"/"Salir"); false si el proyecto ya contaba con Elegibilidad.

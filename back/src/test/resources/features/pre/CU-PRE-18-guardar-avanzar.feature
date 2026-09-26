@@ -6,7 +6,7 @@ Característica: Guardar el presupuesto de Operación y Mantenimiento y avanzar
   Quiero gestionar las filas de actividades, guardar el presupuesto y avanzar a la siguiente sección
 
   Antecedentes:
-    Dado que el Técnico URP se encuentra en la pantalla "Presupuesto de Operación y Mantenimiento" (Anexo A.1)
+    Dado que el Técnico URP se encuentra en la pantalla "Presupuesto de Operación y Mantenimiento" (Anexo A.1) - presupuesto-om
 
   Escenario: Agregar una fila de actividad manualmente
     Cuando el Técnico URP adiciona una nueva fila en la tabla "Costos de Operación" o "Costos de Mantenimiento"

@@ -46,7 +46,9 @@ public class AuditoriaAspect {
         // Body (solo si hay un argumento que no es HttpServletRequest o
         // HttpServletResponse)
         Object requestBody = Arrays.stream(joinPoint.getArgs())
-                .filter(arg -> arg != null && !(arg instanceof HttpServletRequest) && !(arg instanceof HttpServletResponse))
+                .filter(arg -> arg != null
+                        && !(arg instanceof HttpServletRequest)
+                        && !(arg instanceof HttpServletResponse))
                 .findFirst()
                 .orElse(null);
 

@@ -20,6 +20,7 @@ import sv.gob.mh.siip.exception.AccesoDenegadoException;
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.NoAutenticadoException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
+import sv.gob.mh.siip.exception.ReglaNegocioException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
 import sv.gob.mh.siip.model.preinversion.dto.ErrorDto;
@@ -48,6 +49,36 @@ class ManejadorErroresGlobalTest {
         assertEquals("RECURSO_NO_ENCONTRADO", body.getCodigo());
         assertEquals(mensajeEsperado, body.getMensaje());
         assertNotNull(body.getTimestamp());
+    }
+
+    @Test
+    @DisplayName("Debería respetar el código propio de RecursoNoEncontradoException")
+    void testManejarNoEncontradoConCodigo() {
+        ResponseEntity<ErrorDto> responseEntity = manejadorErroresGlobal
+                .manejarNoEncontrado(new RecursoNoEncontradoException("PROYECTO_NO_ENCONTRADO", "No existe"));
+
+        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        ErrorDto body = responseEntity.getBody();
+        assertNotNull(body);
+        assertEquals("PROYECTO_NO_ENCONTRADO", body.getCodigo());
+    }
+
+    @Test
+    @DisplayName("Debería manejar ReglaNegocioException y retornar status 422 con su código")
+    void testManejarReglaNegocio() {
+        ResponseEntity<ErrorDto> conCodigo = manejadorErroresGlobal
+                .manejarReglaNegocio(new ReglaNegocioException("DOCUMENTO_PREINVERSION_REQUERIDO", "Falta el documento"));
+        ResponseEntity<ErrorDto> sinCodigo = manejadorErroresGlobal
+                .manejarReglaNegocio(new ReglaNegocioException(null, "Regla incumplida"));
+
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, conCodigo.getStatusCode());
+        ErrorDto body = conCodigo.getBody();
+        assertNotNull(body);
+        assertEquals("DOCUMENTO_PREINVERSION_REQUERIDO", body.getCodigo());
+        assertEquals("Falta el documento", body.getMensaje());
+        ErrorDto generico = sinCodigo.getBody();
+        assertNotNull(generico);
+        assertEquals("REGLA_NEGOCIO", generico.getCodigo());
     }
 
     @Test

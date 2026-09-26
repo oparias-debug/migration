@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,10 +21,10 @@ import lombok.experimental.SuperBuilder;
 @MappedSuperclass
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@SuperBuilder
-public abstract class RevisionPapBase {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder(builderMethodName = "")
+public class RevisionPapBase {
 
     @NotNull
     @Column(name = "ID_UNIDAD_EJECUTORA", nullable = false)

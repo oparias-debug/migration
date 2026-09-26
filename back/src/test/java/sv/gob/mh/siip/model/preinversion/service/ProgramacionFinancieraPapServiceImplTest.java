@@ -54,6 +54,9 @@ class ProgramacionFinancieraPapServiceImplTest {
 
     private final ProgramacionFinancieraPapServiceImpl service = new ProgramacionFinancieraPapServiceImpl(
             proyectoRepository, etapaPreinversionRepository, fuenteRepository, progRepository,
+            habilitacionRepository, calendarioEventoRepository, actorContexto);
+    private final ProgramacionFinancieraPapAjusteServiceImpl ajusteService =
+            new ProgramacionFinancieraPapAjusteServiceImpl(proyectoRepository, etapaPreinversionRepository, fuenteRepository, progRepository,
             habilitacionRepository, calendarioEventoRepository, etapaMetaFisicaPapRepository, actorContexto);
 
     private void mockActor(Usuario actor) {
@@ -134,7 +137,7 @@ class ProgramacionFinancieraPapServiceImplTest {
         when(etapaMetaFisicaPapRepository.findByEtapaPreinversionProyectoId(proyecto.getId()))
                 .thenReturn(List.of(etapaMeta));
 
-        service.desactivarEstudio("08040", 2027);
+        ajusteService.desactivarEstudio("08040", 2027);
 
         // SF-4: se desactiva (flag), no se borra físicamente.
         assertThat(etapaMeta.getActivo()).isFalse();
@@ -154,7 +157,7 @@ class ProgramacionFinancieraPapServiceImplTest {
         EtapaMetaFisicaPap etapaMeta = EtapaMetaFisicaPap.builder().id(20L).build();
         when(etapaMetaFisicaPapRepository.findByEtapaPreinversionId(etapa.getId())).thenReturn(Optional.of(etapaMeta));
 
-        service.eliminarEtapaProgramacion("08040", NombreEtapaDto.PERFIL, 2027);
+        ajusteService.eliminarEtapaProgramacion("08040", NombreEtapaDto.PERFIL, 2027);
 
         // SF-5: se desactiva (flag), no se borra físicamente.
         assertThat(etapaMeta.getActivo()).isFalse();
@@ -173,7 +176,7 @@ class ProgramacionFinancieraPapServiceImplTest {
         when(fuenteRepository.findByEtapaPreinversionId(etapa.getId())).thenReturn(List.of());
         when(etapaMetaFisicaPapRepository.findByEtapaPreinversionId(etapa.getId())).thenReturn(Optional.empty());
 
-        service.eliminarEtapaProgramacion("08040", NombreEtapaDto.PERFIL, 2027);
+        ajusteService.eliminarEtapaProgramacion("08040", NombreEtapaDto.PERFIL, 2027);
 
         verify(etapaMetaFisicaPapRepository, never()).save(any(EtapaMetaFisicaPap.class));
     }

@@ -84,6 +84,7 @@ public class AnalisisLegalServiceImpl implements AnalisisLegalService {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
         Proyecto proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
+        EdicionFormulacion.exigirEditable(proyecto);
 
         // Usamos directamente el objeto 'proyecto' obtenido por buscarProyecto sin consultarlo otra vez
         AnalisisLegal analisisLegal = analisisLegalRepository.findByProyectoId(idProyecto)
@@ -124,9 +125,9 @@ public class AnalisisLegalServiceImpl implements AnalisisLegalService {
      * @return AnalisisLegalDto mapeado.
      * @author Luis Medrano
      */
-    private AnalisisLegalDto mapToDto(AnalisisLegal entity) {
+    private static AnalisisLegalDto mapToDto(AnalisisLegal entity) {
         List<FilaAnalisisLegalRequestDto> filasDto = entity.getFilas().stream()
-                .map(fila -> {
+                .map((AnalsisGestionesLegalesRequeridas fila) -> {
                     FilaAnalisisLegalRequestDto dto = new FilaAnalisisLegalRequestDto();
                     dto.setAnalisisGestionLegalRequerida(fila.getAnalisisGestionLegalRequerida());
                     dto.setEntregable(fila.getEntregable());
@@ -154,7 +155,7 @@ public class AnalisisLegalServiceImpl implements AnalisisLegalService {
     }
 
     /** RN01/RN02: mismo criterio que el resto de la serie CU-PRE-06 a CU-PRE-14. */
-    private void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
         if (actor.getUnidadEjecutora() != null
                 && !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId())) {
             throw new AccesoDenegadoException(
