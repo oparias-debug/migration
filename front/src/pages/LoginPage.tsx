@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../auth/useAuth';
 import minLogo from '../assets/img/min-logo-gob-el-salvador-negro.png';
 import '../styles/login.css';
+import { IconoLogin } from './iconosLogin';
 
 /**
  * Pantalla de inicio de sesión, según el diseño entregado por el cliente el
@@ -77,7 +78,7 @@ export function LoginPage() {
             <label htmlFor="username" className="sr-only">
                   {t('login.username')}
                 </label>
-            <i className="bi bi-person-fill" aria-hidden="true" />
+            <IconoLogin nombre="persona" />
                 <input
                   type="text"
                   id="username"
@@ -93,7 +94,7 @@ export function LoginPage() {
             <label htmlFor="password" className="sr-only">
                   {t('login.password')}
                 </label>
-            <i className="bi bi-lock-fill" aria-hidden="true" />
+            <IconoLogin nombre="candado" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="password"
@@ -110,7 +111,7 @@ export function LoginPage() {
               aria-label={t(showPassword ? 'login.ocultarPassword' : 'login.verPassword')}
               aria-pressed={showPassword}
             >
-              <i className={showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'} aria-hidden="true" />
+              <IconoLogin nombre={showPassword ? 'ojo-tachado' : 'ojo'} />
             </button>
                 </div>
 

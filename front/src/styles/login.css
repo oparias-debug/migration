@@ -98,11 +98,10 @@
   align-items: center;
   margin-bottom: 12px;
 }
-.login-campo > i {
+.login-campo > svg {
   position: absolute;
   left: 13px;
   color: #8a93a6;
-  font-size: 15px;
   pointer-events: none;
 }
 .login-campo input {
