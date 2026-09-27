@@ -27,7 +27,7 @@ Desde la raíz del repo:
 .\scripts\publish-images.ps1
 ```
 
-Esto corre `mvn clean package -DskipTests`, buildea las 4 imágenes y las sube todas con tag
+Esto corre `mvn clean package -DskipTests` dentro de `back/` y de `api-gateway/`, compila el front con `docker compose run --rm front-build` (`-SkipFrontBuild` lo salta), buildea las 4 imágenes y las sube todas con tag
 `latest` — el mismo tag que usa `dist-tester/.env.example` (`IMAGE_TAG=latest`), así que el
 tester solo necesita `docker compose pull` para bajar lo nuevo, sin tocar nada de su lado.
 

@@ -32,16 +32,16 @@ public class AnalisisLegalMapper {
         }
 
         List<FilaAnalisisLegalRequestDto> filasDto = new ArrayList<>();
+        double totalCosto = 0.0;
         if (entity.getFilas() != null) {
             filasDto = entity.getFilas().stream()
                     .map(this::toFilaDto)
                     .toList();
+            // Cálculo automático del total de costos de entregables por el servidor
+            totalCosto = entity.getFilas().stream()
+                    .mapToDouble(f -> (f.getCostoEntregable() != null) ? f.getCostoEntregable() : 0.0)
+                    .sum();
         }
-
-        // Cálculo automático del total de costos de entregables por el servidor
-        double totalCosto = entity.getFilas().stream()
-                .mapToDouble(f -> (f.getCostoEntregable() != null) ? f.getCostoEntregable() : 0.0)
-                .sum();
 
         AnalisisLegalDto dto = new AnalisisLegalDto();
         dto.setIdProyecto((entity.getProyecto() != null) ? entity.getProyecto().getId() : null);

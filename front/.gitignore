@@ -4,11 +4,20 @@ dist-ssr/
 coverage/
 *.local
 
-# Cliente generado desde openapi/*.yaml (npm run generate:api) - no se versiona,
-# igual que back/target/generated-sources/openapi.
-src/api/generated/
+# Cliente generado desde openapi/*.yaml (npm run generate:api): SI se versionan los .ts,
+# porque la imagen Node del pipeline de la entidad no trae Java y openapi-generator-cli
+# lo necesita. Lo demas que deja el generador (docs, scripts, metadatos) no.
+src/api/generated/**/docs/
+src/api/generated/**/git_push.sh
+src/api/generated/**/.gitignore
+src/api/generated/**/.npmignore
 .openapi-generator/
 .openapi-generator-ignore
+
+# Artefactos locales de build/análisis (en el monorepo los ignoraba el .gitignore raíz)
+tsconfig.tsbuildinfo
+.scannerwork/
+target/
 
 # Logs
 npm-debug.log*

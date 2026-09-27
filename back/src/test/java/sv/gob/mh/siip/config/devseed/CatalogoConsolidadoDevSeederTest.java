@@ -94,6 +94,30 @@ class CatalogoConsolidadoDevSeederTest {
     }
 
     @Test
+    void seed_noDuplicaLaEscala_cuandoElSubcriterioNuevoYaTieneSusCalificaciones() {
+        when(parametroRepository.findByCodigo(anyString())).thenReturn(Optional.of(mock(Parametro.class)));
+        when(indicadorResultadoRepository.findByCodigo(anyString()))
+                .thenReturn(Optional.of(mock(IndicadorResultado.class)));
+        when(rangoInterpretacionPriorizacionRepository.findByCategoria(anyString()))
+                .thenReturn(Optional.of(mock(RangoInterpretacionPriorizacion.class)));
+        when(criterioPriorizacionRepository.findByCodigo(anyString())).thenReturn(Optional.empty());
+        when(criterioPriorizacionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(subcriterioPriorizacionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(escalaCalificacionSubcriterioRepository.findByCodigoSubcriterioAndValor(anyString(), any()))
+                .thenReturn(Optional.of(mock(EscalaCalificacionSubcriterio.class)));
+        when(criterioElegibilidadRepository.findByCodigo(anyString()))
+                .thenReturn(Optional.of(mock(CriterioElegibilidad.class)));
+        when(entradaCatalogoEspecificarRepository.findByTipoAndCodigo(any(), anyString()))
+                .thenReturn(Optional.of(mock(EntradaCatalogoEspecificar.class)));
+
+        seeder.seed();
+
+        verify(subcriterioPriorizacionRepository, times(7)).save(any(SubcriterioPriorizacion.class));
+        verify(escalaCalificacionSubcriterioRepository, times(49)).findByCodigoSubcriterioAndValor(anyString(), any());
+        verify(escalaCalificacionSubcriterioRepository, never()).save(any());
+    }
+
+    @Test
     void seed_esIdempotente_cuandoYaExisteElCriterioDePriorizacion() {
         when(parametroRepository.findByCodigo(anyString())).thenReturn(Optional.of(mock(Parametro.class)));
         when(indicadorResultadoRepository.findByCodigo(anyString()))

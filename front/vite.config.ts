@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 // El backend (api-gateway) no expone CORS: en dev, Vite actúa como
-// reverse-proxy same-origin para /auth y /back, igual que hace Nginx en producción.
+// reverse-proxy same-origin para /auth y /back, igual que hace Apache HTTPD (httpd.conf) en producción.
 const proxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8080';
 
 export default defineConfig({
@@ -28,7 +28,7 @@ export default defineConfig({
       // en sonar-project.properties); 'text'/'html' son para lectura humana en terminal/navegador.
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
-      // src/api/generated no se versiona ni se analiza en SonarQube
+      // src/api/generated es código generado y no se analiza en SonarQube
       // (sonar.exclusions); incluirlo aquí hacía que el resumen del terminal
       // dijera 38% mientras Sonar decía 78%, sobre el mismo código.
       exclude: ['src/main.tsx', 'src/vite-env.d.ts', 'src/**/*.test.{ts,tsx}', 'src/api/generated/**'],

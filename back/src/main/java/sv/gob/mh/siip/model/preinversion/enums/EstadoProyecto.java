@@ -1,5 +1,7 @@
 package sv.gob.mh.siip.model.preinversion.enums;
 
+import java.util.Objects;
+
 /** Estados del ciclo de vida del proyecto a traves de los modulos de Preinversion. */
 public enum EstadoProyecto {
     EN_REGISTRO("En Elaboración"),
@@ -33,7 +35,7 @@ public enum EstadoProyecto {
     // (p.ej. "En Formulación", "Proyecto con Opinión Técnica"). PRIORIZADO/EN_EJECUCION/FINALIZADO/ARCHIVADO quedan
     // fuera de RN04 (ciclo de vida posterior a CU-PRE-03) y su etiqueta no esta confirmada.
     public String getEtiquetaUi() {
-        return (etiquetaUi != null) ? etiquetaUi : name();
+        return Objects.requireNonNullElse(etiquetaUi, name());
     }
 
     /**

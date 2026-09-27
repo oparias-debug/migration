@@ -27,6 +27,10 @@
     No corre "mvn clean package -DskipTests" antes de armar las imágenes de back/api-gateway.
     Usalo si ya tenés los .jar generados y solo querés reconstruir las imágenes Docker.
 
+.PARAMETER SkipFrontBuild
+    No corre "docker compose run --rm front-build" antes de armar la imagen de front.
+    Usalo si front/dist/ ya está compilado y solo querés reconstruir la imagen Docker.
+
 .PARAMETER SkipPush
     Buildea las imágenes pero no las sube (para probar el build en local antes de publicar).
 
@@ -44,6 +48,7 @@ param(
     [string]$Tag = 'latest',
     [string]$Owner = 'david-magnaperita',
     [switch]$SkipMavenBuild,
+    [switch]$SkipFrontBuild,
     [switch]$SkipPush
 )
 
@@ -72,8 +77,23 @@ Push-Location $repoRoot
 try {
     # back/Dockerfile y api-gateway/Dockerfile solo copian target/*.jar (no compilan
     # dentro de Docker), así que hace falta el jar ya generado antes del build de imagen.
+    # No hay pom agregador en la raíz: back y api-gateway se compilan cada uno por separado.
     if (-not $SkipMavenBuild) {
-        Invoke-Step -Name 'mvn clean package -DskipTests' -Action { & mvn clean package -DskipTests }
+        foreach ($module in @('back', 'api-gateway')) {
+            Push-Location (Join-Path $repoRoot $module)
+            try {
+                Invoke-Step -Name "$($module): mvn clean package -DskipTests" -Action { & mvn clean package -DskipTests }
+            } finally {
+                Pop-Location
+            }
+        }
+    }
+
+    # front/Dockerfile tampoco compila: empaqueta front/dist/ (en la entidad lo deja el
+    # pipeline Tekton). Se compila con el servicio front-build de docker-compose.yml, así
+    # que no hace falta Node ni Java en el host.
+    if (-not $SkipFrontBuild) {
+        Invoke-Step -Name 'front: docker compose run --rm front-build' -Action { & docker compose run --rm --build front-build }
     }
 
     foreach ($service in $services) {

@@ -79,7 +79,7 @@ public class BeneficiosProyectoService {
         String tipoIngreso = texto(request, "tipoIngreso");
         String tipoBeneficio = texto(request, "tipoBeneficio");
         if (parametro == null || tipoIngreso == null || tipoBeneficio == null) {
-            invalido();
+            throw invalido();
         }
         List<Double> montos = montos(request.get("montosPrecioMercadoPorPeriodo"));
         Double montoPeriodo1 = numero(request.get("montoPeriodo1"));
@@ -105,14 +105,14 @@ public class BeneficiosProyectoService {
 
     private static void validarTipoIngreso(String tipoIngreso, List<Double> montos, Double montoPeriodo1) {
         if (TIPO_INGRESO_MANUAL.equalsIgnoreCase(tipoIngreso) && montos.stream().allMatch(m -> m == null)) {
-            invalido();
+            throw invalido();
         }
         if (TIPO_INGRESO_AUTOMATICO.equalsIgnoreCase(tipoIngreso) && montoPeriodo1 == null) {
-            invalido();
+            throw invalido();
         }
         if (!TIPO_INGRESO_MANUAL.equalsIgnoreCase(tipoIngreso)
                 && !TIPO_INGRESO_AUTOMATICO.equalsIgnoreCase(tipoIngreso)) {
-            invalido();
+            throw invalido();
         }
     }
 
@@ -134,7 +134,7 @@ public class BeneficiosProyectoService {
                 .orElseGet(() -> BeneficiosProyectoConfiguracion.builder().proyecto(proyecto).build());
         String tipoBien = texto(request, "tipoBien");
         if (tipoBien != null && !TIPOS_BIEN.contains(tipoBien)) {
-            invalido();
+            throw invalido();
         }
         configuracion.setValorRescate(numero(request.get("valorRescate")));
         configuracion.setTipoBien(tipoBien);
@@ -326,7 +326,7 @@ public class BeneficiosProyectoService {
         return resultado;
     }
 
-    private static void invalido() {
-        throw new ValidacionNegocioException("Beneficio inválido", List.of());
+    private static ValidacionNegocioException invalido() {
+        return new ValidacionNegocioException("Beneficio inválido", List.of());
     }
 }

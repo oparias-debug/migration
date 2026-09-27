@@ -20,8 +20,6 @@ import sv.gob.mh.siip.model.preinversion.domain.*;
 import sv.gob.mh.siip.model.preinversion.enums.*;
 import sv.gob.mh.siip.model.preinversion.dto.*;
 import sv.gob.mh.siip.model.administracion.dto.UsuarioResumenDto;
-import sv.gob.mh.siip.model.administracion.mapper.CatalogosAdministracionMapper;
-import sv.gob.mh.siip.model.preinversion.mapper.ProyectoMapper;
 import sv.gob.mh.siip.model.preinversion.repository.*;
 import sv.gob.mh.siip.model.preinversion.service.*;
 import sv.gob.mh.siip.model.programacion.repository.*;
@@ -38,8 +36,8 @@ public class Pre02Bandeja {
     @Autowired private SectorActividadRepository sectores;
     @Autowired private EjeTematicoRepository ejes;
     @Autowired private ActorContexto actores;
-    @Autowired private ProyectoMapper mapper;
-    @Autowired private CatalogosAdministracionMapper catalogosMapper;
+    @Autowired private BandejaPreinversionConsultas consultas;
+    @Autowired private BandejaSolicitudEnsamblador ensamblador;
     @Autowired private BandejaPreinversionService bandeja;
     @Autowired private org.springframework.transaction.PlatformTransactionManager transactionManager;
     private org.springframework.transaction.TransactionStatus transaction;
@@ -72,7 +70,8 @@ public class Pre02Bandeja {
                 .tipoSolicitud(TipoSolicitud.CUP).estado(EstadoSolicitud.REGISTRADA)
                 .fechaSolicitud(LocalDateTime.now()).build());
         notificaciones = mock(NotificacionService.class);
-        mutaciones = new BandejaPreinversionService(solicitudes, usuarios, actores, mapper, catalogosMapper, notificaciones);
+        mutaciones = new BandejaPreinversionService(solicitudes, usuarios, actores, notificaciones, consultas,
+                ensamblador);
         pantalla = "Bandeja Preinversión";
     }
 

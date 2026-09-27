@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.exception.AccesoDenegadoException;
+import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
 import sv.gob.mh.siip.model.preinversion.domain.ActividadOm;
 import sv.gob.mh.siip.model.preinversion.domain.InsumoActividad;
@@ -181,5 +185,201 @@ class PresupuestoOmServiceTest {
         assertThat(actividad.getCostoPeriodo1PrecioMercado()).isEqualTo(600D);
         assertThat(actividad.getCostoPeriodo1PrecioAjustado()).isEqualTo(530D);
         assertThat(actividad.getTipoCostoTabla()).isEqualTo("OPERACION");
+    }
+
+    @Test
+    void configurarRechazaTipoDeCostoNulo() {
+        Map<String, Object> datos = new HashMap<>();
+        datos.put("tipoCosto", null);
+
+        assertThatThrownBy(() -> service.configurar(7L, datos)).isInstanceOf(ValidacionNegocioException.class);
+    }
+
+    @Test
+    void configurarExigeTasaAunqueVengaLaVidaUtil() {
+        Map<String, Object> datos = Map.of("tipoCosto", "MANTENIMIENTO", "vidaUtil", 2);
+
+        assertThatThrownBy(() -> service.configurar(7L, datos)).isInstanceOf(ValidacionNegocioException.class);
+    }
+
+    @Test
+    void configurarRechazaTasaNegativa() {
+        Map<String, Object> datos = Map.of("tipoCosto", "OPERACION", "vidaUtil", 2, "tasaCrecimientoCostos", -0.5D);
+
+        assertThatThrownBy(() -> service.configurar(7L, datos)).isInstanceOf(ValidacionNegocioException.class);
+    }
+
+    @Test
+    void configurarActualizaLaConfiguracionExistenteConVidaUtilYTasa() {
+        PresupuestoOmConfiguracion existente = PresupuestoOmConfiguracion.builder().tipoCosto("NO_APLICA").build();
+        when(configuraciones.findByProyectoId(7L)).thenReturn(Optional.of(existente));
+        when(actividades.findByProyectoId(7L)).thenReturn(List.of());
+
+        Map<String, Object> resultado = service.configurar(7L,
+                Map.of("tipoCosto", "OPERACION", "vidaUtil", 2, "tasaCrecimientoCostos", 1.5D));
+
+        assertThat(existente.getTipoCosto()).isEqualTo("OPERACION");
+        assertThat(existente.getVidaUtil()).isEqualTo(2);
+        assertThat(existente.getTasaCrecimientoCostos()).isEqualTo(1.5D);
+        verify(configuraciones).save(existente);
+        // El Técnico URP no es usuario interno: no recibe precios ajustados (RN09).
+        assertThat(resultado).containsKeys("costosOperacion", "totalInversionPrecioMercado")
+                .doesNotContainKeys("costosMantenimiento", "totalInversionPrecioAjustado");
+    }
+
+    @Test
+    void registroRechazaNombreDeActividadNuloOEnBlanco() {
+        Map<String, Object> sinNombre = Map.of("insumos", List.of());
+        Map<String, Object> nombreEnBlanco = Map.of("nombreActividad", "  ");
+
+        assertThatThrownBy(() -> service.registrarActividad(7L, "OPERACION", sinNombre))
+                .isInstanceOf(ValidacionNegocioException.class).hasMessage("Actividad inválida");
+        assertThatThrownBy(() -> service.registrarActividad(7L, "OPERACION", nombreEnBlanco))
+                .isInstanceOf(ValidacionNegocioException.class).hasMessage("Actividad inválida");
+    }
+
+    @Test
+    void registroIgnoraInsumosIncompletosYExigeAlMenosUnoValido() {
+        Map<String, Object> datos = Map.of("nombreActividad", "Seguro", "insumos", List.of(
+                "no es un mapa",
+                Map.of("insumoTipoCodigo", 15, "costoPeriodo1PrecioMercado", 100D),
+                Map.of("insumoTipoCodigo", " ", "costoPeriodo1PrecioMercado", 100D),
+                Map.of("insumoTipoCodigo", "Mano de obra", "costoPeriodo1PrecioMercado", "cien")));
+
+        assertThatThrownBy(() -> service.registrarActividad(7L, "OPERACION", datos))
+                .isInstanceOf(ValidacionNegocioException.class)
+                .hasMessage("Debe registrar el costo de al menos un insumo");
+    }
+
+    @Test
+    void eliminarActividadInexistenteLanzaRecursoNoEncontrado() {
+        when(actividades.findByIdAndProyectoId(3L, 7L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.eliminarActividad(7L, "OPERACION", 3L))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+    }
+
+    @Test
+    void eliminarActividadDeOtraTablaLanzaRecursoNoEncontrado() {
+        ActividadOm actividad = actividadCon("MANTENIMIENTO", "Pintura", 50D, 1D);
+        when(actividades.findByIdAndProyectoId(3L, 7L)).thenReturn(Optional.of(actividad));
+
+        assertThatThrownBy(() -> service.eliminarActividad(7L, "OPERACION", 3L))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+        verify(actividades, never()).delete(any());
+    }
+
+    @Test
+    void eliminarActividadDeLaTablaIndicadaLaBorra() {
+        ActividadOm actividad = actividadCon("OPERACION", "Vigilancia", 50D, 1D);
+        when(actividades.findByIdAndProyectoId(3L, 7L)).thenReturn(Optional.of(actividad));
+
+        service.eliminarActividad(7L, "operacion", 3L);
+
+        verify(actividades).delete(actividad);
+    }
+
+    @Test
+    void guardarSinConfiguracionDevuelveSoloElIdDelProyecto() {
+        when(configuraciones.findByProyectoId(7L)).thenReturn(Optional.empty());
+
+        assertThat(service.guardar(7L)).containsOnlyKeys("idProyecto");
+    }
+
+    @Test
+    void guardarConConfiguracionSinTipoDeCostoDevuelveSoloElIdDelProyecto() {
+        when(configuraciones.findByProyectoId(7L)).thenReturn(Optional.of(PresupuestoOmConfiguracion.builder()
+                .vidaUtil(2).build()));
+
+        assertThat(service.guardar(7L)).containsOnlyKeys("idProyecto");
+    }
+
+    @Test
+    void obtenerConNoAplicaNoIncluyeTablasNiTotales() {
+        when(configuraciones.findByProyectoId(7L)).thenReturn(Optional.of(PresupuestoOmConfiguracion.builder()
+                .tipoCosto("NO_APLICA").build()));
+        when(actividades.findByProyectoId(7L)).thenReturn(List.of());
+
+        assertThat(service.obtener(7L)).containsOnlyKeys("idProyecto", "tipoCosto", "vidaUtil",
+                "tasaCrecimientoCostos");
+    }
+
+    @Test
+    void obtenerConSoloMantenimientoYSinTasaProyectaCostoConstante() {
+        when(configuraciones.findByProyectoId(7L)).thenReturn(Optional.of(PresupuestoOmConfiguracion.builder()
+                .tipoCosto("MANTENIMIENTO").vidaUtil(2).build()));
+        when(actividades.findByProyectoId(7L)).thenReturn(List.of(actividadCon("MANTENIMIENTO", "Pintura", 50D, 1D)));
+
+        Map<String, Object> resultado = service.obtener(7L);
+
+        assertThat(resultado).doesNotContainKey("costosOperacion").containsKey("costosMantenimiento");
+        assertThat(resultado.get("totalInversionPrecioMercado"))
+                .isEqualTo(Map.of("porPeriodo", List.of(50D, 50D), "total", 100D));
+    }
+
+    @Test
+    void vidaUtilDevuelveCeroSinConfiguracionOSinValor() {
+        when(configuraciones.findByProyectoId(7L)).thenReturn(Optional.empty());
+        when(configuraciones.findByProyectoId(8L)).thenReturn(Optional.of(new PresupuestoOmConfiguracion()));
+        when(configuraciones.findByProyectoId(9L))
+                .thenReturn(Optional.of(PresupuestoOmConfiguracion.builder().vidaUtil(4).build()));
+
+        assertThat(service.vidaUtil(7L)).isZero();
+        assertThat(service.vidaUtil(8L)).isZero();
+        assertThat(service.vidaUtil(9L)).isEqualTo(4);
+    }
+
+    @Test
+    void costosPorTipoSinConfiguracionDevuelveListasVacias() {
+        when(configuraciones.findByProyectoId(7L)).thenReturn(Optional.empty());
+        when(actividades.findByProyectoId(7L)).thenReturn(List.of(actividadCon("OPERACION", "Vigilancia", 10D, 1D)));
+
+        PresupuestoOmService.CostosPorTipo costos =
+                service.costosPorTipo(7L, PresupuestoOmService.TIPO_COSTO_OPERACION);
+
+        assertThat(costos.actividades()).hasSize(1);
+        assertThat(costos.mercado()).isEmpty();
+        assertThat(costos.ajustado()).isEmpty();
+    }
+
+    @Test
+    void obtenerRechazaProyectoSinUnidadEjecutoraParaActorConUnidad() {
+        Usuario usuarioConUnidad = Usuario.builder().rol(RolUsuario.TECNICO_PRE)
+                .unidadEjecutora(UnidadEjecutora.builder().id(10L).build()).build();
+        when(actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE)).thenReturn(usuarioConUnidad);
+
+        assertThatThrownBy(() -> service.obtener(7L)).isInstanceOf(AccesoDenegadoException.class);
+    }
+
+    @Test
+    void guardarComoTecnicoUrpDeLaMismaUnidadOmiteLosPreciosAjustados() {
+        UnidadEjecutora unidad = UnidadEjecutora.builder().id(10L).build();
+        when(actor.exigirRol(RolUsuario.TECNICO_URP)).thenReturn(Usuario.builder().rol(RolUsuario.TECNICO_URP)
+                .unidadEjecutora(unidad).build());
+        when(proyectos.findById(7L)).thenReturn(Optional.of(Proyecto.builder().id(7L).unidadEjecutora(unidad).build()));
+        when(configuraciones.findByProyectoId(7L)).thenReturn(Optional.of(PresupuestoOmConfiguracion.builder()
+                .tipoCosto("OPERACION").vidaUtil(1).tasaCrecimientoCostos(0D).build()));
+        when(actividades.findByProyectoId(7L)).thenReturn(List.of(actividadCon("OPERACION", "Vigilancia", 100D, 1.2D)));
+
+        Map<String, Object> resultado = service.guardar(7L);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> operacion = (Map<String, Object>) resultado.get("costosOperacion");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> actividad = ((List<Map<String, Object>>) operacion.get("actividades")).get(0);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> insumo = ((List<Map<String, Object>>) actividad.get("insumos")).get(0);
+        assertThat(actividad).containsEntry("totalPeriodo1PrecioMercado", 100D)
+                .doesNotContainKey("totalPeriodo1PrecioAjustado");
+        assertThat(insumo).containsEntry("costoPeriodo1PrecioMercado", 100D)
+                .doesNotContainKey("costoPeriodo1PrecioAjustado");
+        assertThat(operacion).doesNotContainKey("totalPorPeriodoPrecioAjustado");
+    }
+
+    @Test
+    void obtenerProyectoInexistenteLanzaRecursoNoEncontrado() {
+        when(proyectos.findById(7L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.obtener(7L)).isInstanceOf(RecursoNoEncontradoException.class);
     }
 }

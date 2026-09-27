@@ -51,7 +51,7 @@ Para lo que podés/no podés tocar en `front`, ver **[CONTRIBUTING-front.md](./C
 ```mermaid
 flowchart TD
     A["1. .feature (Gherkin, español)\nback/src/test/resources/features/\n+ copia idéntica en front/features/"] --> B["2. .openapi.yaml (contrato REST)\nback/src/main/resources/openapi/&lt;dominio&gt;/CU-XX.openapi.yaml\n+ copia idéntica en front/openapi/&lt;dominio&gt;/"]
-    B --> C1["3a. mvn generate-sources -pl back\n-> interfaz Java + DTOs (target/generated-sources)"]
+    B --> C1["3a. mvn generate-sources (dentro de back/)\n-> interfaz Java + DTOs (target/generated-sources)"]
     B --> C2["3b. npm run generate:api\n-> cliente typescript-axios (src/api/generated/)"]
     C1 --> D1["4a. @RestController implements &lt;Tag&gt;Api\n(back/src/main/java/.../controller/)\ndelega en un Service"]
     C2 --> D2["4b. src/api/&lt;dominio&gt;Api.ts (wrapper)\n+ pantalla en src/features/&lt;dominio&gt;/"]
@@ -73,12 +73,13 @@ Los `.feature` son la **especificación funcional** (qué debe hacer el sistema,
    - `apiPackage`/`modelPackage`: **solo si es un dominio nuevo**. Si tu CU es del mismo dominio que uno ya existente (ej. otro CU de `preinversion`), reutilizá los mismos `apiPackage`/`modelPackage` — el generador agrega ahí las interfaces/modelos nuevos sin pisar los existentes. ver ejemplo con CU-01
 4. Generá la interfaz Java y los DTOs:
    ```
-   mvn generate-sources -pl back
+   cd back
+   mvn generate-sources
    ```
 5. Implementá (o extendé) el `@RestController` que `implements` esa interfaz, delegando en un `Service` real — ver `PreinversionController.java`. Con `skipDefaultInterface=true`, si falta implementar un método nuevo **no compila**, es intencional.
 6. Implementá la lógica de negocio en el `Service`/`Repository` correspondientes bajo `back/src/main/java/sv/gob/mh/siip/model/<dominio>/`. Si tu CU necesita columnas o tablas nuevas, alcanza con modelarlas en la entidad JPA — el esquema se recrea solo (ver [nota sobre `ddl-auto` en SETUP.md](./SETUP.md#configuración-de-esquema-por-perfil)); no hace falta escribir ninguna migración.
-7. Volvé al `.feature`: quitale `@wip` a cada escenario que ya podés implementar, corré la suite (`mvn test -pl back -Dtest=RunCucumberTest`) para que Cucumber imprima el stub Java en consola ("You can implement these steps using the snippet(s) below"), y pegá ese stub en la clase de steps correspondiente bajo `back/src/test/java/sv/gob/mh/siip/bdd/steps/<dominio>/`, reemplazando `PendingException` por la implementación real (usando los beans `@Autowired` del contexto Spring de test).
-8. Corré `mvn verify` (o `mvn test -pl back -Dtest=RunCucumberTest` para solo BDD) hasta que todos los escenarios pasen en verde.
+7. Volvé al `.feature`: quitale `@wip` a cada escenario que ya podés implementar, corré la suite (`mvn test -Dtest=RunCucumberTest` dentro de `back/`) para que Cucumber imprima el stub Java en consola ("You can implement these steps using the snippet(s) below"), y pegá ese stub en la clase de steps correspondiente bajo `back/src/test/java/sv/gob/mh/siip/bdd/steps/<dominio>/`, reemplazando `PendingException` por la implementación real (usando los beans `@Autowired` del contexto Spring de test).
+8. Corré `mvn verify` dentro de `back/` (o `mvn test -Dtest=RunCucumberTest` para solo BDD) hasta que todos los escenarios pasen en verde.
 
 ## Parte 2 — Frontend (`front`)
 
@@ -129,33 +130,26 @@ El servidor de SonarQube (servicio `sonarqube` en `docker-compose.yml`) debe est
 
 ```
 
-# back + api-gateway (un solo proyecto Sonar, siip-back), desde la raíz:
+# back (dgicp-siip2-backend-srv) y/o api-gateway (siip-api-gateway), cada uno en su carpeta:
 $env:SONAR_HOST_URL = "http://localhost:9000"
 
 $env:SONAR_TOKEN = "$((Get-Content .env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
 
+cd back          # o cd api-gateway
 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
+cd ..
 
-# front (proyecto siip-front separado):
+# front (proyecto dgicp-siip2-frontend-ui separado; usa el mismo $env:SONAR_HOST_URL de arriba):
 cd front
 npm run generate:api
 $env:SONAR_TOKEN = "$((Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
 npm run sonar
 ```
 
-Entrá a http://localhost:9000 y revisá el dashboard del proyecto correspondiente (`siip-back`/`siip-front`): si el Quality Gate queda en rojo o aparecen issues **New Code** (bugs, vulnerabilidades, code smells bloqueantes) en las líneas que agregaste, resolvelos antes de pedir revisión — no hace falta salir a cero en deuda técnica preexistente, solo en lo que tu PR introduce. Ver [REFERENCE.md](./REFERENCE.md#análisis-estático-sonarqube) para detalles de configuración (exclusiones, cobertura, troubleshooting).
+Entrá a http://localhost:9000 y revisá el dashboard del proyecto correspondiente (`dgicp-siip2-backend-srv`/`siip-api-gateway`/`dgicp-siip2-frontend-ui`): si el Quality Gate queda en rojo o aparecen issues **New Code** (bugs, vulnerabilidades, code smells bloqueantes) en las líneas que agregaste, resolvelos antes de pedir revisión — no hace falta salir a cero en deuda técnica preexistente, solo en lo que tu PR introduce. Ver [REFERENCE.md](./REFERENCE.md#análisis-estático-sonarqube) para detalles de configuración (exclusiones, cobertura, troubleshooting).
 
-#### ⚠️ No confundir con el proyecto Sonar institucional (`dgicp-siip2-backend-srv`)
+#### ⚠️ `back` usa el project key institucional (`dgicp-siip2-backend-srv`)
 
-`back/pom.xml` define su **propio** `sonar.projectKey` (`dgicp-siip2-backend-srv`) y su propio `sonar.host.url` (el servidor institucional `alcm.mh.gob.sv`), independiente del `siip-back` de arriba — ese es el project key registrado para el pipeline de Tekton/Developer Hub, no el del flujo de desarrollo local. **Los dos no comparten resultados entre sí**: correr el escaneo desde la raíz actualiza `siip-back`; correr el mismo comando parado **dentro de `back/`** actualiza `dgicp-siip2-backend-srv`.
+`back/pom.xml` define `sonar.projectKey` = `dgicp-siip2-backend-srv` (el registrado para el pipeline de Tekton/Developer Hub) y `sonar.host.url` = servidor institucional (`alcm.mh.gob.sv`). Por eso el `$env:SONAR_HOST_URL` del bloque de arriba es **obligatorio** para `back`: sin él, el análisis se manda al servidor institucional en vez de tu SonarQube local (el perfil `sonar-host-desde-env` de `back/pom.xml` solo se activa si esa variable existe). Para `api-gateway` es redundante: su `pom.xml` ya apunta a `http://localhost:9000`.
 
-Si necesitás actualizar específicamente `dgicp-siip2-backend-srv` en tu SonarQube local (por ejemplo porque ya tenías ese dashboard en favoritos de antes), corré:
-
-```
-cd back
-$env:SONAR_HOST_URL = "http://localhost:9000"
-$env:SONAR_TOKEN = "$((Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
-mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
-```
-
-El `$env:SONAR_HOST_URL` acá es obligatorio (a diferencia del bloque de arriba, donde es redundante): sin él, `back/pom.xml` manda el análisis al servidor institucional en vez de tu SonarQube local. Antes de revisar resultados, fijate bien en la URL `id=...` que imprime el comando al final (`ANALYSIS SUCCESSFUL, you can find the results at: ...`) — te dice a cuál de los dos proyectos subió, sin necesidad de adivinar por el dashboard que tengas abierto.
+Antes de revisar resultados, fijate en la URL `id=...` que imprime el comando al final (`ANALYSIS SUCCESSFUL, you can find the results at: ...`) — te dice a qué servidor y proyecto subió.

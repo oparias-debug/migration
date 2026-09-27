@@ -343,12 +343,6 @@ public class Pre29ConsultarBuscar {
         throw new IllegalStateException("No queda ningún CUP libre que contenga " + valor);
     }
 
-    /** {@code numero} con ceros a la izquierda hasta completar {@code digitos} caracteres. */
-    private static String conCerosALaIzquierda(int numero, int digitos) {
-        String texto = Integer.toString(numero);
-        return "0".repeat(Math.max(0, digitos - texto.length())) + texto;
-    }
-
     private void prepararUnidades() {
         sufijo = UUID.randomUUID().toString().substring(0, 8);
         institucion = institucionRepository

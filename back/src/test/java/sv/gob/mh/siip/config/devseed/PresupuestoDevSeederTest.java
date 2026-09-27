@@ -1,5 +1,6 @@
 package sv.gob.mh.siip.config.devseed;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -87,6 +88,41 @@ class PresupuestoDevSeederTest {
                 && f.getProyecto().getId().equals(99L) && !f.getProductos().isEmpty()));
         verify(componenteRepository, times(2)).save(argThat((Componente c) -> c.getProyecto() != null
                 && c.getProyecto().getId().equals(99L) && c.getCodigoProducto() != null));
+    }
+
+    @Test
+    void seed_falla_cuandoFaltaLaInstitucion() {
+        when(proyectoRepository.findByNombreContainingIgnoreCase(anyString())).thenReturn(List.of());
+        when(institucionRepository.findByCodigo("MH-DGICP")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(seeder::seed).isInstanceOf(IllegalStateException.class).hasMessageContaining("MH-DGICP");
+        verify(proyectoRepository, never()).save(any());
+    }
+
+    @Test
+    void seed_falla_cuandoFaltaLaUnidadEjecutora() {
+        when(proyectoRepository.findByNombreContainingIgnoreCase(anyString())).thenReturn(List.of());
+        when(unidadEjecutoraRepository.findByCodigo("URP-01")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(seeder::seed).isInstanceOf(IllegalStateException.class).hasMessageContaining("URP-01");
+    }
+
+    @Test
+    void seed_falla_cuandoFaltaElSector() {
+        when(proyectoRepository.findByNombreContainingIgnoreCase(anyString())).thenReturn(List.of());
+        when(sectorActividadRepository.findByCodigo(anyString())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(seeder::seed).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Educación y cultura");
+    }
+
+    @Test
+    void seed_falla_cuandoFaltaElEjeTematico() {
+        when(proyectoRepository.findByNombreContainingIgnoreCase(anyString())).thenReturn(List.of());
+        when(ejeTematicoRepository.findByCodigo(anyString())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(seeder::seed).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Infraestructura Educativa");
     }
 
     @Test

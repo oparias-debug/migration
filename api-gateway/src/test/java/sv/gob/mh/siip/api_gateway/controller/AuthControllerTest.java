@@ -1,8 +1,13 @@
 package sv.gob.mh.siip.api_gateway.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 
@@ -14,7 +19,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 import reactor.core.publisher.Mono;
@@ -46,7 +53,10 @@ class AuthControllerTest {
         private AuthController authController;
         private WebTestClient webTestClient;
 
-        private static final String KEYCLOAK_TOKEN_URI = "http://localhost:8080/auth/realms/test/protocol/openid-connect/token";
+        private static final String KEYCLOAK_TOKEN_URI =
+                        "http://localhost:8080/auth/realms/test/protocol/openid-connect/token";
+        private static final String FORMATO_BODY_LOGIN =
+                        "client_id=%s&client_secret=%s&username=%s&password=%s&grant_type=password";
         private final String clientId = "test-client";
         private final String clientSecret = "test-secret";
 
@@ -149,7 +159,7 @@ class AuthControllerTest {
                 // Verificar que se llamó al WebClient
                 verify(webClient).post();
                 verify(requestBodySpec).bodyValue(
-                                String.format("client_id=%s&client_secret=%s&username=%s&password=%s&grant_type=password",
+                                String.format(FORMATO_BODY_LOGIN,
                                                 clientId, clientSecret, "", "testpass"));
         }
 
@@ -177,7 +187,7 @@ class AuthControllerTest {
                 // Verificar que se llamó al WebClient
                 verify(webClient).post();
                 verify(requestBodySpec).bodyValue(
-                                String.format("client_id=%s&client_secret=%s&username=%s&password=%s&grant_type=password",
+                                String.format(FORMATO_BODY_LOGIN,
                                                 clientId, clientSecret, "testuser", ""));
         }
 
@@ -246,5 +256,56 @@ class AuthControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .exchange()
                                 .expectStatus().isBadRequest();
+        }
+
+        private void setupWebClientMocksRefresh() {
+                when(webClient.post()).thenReturn(requestBodyUriSpec);
+                when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+                when(requestBodySpec.contentType(any(MediaType.class))).thenReturn(requestBodySpec);
+                doReturn(requestHeadersSpec).when(requestBodySpec).body(any(BodyInserter.class));
+                when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        }
+
+        @Test
+        void refreshToken_ConTokenValido_DeberiaRetornarNuevoToken() {
+                setupWebClientMocksRefresh();
+                TokenResponse expectedResponse = new TokenResponse();
+                expectedResponse.setAccessToken("nuevo-access-token");
+                when(responseSpec.bodyToMono(TokenResponse.class)).thenReturn(Mono.just(expectedResponse));
+
+                StepVerifier.create(authController.refreshToken("refresh-123"))
+                                .expectNext(expectedResponse)
+                                .verifyComplete();
+
+                verify(requestBodyUriSpec).uri(KEYCLOAK_TOKEN_URI);
+                verify(requestBodySpec).contentType(MediaType.APPLICATION_FORM_URLENCODED);
+        }
+
+        @Test
+        void refreshToken_CuandoKeycloakRechaza_DeberiaRetornarUnauthorized() {
+                setupWebClientMocksRefresh();
+                WebClientResponseException rechazo = WebClientResponseException.create(
+                                HttpStatus.BAD_REQUEST.value(), "Bad Request", null, null, null);
+                when(responseSpec.bodyToMono(TokenResponse.class)).thenReturn(Mono.error(rechazo));
+
+                StepVerifier.create(authController.refreshToken("refresh-vencido"))
+                                .expectErrorSatisfies(error -> {
+                                        ResponseStatusException ex = (ResponseStatusException) error;
+                                        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+                                        assertEquals("No se pudo refrescar el token", ex.getReason());
+                                        assertEquals(rechazo, ex.getCause());
+                                })
+                                .verify();
+        }
+
+        @Test
+        void refreshToken_CuandoFallaPorOtroMotivo_DeberiaPropagarError() {
+                setupWebClientMocksRefresh();
+                IllegalStateException falla = new IllegalStateException("sin conexión");
+                when(responseSpec.bodyToMono(TokenResponse.class)).thenReturn(Mono.error(falla));
+
+                StepVerifier.create(authController.refreshToken("refresh-123"))
+                                .expectErrorMatches(falla::equals)
+                                .verify();
         }
 }

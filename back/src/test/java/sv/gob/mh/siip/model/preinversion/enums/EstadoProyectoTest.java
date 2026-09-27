@@ -1,6 +1,7 @@
 package sv.gob.mh.siip.model.preinversion.enums;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,5 +22,35 @@ class EstadoProyectoTest {
         Set<String> contrato = Stream.of(EstadoProyectoDto.values()).map(Enum::name).collect(Collectors.toSet());
 
         assertThat(dominio).containsExactlyInAnyOrderElementsOf(contrato);
+    }
+
+    @Test
+    void fromEtiquetaUi_conEtiquetaConocida_devuelveElEstado() {
+        assertThat(EstadoProyecto.fromEtiquetaUi("En Elaboración")).isEqualTo(EstadoProyecto.EN_REGISTRO);
+        assertThat(EstadoProyecto.fromEtiquetaUi("Proyecto con Opinión Técnica"))
+                .isEqualTo(EstadoProyecto.PROYECTO_CON_OT);
+    }
+
+    @Test
+    void fromEtiquetaUi_esLaInversaDeGetEtiquetaUi() {
+        for (EstadoProyecto estado : EstadoProyecto.values()) {
+            assertThat(EstadoProyecto.fromEtiquetaUi(estado.getEtiquetaUi())).isEqualTo(estado);
+        }
+    }
+
+    @Test
+    void fromEtiquetaUi_conEtiquetaDesconocida_lanzaIllegalArgument() {
+        assertThatThrownBy(() -> EstadoProyecto.fromEtiquetaUi("Inexistente"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Estado no reconocido: Inexistente");
+    }
+
+    @Test
+    void bloqueaFormulacion_soloEnViabilidad() {
+        Set<EstadoProyecto> bloqueantes = Stream.of(EstadoProyecto.values())
+                .filter(EstadoProyecto::bloqueaFormulacion)
+                .collect(Collectors.toSet());
+
+        assertThat(bloqueantes).containsExactly(EstadoProyecto.EN_VIABILIDAD);
     }
 }

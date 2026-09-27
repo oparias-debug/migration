@@ -54,4 +54,28 @@ class CatalogoIndicadoresServiceImplTest {
 
         assertThat(resultado).extracting("codigo").containsExactly("IND-01");
     }
+
+    @Test
+    void listarIndicadoresResultado_conBusquedaEnBlanco_devuelveTodos() {
+        when(indicadorResultadoRepository.findAllByOrderByNombreAsc()).thenReturn(List.of(
+                IndicadorResultado.builder().id(1L).codigo("IND-01").nombre("Beneficiarios directos").build(),
+                IndicadorResultado.builder().id(2L).codigo("IND-02").nombre("Metros cuadrados construidos").build()));
+
+        var resultado = service.listarIndicadoresResultado("   ");
+
+        assertThat(resultado).hasSize(2);
+    }
+
+    @Test
+    void listarIndicadoresResultado_conBusqueda_coincideSoloPorDescripcion() {
+        when(indicadorResultadoRepository.findAllByOrderByNombreAsc()).thenReturn(List.of(
+                IndicadorResultado.builder().id(1L).codigo("IND-01").nombre("Cobertura")
+                        .descripcion("Hogares con AGUA potable").build(),
+                IndicadorResultado.builder().id(2L).codigo("IND-02").nombre("Cobertura eléctrica")
+                        .descripcion("Hogares conectados a la red").build()));
+
+        var resultado = service.listarIndicadoresResultado("agua");
+
+        assertThat(resultado).extracting("codigo").containsExactly("IND-01");
+    }
 }

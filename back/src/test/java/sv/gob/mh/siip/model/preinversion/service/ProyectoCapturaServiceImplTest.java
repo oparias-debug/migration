@@ -156,6 +156,22 @@ class ProyectoCapturaServiceImplTest {
     }
 
     @Test
+    void listarProyectosCaptura_tecnicoUrp_consultaAcotadoASuUnidadEjecutora() {
+        UnidadEjecutora unidad = mock(UnidadEjecutora.class);
+        when(unidad.getId()).thenReturn(4L);
+        when(actorContexto.exigir()).thenReturn(Usuario.builder().id(2L).rol(RolUsuario.TECNICO_URP)
+                .unidadEjecutora(unidad).build());
+        when(repository.findAll(any(Specification.class), eq(PageRequest.of(0, 20))))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        ProyectosCapturaResponseDto response = service.listarProyectosCaptura(FILTRO_VACIO, null, null);
+
+        assertThat(response.getContenido()).isEmpty();
+        // RN01: la Unidad Ejecutora del Técnico URP se lee para acotar la consulta.
+        verify(unidad).getId();
+    }
+
+    @Test
     void listarProyectosCapturaSinActorAutenticadoLanzaNoAutenticado() {
         when(actorContexto.exigir()).thenThrow(new NoAutenticadoException("No autenticado"));
 

@@ -60,22 +60,6 @@
       {
         "name": "ADMINISTRADOR_CALENDARIO",
         "description": "Administrador de Calendarios (SIIP). Administra los calendarios bajo su responsabilidad (CU-ADM-04, RN12)."
-      },
-      {
-        "name": "TECNICO_SEG",
-        "description": "[SUPUESTO] Técnico de Seguimiento (SIIP). Rol identificado en Anexo C sin casos de uso implementados aún; no incorporado formalmente a catalogo-actores.md."
-      },
-      {
-        "name": "TECNICO_OPE",
-        "description": "[SUPUESTO] Técnico Operativo (SIIP). Rol identificado en Anexo C sin casos de uso implementados aún; no incorporado formalmente a catalogo-actores.md."
-      },
-      {
-        "name": "TECNICO_SIAF",
-        "description": "[SUPUESTO] Técnico de interfaz con SIAF (SIIP). Rol identificado en Anexo C, relacionado con la integración a un sistema externo (ver SistemaExterno/CU-ITF-01); sin casos de uso implementados aún."
-      },
-      {
-        "name": "INGENIERO_DINAFI",
-        "description": "[SUPUESTO] Ingeniero DINAFI (SIIP). Rol identificado en Anexo C sin casos de uso implementados aún; no incorporado formalmente a catalogo-actores.md."
       }
     ]
   },
@@ -380,62 +364,6 @@
       ],
       "realmRoles": [
         "ADMINISTRADOR_CALENDARIO"
-      ]
-    },
-    {
-      "username": "tecnico.seg",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "tecnico.seg@example.com",
-      "firstName": "Tecnico",
-      "lastName": "Seguimiento",
-      "credentials": [
-        { "type": "password", "value": "tecnicoSeg123", "temporary": false }
-      ],
-      "realmRoles": [
-        "TECNICO_SEG"
-      ]
-    },
-    {
-      "username": "tecnico.ope",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "tecnico.ope@example.com",
-      "firstName": "Tecnico",
-      "lastName": "Operativo",
-      "credentials": [
-        { "type": "password", "value": "tecnicoOpe123", "temporary": false }
-      ],
-      "realmRoles": [
-        "TECNICO_OPE"
-      ]
-    },
-    {
-      "username": "tecnico.siaf",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "tecnico.siaf@example.com",
-      "firstName": "Tecnico",
-      "lastName": "SIAF",
-      "credentials": [
-        { "type": "password", "value": "tecnicoSiaf123", "temporary": false }
-      ],
-      "realmRoles": [
-        "TECNICO_SIAF"
-      ]
-    },
-    {
-      "username": "ingeniero.dinafi",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "ingeniero.dinafi@example.com",
-      "firstName": "Ingeniero",
-      "lastName": "DINAFI",
-      "credentials": [
-        { "type": "password", "value": "ingenieroDinafi123", "temporary": false }
-      ],
-      "realmRoles": [
-        "INGENIERO_DINAFI"
       ]
     }
   ]

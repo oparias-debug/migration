@@ -38,6 +38,36 @@ services:
     networks: 
       - microred
 
+  # Compila el front (npm ci + npm run build -> front/dist/) sin necesitar Node en el host. front/Dockerfile solo empaqueta un dist/ ya compilado (en la entidad lo
+  # compila el pipeline Tekton), y "up --build" construye las imágenes ANTES de levantar
+  # cualquier contenedor, así que esto va como paso previo, no como dependencia de front:
+  #   docker compose run --rm front-build
+  #   docker compose up -d --build front
+  # Con profile propio para que "docker compose up" no lo levante solo.
+  front-build:
+    profiles: ["build"]
+    build:
+      context: ./front
+      # Misma situación que el pipeline de la entidad: Node sin Java. src/api/generated/ va
+      # versionado, así que npm run build no necesita openapi-generator-cli.
+      dockerfile_inline: |
+        FROM registry.access.redhat.com/ubi9/nodejs-22@sha256:510a73eeff392500e22eadf976686dbd16c27eaa1a8808f8f51b29fec950f68c
+        # El volumen anónimo de node_modules (abajo) hereda dueño y permisos de esta carpeta;
+        # sin crearla aquí nace de root y npm ci (usuario 1001) no puede escribir.
+        USER root
+        RUN mkdir -p /opt/app-root/src/node_modules && chown 1001:0 /opt/app-root/src/node_modules
+        USER 1001
+    working_dir: /opt/app-root/src
+    environment:
+      # En esta imagen HOME = /opt/app-root/src, que es el bind mount: sin esto la caché de
+      # npm termina en front/.npm del host.
+      npm_config_cache: /tmp/.npm
+    command: ["bash", "-c", "npm ci && npm run build"]
+    volumes:
+      - ./front:/opt/app-root/src
+      # node_modules propio del contenedor (binarios Linux): no pisa el del host.
+      - /opt/app-root/src/node_modules
+
   front:
      build:
        context: ./front

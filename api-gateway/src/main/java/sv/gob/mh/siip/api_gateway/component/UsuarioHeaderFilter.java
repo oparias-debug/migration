@@ -3,6 +3,9 @@ package sv.gob.mh.siip.api_gateway.component;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -21,6 +24,7 @@ public class UsuarioHeaderFilter implements GlobalFilter, Ordered {
 
     private static final String HEADER_USUARIO = "X-Usuario";
     private static final String CLAIM_USUARIO = "preferred_username";
+    private static final int DESPLAZAMIENTO_ORDEN = 10;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -30,13 +34,14 @@ public class UsuarioHeaderFilter implements GlobalFilter, Ordered {
                 // flatMap + Mono.justOrEmpty (no .map): getClaimAsString devuelve null si el
                 // claim no está presente, y Reactor no permite que un mapper de .map() emita
                 // null (lanza NullPointerException: "The mapper ... returned a null value").
-                .flatMap(jwt -> Mono.justOrEmpty(jwt.getClaimAsString(CLAIM_USUARIO)))
-                .filter(username -> !username.isBlank())
-                .map(username -> exchange.mutate()
-                        .request(request -> request.headers(headers -> {
-                            headers.remove(HEADER_USUARIO);
-                            headers.set(HEADER_USUARIO, username);
-                        }))
+                .flatMap((Jwt jwt) -> Mono.justOrEmpty(jwt.getClaimAsString(CLAIM_USUARIO)))
+                .filter((String username) -> !username.isBlank())
+                .map((String username) -> exchange.mutate()
+                        .request((ServerHttpRequest.Builder request) -> request
+                                .headers((HttpHeaders headers) -> {
+                                    headers.remove(HEADER_USUARIO);
+                                    headers.set(HEADER_USUARIO, username);
+                                }))
                         .build())
                 .defaultIfEmpty(exchange)
                 .flatMap(chain::filter);
@@ -44,6 +49,6 @@ public class UsuarioHeaderFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE + 10;
+        return Ordered.HIGHEST_PRECEDENCE + DESPLAZAMIENTO_ORDEN;
     }
 }

@@ -41,7 +41,7 @@ import { createHttpClient } from './httpClient';
 // baseURL: '/back' en vez de reusar httpClient (baseURL: '/'), que haría que
 // las requests salieran a /proyectos en lugar de /back/proyectos.
 // api-gateway reescribe /back/** -> back:8081/** (RewritePath, ver
-// nginx.conf.template / application.yml de api-gateway).
+// httpd.conf / application.yml de api-gateway).
 const preinversionAxios = createHttpClient('/back');
 export const preinversionApi = new PreinversinRegistroYSolicitudDeCUPApi(undefined, undefined, preinversionAxios);
 // Catálogos seleccionables (sectores, ejes temáticos, ejes del Plan de Gobierno, planes

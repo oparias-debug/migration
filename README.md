@@ -19,13 +19,13 @@ Si algo no te queda claro (del código, de un término de negocio, del contrato 
 
 ## Arquitectura
 
-El proyecto es un **multi-módulo Maven** (`pom.xml` raíz de tipo `pom`) compuesto por los siguientes microservicios:
+El proyecto se compone de los siguientes microservicios. `back`, `api-gateway` y `front` son proyectos **independientes** (cada uno con su propio repositorio en la entidad): no hay `pom.xml` agregador en la raíz, así que `back` y `api-gateway` se compilan cada uno dentro de su carpeta.
 
 | Módulo | Puerto | Descripción |
 |---|---|---|
 | `api-gateway` | 8080 | Spring Cloud Gateway (WebFlux). Enruta las peticiones externas hacia `back`, aplica seguridad OAuth2/OIDC contra Keycloak, `TokenRelay`, *Circuit Breaker* y *Retry*, y expone `/auth/login`/`/auth/refresh` (con sus propios DTOs `LoginRequest`/`TokenResponse`, package `sv.gob.mh.siip.api_gateway.dto`) contra el token endpoint de Keycloak. Expone Swagger UI agregado. |
 | `back` | 8081 (solo interno) | Backend único del sistema: catálogos (departamentos, municipios, distritos, sectores, etapas, componentes ambientales, tablas de rangos, catálogos generales), gestión de usuarios/roles/permisos/grupos/objetos protegidos, gestión de proyectos, procesos de preinversión y **motor de workflow (Flowable BPM)** para el registro/aprobación de proyectos. Incluye sus propios DTOs/enums/utilidades (`sv.gob.mh.siip.dto`, `.enums`, `.util`) — antes vivían en el módulo `siip-comun`, fusionado aquí porque ya era su único consumidor real. No tiene Spring Security propio: confía en que solo `api-gateway` lo invoque, por eso no publica su puerto al host. |
-| `front` | 80 (interno 8080) | SPA en **React + Vite (TypeScript)**, servida en producción por **Nginx**. Nginx actúa como reverse-proxy same-origin de `/auth/**` y `/back/**` hacia `api-gateway` (evita tener que habilitar CORS); el login se autentica contra Keycloak a través de `api-gateway`. No es un módulo Maven — se compila con npm/Vite dentro de su propio `Dockerfile` (multi-stage: build Node + imagen Nginx). |
+| `front` | 80 (interno 8080) | SPA en **React + Vite (TypeScript)**. Se sirve con **Apache HTTPD** sobre UBI 9 (`front/Dockerfile`, el mismo en local y en la entidad), que actúa como reverse-proxy same-origin de `/auth/**` y `/back/**` hacia `api-gateway` (evita tener que habilitar CORS). El `Dockerfile` solo empaqueta `dist/`: en la entidad lo compila el pipeline y en local el servicio `front-build` de `docker-compose.yml`. El login se autentica contra Keycloak a través de `api-gateway`. No es un proyecto Maven. |
 | `postgres` | 5432 | Base de datos PostgreSQL, con esquema de negocio (`public`) y esquema de Flowable (`flowable`). |
 | `keycloak` | 8085 | Proveedor de identidad (OIDC) para autenticación/autorización de usuarios y del propio API Gateway. |
 
@@ -35,13 +35,13 @@ Todos los servicios comparten la red Docker `microred` y `back` espera a que `po
 
 ```mermaid
 flowchart LR
-    Usuario -->|HTTP| Front["front: React SPA vía Nginx (80)"]
+    Usuario -->|HTTP| Front["front: React SPA vía HTTPD (80)"]
     Front -->|proxy /auth, /back| Gateway["api-gateway (8080)"]
     Gateway --> Back["back (8081)"]
     Gateway <-->|validación de tokens / login| Keycloak["Keycloak (8085)"]
 ```
 
-El navegador solo habla con `front` (un único origen); es Nginx quien reenvía `/auth/**` y `/back/**` hacia `api-gateway` dentro de la red Docker. En desarrollo local (`npm run dev`), el servidor de Vite cumple ese mismo rol de proxy (ver [SETUP.md](./SETUP.md) para levantarlo).
+El navegador solo habla con `front` (un único origen); es su Apache HTTPD quien reenvía `/auth/**` y `/back/**` hacia `api-gateway` dentro de la red Docker. En desarrollo local (`npm run dev`), el servidor de Vite cumple ese mismo rol de proxy (ver [SETUP.md](./SETUP.md) para levantarlo).
 
 ### Motor de procesos (Flowable)
 

@@ -64,6 +64,35 @@
       "reglas": [
         { "regla": "xml:S1135", "nota": "Complete the task associated to this 'TODO' comment (pom.xml; ojo: también detecta la palabra española 'todo')" }
       ]
+    },
+    {
+      "_comentario": [
+        "Reglas del front (dgicp-siip2-frontend-ui) sacadas del primer análisis en el Sonar de la",
+        "entidad (2026-09-26). Claves confirmadas contra el Sonar local por el título de la regla.",
+        "No se lista typescript:S7727 ('Do not pass function X directly to .some(...)'): ya viene",
+        "en Sonar way. S1451 queda con headerFormat vacío porque no se sabe qué cabecera exige la",
+        "entidad; con el formato vacío la regla no marca nada en local: copiar el valor de",
+        "'headerFormat' (y 'isRegularExpression') desde el detalle de la regla en su Sonar."
+      ],
+      "nombre": "Entidad MH",
+      "lenguaje": "ts",
+      "hereda_de": "Sonar way",
+      "reglas": [
+        { "regla": "typescript:S1451", "nota": "Add or update the header of this file (headerFormat de la entidad: pendiente)" },
+        { "regla": "typescript:S3524", "params": { "parameter_parens": "false", "body_braces": "false" }, "nota": "Remove parentheses around the parameter of this arrow function" },
+        { "regla": "typescript:S3499", "nota": "Group all shorthand properties at either the beginning or end of this object declaration" },
+        { "regla": "typescript:S109",  "nota": "No magic number: N" },
+        { "regla": "typescript:S7764", "nota": "Prefer `globalThis` over `window`" },
+        { "regla": "typescript:S121",  "nota": "Expected { after 'if' condition / after 'else'" },
+        { "regla": "typescript:S7728", "nota": "Use `for…of` instead of `.forEach(…)`" },
+        { "regla": "typescript:S3801", "nota": "Refactor this function to use \"return\" consistently" },
+        { "regla": "typescript:S4325", "nota": "This assertion is unnecessary since it does not change the type of the expression" },
+        { "regla": "typescript:S1541", "params": { "Threshold": "10" }, "nota": "Function has a complexity of N which is greater than 10 authorized" },
+        { "regla": "typescript:S117",  "params": { "format": "^[_$A-Za-z][$A-Za-z0-9]*$|^[_$A-Z][_$A-Z0-9]+$" }, "nota": "Rename this parameter \"error_\" to match the regular expression ..." },
+        { "regla": "typescript:S1192", "params": { "threshold": "3" }, "nota": "Define a constant instead of duplicating this literal N times" },
+        { "regla": "typescript:S7735", "nota": "Unexpected negated condition" },
+        { "regla": "typescript:S6480", "nota": "JSX props should not use arrow functions" }
+      ]
     }
   ],
   "no_disponibles_en_community": {

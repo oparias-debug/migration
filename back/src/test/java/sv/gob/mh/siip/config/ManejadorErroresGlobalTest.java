@@ -18,7 +18,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import sv.gob.mh.siip.exception.AccesoDenegadoException;
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
+import sv.gob.mh.siip.exception.FormatoArchivoNoSoportadoException;
+import sv.gob.mh.siip.exception.InconsistenciaFechaException;
 import sv.gob.mh.siip.exception.NoAutenticadoException;
+import sv.gob.mh.siip.exception.OperacionNoPermitidaException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
 import sv.gob.mh.siip.exception.ReglaNegocioException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
@@ -67,7 +70,8 @@ class ManejadorErroresGlobalTest {
     @DisplayName("Debería manejar ReglaNegocioException y retornar status 422 con su código")
     void testManejarReglaNegocio() {
         ResponseEntity<ErrorDto> conCodigo = manejadorErroresGlobal
-                .manejarReglaNegocio(new ReglaNegocioException("DOCUMENTO_PREINVERSION_REQUERIDO", "Falta el documento"));
+                .manejarReglaNegocio(
+                        new ReglaNegocioException("DOCUMENTO_PREINVERSION_REQUERIDO", "Falta el documento"));
         ResponseEntity<ErrorDto> sinCodigo = manejadorErroresGlobal
                 .manejarReglaNegocio(new ReglaNegocioException(null, "Regla incumplida"));
 
@@ -191,5 +195,50 @@ class ManejadorErroresGlobalTest {
         ErrorDto body = responseEntity.getBody();
         assertNotNull(body);
         assertTrue(body.getDetalles().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Debería manejar FormatoArchivoNoSoportadoException y retornar status 415")
+    void testManejarFormatoArchivoNoSoportado() {
+        ResponseEntity<ErrorDto> responseEntity = manejadorErroresGlobal
+                .manejarFormatoArchivoNoSoportado(new FormatoArchivoNoSoportadoException("El archivo no es PDF/A"));
+
+        assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, responseEntity.getStatusCode());
+        ErrorDto body = responseEntity.getBody();
+        assertNotNull(body);
+        assertEquals("FORMATO_ARCHIVO_NO_SOPORTADO", body.getCodigo());
+        assertEquals("El archivo no es PDF/A", body.getMensaje());
+    }
+
+    @Test
+    @DisplayName("Debería manejar InconsistenciaFechaException con y sin código propio y retornar status 422")
+    void testManejarInconsistenciaFecha() {
+        ResponseEntity<ErrorDto> conCodigo = manejadorErroresGlobal
+                .manejarInconsistenciaFecha(new InconsistenciaFechaException("RANGO_INVERTIDO", "Rango invertido"));
+        ResponseEntity<ErrorDto> sinCodigo = manejadorErroresGlobal
+                .manejarInconsistenciaFecha(new InconsistenciaFechaException("Fuera del periodo"));
+
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, conCodigo.getStatusCode());
+        ErrorDto body = conCodigo.getBody();
+        assertNotNull(body);
+        assertEquals("RANGO_INVERTIDO", body.getCodigo());
+        assertEquals("Rango invertido", body.getMensaje());
+        ErrorDto generico = sinCodigo.getBody();
+        assertNotNull(generico);
+        assertEquals("INCONSISTENCIA_FECHA", generico.getCodigo());
+        assertEquals("Fuera del periodo", generico.getMensaje());
+    }
+
+    @Test
+    @DisplayName("Debería manejar OperacionNoPermitidaException y retornar status 405")
+    void testManejarOperacionNoPermitida() {
+        ResponseEntity<ErrorDto> responseEntity = manejadorErroresGlobal
+                .manejarOperacionNoPermitida(new OperacionNoPermitidaException("No se puede eliminar"));
+
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, responseEntity.getStatusCode());
+        ErrorDto body = responseEntity.getBody();
+        assertNotNull(body);
+        assertEquals("OPERACION_NO_PERMITIDA", body.getCodigo());
+        assertEquals("No se puede eliminar", body.getMensaje());
     }
 }

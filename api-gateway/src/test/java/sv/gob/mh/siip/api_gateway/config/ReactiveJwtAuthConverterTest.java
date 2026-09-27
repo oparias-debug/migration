@@ -65,6 +65,19 @@ class ReactiveJwtAuthConverterTest {
     }
 
     @Test
+    void shouldIgnoreRolesClaimThatIsNotAList() {
+        Jwt jwt = mock(Jwt.class);
+        Map<String, Object> realmAccess = Map.of("roles", "admin");
+        when(jwt.getClaim("realm_access")).thenReturn(realmAccess);
+
+        Mono<AbstractAuthenticationToken> result = converter.convert(jwt);
+
+        StepVerifier.create(result)
+                .assertNext(token -> assertThat(token.getAuthorities()).isEmpty())
+                .verifyComplete();
+    }
+
+    @Test
     void shouldIgnoreNonStringRoles() {
         Jwt jwt = mock(Jwt.class);
         Map<String, Object> realmAccess = Map.of("roles", List.of("admin", 123, true));

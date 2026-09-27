@@ -20,6 +20,7 @@ public class CustomHeaderFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return 1; // Prioridad del filtro
+        // Prioridad del filtro
+        return 1;
     }
 }

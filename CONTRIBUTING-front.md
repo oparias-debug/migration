@@ -14,7 +14,7 @@ Mirá `preinversion`/CU-PRE-01 como referencia completa: `front/src/api/preinver
    ```
    npm run generate:api
    ```
-   (para un dominio nuevo, agregá antes un script `generate:api:<dominio>` en `front/package.json`, análogo al existente, apuntando a `openapi/<dominio>/CU-XX.openapi.yaml` y `-o src/api/generated/<dominio>`).
+   (para un dominio nuevo, agregá antes un script `generate:api:<dominio>` en `front/package.json`, análogo al existente, apuntando a `openapi/<dominio>/CU-XX.openapi.yaml` y `-o src/api/generated/<dominio>`). **Commiteá lo generado** junto con el `.yaml`: el pipeline de la entidad no tiene Java y compila con lo que está en el repo.
 4. Creá (o extendé) el wrapper `front/src/api/<dominio>Api.ts`: instanciá las clases generadas (una por `tag` del yaml) pasándoles `createHttpClient('/back')`. Reexportá ahí los tipos (`Dto`s) que la UI necesite.
 5. Implementá la pantalla/componente en `front/src/features/<dominio>/<caso-de-uso>/`, siguiendo el patrón de `features/preinversion/proyectos/`: `react-hook-form` + un schema `zod` en `<algo>FormSchema.ts`, reutilizando los componentes genéricos de `src/components/form/` (`FormRow`, `DatePickerInput`) y `src/components/table/` (`DataTable`, `Pagination`) donde aplique.
 6. Conectá la ruta/menú si hace falta (reemplazando el placeholder "🚧 Página en Construcción" del módulo correspondiente en el sidebar/routing).
@@ -33,13 +33,13 @@ Mirá `preinversion`/CU-PRE-01 como referencia completa: `front/src/api/preinver
 - Tu `.feature`/`.openapi.yaml` (copia idéntica de la del back — ver [CONTRIBUTING.md](./CONTRIBUTING.md)).
 
 🚫 No toques:
-- Código generado: `front/src/api/generated/`. Se regenera solo; si lo editás a mano, se pierde en el próximo build.
+- Código generado: `front/src/api/generated/`. Si lo editás a mano, se pierde en el próximo `npm run generate:api`.
 - El `httpClient.ts` genérico del front — cada wrapper de dominio instancia el cliente generado con `createHttpClient('/back')` propio (ver nota en `preinversionApi.ts`); no reutilices el `httpClient` genérico, porque el cliente generado ignora su `basePath` si el axios que recibe ya trae `baseURL` distinto.
 
 ## Puntos que suelen confundir a alguien nuevo
 
 - El `.feature` y el `.openapi.yaml` están **duplicados a propósito** en `back` y `front` — no hay generación cruzada entre módulos ni symlinks. Si editás uno, editá el otro a mano.
-- El código generado (cliente TS en `front/src/api/generated/`) **nunca se edita a mano** y **nunca se versiona** — se regenera en cada `npm run generate:api`.
+- El código generado (cliente TS en `front/src/api/generated/`) **nunca se edita a mano**, pero **sí se versiona** (solo los `.ts`): el pipeline de la entidad no tiene Java para regenerarlo. Se regenera con `npm run generate:api` y se commitea junto con el `.yaml` que lo originó.
 
 ## Definition of Done (front)
 
@@ -62,7 +62,8 @@ El servidor de SonarQube (servicio `sonarqube` en `docker-compose.yml`) debe est
 ```
 cd front
 npm run generate:api
+$env:SONAR_HOST_URL = "http://localhost:9000"   # sin esto el análisis va al servidor institucional
 npm run sonar
 ```
 
-Entrá a http://localhost:9000 y revisá el dashboard del proyecto `siip-front`: si el Quality Gate queda en rojo o aparecen issues **New Code** (bugs, vulnerabilidades, code smells bloqueantes) en las líneas que agregaste, resolvelos antes de pedir revisión — no hace falta salir a cero en deuda técnica preexistente, solo en lo que tu PR introduce. Ver [REFERENCE.md](./REFERENCE.md#análisis-estático-sonarqube) para detalles de configuración.
+Entrá a http://localhost:9000 y revisá el dashboard del proyecto `dgicp-siip2-frontend-ui`: si el Quality Gate queda en rojo o aparecen issues **New Code** (bugs, vulnerabilidades, code smells bloqueantes) en las líneas que agregaste, resolvelos antes de pedir revisión — no hace falta salir a cero en deuda técnica preexistente, solo en lo que tu PR introduce. Ver [REFERENCE.md](./REFERENCE.md#análisis-estático-sonarqube) para detalles de configuración.

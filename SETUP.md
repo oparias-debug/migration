@@ -20,7 +20,9 @@ Versión corta para tener el sistema andando y confirmar que todo quedó bien co
 2. Copiá el bloque de [variables de entorno](#variables-de-entorno) a un archivo `.env` en la raíz del proyecto y completá los valores vacíos (`DB_USER`, `DB_PASSWORD`, `DB_DATABASE`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`) — para desarrollo local podés poner cualquier valor propio, no necesitan ser reales.
 3. Compilá y levantá todo:
    ```
-   mvn clean package install -DskipTests
+   cd back;        mvn clean package -DskipTests; cd ..
+   cd api-gateway; mvn clean package -DskipTests; cd ..
+   docker compose run --rm front-build
    docker-compose up --build -d
    ```
    La primera vez tarda varios minutos (descarga imágenes, compila `front`, arranca Keycloak). `back` espera a que `postgres` esté *healthy* antes de arrancar.
@@ -95,20 +97,24 @@ El perfil `dev` (`back/src/main/resources/application-dev.yml`) desactiva `ddl-a
 ### Todo el sistema
 
 ```
-mvn clean package install -DskipTests
+cd back;        mvn clean package -DskipTests; cd ..
+cd api-gateway; mvn clean package -DskipTests; cd ..
+docker compose run --rm front-build
 docker-compose up --build -d
 ```
 
-`mvn` compila `api-gateway` y `back` (`front` ya no es un módulo Maven — ver más abajo — y `siip-comun` se fusionó dentro de `back`). `docker-compose up --build` construye la imagen de `front` por separado, ejecutando `npm ci && npm run build` dentro de su propio `Dockerfile` y empaquetando el resultado en una imagen Nginx — no requiere el paso de `mvn` para nada relacionado con el frontend.
+`back` y `api-gateway` son proyectos Maven independientes (no hay `pom.xml` agregador en la raíz: cada uno va a su propio repositorio en la entidad), así que se compilan por separado (`front` no es un proyecto Maven — ver más abajo — y `siip-comun` se fusionó dentro de `back`). `front` sigue el mismo patrón: su `Dockerfile` (el mismo que usa el pipeline de la entidad) no compila, solo empaqueta `front/dist/` en Apache HTTPD. `docker compose run --rm front-build` hace esa compilación (`npm ci && npm run build`) en un contenedor con Node y Java, así que no hace falta tenerlos en el host; va antes de `up` porque Compose construye todas las imágenes antes de levantar cualquier contenedor. Las dos imágenes base del front son públicas (`registry.access.redhat.com`), así que esto funciona fuera de la VPN del MH.
 
 ### Un solo módulo (por ejemplo, `back`)
 
 ```
-mvn clean package install -DskipTests -pl back
+cd back
+mvn clean package -DskipTests
+cd ..
 docker compose up -d --build back
 ```
 
-> `back` y `api-gateway` ya no tienen dependencias internas entre sí ni con otro módulo Java (`siip-comun` se fusionó en `back`), así que compilar uno con `-pl` no requiere `-am`.
+> `back` y `api-gateway` no tienen dependencias entre sí ni con otro módulo Java (`siip-comun` se fusionó en `back`): cada uno compila solo.
 
 ### Frontend en desarrollo local (sin Docker)
 
@@ -118,7 +124,7 @@ npm install
 npm run dev
 ```
 
-El servidor de Vite (`http://localhost:5173`) proxya `/auth/**` y `/back/**` hacia `api-gateway` (por defecto `http://localhost:8080`, configurable con `VITE_API_PROXY_TARGET` en `front/.env.development`) — así el código de la app siempre usa rutas relativas y se comporta igual en desarrollo que en producción (donde ese mismo rol lo cumple Nginx).
+El servidor de Vite (`http://localhost:5173`) proxya `/auth/**` y `/back/**` hacia `api-gateway` (por defecto `http://localhost:8080`, configurable con `VITE_API_PROXY_TARGET` en `front/.env.development`) — así el código de la app siempre usa rutas relativas y se comporta igual en desarrollo que en producción (donde ese mismo rol lo cumple Apache HTTPD, ver `front/httpd.conf`).
 
 `npm run build` compila con TypeScript y genera el bundle de producción en `front/dist/` (lo que empaqueta el `Dockerfile`). Para la estructura de carpetas del front, ver [REFERENCE.md](./REFERENCE.md).
 

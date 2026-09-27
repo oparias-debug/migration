@@ -54,7 +54,7 @@ export function createHttpClient(baseURL: string): AxiosInstance {
 }
 
 // Rutas relativas (/auth/*, /back/*): en dev las resuelve el proxy de Vite,
-// en producción el reverse-proxy de Nginx — mismo comportamiento same-origin
+// en producción el reverse-proxy de Apache HTTPD (httpd.conf) — mismo comportamiento same-origin
 // en ambos entornos, sin necesidad de CORS en api-gateway.
 const httpClient = createHttpClient('/');
 

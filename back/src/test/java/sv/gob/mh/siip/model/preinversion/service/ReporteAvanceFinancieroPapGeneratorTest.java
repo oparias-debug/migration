@@ -112,4 +112,19 @@ class ReporteAvanceFinancieroPapGeneratorTest {
                     "Comentarios al reporte financiero DGICP: Linea 1 Linea 2");
         }
     }
+
+    @Test
+    void generarPdf_filaSinEtapaNiFuente_dejaVaciasEsasColumnas() throws IOException {
+        var encabezado = new ReporteAvanceFinancieroPapGenerator.Encabezado("MINSAL", 2028,
+                Cuatrimestre.CUATRIMESTRE_I, false, null);
+
+        byte[] bytes = ReporteAvanceFinancieroPapGenerator.generarPdf(encabezado,
+                List.of(new EstudioFilaAvancePAPDto("08041", "Proyecto B", null)));
+
+        try (PDDocument documento = PDDocument.load(bytes)) {
+            String texto = new PDFTextStripper().getText(documento);
+            assertThat(texto).contains("08041 | Proyecto B |  |  | 0.00")
+                    .doesNotContain("Comentarios al reporte financiero DGICP");
+        }
+    }
 }

@@ -16,9 +16,6 @@ public enum RolUsuario {
     COORDINADOR_PROGRAMACION,
     /** Coordinador SYMP: unica accion, seleccionar Co-ejecutor (CU-PRE-03.5, RN16). */
     COORDINADOR_SYMP,
-    /** [SUPUESTO] Rol identificado en Anexo C, aun sin casos de uso implementados; no incorporado
-     *  formalmente a catalogo-actores.md. */
-    INGENIERO_DINAFI,
     /** Jefe DGI. Priorizacion y programacion/avance cuatrimestral financiero y de metas fisicas de
      *  Preinversion. */
     JEFE_DGI,
@@ -26,9 +23,6 @@ public enum RolUsuario {
     SUBJEFE_DGI,
     /** Tecnico de la Unidad de Asesoria Legal. Registro, modificacion y ficha de convenios. */
     TECNICO_LEGAL,
-    /** [SUPUESTO] Tecnico Operativo. Rol identificado en Anexo C, aun sin casos de uso
-     *  implementados; no incorporado formalmente a catalogo-actores.md. */
-    TECNICO_OPE,
     /** Tecnico de Preinversion. Registro y analisis del ciclo de proyectos en fase de
      *  Preinversion: area de influencia, mercado, tecnica, ambiental, riesgo, legal, presupuesto,
      *  indicadores y elegibilidad. */
@@ -39,9 +33,6 @@ public enum RolUsuario {
     /** [SUPUESTO] Tecnico de Seguimiento. Rol identificado en Anexo C, aun sin casos de uso
      *  implementados; no incorporado formalmente a catalogo-actores.md. */
     TECNICO_SEG,
-    /** [SUPUESTO] Tecnico responsable de la interfaz con el Sistema de Administracion Financiera
-     *  Integrado (SIAF, ver SistemaExterno/CU-ITF-01); aun sin casos de uso implementados. */
-    TECNICO_SIAF,
     /** Priorizacion de proyectos (CU-PRE-26.5). Actores aun no incorporados a catalogo-actores.md;
      *  ya existen como rol de Keycloak (realm-export.json) con estos mismos nombres. */
     TECNICO_SYMP,

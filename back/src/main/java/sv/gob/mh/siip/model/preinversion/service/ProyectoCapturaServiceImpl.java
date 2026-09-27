@@ -1,12 +1,13 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import sv.gob.mh.siip.model.preinversion.dto.PaginacionMetadataDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectoCapturaItemDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProyectosCapturaResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.UnidadEjecutoraResumenDto;
+import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoCapturaRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoCapturaRepository.Specs;
@@ -67,7 +69,7 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
 
     /**
      * Ejecuta la consulta de proyectos delegando las especificaciones a {@link Specs} y gestionando
-     * el objeto {@link Pageable}.
+     * la paginación ({@code PageRequest}).
      * RN01/RN02: el Técnico URP solo ve los proyectos de su propia Unidad Ejecutora; el resto de
      * los roles (Viabilizador, Técnico PRE, Coordinador PRE) ve todos
      * los proyectos sin restricción de Unidad Ejecutora.
@@ -98,12 +100,10 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
                         ? actor.getUnidadEjecutora().getId() : null)
         );
 
-        Pageable pageable = PageRequest.of(
+        Page<Proyecto> paginaEntidades = proyectoCapturaRepository.findAll(spec, PageRequest.of(
                 (pagina != null && pagina >= 0) ? pagina : 0,
                 (tamanio != null && tamanio > 0) ? tamanio : TAMANIO_PAGINA_POR_DEFECTO
-        );
-
-        Page<Proyecto> paginaEntidades = proyectoCapturaRepository.findAll(spec, pageable);
+        ));
 
         return construirRespuesta(paginaEntidades);
     }
@@ -118,7 +118,7 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
         Map<Long, NombreEtapaDto> etapaActualPorProyecto = etapaActualPorProyecto(paginaEntidades.getContent());
 
         List<ProyectoCapturaItemDto> contenido = paginaEntidades.getContent().stream()
-                .map(entidad -> toItemDto(entidad, etapaActualPorProyecto.get(entidad.getId())))
+                .map((Proyecto entidad) -> toItemDto(entidad, etapaActualPorProyecto.get(entidad.getId())))
                 .toList();
 
         PaginacionMetadataDto paginacion = new PaginacionMetadataDto();
@@ -178,12 +178,13 @@ public class ProyectoCapturaServiceImpl implements ProyectoCapturaService {
         List<Long> idsProyecto = proyectos.stream().map(Proyecto::getId).toList();
         return etapaPreinversionRepository.findByProyectoIdIn(idsProyecto).stream()
                 .collect(Collectors.toMap(
-                        e -> e.getProyecto().getId(),
-                        EtapaPreinversion::getTipoEtapa,
-                        (etapaActual, otraEtapa) -> otraEtapa.compareTo(etapaActual) > 0 ? otraEtapa : etapaActual))
-                .entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> NombreEtapaDto.valueOf(entry.getValue().name())));
+                        (EtapaPreinversion etapa) -> etapa.getProyecto().getId(),
+                        (EtapaPreinversion etapa) -> NombreEtapaDto.valueOf(etapa.getTipoEtapa().name()),
+                        BinaryOperator.maxBy(Comparator.comparing(ProyectoCapturaServiceImpl::ordenEnRuta))));
+    }
+
+    /** Posición de la etapa en la ruta PERFIL/PREFACTIBILIDAD/FACTIBILIDAD/DISENO/EJECUCION. */
+    private static int ordenEnRuta(NombreEtapaDto etapa) {
+        return TipoEtapaPreinversion.valueOf(etapa.name()).ordinal();
     }
 }

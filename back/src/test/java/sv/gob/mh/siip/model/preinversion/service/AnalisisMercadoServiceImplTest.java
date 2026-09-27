@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -111,7 +112,8 @@ class AnalisisMercadoServiceImplTest {
 
     @Test
     void guardar_sinNingunaFilaCompleta_lanzaValidacionNegocio() {
-        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP)).thenReturn(Usuario.builder().unidadEjecutora(null).build());
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(null).build());
         when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyectoDeUnidad(5L)));
         FilaAnalisisMercadoRequestDto filaIncompleta = new FilaAnalisisMercadoRequestDto()
                 .producto(new ProductoSeleccionadoDto("P-01"));
@@ -125,7 +127,8 @@ class AnalisisMercadoServiceImplTest {
 
     @Test
     void guardar_conRequestSinFilas_lanzaValidacionNegocio() {
-        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP)).thenReturn(Usuario.builder().unidadEjecutora(null).build());
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(null).build());
         when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyectoDeUnidad(5L)));
         AnalisisMercadoRequestDto request = new AnalisisMercadoRequestDto();
 
@@ -136,7 +139,8 @@ class AnalisisMercadoServiceImplTest {
     @Test
     void guardar_conFilaCompletaYProductoEnCatalogo_creaAnalisisNuevoUsandoDatosDelCatalogo() {
         Proyecto proyecto = proyectoDeUnidad(5L);
-        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP)).thenReturn(Usuario.builder().unidadEjecutora(null).build());
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(null).build());
         when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyecto));
         when(analisisMercadoRepository.findByProyectoId(1L)).thenReturn(Optional.empty());
         ProductoIndicadorCatalogo productoCatalogo = ProductoIndicadorCatalogo.builder()
@@ -159,7 +163,8 @@ class AnalisisMercadoServiceImplTest {
 
     @Test
     void guardar_conProductoNoRegistradoEnCatalogo_usaNombreEnviadoYUnidadMedidaNula() {
-        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP)).thenReturn(Usuario.builder().unidadEjecutora(null).build());
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(null).build());
         when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyectoDeUnidad(5L)));
         when(analisisMercadoRepository.findByProyectoId(1L)).thenReturn(Optional.empty());
         when(productoRepository.findByCodigoProductoIn(List.of("SIN-CATALOGO"))).thenReturn(List.of());
@@ -180,7 +185,8 @@ class AnalisisMercadoServiceImplTest {
     @Test
     void guardar_conAnalisisExistente_actualizaSusFilasEnLugarDeCrearUnoNuevo() {
         Proyecto proyecto = proyectoDeUnidad(5L);
-        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP)).thenReturn(Usuario.builder().unidadEjecutora(null).build());
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(null).build());
         when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyecto));
         AnalisisMercado existente = AnalisisMercado.builder().id(9L).proyecto(proyecto).build();
         when(analisisMercadoRepository.findByProyectoId(1L)).thenReturn(Optional.of(existente));
@@ -196,5 +202,76 @@ class AnalisisMercadoServiceImplTest {
 
         assertThat(resultado.getFilas()).hasSize(1);
         assertThat(existente.getFilas()).hasSize(1);
+    }
+
+    private static FilaAnalisisMercadoRequestDto filaCompleta(String codigo) {
+        return new FilaAnalisisMercadoRequestDto().producto(new ProductoSeleccionadoDto(codigo))
+                .demanda(100d).oferta(40d).aniosAProyectar(2).tasaDemanda(10d).tasaOferta(5d);
+    }
+
+    @Test
+    void guardar_conRequestNulo_lanzaValidacionNegocio() {
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(null).build());
+        when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyectoDeUnidad(5L)));
+
+        assertThatThrownBy(() -> service.guardar(1L, null)).isInstanceOf(ValidacionNegocioException.class);
+    }
+
+    @Test
+    void guardar_conListaDeFilasNula_lanzaValidacionNegocio() {
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(null).build());
+        when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyectoDeUnidad(5L)));
+        AnalisisMercadoRequestDto request = new AnalisisMercadoRequestDto().filas(null);
+
+        assertThatThrownBy(() -> service.guardar(1L, request)).isInstanceOf(ValidacionNegocioException.class);
+    }
+
+    @Test
+    void guardar_filasALasQueLesFaltaAlgunDato_noCuentanComoCompletas() {
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(null).build());
+        when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyectoDeUnidad(5L)));
+        List<FilaAnalisisMercadoRequestDto> filas = new ArrayList<>();
+        filas.add(null);
+        filas.add(filaCompleta("P-01").producto(null));
+        filas.add(filaCompleta(null));
+        filas.add(filaCompleta("  "));
+        filas.add(filaCompleta("P-01").demanda(null));
+        filas.add(filaCompleta("P-01").oferta(null));
+        filas.add(filaCompleta("P-01").aniosAProyectar(null));
+        filas.add(filaCompleta("P-01").tasaDemanda(null));
+        filas.add(filaCompleta("P-01").tasaOferta(null));
+        AnalisisMercadoRequestDto request = new AnalisisMercadoRequestDto().filas(filas);
+
+        ValidacionNegocioException ex = assertThrows(ValidacionNegocioException.class,
+                () -> service.guardar(1L, request));
+        assertThat(ex.getCodigo()).isEqualTo("ANALISIS_MERCADO_SIN_FILA_COMPLETA");
+    }
+
+    @Test
+    void guardar_conFilaCompletaYFilasIncompletas_guardaTodasSinBuscarCodigosVacios() {
+        UnidadEjecutora unidad = UnidadEjecutora.builder().id(5L).build();
+        when(actorContexto.exigirRol(RolUsuario.TECNICO_URP))
+                .thenReturn(Usuario.builder().unidadEjecutora(unidad).build());
+        when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyectoDeUnidad(5L)));
+        when(analisisMercadoRepository.findByProyectoId(1L)).thenReturn(Optional.empty());
+        when(productoRepository.findByCodigoProductoIn(List.of("P-01"))).thenReturn(List.of());
+        when(analisisMercadoRepository.save(any(AnalisisMercado.class))).thenAnswer(inv -> inv.getArgument(0));
+        AnalisisMercadoRequestDto request = new AnalisisMercadoRequestDto()
+                .addFilasItem(filaCompleta("P-01"))
+                .addFilasItem(new FilaAnalisisMercadoRequestDto().demanda(10d).tasaDemanda(5d))
+                .addFilasItem(new FilaAnalisisMercadoRequestDto().producto(new ProductoSeleccionadoDto(" ")));
+
+        AnalisisMercadoDto resultado = service.guardar(1L, request);
+
+        assertThat(resultado.getFilas()).hasSize(3);
+        FilaAnalisisMercadoDto sinProducto = resultado.getFilas().get(1);
+        assertThat(sinProducto.getProducto().getCodigoProducto()).isNull();
+        assertThat(sinProducto.getProducto().getProducto()).isNull();
+        assertThat(sinProducto.getPromedioDemanda()).isNull();
+        assertThat(resultado.getFilas().get(2).getUnidadMedida()).isNull();
+        verify(productoRepository, never()).findByCodigoProductoIn(List.of(" "));
     }
 }
