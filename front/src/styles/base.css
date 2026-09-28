@@ -6,6 +6,7 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body, #root { height: 100%; }
+
 body {
   margin: 0;
   font-family: var(--tipo-texto);
@@ -50,21 +51,25 @@ a { color: var(--azul); }
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+
   /* El menú acompaña al encabezado: queda a la vista y es su propio ítem
      marcado el que dice dónde estás. `.menu-nav` ya tiene overflow propio, así
      que si la lista no cabe se desplaza sola sin arrastrar la página. */
   position: sticky; top: 0; height: 100vh;
 }
+
 .menu-marca {
   padding: 21px 14px 16px;
   text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
 }
 .menu-marca img { width: var(--escudo-menu); max-width: 100%; display: block; margin: 0 auto 10px; }
+
 .menu-marca .ministerio {
   font-family: var(--tipo-titulo); font-size: 11.6px; letter-spacing: .4px;
   line-height: 1.3; color: #E6E9EE;
 }
+
 /* El diseño nuevo pone "SIIP" en palo seco grueso, no en la serif del
    logotipo. Ancho medido: 25.6% de la barra. */
 .menu-marca .sigla {
@@ -75,20 +80,24 @@ a { color: var(--azul); }
 
 .menu-usuario {
   display: flex; align-items: center; gap: 10px; padding: 14px 18px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
 }
+
 .menu-usuario .avatar {
   width: 34px; height: 34px; border-radius: 50%; background: var(--azul); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 12.5px; flex-shrink: 0;
 }
 .menu-usuario .quien { flex: 1; min-width: 0; }
+
 .menu-usuario .nom {
   font-size: 12.5px; color: #fff; font-weight: 700; letter-spacing: .3px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
 .menu-usuario .rol {
   font-size: 11px; color: var(--menu-txt-2);
+
   /* Los nombres de rol largos (ADMINISTRADOR_DE_CATALOGOS) se salían del menú. */
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -104,27 +113,13 @@ a { color: var(--azul); }
   color: var(--nav-txt); font: inherit; font-size: 12.5px; text-align: left;
 }
 .menu-contraer:hover { color: #fff; }
+
 .menu-contraer .circulo {
   width: 30px; height: 30px; border-radius: 50%; background: #fff; color: var(--menu);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .menu-contraer .circulo > span { transform: rotate(180deg); }
 
-/* Menú plegado: sólo iconos. Se estrecha el ancho y se ocultan los textos, sin
-   desmontar nada, para que el estado no se pierda al plegar. */
-.menu.plegado { width: 68px; }
-.menu.plegado .menu-marca .ministerio,
-.menu.plegado .menu-marca .nombre,
-.menu.plegado .menu-usuario .quien,
-.menu.plegado .menu-usuario .chevron-usuario,
-.menu.plegado .menu-contraer .txt,
-.menu.plegado .submenu { display: none; }
-.menu.plegado .ni { justify-content: center; padding-inline: 0; font-size: 0; gap: 0; }
-.menu.plegado .menu-usuario { justify-content: center; padding-inline: 0; }
-.menu.plegado .menu-contraer { justify-content: center; padding-inline: 0; }
-.menu.plegado .menu-contraer .circulo > span { transform: none; }
-.menu.plegado .menu-marca .sigla { font-size: 15px; }
-.menu.plegado .menu-marca img { width: 34px; }
 
 /* Cinco estados del ítem: reposo, hover, seleccionado, foco, deshabilitado. */
 .ni {
@@ -139,13 +134,15 @@ a { color: var(--azul); }
   transition: background .12s;
 }
 .ni:hover { background: var(--nav-hover); color: #fff; }
+
 .ni.activo {
   background: var(--sel); color: var(--sel-txt); font-weight: 700;
   border-radius: 10px 10px 0 0; margin-bottom: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,.18);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 18%);
 }
 .ni.activo:hover { background: var(--sel); color: var(--sel-txt); }
 .ni.activo.plegado { border-radius: 10px; }
+
 /* Activo sin submenú: píldora azul del diseño (medida: 187 de 215 de ancho). */
 .ni.activo.pildora {
   background: var(--azul-vivo); color: #fff; border-radius: 22px;
@@ -159,12 +156,12 @@ a { color: var(--azul); }
 .submenu {
   background: var(--sub); margin: 0 11px 7px 17px;
   border-radius: 0 0 10px 10px; padding: 8px 0 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.18);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 18%);
   overflow: hidden; max-height: 320px;
   transition: max-height .2s ease, padding .2s ease, margin .2s ease;
 }
 .submenu.plegado { max-height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; box-shadow: none; }
-.submenu.plegado .sni { visibility: hidden; }
+
 .sni {
   display: block; width: 100%; text-align: left;
   padding: 7px 16px 7px 34px; font-size: 11.5px; letter-spacing: .4px; line-height: 1.35;
@@ -175,16 +172,35 @@ a { color: var(--azul); }
 .sni:hover { color: var(--sub-on); }
 .sni.activo { color: var(--sub-on); font-weight: 700; box-shadow: inset 2px 0 0 var(--sub-on); }
 .sni.activo::before { content: "•"; position: absolute; left: 18px; }
+.submenu.plegado .sni { visibility: hidden; }
 
 .menu-plegar {
-  padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.08);
+  padding: 14px 18px; border-top: 1px solid rgb(255 255 255 / 8%);
   font-size: 12.5px; color: #99A1AD; background: none; border-left: 0; border-right: 0; border-bottom: 0;
   cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
   -webkit-user-select: none; user-select: none;
 }
 .menu-plegar:hover { color: #fff; }
 
+/* Menú plegado: sólo iconos. Se estrecha el ancho y se ocultan los textos, sin
+   desmontar nada, para que el estado no se pierda al plegar. */
+.menu.plegado { width: 68px; }
+
+.menu.plegado .menu-marca .ministerio,
+.menu.plegado .menu-marca .nombre,
+.menu.plegado .menu-usuario .quien,
+.menu.plegado .menu-usuario .chevron-usuario,
+.menu.plegado .menu-contraer .txt,
+.menu.plegado .submenu { display: none; }
+.menu.plegado .ni { justify-content: center; padding-inline: 0; font-size: 0; gap: 0; }
+.menu.plegado .menu-usuario { justify-content: center; padding-inline: 0; }
+.menu.plegado .menu-contraer { justify-content: center; padding-inline: 0; }
+.menu.plegado .menu-contraer .circulo > span { transform: none; }
+.menu.plegado .menu-marca .sigla { font-size: 15px; }
+.menu.plegado .menu-marca img { width: 34px; }
+
 /* ---------------------------------------------------------- BARRA SUPERIOR -- */
+
 /* La usuaria pidió (reunión del 11/09/2026) que el encabezado quede a la vista
    al desplazarse, para saber siempre en qué parte del sistema está. Se hace con
    `sticky` y no con `fixed` para no sacar la barra del flujo: así conserva su
@@ -199,17 +215,21 @@ a { color: var(--azul); }
 .hamburguesa:hover { color: var(--azul); }
 .topbar .titulo { font-family: var(--tipo-titulo); font-size: 21px; color: var(--menu); white-space: nowrap; }
 .buscador { flex: 1; max-width: 420px; position: relative; margin-left: auto; }
+
 .buscador input {
   width: 100%; padding: 9px 38px 9px 14px; border: 1px solid var(--n200);
   border-radius: var(--r); font-size: 13px; background: var(--n50);
 }
 .buscador .lupa { position: absolute; right: 12px; top: 10px; opacity: .7; pointer-events: none; }
 .topbar-acciones { display: flex; align-items: center; gap: 12px; }
+
 .idioma {
   display: flex; border: 1px solid var(--n200); border-radius: var(--r); overflow: hidden;
+
   /* <fieldset> trae margin/padding propios del navegador: se anulan. */
   margin: 0; padding: 0;
 }
+
 .idioma button {
   font-size: 11.5px; font-weight: 700; padding: 5px 10px;
   border: 0; background: #fff; color: var(--n500); cursor: pointer;
@@ -223,17 +243,20 @@ a { color: var(--azul); }
   background: none; border: 0; cursor: pointer; padding: 3px 6px;
   font: inherit; font-size: 13px; font-weight: 600; color: var(--n700);
 }
+
 .mi-cuenta .avatar {
   width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: 11.5px; font-weight: 700; flex-shrink: 0;
 }
 .mi-cuenta .flecha { font-size: 10px; color: var(--n500); }
+
 .usuario-desplegable .quien {
   padding: 9px 13px; border-bottom: 1px solid var(--n200); line-height: 1.35;
 }
 .usuario-desplegable .quien b { display: block; font-size: 12.5px; color: var(--n700); }
 .usuario-desplegable .quien span { font-size: 11px; color: var(--n500); }
+
 .selector-rol {
   font-size: 12px; padding: 5px 8px; border: 1px solid var(--n200);
   border-radius: var(--r); max-width: 210px;
@@ -243,10 +266,12 @@ a { color: var(--azul); }
 .ruta {
   background: #fff; border-bottom: 1px solid var(--n200); padding: 9px 24px;
   display: flex; align-items: center; gap: 7px; overflow-x: auto; white-space: nowrap;
+
   /* Va pegada bajo la barra superior: juntas forman el encabezado que queda
      fijo, con la miga indicando la pantalla. */
   position: sticky; top: var(--topbar-alto); z-index: 29;
 }
+
 .ruta a, .ruta span {
   font-size: 11px; font-weight: 700; letter-spacing: .7px;
   color: var(--n500); text-decoration: none;
@@ -256,6 +281,7 @@ a { color: var(--azul); }
 .ruta .actual { color: var(--menu); }
 
 /* -------------------------------------------------------------------- HERO -- */
+
 /* Medidas tomadas del diseño del 09/09/2026 sobre un viewport de 1600: la
    banda mide 1305 x 123, el logotipo 267 x 97 con 10 px de aire arriba, y el
    nombre del sistema ocupa 207 de ancho, que es lo que fuerza el corte en dos
@@ -266,11 +292,13 @@ a { color: var(--azul); }
   border-radius: var(--r2); padding: 13px 45px; min-height: 123px;
   display: flex; justify-content: space-between; align-items: center; gap: 24px;
   color: #fff; overflow: hidden;
+
   /* Pedido del cliente (17/09/2026): la banda se queda fija al desplazarse,
      igual que la barra superior. Se pega justo debajo de ella, y por debajo de
      su z-index para que la barra siga ganando. */
   position: sticky; top: var(--topbar-alto); z-index: 20;
 }
+
 .hero::after {
   content: ""; position: absolute; top: 0; right: 0; bottom: 0;
   width: var(--puntos-ancho); pointer-events: none;
@@ -280,41 +308,48 @@ a { color: var(--azul); }
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 30%);
           mask-image: linear-gradient(90deg, transparent 0, #000 30%);
 }
+
 /* Diseño 09/09/2026: SIIP y el nombre completo en una línea, con divisor
    vertical entre ambos. Ya no hay "BIENVENIDO A" ni párrafo descriptivo. */
 .hero-marca { display: flex; align-items: center; gap: 26px; position: relative; z-index: 1; }
+
 .hero h1 {
   font-family: var(--tipo-titulo); font-size: 46px; line-height: 1; margin: 0;
   position: relative; padding-bottom: 14px;
 }
+
 /* Subrayado cian bajo SIIP, presente en el diseño y que faltaba. */
 .hero h1::after {
   content: ""; position: absolute; left: 0; bottom: 0;
   width: 60%; height: 3px; background: var(--hero-linea); border-radius: 2px;
 }
+
 .hero .lema {
   /* 250 es el mínimo con el que corta en dos líneas —"Sistema de Información" /
      "de Inversión Pública"— como el diseño. El diseño mide 207, pero su tipo es
      algo más estrecho que el nuestro; se ajusta al corte, no al número. */
   color: #fff; font-size: 19px; line-height: 1.35; max-width: 250px;
-  border-left: 1px solid rgba(255,255,255,.45); padding-left: 26px;
+  border-left: 1px solid rgb(255 255 255 / 45%); padding-left: 26px;
 }
 .hero .marca { display: flex; align-items: center; gap: 33px; margin-right: 126px; position: relative; z-index: 1; }
+
 /* Se fija el ALTO, no el ancho: así la banda mide siempre lo que dice el
    diseño (97 de logotipo + 13 y 13 de aire = 123) aunque cambie la proporción
    del archivo. El logotipo actual es algo más cuadrado que el del diseño, y
    están pendientes de enviar los definitivos. */
 .hero .marca img { height: 97px; width: auto; max-width: 100%; }
+
   /* 321 px es la medida del diseño (964 ÷ 3); el cliente pidió 1.15× = 369. */
 .hero .marca .txt {
   font-family: var(--tipo-titulo); font-size: 16.5px; letter-spacing: 1.2px;
-  border-left: 1px solid rgba(255,255,255,.35); padding-left: 31px;
+  border-left: 1px solid rgb(255 255 255 / 35%); padding-left: 31px;
   line-height: 1.35; white-space: nowrap;
 }
 
 /* ------------------------------------------------------------------ COMUNES -- */
 h2.seccion { font-family: var(--tipo-titulo); font-size: 17px; color: var(--menu); margin: 22px 0 12px; }
 .tarjeta { background: #fff; border: 1px solid var(--n200); border-radius: var(--r2); box-shadow: var(--sombra); }
+
 .nota {
   background: var(--info-bg); border-left: 3px solid var(--info);
   padding: 10px 14px; border-radius: 0 var(--r) var(--r) 0;
@@ -322,19 +357,23 @@ h2.seccion { font-family: var(--tipo-titulo); font-size: 17px; color: var(--menu
 }
 
 .modulos { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; }
+
 .modulo {
   background: #fff; border: 1px solid var(--n200); border-radius: var(--r2);
   padding: 22px 18px; text-align: center; cursor: pointer; box-shadow: var(--sombra);
   -webkit-user-select: none; user-select: none; display: block; width: 100%;
+
   /* En el diseño la flecha va abajo a la derecha y siempre en azul, no en el
    color del módulo. */
   position: relative; padding-bottom: 34px;
 }
 .modulo:hover { border-color: var(--azul); }
+
 /* 119 px en el diseño del cliente (siip-INICIO-NUEVA-GRIS). */
 .modulo img { width: 113px; height: 106px; object-fit: contain; display: block; margin: 0 auto 14px; }
 .modulo h3 { font-size: 15.5px; margin: 0 0 5px; }
 .modulo p { font-size: 12.5px; color: var(--n500); margin: 0; }
+
 .modulo .flecha {
   position: absolute; right: 18px; bottom: 12px;
   font-size: 16px; color: var(--azul); margin: 0;
@@ -347,6 +386,7 @@ h2.seccion { font-family: var(--tipo-titulo); font-size: 17px; color: var(--menu
   background: #fff; border: 1px solid var(--n200); border-radius: var(--r2);
   box-shadow: var(--sombra); overflow: hidden;
 }
+
 .indicador {
   background: none; border: 0; border-left: 1px solid var(--n200);
   padding: 18px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer;
@@ -354,6 +394,7 @@ h2.seccion { font-family: var(--tipo-titulo); font-size: 17px; color: var(--menu
 }
 .indicador:first-child { border-left: 0; }
 .indicador:hover { background: var(--n050, #F7F8FA); }
+
 /* La casilla sin estado en el contrato no navega: ni cursor ni hover. */
 .indicador.sin-estado { cursor: default; }
 .indicador.sin-estado:hover { background: none; }
@@ -362,6 +403,7 @@ h2.seccion { font-family: var(--tipo-titulo); font-size: 17px; color: var(--menu
 .indicador .etiqueta { display: block; font-size: 12px; color: var(--n500); margin-top: 3px; }
 
 .pendientes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+
 /* Diseño 09/09/2026: cada tarjeta lleva el icono en una caja gris a la
    izquierda. Sustituye al borde de color del diseño anterior. */
 .pendiente {
@@ -371,6 +413,7 @@ h2.seccion { font-family: var(--tipo-titulo); font-size: 17px; color: var(--menu
   display: flex; align-items: center; gap: 14px;
 }
 .pendiente:hover { border-color: var(--azul); }
+
 .pendiente .caja-icono {
   width: 46px; height: 46px; border-radius: 10px; background: var(--n100, #F1F2F4);
   display: flex; align-items: center; justify-content: center;
@@ -384,6 +427,7 @@ h2.seccion { font-family: var(--tipo-titulo); font-size: 17px; color: var(--menu
 /* ------------------------------------------------------------------- TABLA -- */
 .tabla-cont { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
 thead th {
   background: var(--n50); text-align: left; font-size: 10.5px; letter-spacing: .9px;
   text-transform: uppercase; color: var(--n500); padding: 11px 14px;
@@ -391,7 +435,6 @@ thead th {
 }
 tbody td { padding: 12px 14px; border-bottom: 1px solid var(--n100); }
 tbody tr { cursor: pointer; -webkit-user-select: none; user-select: none; }
-tbody tr:hover td { background: var(--azul-suave); }
 .mono { font-family: var(--tipo-mono); font-size: 12px; color: var(--menu); }
 .vacio { text-align: center; color: var(--n500); padding: 34px 14px; }
 
@@ -404,14 +447,16 @@ tbody tr:hover td { background: var(--azul-suave); }
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 12px; font-weight: 600; white-space: nowrap; cursor: default;
 }
+
 .marca-estado::before {
   content: ''; flex: none; width: 8px; height: 8px;
-  border-radius: 50%; background: currentColor;
+  border-radius: 50%; background: currentcolor;
 }
 .e-neutro { color: var(--n500); }
 .e-info   { color: var(--info); }
 .e-aviso  { color: var(--aviso); }
 .e-ok     { color: var(--ok); }
+
 /* Lo que exige atención inmediata: un riesgo "Muy alto" (CU-PRE-15) o una meta
    atrasada (CU-PRE-33). Sin esta clase, el color del estado no se aplicaba y la
    fila crítica se leía igual que cualquier otra. */
@@ -431,6 +476,7 @@ tbody tr:hover td { background: var(--azul-suave); }
 }
 .campo { display: flex; flex-direction: column; gap: 4px; }
 .campo label { font-size: 11px; font-weight: 700; color: var(--n500); letter-spacing: .3px; }
+
 .campo input, .campo select {
   font-size: 13px; padding: 8px 10px; border: 1px solid var(--n200);
   border-radius: var(--r); background: #fff; min-width: 160px;
@@ -466,13 +512,14 @@ tbody tr:hover td { background: var(--azul-suave); }
 
 /* ------------------------------------------------------------------ MÓVIL -- */
 .velo { display: none; }
+
 @media (max-width: 1000px) {
   .menu {
     position: fixed; inset: 0 auto 0 0; z-index: 60;
     transform: translateX(-100%); transition: transform .22s ease;
   }
   .menu.abierto { transform: translateX(0); }
-  .velo { display: block; position: fixed; inset: 0; background: rgba(15,20,32,.45); z-index: 55; border: 0; }
+  .velo { display: block; position: fixed; inset: 0; background: rgb(15 20 32 / 45%); z-index: 55; border: 0; }
   .hero { flex-direction: column; align-items: flex-start; }
   .hero .marca { margin-right: 0; }
   .hero::after { display: none; }
@@ -485,17 +532,18 @@ tbody tr:hover td { background: var(--azul-suave); }
    contigua reflejada). No venía suelta entre los archivos entregados; conviene
    pedir el original al diseñador para sustituirla.
    ========================================================================== */
-.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 .login-fondo {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   padding: 24px; position: relative;
   background-size: cover; background-position: center; background-color: #0b2a5b;
 }
+
 .login-fondo::before {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(4,20,48,.35) 0%, rgba(4,20,48,.10) 40%);
+  background: linear-gradient(180deg, rgb(4 20 48 / 35%) 0%, rgb(4 20 48 / 10%) 40%);
 }
+
 .login-idioma {
   position: absolute; top: 26px; right: 34px; z-index: 1;
   display: flex; align-items: center; gap: 10px; color: #fff; font-size: 15px;
@@ -506,26 +554,30 @@ tbody tr:hover td { background: var(--azul-suave); }
 .login-tarjeta {
   position: relative; z-index: 1; width: 100%; max-width: 338px;
   background: #fff; border-radius: 4px; padding: 34px 32px 28px;
-  box-shadow: 0 18px 48px rgba(0,0,0,.32); text-align: center;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 32%); text-align: center;
 }
 .login-marca { width: 244px; max-width: 100%; display: block; margin: 0 auto 22px; }
+
 /* "SIIP | Sistema de Información de Inversión Pública" en texto, en el mismo
    hueco que ocupaba el PNG (246 de ancho) para no mover el resto del login. */
 .login-siip {
   width: 246px; max-width: 100%; margin: 0 auto 30px;
   display: flex; align-items: center; gap: 12px; color: #111;
 }
+
 .login-siip .sigla {
   font-family: var(--tipo-titulo); font-size: 44px; font-weight: 700;
   line-height: 1; letter-spacing: -.5px;
 }
+
 .login-siip .nombre {
   font-size: 12.5px; line-height: 1.3; text-align: left;  /* la tarjeta centra; el logotipo no */
-  border-left: 1px solid currentColor; padding-left: 12px;
+  border-left: 1px solid currentcolor; padding-left: 12px;
 }
 
 .login-campo { position: relative; display: flex; align-items: center; margin-bottom: 12px; }
 .login-icono { position: absolute; left: 12px; font-size: 13px; opacity: .55; pointer-events: none; }
+
 .login-campo input {
   width: 100%; padding: 11px 14px 11px 38px; font-size: 14px; color: var(--n900);
   background: #EEF2F9; border: 1px solid #E2E8F2; border-radius: 4px;
@@ -548,6 +600,7 @@ tbody tr:hover td { background: var(--azul-suave); }
   color: #fff; background: #12275C; border: 0; border-radius: 4px; cursor: pointer;
 }
 .login-enviar:hover { background: #0D1D47; }
+
 .login-olvido {
   display: block; margin: 14px auto 0; background: none; border: 0;
   font-size: 13.5px; color: #12275C; text-decoration: underline; cursor: pointer;
@@ -556,36 +609,42 @@ tbody tr:hover td { background: var(--azul-suave); }
 
 /* ================================================ FORMULARIO (Anexo A.2) == */
 .formcard { border-radius: var(--r2); overflow: hidden; border: 1px solid var(--n200); background: #fff; box-shadow: var(--sombra); }
+
 .formhead {
   background: var(--navy); color: #fff; padding: 13px 20px; font-size: 14.5px; font-weight: 700;
   display: flex; align-items: center; gap: 12px;
 }
+
 .btn-mapa {
   font: inherit; font-size: 11.5px; font-weight: 700; margin-left: auto;
-  background: rgba(0,0,0,.22); color: #fff; border: 1px solid rgba(255,255,255,.55);
+  background: rgb(0 0 0 / 22%); color: #fff; border: 1px solid rgb(255 255 255 / 55%);
   border-radius: var(--r); padding: 5px 11px; cursor: pointer;
 }
-.btn-mapa:hover { background: rgba(255,255,255,.26); }
+.btn-mapa:hover { background: rgb(255 255 255 / 26%); }
 .formbody { padding: 20px; }
+
 /* Código junto al título en la banda azul: sin el azul de .mono, que ahí no se ve. */
 .formhead .mono { color: inherit; opacity: .75; font-weight: 400; }
 .fr { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .f { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
 .f.w { grid-column: 1 / -1; }
 .f label { font-size: 12.5px; font-weight: 700; color: var(--n700); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
 .f input, .f select, .f textarea {
   font: inherit; font-size: 13.5px; padding: 9px 11px; border: 1px solid var(--n300);
   border-radius: var(--r); background: #fff; width: 100%;
 }
 .f input:disabled, .f select:disabled, .f textarea:disabled { background: var(--n50); color: var(--n500); }
-.f .malo { border-color: var(--error); box-shadow: 0 0 0 2px rgba(198,40,40,.12); }
+.f .malo { border-color: var(--error); box-shadow: 0 0 0 2px rgb(198 40 40 / 12%); }
 .f .error { font-size: 12px; font-weight: 700; color: var(--error); }
 .f .ayuda { font-size: 11.5px; font-weight: 400; color: var(--n500); }
 .req { color: var(--error); }
+
 /* Opciones en línea y a la misma distancia entre sí; cada casilla pegada a su
    texto, para que no se lean como si estuvieran en renglones distintos
    (Rocío, pruebas del 21/09/2026). */
 .radios { display: flex; gap: 10px 26px; flex-wrap: wrap; align-items: center; }
+
 .radios label {
   display: inline-flex; align-items: center; gap: 7px;
   font-weight: 400; font-size: 13.5px; cursor: pointer;
@@ -604,6 +663,7 @@ tbody tr:hover td { background: var(--azul-suave); }
 .medida.on { background: #fff; border-color: var(--azul); }
 .medida-tit { font-size: 12.5px; font-weight: 700; color: var(--n700); display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .medida-tit input { width: auto; }
+
 /* Sangría de las opciones bajo su categoría, con guía vertical: el cliente
    pidió (31/08/2026) que se vea a simple vista que dependen de ella.
    Los 11 px alinean la casilla hija con el texto de la categoría, que arranca
@@ -628,20 +688,29 @@ tbody tr:hover td { background: var(--azul-suave); }
 
 .acciones-form { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--n200); background: var(--n50); }
 .acciones-form .esp { flex: 1; }
+
 .aviso-ok {
   position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
   background: var(--ok); color: #fff; font-weight: 700; font-size: 13.5px;
-  padding: 10px 22px; border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 80;
+  padding: 10px 22px; border-radius: 20px; box-shadow: 0 8px 24px rgb(0 0 0 / 20%); z-index: 80;
 }
+
 @media (max-width: 1000px) { .fr { grid-template-columns: 1fr; } }
 
 /* --------------------------------------------------- AÑADIDOS DEL PRODUCTO --
    Sólo lo que el prototipo resolvía con estilos en línea o no necesitaba por
    no tener sesión real. */
-.sr-only {
+
+/* Contenido que sólo leen los lectores de pantalla. `clip` está obsoleto pero se
+   mantiene junto a `clip-path`: sin él, un navegador que no entienda `clip-path`
+   deja el texto a la vista en lugar de ocultarlo. */
+.sr-only,
+.visualmente-oculto {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
 }
+
 .topbar-salir {
   background: none; border: 1px solid var(--n300); border-radius: var(--r);
   color: var(--n700); font-size: 12.5px; padding: 6px 12px; cursor: pointer;
@@ -655,6 +724,7 @@ tbody tr:hover td { background: var(--azul-suave); }
   font-size: 12.5px; color: var(--navy);
 }
 .nota-form { margin: 8px 0 0; font-size: 12.5px; color: var(--n500); }
+
 .enlace {
   font: inherit; font-size: 12px; font-weight: 700; margin-left: auto;
   background: none; border: 0; color: var(--azul); text-decoration: underline; cursor: pointer; padding: 0;
@@ -664,6 +734,7 @@ tbody tr:hover td { background: var(--azul-suave); }
    aquí el rol sale del token, así que muestra al usuario y despliega el cierre
    de sesión. */
 .usuario-menu { position: relative; }
+
 .usuario-menu .selector-rol {
   display: flex; align-items: center; gap: 6px;
   background: #fff; color: var(--n700); font-weight: 400; cursor: pointer;
@@ -671,17 +742,20 @@ tbody tr:hover td { background: var(--azul-suave); }
 }
 .usuario-menu .selector-rol:hover { border-color: var(--n300); }
 .usuario-menu .flecha { color: var(--n500); font-size: 10px; }
+
 .usuario-desplegable {
   position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
   background: #fff; border: 1px solid var(--n200); border-radius: var(--r);
   box-shadow: var(--sombra); min-width: 160px; padding: 4px;
 }
+
 .usuario-desplegable button {
   display: block; width: 100%; text-align: left; font: inherit; font-size: 12.5px;
   background: none; border: 0; padding: 8px 10px; border-radius: 4px; cursor: pointer; color: var(--n700);
 }
 .usuario-desplegable button:hover { background: var(--n100); }
 .conteo-listado { padding: 10px 16px 0; margin: 0; font-size: 12.5px; color: var(--n500); }
+
 /* Campos que asigna el servidor: se muestran, no se piden (CU-PRE-01 §B.1). */
 .campo-asignado {
   margin: 0; padding: 9px 11px; font-size: 13.5px;
@@ -695,12 +769,14 @@ tbody tr:hover td { background: var(--azul-suave); }
   margin-bottom: 14px; padding: 11px 15px; border-left: 3px solid var(--error);
   background: #FDECEC; color: #9B1C1C; border-radius: 0 var(--r) var(--r) 0; font-size: 12.5px;
 }
+
 /* Nombre del proyecto en la tabla: enlace, no botón. */
 .enlace-fila {
   font: inherit; background: none; border: 0; padding: 0; cursor: pointer;
   color: var(--azul); text-decoration: underline; text-align: left;
 }
 .enlace-fila:hover { color: #002f92; }
+
 /* Aviso de credenciales en el acceso. */
 .login-error {
   margin: 0 0 12px; padding: 9px 12px; border-radius: 4px;
@@ -712,6 +788,7 @@ tbody tr:hover td { background: var(--azul-suave); }
    mengua con filas, y los dos árboles en PDF. El resto de la pantalla reutiliza
    .formcard / .fr / .acciones-form como las demás. */
 .objetivos-especificos { border: 0; margin: 14px 0 0; padding: 0; }
+
 .objetivos-especificos legend {
   font-size: 11px; font-weight: 700; color: var(--n500); letter-spacing: .3px;
   padding: 0; margin-bottom: 6px;
@@ -720,6 +797,7 @@ tbody tr:hover td { background: var(--azul-suave); }
 .objetivo-fila input { flex: 1; }
 
 .arboles { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 18px; }
+
 .arbol-adjunto {
   flex: 1; min-width: 260px;
   border: 1px solid var(--n200); border-radius: var(--r2); padding: 12px 14px;
@@ -732,10 +810,12 @@ tbody tr:hover td { background: var(--azul-suave); }
    La tabla de campos es la parte propia: el administrador define ahí la
    estructura del catálogo, fila a fila. */
 .campos-catalogo { border: 0; margin: 18px 0 0; padding: 0; }
+
 .campos-catalogo legend {
   font-size: 11px; font-weight: 700; color: var(--n500); letter-spacing: .3px;
   padding: 0; margin-bottom: 6px;
 }
+
 .campos-catalogo table input[type="text"],
 .campos-catalogo table select,
 .campos-catalogo table textarea { width: 100%; }
@@ -746,6 +826,7 @@ tbody tr:hover td { background: var(--azul-suave); }
    La tabla mezcla filas de producto y de macroactividad: la sangría y el tono
    son lo que deja ver a simple vista qué cuelga de qué. */
 .fila-producto > td { font-weight: 600; }
+
 .fila-macro > td:first-child,
 .fila-macro > td:nth-child(2) { padding-left: 26px; color: var(--n500); }
 .fila-macro > td { background: var(--n050, #F7F8FA); }
@@ -756,13 +837,12 @@ tbody tr:hover td { background: var(--azul-suave); }
 /* "Detalle de Macroactividad" (Anexo A.2). */
 .modal-detalle {
   border: 0; border-radius: var(--r2); padding: 0; max-width: min(1100px, 94vw);
-  box-shadow: 0 18px 48px rgba(0,0,0,.28);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 28%);
 }
-.modal-detalle::backdrop { background: rgba(0,0,0,.45); }
+.modal-detalle::backdrop { background: rgb(0 0 0 / 45%); }
 .modal-detalle > form { padding: 20px; }
 .modal-detalle h2 { font-family: var(--tipo-titulo); font-size: 17px; margin: 0 0 14px; color: var(--menu); }
 .modal-detalle table input { width: 100%; min-width: 92px; text-align: right; }
-.modal-detalle tfoot th { text-align: left; }
 .modal-detalle .acciones-form { margin: 14px -20px -20px; }
 
 /* ================================================== PASOS DEL PROYECTO ==
@@ -776,21 +856,25 @@ tbody tr:hover td { background: var(--azul-suave); }
   background: #fff; border: 1px solid var(--n200); border-radius: var(--r2);
   box-shadow: var(--sombra); padding: 10px 14px; margin-bottom: 14px;
 }
+
 /* Cabecera: nombre del proyecto a la izquierda, plegado a la derecha. */
 .pasos-cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
 .pasos-cabecera p { margin: 0; font-size: 13px; color: var(--n700); }
+
 .pasos-plegar {
   border: 0; background: none; font: inherit; font-size: 12px; font-weight: 600;
   color: var(--azul); cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 0;
 }
+
 /* Plegada, la barra deja sólo una línea: el proyecto y el paso en el que se está. */
 .pasos-proyecto.plegada { padding: 8px 14px; }
 .pasos-actual-inline { margin-left: 10px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--azul); }
 
 .pasos-grupos {
   display: flex; flex-wrap: wrap; gap: 2px;
-  border-bottom: 1px solid var(--n200); margin: 8px 0 8px;
+  border-bottom: 1px solid var(--n200); margin: 8px 0;
 }
+
 .pasos-grupo {
   background: none; border: 0; border-bottom: 2px solid transparent;
   padding: 6px 9px; margin-bottom: -1px;
@@ -805,11 +889,13 @@ tbody tr:hover td { background: var(--azul-suave); }
    (Rocío, 22/09/2026: "ocupan demasiado espacio horizontal y vertical"). */
 .pasos-seccion { display: flex; align-items: baseline; gap: 10px; padding: 3px 0; }
 .pasos-seccion + .pasos-seccion { border-top: 1px dashed var(--n100); }
+
 .pasos-seccion-titulo {
   margin: 0; flex: 0 0 168px; font-size: 11px; font-weight: 700; color: var(--n500);
   letter-spacing: .2px; text-align: right; line-height: 1.35;
 }
 .pasos-lista ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; }
+
 .pasos-paso {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 9px 3px 4px; border: 1px solid var(--n200); border-radius: 999px;
@@ -818,6 +904,7 @@ tbody tr:hover td { background: var(--azul-suave); }
 a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul); }
 .pasos-paso.actual { background: var(--azul); border-color: var(--azul); color: #fff; }
 .pasos-paso.sin-pantalla { border-style: dashed; color: var(--n500); background: #F7F8FA; cursor: default; }
+
 .pasos-numero {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px;
@@ -836,6 +923,7 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 /* ============================== CU-PRE-04 · PESTAÑAS DE IDENTIFICACIÓN ==
    Los paneles no se desmontan: se ocultan con el atributo hidden. */
 .pestanas { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--n200); margin: 14px 0; }
+
 .pestana {
   background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
   padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--n500); cursor: pointer;
@@ -852,17 +940,19 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 
 /* Campos dentro de las tablas editables: el mismo aspecto que los del
    formulario (.f input), en vez de los controles por defecto del navegador. */
-.tabla-editable input:not([type="checkbox"]):not([type="radio"]),
+.tabla-editable input:not([type="checkbox"], [type="radio"]),
 .tabla-editable select,
 .tabla-editable textarea {
   font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--n300);
   border-radius: var(--r); background: #fff; width: 100%; min-width: 110px;
 }
+
 .tabla-editable input:disabled, .tabla-editable select:disabled, .tabla-editable textarea:disabled,
 .tabla-editable input[readonly] { background: var(--n50); color: var(--n500); }
-.tabla-editable .malo { border-color: var(--error); box-shadow: 0 0 0 2px rgba(198,40,40,.12); }
+.tabla-editable .malo { border-color: var(--error); box-shadow: 0 0 0 2px rgb(198 40 40 / 12%); }
 
 /* ======================================== REVISIÓN PRE (CU-PRE-01.5) ====== */
+
 /* Va a lo ancho de las dos columnas de .fr: a media columna se leía como un
    campo más del formulario y no como la conversación entre PRE y URP
    (Rocío, pruebas del 21/09/2026). */
@@ -885,6 +975,7 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 .rp-texto { margin: 3px 0 0; font-size: 13.5px; white-space: pre-wrap; }
 .rp-pie { padding: 14px 16px; border-top: 1px solid var(--n200); background: var(--n50); }
 .rp-pie label { display: block; font-size: 12.5px; font-weight: 700; color: var(--n700); margin-bottom: 5px; }
+
 .rp-pie textarea {
   font: inherit; font-size: 13.5px; width: 100%; padding: 9px 11px;
   border: 1px solid var(--n300); border-radius: var(--r); background: #fff;
@@ -893,21 +984,28 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 .rp-aviso { display: block; font-size: 12.5px; color: var(--n500); margin-top: 6px; }
 
 /* ==================================== CALENDARIO VISUAL (CU-ADM-04) ======= */
+
 /* El calendario a la izquierda y los diálogos de su definición a la derecha,
    como lo planteó el cliente. Por debajo de 1100 la columna de diálogos pasa
    debajo del mes en vez de estrujarlo. */
 .cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; align-items: start; }
+
 @media (max-width: 1100px) { .cal-layout { grid-template-columns: 1fr; } }
+
 /* Los formularios del panel derecho van a una columna: ahí no caben dos. */
 .cal-der .fr { grid-template-columns: 1fr; }
 .cal-der > section { margin-bottom: 18px; }
+
 /* Las pestañas del panel derecho van pegadas al borde de su columna. */
 .cal-der .pestanas { margin-top: 14px; }
+
 /* Una semana entera fuera del mes no se dibuja: sobra una fila vacía. */
 .cal-rejilla tr.fuera-del-mes { display: none; }
+
 /* Editar y quitar, uno al lado del otro y sin partirse en dos renglones. */
 .acciones-fila { white-space: nowrap; }
 .acciones-fila .btn + .btn { margin-left: 8px; }
+
 /* Las consultas son siete botones: se dejan fluir en varias líneas. */
 .acciones-consultas { flex-wrap: wrap; }
 
@@ -916,6 +1014,7 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 .cal-mes { font-size: 15px; font-weight: 700; color: var(--n900); min-width: 190px; text-align: center; }
 
 .cal-rejilla { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
 .cal-rejilla th {
   font-size: 11.5px; text-transform: uppercase; letter-spacing: .3px;
   color: var(--n500); padding: 6px 0; text-align: center; background: none;
@@ -925,6 +1024,7 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 .cal-rejilla td.es-laboral { background: var(--ok-bg); }
 .cal-rejilla td.es-no-laboral { background: #FBDCDC; }
 .cal-rejilla td.sin-definir { background: #fff; }
+
 .cal-rejilla .dia {
   width: 100%; height: 100%; min-height: 60px; display: flex; flex-direction: column; align-items: flex-start;
   gap: 2px; padding: 6px 8px; border: 0; background: none; font: inherit; cursor: pointer; text-align: left;
@@ -936,6 +1036,7 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 
 .cal-leyenda { display: flex; flex-wrap: wrap; gap: 16px; list-style: none; margin: 12px 0 0; padding: 0; font-size: 12.5px; }
 .cal-leyenda li { display: flex; align-items: center; gap: 7px; color: var(--n700); }
+
 .cal-leyenda .muestra {
   width: 16px; height: 16px; border: 1px solid var(--n300); border-radius: 3px;
   display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
@@ -952,12 +1053,10 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 .cal-porque li { margin-bottom: 4px; }
 
 /* Texto para lectores de pantalla que no debe verse. */
-.visualmente-oculto {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-}
+
 
 /* ================== ESTILOS QUE SUSTITUYEN A BOOTSTRAP (retirado) ========= */
+
 /* Eran las últimas pantallas que dependían de bootstrap.min.css: 276 KB de
    CSS para una docena de clases. Se reescriben con el propio diseño. */
 
@@ -969,6 +1068,7 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 
 /* Navegación secundaria y filtro suelto de la bandeja. */
 .sub-nav { margin-bottom: 14px; font-size: 13.5px; }
+
 .filtro-suelto {
   font: inherit; font-size: 13.5px; padding: 9px 11px; margin-bottom: 14px;
   border: 1px solid var(--n300); border-radius: var(--r); background: #fff; max-width: 320px;
@@ -982,9 +1082,9 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 /* Modal de categorías (GRD/GRC/ACC). */
 .modal-categorias {
   border: 0; border-radius: var(--r2); padding: 0; max-width: 780px; width: 92%;
-  box-shadow: 0 18px 48px rgba(0,0,0,.28);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 28%);
 }
-.modal-categorias::backdrop { background: rgba(0,0,0,.5); }
+.modal-categorias::backdrop { background: rgb(0 0 0 / 50%); }
 .mc-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--n200); }
 .mc-cabecera h2 { font-family: var(--tipo-titulo); font-size: 17px; margin: 0; color: var(--navy); }
 .mc-cerrar { border: 0; background: none; font-size: 24px; line-height: 1; color: var(--n500); cursor: pointer; padding: 0 4px; }
@@ -999,7 +1099,10 @@ a.pasos-paso:not(.actual):hover { border-color: var(--azul); color: var(--azul);
 /* Utilidades que cubrían las de Bootstrap, ahora propias. */
 .pagina-aviso { text-align: center; padding: 48px 24px; }
 .pagina-aviso-texto { font-size: 16px; color: var(--n500); margin: 8px 0 0; }
+
 /* Tabla de datos sencilla, con rejilla: la usan los listados de alternativas y etapas. */
 .tabla-datos { width: 100%; border-collapse: collapse; font-size: 13px; }
 .tabla-datos th, .tabla-datos td { border: 1px solid var(--n200); padding: 7px 10px; text-align: left; }
 .tabla-datos th { background: var(--n100); font-weight: 700; color: var(--n700); }
+tbody tr:hover td { background: var(--azul-suave); }
+.modal-detalle tfoot th { text-align: left; }

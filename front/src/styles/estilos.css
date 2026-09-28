@@ -12,12 +12,13 @@
    Se sirve desde el propio bundle, no desde fonts.googleapis.com: el SIIP es un
    sistema interno y no debe depender de un tercero para renderizar texto.
    ============================================================================= */
+
 /* La @font-face de Roboto vive en tokens.css, con el resto del sistema de diseño. */
 
 /* Bootstrap resuelve la tipografía de body, titulares y controles a través de
    esta variable, así que basta redefinirla una vez. */
 :root {
-  --bs-body-font-family: 'Roboto', -apple-system, "Segoe UI", Arial, sans-serif;
+  --bs-body-font-family: 'Roboto', -apple-system, "Segoe UI", arial, sans-serif;
 }
 
 /* Portado de static/css/estilos.css (front Java original).
@@ -29,7 +30,7 @@
    de elemento y alcanzaba a cualquier <nav> de la aplicación. */
 .card {
   border-radius: 1rem;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 10%);
 }
 
 .form-control:focus {

@@ -14,6 +14,7 @@
    obtener el valor en px CSS. Nada de estimar proporciones contra un ancho
    supuesto: eso fue lo que infló toda la barra lateral un 22%.
    ============================================================================= */
+
 /* (cabecera original)
    SIIP · Tokens de diseño
    -----------------------------------------------------------------------------
@@ -26,11 +27,12 @@
    ============================================================================= */
 
 @font-face {
-  font-family: 'Roboto';
+  font-family: Roboto;
   font-style: normal;
   font-weight: 400 800;          /* variable: cubre los pesos 400, 700 y 800 en uso */
   font-display: swap;
   src: url('/fonts/roboto-400-800-latin.woff2') format('woff2');
+
   /* Subconjunto «latin» de Google Fonts: U+0000-00FF incluye á é í ó ú ñ ü ¿ ¡ */
 }
 
@@ -38,6 +40,7 @@
   /* --- Marca institucional -------------------------------------------------
      #313945 es PANTONE 432 C, el "fondo de color habitual" del manual de marca.
      Es el gris que pidió Rocío para el menú (el SIIP de Colombia es azul). */
+
   /* Historial de este color, porque cambió dos veces:
        1) #313945 (PANTONE 432 C), el gris del manual de marca.
        2) #222222, del diseño del 30/08/2026 (siip-INICIO-NUEVA-GRIS). Rocío
@@ -46,10 +49,12 @@
           que vuelve al azul. Es lo más reciente, así que es lo que se aplica.
      Si alguien se pregunta por qué no es gris: se revirtió, no se perdió. */
   --menu:        #003078;
+
   /* Fondo del menú lateral. Pedido del cliente (17/09/2026): bajarlo al mismo
      tono de azul de la banda de inicio. --menu se queda como color de texto
      (títulos, cifras, migas), que no cambia. */
   --menu-fondo:  #2F5F9E;
+
   /* Texto secundario sobre el menú (nombre del sistema, rol del usuario). Sube
      a 4.77:1 sobre --menu-fondo; los grises anteriores (#B9C0CB y #C4CAD3)
      quedaron en 3.5 y 3.9 al aclararse el fondo el 17/09/2026. */
@@ -60,12 +65,14 @@
   /* --- Azules del diseño (medidos) ---------------------------------------- */
   --navy:        #002469;   /* menú del mockup, encabezado de formulario */
   --navy-2:      #00266D;   /* extremo claro de los degradados de marca */
+
   /* Encabezado del Home. Los usuarios pidieron mantener el azul institucional
      pero en un tono más tenue; el cliente propuso este valor como referencia
      (mensaje del 10/09/2026). Antes era el degradado de --navy-2 a --navy. */
   --hero:        #2F5F9E;
   --hero-2:      #2A568F;   /* extremo oscuro, para que la banda no quede plana */
   --hero-linea:  #3ADDFF;   /* subrayado bajo SIIP, medido sobre el diseño */
+
   /* HOVER y píldora activa del menú (diseño 09/09/2026). Se oscureció un punto
      respecto del #0172FE del diseño: con blanco encima daba 4.34:1, por debajo
      del mínimo de 4.5; así queda en 5.09:1. */
@@ -117,14 +124,16 @@
   --info:    #003DB9;  --info-bg: #DFEDFE;
   --neutro-bg: #EEF1F5;
   --error:   #C62828;
+
   /* Anillo de foco. Dos aros concéntricos: el blanco se ve sobre los azules
      (menú, banda, botón primario) y el azul se ve sobre los fondos claros.
      Con un solo aro azul, el foco era invisible sobre cualquier superficie
      azul (1.0:1 sobre el propio botón primario). */
   --foco:        #003DB9;
-  --foco-claro:  #FFFFFF;
+  --foco-claro:  #FFF;
 
   /* --- Tipografía --------------------------------------------------------- */
+
   /* Roboto, confirmada por el cliente el 31/08/2026 ("Usa la Roboto").
      Coincide con lo medido: el cotejo glifo a glifo del logotipo oficial
      (docs/tipografia/) descarta Montserrat — queda última de 19 candidatas —
@@ -134,17 +143,17 @@
      además comercial y exigiría comprar licencia web.
      Titulares y texto comparten familia: en las maquetas no hay ninguna
      serifa, sólo cambia el peso. */
-  --tipo-titulo: 'Roboto', -apple-system, "Segoe UI", Arial, sans-serif;
-  --tipo-texto:  'Roboto', -apple-system, "Segoe UI", Arial, sans-serif;
+  --tipo-titulo: 'Roboto', -apple-system, "Segoe UI", arial, sans-serif;
+  --tipo-texto:  'Roboto', -apple-system, "Segoe UI", arial, sans-serif;
   --icono-menu:  22px;      /* el diseño da 17 (51 ÷ 3); el cliente los prefiere algo mayores */
-  --tipo-mono:   Menlo, Consolas, 'Courier New', monospace;
+  --tipo-mono:   menlo, consolas, 'Courier New', monospace;
 
   /* --- Geometría ---------------------------------------------------------- */
   --r:   6px;
   --r2:  10px;
   --menu-ancho: 204px;      /* 611 px del export ÷ 3 */
   --topbar-alto: 59px;
-  --sombra: 0 1px 2px rgba(0,36,105,.06), 0 4px 12px rgba(0,36,105,.05);
+  --sombra: 0 1px 2px rgb(0 36 105 / 6%), 0 4px 12px rgb(0 36 105 / 5%);
 
   /* --- Marca en el menú (proporciones del mockup: 87 de 209 = 41.6%) ------- */
   --escudo-menu: 83px;      /* 249 ÷ 3 */

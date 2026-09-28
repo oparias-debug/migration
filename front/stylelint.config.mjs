@@ -29,6 +29,25 @@ const config = {
     // Las tablas de variantes (`.top-right { top: 0; right: 0; }`) se leen mejor en una
     // linea que repartidas en tres. Es una preferencia de formato, no de correccion.
     'declaration-block-single-line-max-declarations': null,
+
+    // Las dos siguientes se apagan por compatibilidad de navegador, no por comodidad.
+    // El build no lleva autoprefixer ni postcss, asi que lo que se escriba aqui es
+    // exactamente lo que llega al navegador: si se quitan los prefijos, se pierden.
+    // `-webkit-user-select` hizo falta en Safari hasta la 16.4 y `-webkit-mask-image`
+    // hasta la 15.4, y de esa mascara dependen los iconos del menu.
+    'property-no-vendor-prefix': null,
+
+    // `(width <= 1000px)` es sintaxis de rango: Chrome 104, Safari 16.4, Firefox 102.
+    // Un navegador anterior no la entiende y descarta la consulta entera, con lo que
+    // se pierde toda la maquetacion responsive en vez de degradarse. `max-width` la
+    // entiende cualquiera.
+    'media-feature-range-notation': null,
+
+    // `clip` esta obsoleto, pero acompana a `clip-path` en el patron que oculta
+    // contenido dejandolo disponible para lectores de pantalla: si el navegador no
+    // entiende `clip-path` y no hay `clip`, el texto se ve. Es el unico sitio donde
+    // se usa; la regla sigue activa para cualquier otra propiedad obsoleta.
+    'property-no-deprecated': [true, { ignoreProperties: ['clip'] }],
   },
 };
 
