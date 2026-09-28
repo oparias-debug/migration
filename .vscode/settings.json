@@ -1,6 +1,18 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
     "java.compile.nullAnalysis.mode": "automatic",
+    "[java]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+    },
+    "jdk.format.options": {
+        "indent-shift-width": 4,
+        "tab-size": 4,
+        "spaces-per-tab": 4,
+        "expand-tabs": true,
+        "continuationIndentSize": 8
+    },
     "sonarlint.connectedMode.project": {
         "connectionId": "http-localhost-9000",
         "projectKey": "siip-front"

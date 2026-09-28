@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Buildea las imágenes Docker de back, api-gateway, front y keycloak, y las publica en
+    Buildea las imágenes Docker de backend-srv, api-gateway, front y keycloak, y las publica en
     GitHub Container Registry (ghcr.io) para compartirlas de forma privada con un tester
     que no tiene el repo ni el entorno de desarrollo levantado.
 
@@ -24,7 +24,7 @@
     Owner de ghcr.io (default: "david-magnaperita", dueño del repo en GitHub).
 
 .PARAMETER SkipMavenBuild
-    No corre "mvn clean package -DskipTests" antes de armar las imágenes de back/api-gateway.
+    No corre "mvn clean package -DskipTests" antes de armar las imágenes de backend-srv/api-gateway.
     Usalo si ya tenés los .jar generados y solo querés reconstruir las imágenes Docker.
 
 .PARAMETER SkipFrontBuild
@@ -54,7 +54,9 @@ param(
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $registry = "ghcr.io/$Owner"
-$services = @('back', 'api-gateway', 'front', 'keycloak')
+# Carpeta del módulo -> nombre de la imagen en GHCR. backend-srv conserva la imagen
+# siip-back (el paquete al que ya tiene acceso el tester); renombrarla crearía un paquete nuevo.
+$services = [ordered]@{ 'backend-srv' = 'back'; 'api-gateway' = 'api-gateway'; 'front' = 'front'; 'keycloak' = 'keycloak' }
 $results = @()
 
 function Invoke-Step {
@@ -75,11 +77,11 @@ function Invoke-Step {
 
 Push-Location $repoRoot
 try {
-    # back/Dockerfile y api-gateway/Dockerfile solo copian target/*.jar (no compilan
+    # backend-srv/Dockerfile y api-gateway/Dockerfile solo copian target/*.jar (no compilan
     # dentro de Docker), así que hace falta el jar ya generado antes del build de imagen.
-    # No hay pom agregador en la raíz: back y api-gateway se compilan cada uno por separado.
+    # No hay pom agregador en la raíz: backend-srv y api-gateway se compilan cada uno por separado.
     if (-not $SkipMavenBuild) {
-        foreach ($module in @('back', 'api-gateway')) {
+        foreach ($module in @('backend-srv', 'api-gateway')) {
             Push-Location (Join-Path $repoRoot $module)
             try {
                 Invoke-Step -Name "$($module): mvn clean package -DskipTests" -Action { & mvn clean package -DskipTests }
@@ -96,11 +98,11 @@ try {
         Invoke-Step -Name 'front: docker compose run --rm front-build' -Action { & docker compose run --rm --build front-build }
     }
 
-    foreach ($service in $services) {
-        $image = "$registry/siip-$($service):$Tag"
-        # back/Dockerfile es el del ambiente de la entidad (imagen base en el registry
-        # interno de MH); fuera de esa red se usa back/Dockerfile.local.
-        $dockerfile = if ($service -eq 'back') { "./$service/Dockerfile.local" } else { "./$service/Dockerfile" }
+    foreach ($service in $services.Keys) {
+        $image = "$registry/siip-$($services[$service]):$Tag"
+        # backend-srv/Dockerfile es el del ambiente de la entidad (imagen base en el registry
+        # interno de MH); fuera de esa red se usa backend-srv/Dockerfile.local.
+        $dockerfile = if ($service -eq 'backend-srv') { "./$service/Dockerfile.local" } else { "./$service/Dockerfile" }
         Invoke-Step -Name "docker build $service -> $image" -Action { & docker build -t $image -f $dockerfile "./$service" }
 
         if (-not $SkipPush) {

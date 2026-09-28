@@ -53,7 +53,22 @@
       { "regla": "java:S3457", "nota": "Format specifiers should be used instead of string concatenation (también en tests)" },
       { "regla": "java:S5778", "nota": "Refactor the code of the lambda to have only one invocation possibly throwing a runtime exception (tests)" },
       { "regla": "java:S4144", "nota": "Update this method so that its implementation is not identical to 'x' (tests)" },
-      { "regla": "java:S5838", "nota": "Use assertThat(actual).isNull() instead (tests)" }
+      { "regla": "java:S5838", "nota": "Use assertThat(actual).isNull() instead (tests)" },
+      { "regla": "java:S1120", "params": { "indentationLevel": "4" }, "nota": "Source code should be indented consistently (sin params Sonar usa 2)" },
+      { "regla": "java:S3052", "nota": "Fields should not be initialized to default values" },
+      { "regla": "java:S1312", "nota": "Loggers should be 'private static final' and should share a naming convention" },
+      { "regla": "java:S5977", "nota": "Tests should use fixed data instead of randomized data" },
+      { "regla": "java:S1820", "nota": "Classes should not have too many fields" },
+      { "regla": "java:S4551", "nota": "Enum values should be compared with '=='" },
+      { "regla": "java:S3242", "nota": "Method parameters should be declared with base types" },
+      { "regla": "java:S2384", "nota": "Private mutable members should not be stored or returned directly" },
+      { "regla": "java:S1067", "params": { "max": "5" }, "nota": "Expressions should not be too complex" },
+      { "regla": "java:S923",  "nota": "Functions should not be defined with a variable number of arguments" },
+      { "regla": "java:S2972", "nota": "Inner classes should not have too many lines of code" },
+      { "regla": "java:S5867", "nota": "Unicode-aware versions of character classes should be preferred" },
+      { "regla": "java:S2301", "nota": "Public methods should not contain selector arguments" }
+      
+      
     ]
   },
   "perfiles_adicionales": [
@@ -70,15 +85,14 @@
         "Reglas del front (dgicp-siip2-frontend-ui) sacadas del primer análisis en el Sonar de la",
         "entidad (2026-09-26). Claves confirmadas contra el Sonar local por el título de la regla.",
         "No se lista typescript:S7727 ('Do not pass function X directly to .some(...)'): ya viene",
-        "en Sonar way. S1451 queda con headerFormat vacío porque no se sabe qué cabecera exige la",
-        "entidad; con el formato vacío la regla no marca nada en local: copiar el valor de",
-        "'headerFormat' (y 'isRegularExpression') desde el detalle de la regla en su Sonar."
+        "en Sonar way. El headerFormat de S1451 es la cabecera que usan otros proyectos del MH",
+        "(texto literal, isRegularExpression=false); todo .ts/.tsx de src/ debe empezar con ella."
       ],
       "nombre": "Entidad MH",
       "lenguaje": "ts",
       "hereda_de": "Sonar way",
       "reglas": [
-        { "regla": "typescript:S1451", "nota": "Add or update the header of this file (headerFormat de la entidad: pendiente)" },
+        { "regla": "typescript:S1451", "params": { "headerFormat": "/*\n * Copyright (c) Ministerio de Hacienda de El Salvador.\n * All rights reserved.\n */", "isRegularExpression": "false" }, "nota": "Add or update the header of this file" },
         { "regla": "typescript:S3524", "params": { "parameter_parens": "false", "body_braces": "false" }, "nota": "Remove parentheses around the parameter of this arrow function" },
         { "regla": "typescript:S3499", "nota": "Group all shorthand properties at either the beginning or end of this object declaration" },
         { "regla": "typescript:S109",  "nota": "No magic number: N" },
@@ -91,7 +105,20 @@
         { "regla": "typescript:S117",  "params": { "format": "^[_$A-Za-z][$A-Za-z0-9]*$|^[_$A-Z][_$A-Z0-9]+$" }, "nota": "Rename this parameter \"error_\" to match the regular expression ..." },
         { "regla": "typescript:S1192", "params": { "threshold": "3" }, "nota": "Define a constant instead of duplicating this literal N times" },
         { "regla": "typescript:S7735", "nota": "Unexpected negated condition" },
-        { "regla": "typescript:S6480", "nota": "JSX props should not use arrow functions" }
+        { "regla": "typescript:S6480", "nota": "JSX props should not use arrow functions" },
+        { "regla": "typescript:S126",  "nota": "Add the missing \"else\" clause" },
+        { "regla": "typescript:S3525", "nota": "Declare a \"X\" class and move this declaration of \"y\" into it (prototype assignments, src/test/setup.ts)" }
+      ]
+    },
+    {
+      "_comentario": [
+        "Reglas CSS del front (src/styles/*.css) sacadas del mismo análisis (2026-09-27)."
+      ],
+      "nombre": "Entidad MH",
+      "lenguaje": "css",
+      "hereda_de": "Sonar way",
+      "reglas": [
+        { "regla": "css:S4664", "nota": "Expected selector \".x\" to come before selector \".y .x\" (no-descending-specificity)" }
       ]
     }
   ],

@@ -8,6 +8,7 @@ Cómo levantar el stack completo o un módulo puntual. Para entender qué es cad
 - [Requisitos](#requisitos)
 - [Variables de entorno](#variables-de-entorno)
 - [Base de datos: Postgres en local, Oracle en producción](#base-de-datos-postgres-en-local-oracle-en-producción)
+- [Configuración por ambiente en la entidad (backend-srv-config)](#configuración-por-ambiente-en-la-entidad-backend-srv-config)
 - [Compilación y despliegue](#compilación-y-despliegue)
 - [Herramienta externa: Flowable UI (opcional)](#herramienta-externa-flowable-ui-opcional)
 - [Accesos una vez levantado el stack](#accesos-una-vez-levantado-el-stack)
@@ -20,17 +21,17 @@ Versión corta para tener el sistema andando y confirmar que todo quedó bien co
 2. Copiá el bloque de [variables de entorno](#variables-de-entorno) a un archivo `.env` en la raíz del proyecto y completá los valores vacíos (`DB_USER`, `DB_PASSWORD`, `DB_DATABASE`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`) — para desarrollo local podés poner cualquier valor propio, no necesitan ser reales.
 3. Compilá y levantá todo:
    ```
-   cd back;        mvn clean package -DskipTests; cd ..
+   cd backend-srv; mvn clean package -DskipTests; cd ..
    cd api-gateway; mvn clean package -DskipTests; cd ..
    docker compose run --rm front-build
    docker-compose up --build -d
    ```
-   La primera vez tarda varios minutos (descarga imágenes, compila `front`, arranca Keycloak). `back` espera a que `postgres` esté *healthy* antes de arrancar.
+   La primera vez tarda varios minutos (descarga imágenes, compila `front`, arranca Keycloak). `backend-srv` espera a que `postgres` esté *healthy* antes de arrancar.
 4. Confirmá que los tres puntos de entrada responden (ver [tabla completa de accesos](#accesos-una-vez-levantado-el-stack)):
    - http://localhost → pantalla de login de la SPA.
    - http://localhost:8080/swagger-ui.html → Swagger UI del API Gateway.
    - http://localhost:8085 → consola de Keycloak.
-5. **Smoke test de login:** en http://localhost, entrá con un usuario ya sembrado en `keycloak/realm-export.json` (realm `siip-api`) — por ejemplo `user` / `user123`, o `tecnico.pre` / `tecnicoPre123` si querés ver el módulo de Preinversión con ese rol. Si el login funciona y llegás al home, el stack completo (front → gateway → Keycloak → back → postgres) está bien conectado.
+5. **Smoke test de login:** en http://localhost, entrá con un usuario ya sembrado en `keycloak/realm-export.json` (realm `siip-api`) — por ejemplo `user` / `user123`, o `tecnico.pre` / `tecnicoPre123` si querés ver el módulo de Preinversión con ese rol. Si el login funciona y llegás al home, el stack completo (front → gateway → Keycloak → backend-srv → postgres) está bien conectado.
 
 Si algo de esto falla, revisá `docker-compose logs -f <servicio>` antes que nada; y si seguís trabado, escribile a david@magnaperitia.com.
 
@@ -68,18 +69,18 @@ SONARQUBE_DB_PASSWORD=
 SONARQUBE_DB_DATABASE=
 ```
 
-`SONAR_TOKEN` se genera desde la propia consola de SonarQube (http://localhost:9000, **My Account → Security**) una vez que el servicio está arriba — no hace falta completarlo antes del primer `docker-compose up` (ver [Análisis estático](./REFERENCE.md#análisis-estático-sonarqube)).
+`SONAR_TOKEN` se genera desde la propia consola de SonarQube (http://localhost:9000, **My Account → Security**) una vez que el servicio está arriba — no hace falta completarlo antes del primer `docker-compose up` (ver [Análisis estático](./REFERENCE.md#sonarqube-local)).
 
 > No versionar el `.env` con credenciales reales; usarlo solo como plantilla local.
 
 ## Base de datos: Postgres en local, Oracle en producción
 
-`back` no tiene el driver ni la URL de base de datos hardcodeados — todo sale de `DB_URL`/`DB_DRIVER_CLASS_NAME`/`DB_SCHEMA`, así que el mismo jar sirve para cualquiera de los dos motores. En local (docker-compose) apunta a Postgres con los valores del `.env` de arriba. En producción, el `.env`/secreto real del servidor debe usar algo como:
+`backend-srv` no tiene el driver ni la URL de base de datos hardcodeados — todo sale de `DB_URL`/`DB_DRIVER_CLASS_NAME`/`DB_SCHEMA`, así que el mismo jar sirve para cualquiera de los dos motores. En local (docker-compose) apunta a Postgres con los valores del `.env` de arriba. En los ambientes de la entidad estos valores salen del chart de `backend-srv-config` (ver [siguiente sección](#configuración-por-ambiente-en-la-entidad-backend-srv-config)) y tienen esta forma:
 
 ```
 DB_URL=jdbc:oracle:thin:@//<host>:<puerto>/<service_name_o_SID>
 DB_DRIVER_CLASS_NAME=oracle.jdbc.OracleDriver
-DB_SCHEMA=<usuario_oracle_de_la_app>
+DB_SCHEMA=<esquema_dueño_de_las_tablas>
 ```
 
 Prerrequisitos operativos (no son cambios de código):
@@ -88,33 +89,56 @@ Prerrequisitos operativos (no son cambios de código):
 
 ### Configuración de esquema por perfil
 
-El perfil `dev` (`back/src/main/resources/application-dev.yml`) desactiva `ddl-auto` (`none`) para dejar la gestión del esquema fuera del arranque de la aplicación; el perfil por defecto (`application.yml`) usa `create-drop`.
+| Perfil | Dónde se usa | `JPA_DDL_AUTO` | `FLOWABLE_DB_SCHEMA_UPDATE` | Datos de prueba |
+|---|---|---|---|---|
+| `dev` (`application-dev.yml`) | local: `docker-compose.yml`, `dist-tester` | `create-drop` | `drop-create` | Sí (`DevSeeder`) |
+| `test` (`src/test/resources/application-test.yml`) | `mvn test` (H2 en memoria) | `create-drop` | `drop-create` | No (cada prueba arma lo suyo) |
+| `prod` (por defecto, `application.yml`) | ambientes de la entidad | `validate` | `false` | No |
 
-> **Estado actual — sin herramienta de migraciones.** Mientras el proyecto usa `create-drop` en el perfil por defecto, agregar una columna o tabla nueva a una entidad JPA no requiere ningún paso extra: el esquema se recrea solo al levantar `back`. No hace falta escribir scripts de migración (Flyway/Liquibase) por ahora. Esto es una decisión temporal: el día que el proyecto pase a un esquema estable (pensando sobre todo en Oracle en producción, donde un `create-drop` borraría datos reales), va a hacer falta introducir una herramienta de migraciones — pero eso todavía no está resuelto.
+Los dos valores se pueden sobreescribir con esas variables de entorno, pero el valor por defecto de `application.yml` es a propósito el seguro: si a un ambiente compartido le falta la variable, la app **no** crea ni borra tablas; si el esquema no existe, el arranque falla y se ve.
+
+> **Estado actual — sin herramienta de migraciones.** En local (`dev`) agregar una columna o tabla nueva a una entidad JPA no requiere ningún paso extra: el esquema se recrea solo al levantar `backend-srv`. En la entidad eso no alcanza: con `validate`, cada cambio de entidad necesita que el esquema de Oracle ya lo tenga. Falta decidir cómo se entrega ese DDL (scripts para el DBA o Flyway/Liquibase) — está anotado en los pendientes de `backend-srv-config/README.md`.
+
+## Configuración por ambiente en la entidad (backend-srv-config)
+
+`backend-srv` sigue la convención de la entidad de separar código y configuración en dos repositorios de Gerrit:
+
+| Repo | Contenido |
+|---|---|
+| `dgicp-siip2/backend-srv` (carpeta `backend-srv/`) | Código, `Dockerfile`, pipeline. La imagen es la misma en todos los ambientes. |
+| `dgicp-siip2/backend-srv-config` (carpeta `backend-srv-config/`) | Chart Helm que despliega ArgoCD: todo lo que distingue dev, pruebas, preproducción y producción. |
+
+Cómo se arma la configuración de un ambiente:
+
+- **La rama de `backend-srv-config` es el ambiente**; dentro de ella, `values.yaml` tiene los valores base y `envs/values-<cluster>.yaml` sobreescribe lo que depende del cluster (base de datos, esquemas, dominios, registry).
+- Lo no sensible va al **ConfigMap `backend-srv-cmp`** (`configMap.data` del chart) y lo sensible (`DB_USER`, `DB_PASSWORD`) al **Secret `backend-srv-secret`**, que el chart crea vacío y el owner completa directamente en el cluster. Nada sensible va a git.
+- Ambos llegan al contenedor como variables de entorno (`envFrom`), con los mismos nombres que usa `docker-compose.yml` en local. La lista completa de variables y su valor en cada ambiente está en [`backend-srv/docs/configuracion.md`](./backend-srv/docs/configuracion.md) y en [`backend-srv-config/README.md`](./backend-srv-config/README.md).
+
+Regla práctica: **si agregás una propiedad a `application.yml` que cambia por ambiente**, leela de una variable de entorno (con un valor por defecto seguro), agregala al `.env`/`docker-compose.yml` para local y a `configMap.data` de `backend-srv-config` (o al Secret, si es sensible) en el mismo cambio.
 
 ## Compilación y despliegue
 
 ### Todo el sistema
 
 ```
-cd back;        mvn clean package -DskipTests; cd ..
+cd backend-srv; mvn clean package -DskipTests; cd ..
 cd api-gateway; mvn clean package -DskipTests; cd ..
 docker compose run --rm front-build
 docker-compose up --build -d
 ```
 
-`back` y `api-gateway` son proyectos Maven independientes (no hay `pom.xml` agregador en la raíz: cada uno va a su propio repositorio en la entidad), así que se compilan por separado (`front` no es un proyecto Maven — ver más abajo — y `siip-comun` se fusionó dentro de `back`). `front` sigue el mismo patrón: su `Dockerfile` (el mismo que usa el pipeline de la entidad) no compila, solo empaqueta `front/dist/` en Apache HTTPD. `docker compose run --rm front-build` hace esa compilación (`npm ci && npm run build`) en un contenedor con Node y Java, así que no hace falta tenerlos en el host; va antes de `up` porque Compose construye todas las imágenes antes de levantar cualquier contenedor. Las dos imágenes base del front son públicas (`registry.access.redhat.com`), así que esto funciona fuera de la VPN del MH.
+`backend-srv` y `api-gateway` son proyectos Maven independientes (no hay `pom.xml` agregador en la raíz: cada uno va a su propio repositorio en la entidad), así que se compilan por separado (`front` no es un proyecto Maven — ver más abajo — y `siip-comun` se fusionó dentro de `backend-srv`). `front` sigue el mismo patrón: su `Dockerfile` (el mismo que usa el pipeline de la entidad) no compila, solo empaqueta `front/dist/` en Apache HTTPD. `docker compose run --rm front-build` hace esa compilación (`npm ci && npm run build`) en un contenedor con Node y Java, así que no hace falta tenerlos en el host; va antes de `up` porque Compose construye todas las imágenes antes de levantar cualquier contenedor. Las dos imágenes base del front son públicas (`registry.access.redhat.com`), así que esto funciona fuera de la VPN del MH.
 
-### Un solo módulo (por ejemplo, `back`)
+### Un solo módulo (por ejemplo, `backend-srv`)
 
 ```
-cd back
+cd backend-srv
 mvn clean package -DskipTests
 cd ..
-docker compose up -d --build back
+docker compose up -d --build backend-srv
 ```
 
-> `back` y `api-gateway` no tienen dependencias entre sí ni con otro módulo Java (`siip-comun` se fusionó en `back`): cada uno compila solo.
+> `backend-srv` y `api-gateway` no tienen dependencias entre sí ni con otro módulo Java (`siip-comun` se fusionó en `backend-srv`): cada uno compila solo.
 
 ### Frontend en desarrollo local (sin Docker)
 
@@ -126,7 +150,7 @@ npm run dev
 
 El servidor de Vite (`http://localhost:5173`) proxya `/auth/**` y `/back/**` hacia `api-gateway` (por defecto `http://localhost:8080`, configurable con `VITE_API_PROXY_TARGET` en `front/.env.development`) — así el código de la app siempre usa rutas relativas y se comporta igual en desarrollo que en producción (donde ese mismo rol lo cumple Apache HTTPD, ver `front/httpd.conf`).
 
-`npm run build` compila con TypeScript y genera el bundle de producción en `front/dist/` (lo que empaqueta el `Dockerfile`). Para la estructura de carpetas del front, ver [REFERENCE.md](./REFERENCE.md).
+`npm run build` compila con TypeScript y genera el bundle de producción en `front/dist/` (lo que empaqueta el `Dockerfile`). Para la estructura de carpetas del front, ver [front/docs/architecture.md](./front/docs/architecture.md).
 
 ### Herramienta externa: Flowable UI (opcional)
 

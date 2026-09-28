@@ -1,188 +1,112 @@
 # Referencia técnica
 
-Cómo funciona internamente la generación de código desde OpenAPI (back y front), la estructura del front, y cómo están organizadas las pruebas. Para levantar el stack, ver [SETUP.md](./SETUP.md). Para los pasos de "cómo agregar un CU", ver [CONTRIBUTING.md](./CONTRIBUTING.md).
+La referencia técnica de cada componente vive **dentro de su propio repositorio**, en `docs/`
+(se publica como TechDocs en el Developer Hub). Así se mantiene al día junto al código y no
+depende del monorepo. Esta página solo reúne lo que cruza componentes: la duplicación de
+contratos y `.feature` entre back y front, `api-gateway` (que no tiene `docs/` propio) y el
+servidor de SonarQube local.
 
-## Índice
+Para levantar el stack, ver [SETUP.md](./SETUP.md). Para los pasos de "cómo agregar un CU", ver
+[CONTRIBUTING.md](./CONTRIBUTING.md).
 
-- [Contratos OpenAPI (back) — generación de código](#contratos-openapi-back--cómo-funciona-la-generación-de-código)
-- [Estructura del front](#estructura-del-front)
-- [Contratos OpenAPI (front) — generación del cliente](#contratos-openapi-front--cómo-funciona-la-generación-del-cliente)
-- [Pruebas y calidad](#pruebas-y-calidad)
-  - [Cobertura de pruebas](#cobertura-de-pruebas)
-  - [Análisis estático (SonarQube)](#análisis-estático-sonarqube)
-  - [Pruebas BDD (Gherkin/Cucumber)](#pruebas-bdd-gherkincucumber--solo-en-back)
+## Dónde está cada tema
 
-## Contratos OpenAPI (back) — cómo funciona la generación de código
+| Tema | `backend-srv` | `front` |
+|---|---|---|
+| Estructura del código | [docs/architecture.md](./backend-srv/docs/architecture.md) | [docs/architecture.md](./front/docs/architecture.md) |
+| Contratos OpenAPI y código generado | [docs/desarrollo.md § Contratos](./backend-srv/docs/desarrollo.md#contratos-openapi-api-first) | [docs/desarrollo.md § Cliente generado](./front/docs/desarrollo.md#cliente-generado-desde-openapi) |
+| Pruebas y cobertura | [docs/desarrollo.md § Pruebas](./backend-srv/docs/desarrollo.md#pruebas) | [docs/desarrollo.md § Pruebas](./front/docs/desarrollo.md#pruebas) |
+| `.feature` (Gherkin) | [§ BDD (Cucumber)](./backend-srv/docs/desarrollo.md#bdd-cucumber): suite automatizada | [§ Especificaciones Gherkin](./front/docs/desarrollo.md#especificaciones-gherkin-features): copias sin steps |
+| Motor de procesos (Flowable) | [docs/desarrollo.md § Flowable](./backend-srv/docs/desarrollo.md#motor-de-procesos-flowable) | — |
+| Análisis estático | [docs/desarrollo.md § SonarQube](./backend-srv/docs/desarrollo.md#análisis-estático-sonarqube) | [docs/desarrollo.md § SonarQube](./front/docs/desarrollo.md#análisis-estático-sonarqube) |
+| Variables de entorno y perfiles | [docs/configuracion.md](./backend-srv/docs/configuracion.md) | [README § Contenedor](./front/README.md#contenedor) |
 
-`back` usa **contrato primero** (API-first) para los servicios REST: se escribe un `.yaml` OpenAPI describiendo el/los endpoint(s) de un caso de uso, y `openapi-generator-maven-plugin` (configurado en `back/pom.xml`) genera la interfaz Java (con `@RequestMapping`, validación, docs Swagger) y los DTOs correspondientes. Vos solo escribís un `@RestController` que implementa esa interfaz — nunca se edita el código generado a mano.
+## Contratos y `.feature` duplicados entre back y front
 
-**Estructura actual** (un `.yaml` por caso de uso, agrupado en una carpeta por dominio de negocio — coincide con `back/src/main/java/sv/gob/mh/siip/model/<dominio>/` y su `TRAZABILIDAD-<DOMINIO>.md`):
+Cada CU tiene un `.openapi.yaml` y uno o más `.feature`. El original vive en `backend-srv` y
+`front` guarda una **copia manual**: no hay symlink ni script de sincronización, porque en la
+entidad son repositorios separados.
 
-```
-back/src/main/resources/openapi/
-└── preinversion/
-    └── CU-PRE-01.openapi.yaml   # Registro y Solicitud de CUP (CU-PRE-01)
-```
+| Archivo | Original (`backend-srv`) | Copia (`front`) |
+|---|---|---|
+| Contrato OpenAPI | `src/main/resources/openapi/<dominio>/CU-XX.openapi.yaml` | `openapi/<dominio>/CU-XX.openapi.yaml` |
+| Especificación Gherkin | `src/test/resources/features/<dominio>/*.feature` | `features/*.feature` (solo los CU que el front implementa) |
 
-Hoy solo existe el contrato de `preinversion` (CU-PRE-01); el resto de dominios (`administracion`, `convenios`, `ejecucion`, `oym`, `programacion`) todavía no tienen `.yaml` ni `<execution>` en el plugin.
+Al cambiar un contrato en el back hay que copiarlo al front, correr `npm run generate:api` y
+commitear lo generado (el cliente de `front/src/api/generated/` se versiona). Nada lo valida
+automáticamente: revisar que las dos copias sean idénticas es parte de la Definition of Done de
+[CONTRIBUTING.md](./CONTRIBUTING.md).
 
-**Generar el código:**
+## `api-gateway`: pruebas y cobertura
 
-```
-cd back
-mvn generate-sources
-```
-
-(también se dispara solo con `mvn compile`/`package`/`install`, ya que está enlazado a la fase `generate-sources`). Genera, por dominio, algo como:
-
-```
-back/target/generated-sources/openapi/src/main/java/sv/gob/mh/siip/<dominio>/
-├── api/<Tag>Api.java          # interfaz, una por tag del yaml — NO editar, se regenera en cada build
-└── dto/<Modelo>Dto.java       # DTOs de request/response — NO editar
-```
-
-Esa carpeta es 100% generada (vive bajo `target/`, ignorada por git) — se borra y se reconstruye en cada `mvn clean`.
-
-**Configuración clave** (en `back/pom.xml`, aplicada a todas las ejecuciones): `interfaceOnly=true` (no genera controllers ni clase `Application`), `skipDefaultInterface=true` (fuerza a implementar cada método), `useSpringBoot3=true` (imports `jakarta.*`, no `javax.*`). El Swagger UI existente (`springdoc-openapi-starter-webmvc-ui`) sigue funcionando igual: documenta en runtime cualquier `@RestController` activo, generado o no.
-
-> Los pasos concretos para **agregar** un endpoint o un dominio nuevo están en [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-## Estructura del front
+`api-gateway` no tiene `docs/`. Se prueba igual que `backend-srv`, dentro de su carpeta (no hay
+`pom.xml` agregador en la raíz):
 
 ```
-front/
-├── openapi/
-│   └── preinversion/CU-PRE-01.openapi.yaml   # copia del contrato del back, ver abajo
-├── features/                              # .feature (Gherkin) espejo de back/src/test/resources/features
-├── src/
-│   ├── api/
-│   │   ├── generated/    # cliente typescript-axios generado — NO editar; se versiona (solo .ts)
-│   │   ├── httpClient.ts # axios base (refresh-on-401)
-│   │   └── <dominio>Api.ts  # wrapper por dominio: instancia el cliente generado + reexporta tipos
-│   ├── auth/        # AuthContext, guard de rutas (RequireAuth)
-│   ├── layout/       # AppLayout, Sidebar, Topbar
-│   ├── pages/         # LoginPage, HomePage, placeholders (ver nota abajo)
-│   ├── features/       # pantallas/lógica por dominio de negocio (ej. features/preinversion/proyectos/)
-│   ├── components/     # form/ (FormRow, DatePickerInput), table/ (DataTable, Pagination), ConfirmDialog
-│   └── i18n/            # traducciones (es)
-├── Dockerfile              # empaqueta dist/ (ya compilado: pipeline o front-build de docker-compose) en ubi9/httpd-24
-└── httpd.conf              # reverse-proxy /auth, /back + SPA fallback + cabeceras de seguridad
+cd api-gateway
+mvn clean verify    # JUnit 5 + Mockito; reporte JaCoCo en target/site/jacoco/index.html
 ```
 
-> **Estado actual del front:** login, home y el módulo `preinversion` (CU-PRE-01, "Registro y Solicitud de CUP" — ver `src/features/preinversion/proyectos/`) están implementados contra el back real. El resto de módulos del sidebar (Catálogos Generales, Tablas de Rangos, y los dominios `administracion`/`convenios`/`ejecucion`/`oym`/`programacion`) siguen como placeholders ("🚧 Página en Construcción"): tuvieron una implementación CRUD completa en un primer momento, pero se retiraron cuando `back` reemplazó ese layer de controllers/servicios por el nuevo modelo de dominio, que todavía no expone endpoints REST para esos módulos. Los componentes genéricos (`FormRow`, `DatePickerInput`, `DataTable`, `Pagination`, `ConfirmDialog`) se conservaron porque no dependen de esos DTOs — son la base para conectar cada módulo nuevo en cuanto `back` publique su contrato, siguiendo el patrón descrito en [CONTRIBUTING.md](./CONTRIBUTING.md).
+`.\scripts\run-tests.ps1` corre las pruebas de `backend-srv`, `api-gateway` y `front` seguidas.
 
-## Contratos OpenAPI (front) — cómo funciona la generación del cliente
+Su proyecto Sonar es `siip-api-gateway`, y su `pom.xml` ya apunta a `http://localhost:9000`.
 
-Igual que `back`, `front` genera su cliente HTTP a partir de un `.yaml` OpenAPI — pero acá el `.yaml` es una **copia manual** del que vive en `back/src/main/resources/openapi/` (no hay symlink ni script de sync: al editar el contrato hay que copiarlo a los dos lados y mantenerlos idénticos).
+## SonarQube local
 
-```
-front/openapi/preinversion/CU-PRE-01.openapi.yaml   # idéntico a back/src/main/resources/openapi/preinversion/CU-PRE-01.openapi.yaml
-```
-
-**Generar el cliente:**
-
-```
-cd front
-npm run generate:api
-```
-
-Esto corre `openapi-generator-cli generate -i openapi/preinversion/CU-PRE-01.openapi.yaml -g typescript-axios -o src/api/generated/preinversion ...` (ver `package.json`) y regenera `src/api/generated/preinversion/` (API clients + tipos, uno por `tag` del yaml). A diferencia de `back/target/generated-sources`, esa carpeta **sí se versiona** (solo los `.ts`; `docs/`, `git_push.sh` y metadatos del generador los ignora `front/.gitignore`): la imagen Node del pipeline de la entidad no trae Java, así que no puede correr `openapi-generator-cli`. Cada vez que cambia un contrato hay que regenerar y commitear.
-
-`npm run build` **no** regenera el cliente (no hay hook `prebuild`): compila con lo versionado, igual en local, en `front-build` de `docker-compose.yml` y en el pipeline. `generate:api` se corre a mano (necesita Java 11+) cuando cambia un `.yaml`.
-
-> Los pasos para agregar un script `generate:api:<dominio>` nuevo y el wrapper correspondiente están en [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-## Pruebas y calidad
-
-- Los tests unitarios se ubican por módulo en `src/test/java` (JUnit 5 + Mockito).
-- Cobertura con JaCoCo configurado en el `pom.xml` de cada proyecto (`back/pom.xml`, `api-gateway/pom.xml`: `prepare-agent` + `report` en fase `verify`).
-- Análisis estático con SonarQube, corriendo como servicio `sonarqube` en `docker-compose.yml` (junto a su propia base `sonarqube-db`, separada de `siip-db`), autenticado con `SONAR_TOKEN` (variable de entorno).
-
-### Cobertura de pruebas
-
-**Backend (`back`, `api-gateway`) — JaCoCo**, dentro de cada carpeta (no hay `pom.xml` agregador en la raíz; `.\scripts\run-tests.ps1` corre los dos seguidos):
-
-```
-cd back          # o cd api-gateway
-mvn clean verify
-```
-
-Genera un reporte HTML por proyecto en `<proyecto>/target/site/jacoco/index.html` (por ejemplo `back/target/site/jacoco/index.html`) — abrirlo directamente en el navegador. `mvn clean package`/`install` también ejecuta los tests, pero el reporte HTML solo se genera en la fase `verify` (donde está enlazado el goal `report` de JaCoCo).
-
-**Frontend (`front`) — Vitest + `@vitest/coverage-v8`:**
-
-```
-cd front
-npm run test           # corre los tests una vez
-npm run test:watch      # modo watch, para desarrollo
-npm run test:coverage    # corre los tests y genera el reporte de cobertura
-```
-
-`test:coverage` imprime la tabla de cobertura en la terminal y además genera un reporte HTML en `front/coverage/index.html`. Los tests viven junto al código que prueban (`*.test.ts`/`*.test.tsx`, p. ej. `src/auth/tokenStore.test.ts`), usando Vitest + React Testing Library (`jsdom` como entorno DOM). Hoy la cobertura es baja porque recién se sentó la base de testing al migrar el front a React — hay que ir sumando tests a medida que se toca cada módulo.
-
-### Análisis estático (SonarQube)
-
-El servidor corre local vía Docker Compose (servicio `sonarqube`, imagen `sonarqube:community`, con su propia Postgres `sonarqube-db` — separada de `siip-db` porque Sonar necesita su propio usuario/esquema y no debe compartir ciclo de vida con la base de negocio):
+El servidor corre con Docker Compose (servicio `sonarqube`, imagen `sonarqube:community`), con
+su propia Postgres `sonarqube-db`. Está separada de `siip-db` porque Sonar necesita su propio
+usuario y esquema, y no debe compartir ciclo de vida con la base de negocio.
 
 ```
 docker compose up -d sonarqube
 ```
 
-La primera vez tarda un par de minutos en arrancar (Elasticsearch embebido). Si el contenedor muere con `max virtual memory areas vm.max_map_count [...] is too low`, hay que subir ese límite en el host/VM de Docker (en Docker Desktop con WSL2: `wsl -d docker-desktop sysctl -w vm.max_map_count=262144`, o agregarlo a `.wslconfig` para que sobreviva un reinicio).
+La primera vez tarda un par de minutos en arrancar (Elasticsearch embebido). Si el contenedor
+muere con `max virtual memory areas vm.max_map_count [...] is too low`, hay que subir ese límite
+en la VM de Docker (Docker Desktop con WSL2: `wsl -d docker-desktop sysctl -w
+vm.max_map_count=262144`, o agregarlo a `.wslconfig` para que sobreviva un reinicio).
 
-Una vez arriba, entrar a http://localhost:9000 (usuario/clave por defecto `admin`/`admin`, pide cambiarla al primer login), crear un token de usuario (**My Account → Security**, tipo *User Token*) y ponerlo en `SONAR_TOKEN` en el `.env` de la raíz (reemplaza cualquier valor previo — un token de otro servidor/organización no sirve acá).
+Una vez arriba, entrar a http://localhost:9000 (`admin`/`admin`, pide cambiarla al primer
+login), crear un token de usuario (**My Account → Security**, tipo *User Token*) y ponerlo en
+`SONAR_TOKEN` en el `.env` de la raíz. Un token de otro servidor no sirve.
 
-**Mismas reglas que la entidad**: el Sonar de la entidad usa un perfil Java más estricto que el *Sonar way* (líneas ≤ 120, sin imports con `*`, `package-info.java` por paquete, etc.) y un quality gate con coverage ≥ 95 %. Como no hay backup de su perfil, las reglas están reconstruidas a partir de sus incidencias en `sonar/reglas-entidad.json`. El servicio `sonarqube-init` las aplica al Sonar local (perfil "Entidad MH", que hereda de *Sonar way*, y quality gate "Entidad MH", ambos como default) y verifica regla por regla que quedaron activas:
+### Mismas reglas que la entidad
 
-1. Poner en el `.env` la clave del usuario `admin` del Sonar local (`SONAR_ADMIN_PASSWORD=...`) o un token de ese usuario (`SONAR_ADMIN_TOKEN=...`). El `SONAR_TOKEN` de un usuario común no puede administrar perfiles.
-2. `docker compose up sonarqube-init`. Termina con "aplicados y verificados", o con la lista de lo que no coincide.
-3. Cuando la entidad reporte una regla nueva, agregar su clave (`java:Sxxx`, visible en el detalle de la incidencia) a `sonar/reglas-entidad.json` y volver a correr el paso 2.
+El Sonar de la entidad usa un perfil Java más estricto que *Sonar way* (líneas ≤ 120, sin
+imports con `*`, `package-info.java` por paquete, etc.) y un quality gate con cobertura ≥ 95 %.
+Como no hay backup de ese perfil, las reglas están reconstruidas a partir de sus incidencias en
+`sonar/reglas-entidad.json`. El servicio `sonarqube-init` las aplica al Sonar local (perfil y
+quality gate "Entidad MH", ambos por defecto) y verifica regla por regla que quedaron activas:
 
-> **Sobre la versión y la autenticación**: `sonarqube:community` (Community Build, release rolling) acepta autenticación Bearer con `sonar.token`/`SONAR_TOKEN` sin workarounds — los comandos de abajo ya lo usan así. Ojo con el scanner de `front` (`@sonar/scan`): si no encuentra `sonar.host.url` apunta por defecto a **SonarCloud** y falla con `403`. `front/sonar-project.properties` lo fija al servidor institucional (`alcm.mh.gob.sv`), igual que `back/pom.xml`; para el Sonar local hay que definir `SONAR_HOST_URL`, que `@sonar/scan` lee antes que el archivo (verificado: el log muestra `Bootstrapper: Server URL: <valor de SONAR_HOST_URL>`).
->
-> El análisis, sobre todo la primera vez (JVM en frío, sin caché de análisis, `@sonar/scan` sin el scanner-cli descargado), puede tardar varios minutos reales — no está colgado, `mvn`/`npx` simplemente no imprimen nada mientras el analizador Java/TS procesa los archivos. Dejalo correr en background si vas a hacer otra cosa mientras tanto.
+1. Poner en el `.env` la clave del usuario `admin` del Sonar local (`SONAR_ADMIN_PASSWORD=...`)
+   o un token de ese usuario (`SONAR_ADMIN_TOKEN=...`). El `SONAR_TOKEN` de un usuario común no
+   puede administrar perfiles.
+2. `docker compose up sonarqube-init`. Termina con "aplicados y verificados", o con la lista de
+   lo que no coincide.
+3. Cuando la entidad reporte una regla nueva, agregar su clave (`java:Sxxx`, visible en el
+   detalle de la incidencia) a `sonar/reglas-entidad.json` y volver a correr el paso 2.
 
-**Backend — un proyecto Sonar por proyecto Maven, corrido dentro de cada carpeta:** `back` → `dgicp-siip2-backend-srv`, `api-gateway` → `siip-api-gateway`.
+### Analizar cada proyecto contra el Sonar local
 
-```
+`backend-srv` y `front` apuntan por defecto al servidor institucional (`alcm.mh.gob.sv`), así que
+hay que definir `SONAR_HOST_URL`. En `api-gateway` es redundante.
+
+```powershell
 $env:SONAR_HOST_URL = "http://localhost:9000"
 $env:SONAR_TOKEN = "$((Get-Content .env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
-cd back          # o cd api-gateway
+
+cd backend-srv    # o cd api-gateway
 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
-```
 
-(`$SONAR_TOKEN` en bash/mac/Linux). `sonar.projectKey`/`sonar.projectName`/`sonar.host.url` ya están en el `pom.xml` de cada proyecto — no hace falta repetirlos. En `back` el `$env:SONAR_HOST_URL` es obligatorio: su `pom.xml` apunta por defecto al servidor institucional (`alcm.mh.gob.sv`) y solo lo cambia el perfil `sonar-host-desde-env` cuando esa variable existe; en `api-gateway` es redundante (ya apunta a `localhost:9000`). El plugin no está declarado como dependencia fija del build (convención recomendada por Sonar: se invoca por coordenadas completas) así que `clean verify` corre antes para que JaCoCo genere `target/site/jacoco/jacoco.xml` por módulo, que el scanner detecta solo. El `argLine` de Surefire en el `pom.xml` de cada proyecto también lleva `-XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true`: sin eso, en JDK 21+ (JEP 451) el "inline mock maker" de Mockito falla al auto-adjuntarse y los tests con `@Mock`/`MockitoExtension` truenan.
-
-**Frontend (`front`) — proyecto Sonar separado (`dgicp-siip2-frontend-ui`, TypeScript/JS, no es un proyecto Maven):**
-
-```
 cd front
-$env:SONAR_HOST_URL = "http://localhost:9000"   # obligatorio: sin esto va al servidor institucional
-$env:SONAR_TOKEN = "$((Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"  # o export SONAR_TOKEN=... en bash
 npm run sonar
 ```
 
-`npm run sonar` corre `test:coverage` (genera `coverage/lcov.info`, que lee `sonar.javascript.lcov.reportPaths` en `front/sonar-project.properties`) y después `@sonar/scan` (scanner oficial de Sonar, se descarga on-demand vía `npx`, no queda como dependencia instalada), que lee `SONAR_TOKEN`/`SONAR_HOST_URL` solo. También analiza `front/Dockerfile` (`sonar.sources=src,Dockerfile`) para que se le apliquen las reglas del perfil SecDocker de la entidad. Excluye `src/api/generated/**` del análisis y de cobertura — es código generado por `openapi-generator-cli`, no se versiona y no tiene sentido auditarlo (mismo criterio que las exclusiones de JaCoCo en el `pom.xml` de `back` para `api/`/`dto/` generados).
+| Proyecto | Clave Sonar | Detalle |
+|---|---|---|
+| `backend-srv` | `dgicp-siip2-backend-srv` | [docs/desarrollo.md § SonarQube](./backend-srv/docs/desarrollo.md#análisis-estático-sonarqube) |
+| `api-gateway` | `siip-api-gateway` | [arriba](#api-gateway-pruebas-y-cobertura) |
+| `front` | `dgicp-siip2-frontend-ui` | [docs/desarrollo.md § SonarQube](./front/docs/desarrollo.md#análisis-estático-sonarqube) |
 
-### Pruebas BDD (Gherkin/Cucumber) — solo en `back`
-
-`back` tiene Cucumber (`io.cucumber:cucumber-java`, `cucumber-spring`, `cucumber-junit-platform-engine`) integrado sobre JUnit 5 Platform, corriendo junto a los tests normales con `mvn test`. Estructura:
-
-```
-back/src/test/resources/features/      # archivos .feature (Gherkin)
-back/src/test/java/sv/gob/mh/siip/bdd/
-├── RunCucumberTest.java                # runner @Suite — no se toca al agregar features
-├── CucumberSpringConfiguration.java     # @SpringBootTest + @AutoConfigureTestDatabase (H2) + @Transactional
-└── steps/                              # step definitions (@Given/@When/@Then), un archivo por feature/dominio
-```
-
-**Ejecutar solo la suite BDD:**
-
-```
-cd back
-mvn test -Dtest=RunCucumberTest
-```
-
-`front/features/` tiene una **copia idéntica** de cada `.feature` de `back/src/test/resources/features/` (mismo Gherkin, mismos tags). `front` trae `@cucumber/cucumber` como dependencia y un script `npm run test:bdd` (`cucumber-js`), pero hoy **no existen step definitions del lado front** — no hay carpeta `step_definitions`. En la práctica, estos `.feature` en `front` funcionan como la especificación funcional en español que la UI debe cumplir (base para tests manuales o para los `*.test.tsx` de Vitest), no como una suite automatizada activa.
-
-> Las reglas para escribir un `.feature` nuevo (una sola `Feature:` por archivo, `@wip`, idioma, etc.) y el flujo para implementarlo paso a paso están en [CONTRIBUTING.md](./CONTRIBUTING.md).
+El análisis, sobre todo el primero (JVM en frío, sin caché, scanner por descargar), puede tardar
+varios minutos sin imprimir nada. No está colgado.

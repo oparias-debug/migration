@@ -16,36 +16,36 @@ import reactor.test.StepVerifier;
 
 class CustomHeaderFilterTest {
 
-    private CustomHeaderFilter filter;
+  private CustomHeaderFilter filter;
 
-    @BeforeEach
-    void setUp() {
-        filter = new CustomHeaderFilter();
-    }
+  @BeforeEach
+  void setUp() {
+    filter = new CustomHeaderFilter();
+  }
 
-    @Test
-    void shouldAddCustomHeaderToResponse() {
-        // Arrange: crear una solicitud simulada
-        MockServerHttpRequest request = MockServerHttpRequest.get("/test").build();
-        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+  @Test
+  void shouldAddCustomHeaderToResponse() {
+    // Arrange: crear una solicitud simulada
+    MockServerHttpRequest request = MockServerHttpRequest.get("/test").build();
+    MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        GatewayFilterChain chain = mock(GatewayFilterChain.class);
-        when(chain.filter(Mockito.any(ServerWebExchange.class))).thenReturn(Mono.empty());
+    GatewayFilterChain chain = mock(GatewayFilterChain.class);
+    when(chain.filter(Mockito.any(ServerWebExchange.class))).thenReturn(Mono.empty());
 
-        // Act
-        Mono<Void> result = filter.filter(exchange, chain);
+    // Act
+    Mono<Void> result = filter.filter(exchange, chain);
 
-        // Assert
-        StepVerifier.create(result)
-                .expectComplete()
-                .verify();
+    // Assert
+    StepVerifier.create(result)
+        .expectComplete()
+        .verify();
 
-        String headerValue = exchange.getResponse().getHeaders().getFirst("X-Gateway-Info");
-        assertThat(headerValue).isEqualTo("Procesado por el API Gateway del SIIP");
-    }
+    String headerValue = exchange.getResponse().getHeaders().getFirst("X-Gateway-Info");
+    assertThat(headerValue).isEqualTo("Procesado por el API Gateway del SIIP");
+  }
 
-    @Test
-    void shouldReturnOrder() {
-        assertThat(filter.getOrder()).isEqualTo(1);
-    }
+  @Test
+  void shouldReturnOrder() {
+    assertThat(filter.getOrder()).isEqualTo(1);
+  }
 }

@@ -4,12 +4,13 @@ site_description: 'componente para interfaz de usuario de sistema información d
 
 # Nav reducida respecto a la plantilla react-simple (Next.js): este front es React + Vite,
 # asi que la mayoria de sus paginas (App Router, app-config.json, frmk, Zustand, OIDC)
-# describen piezas que aca no existen. front documenta su arquitectura real y remite a la
-# documentacion operativa que ya existe en la raiz del monorepo siip en vez de duplicarla.
+# describen piezas que aca no existen. front documenta su arquitectura y su forma de
+# trabajo reales; solo levantar el stack completo queda en la raiz del monorepo siip.
 # Ver README.md § Pendientes / por revisar para las brechas frente a la plantilla.
 nav:
   - Inicio: index.md
   - Arquitectura: architecture.md
+  - Desarrollo: desarrollo.md
 
 plugins:
   - techdocs-core

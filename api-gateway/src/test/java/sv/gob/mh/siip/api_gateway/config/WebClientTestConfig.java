@@ -6,8 +6,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @TestConfiguration
 public class WebClientTestConfig {
-    @Bean
-    public WebClient.Builder webClientBuilder() {
-        return WebClient.builder();
-    }
+  @Bean
+  public WebClient.Builder webClientBuilder() {
+    return WebClient.builder();
+  }
 }

@@ -1,0 +1,7 @@
+root = true
+
+# Sonar de la entidad (java:S1120, perfil SecJava): indentación de 4 espacios.
+[*.java]
+indent_style = space
+indent_size = 4
+max_line_length = 120

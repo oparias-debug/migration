@@ -1,0 +1,66 @@
+package sv.gob.mh.siip.model.programacion.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+
+/** Meta fisica mensualizada de un indicador (Enero-Diciembre). CU-PRO-18. */
+@Entity
+@Table(name = "PROGRAMACION_FISICA_MENSUAL",
+         uniqueConstraints = @UniqueConstraint(
+                 name = "UK_PROG_FISICA_MENSUAL",
+                 columnNames = {"ID_INDICADOR_PRODUCTO", "ANIO", "MES"}))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode(of = "id")
+public class ProgramacionFisicaMensual {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prog_fisica_mensual_seq")
+    @SequenceGenerator(name = "prog_fisica_mensual_seq", sequenceName = "PROG_FISICA_MENSUAL_SEQ", allocationSize = 1)
+    @Column(name = "ID_PROG_FISICA_MENSUAL")
+    private Long id;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "ID_INDICADOR_PRODUCTO", nullable = false)
+    private IndicadorProducto indicadorProducto;
+
+    @NotNull
+    @Column(name = "ANIO", nullable = false)
+    private Integer anio;
+
+    @NotNull
+    @Min(1) @Max(12)
+    @Column(name = "MES", nullable = false)
+    private Integer mes;
+
+    @NotNull
+    @Column(name = "META_PROGRAMADA", nullable = false, precision = 18, scale = 2)
+    private BigDecimal metaProgramada;
+
+    @Column(name = "PORCENTAJE", precision = 5, scale = 2)
+    private BigDecimal porcentaje;
+}

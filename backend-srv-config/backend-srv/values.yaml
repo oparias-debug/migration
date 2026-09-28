@@ -1,0 +1,307 @@
+# Valores base de backend-srv (dgicp-siip2). Son los de DEV.
+# Render: helm -f values.yaml -f envs/values-<cluster>.yaml (ver README.md de este repo).
+# La configuración propia de la aplicación está en configMap.data (más abajo) y en el
+# Secret backend-srv-secret, que se carga a mano en el cluster.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: "quay-registry-quay-quay-enterprise.apps.gcp-op-desa.cloud.mh.gob.sv/mh-dgicp-siip2/backend-srv"
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets:
+  - name: quay-credentials
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: "backend-srv"
+
+containerPort: 8080
+
+route:
+  enabled: true
+  name: backend-srv 
+  prefix: "backend-srv"
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+# Endurecimiento del pod. En OpenShift el SCC restricted-v2 ya impone casi todo esto,
+# pero sin declararlo el chart no es portable ni auditable: no se puede demostrar que el
+# contenedor no corre privilegiado sin ir a mirar el SCC del clúster.
+#
+# runAsNonRoot NO se declara aquí A PROPÓSITO. Exige que la imagen fije un USER
+# NUMÉRICO: con un nombre (por ejemplo 'apache') el kubelet no puede comprobar que no
+# sea root y se NIEGA a arrancar el contenedor. Como el SCC ya garantiza que no corre
+# como root, declararlo aquí no añade seguridad real y sí puede tumbar un servicio.
+# Se activa por servicio, cuando su imagen use un uid numérico; el ciclo avisa en cada
+# CR si el USER del Dockerfile es un nombre.
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+  # fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  privileged: false
+  capabilities:
+    drop:
+      - ALL
+  # readOnlyRootFilesystem se deja FUERA a propósito: Quarkus y httpd necesitan escribir
+  # en el directorio temporal. Activarlo exige montarlo como emptyDir, y eso es una
+  # decisión por servicio y no un valor por defecto seguro: puesto aquí sin más, dejaría
+  # los pods en CrashLoop.
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  type: ClusterIP
+  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  port: 80
+
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+# -- Expose the service via gateway-api HTTPRoute
+# Requires Gateway API resources and suitable controller installed within the cluster
+# (see: https://gateway-api.sigs.k8s.io/guides/)
+httpRoute:
+  # HTTPRoute enabled.
+  enabled: false
+  # HTTPRoute annotations.
+  annotations: {}
+  # Which Gateways this Route is attached to.
+  parentRefs:
+  - name: gateway
+    sectionName: http
+    # namespace: default
+  # Hostnames matching HTTP header.
+  hostnames:
+  - chart-example.local
+  # List of rules and filters applied.
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /headers
+  #   filters:
+  #   - type: RequestHeaderModifier
+  #     requestHeaderModifier:
+  #       set:
+  #       - name: My-Overwrite-Header
+  #         value: this-is-the-only-value
+  #       remove:
+  #       - User-Agent
+  # - matches:
+  #   - path:
+  #       type: PathPrefix
+  #       value: /echo
+  #     headers:
+  #     - name: version
+  #       value: v2
+
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+    
+envFrom:
+  - configMapRef:
+      name: backend-srv-cmp
+  # Load all variables from the Helm-managed ConfigMap
+  # =============================================================================
+  # Secret — Credenciales sensibles (DB, OIDC)
+  # NO forma parte del chart: lo crea el owner del proyecto una sola vez tras el
+  # aprovisionamiento, por motivos de seguridad.
+  # El Secret debe llamarse: <project_name>-secret (aquí: backend-srv-secret)
+  # Claves esperadas:
+  #   DB_USER          — Usuario de base de datos (usar el *_POOL, no el *_USER
+  #                      dueño del esquema)
+  #   DB_PASSWORD      — Contraseña de base de datos
+  # Sin este Secret la aplicación NO arranca: es intencional, para que el fallo
+  # sea evidente en vez de intentar conectarse con una credencial inválida.
+  # =============================================================================
+  - secretRef:
+      name: backend-srv-secret
+
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+  timeoutSeconds: 5
+
+startupProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 12
+  timeoutSeconds: 3
+
+
+# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# ConfigMap configuration
+# This creates a ConfigMap named: <release-name>-config
+# Example: if release name is "myapp", ConfigMap will be "myapp-config"
+configMap:
+  # Enable/disable ConfigMap creation
+  enabled: true
+  # Annotations for the ConfigMap
+  annotations: {}
+    # example.com/managed-by: "helm"
+  # Data to include in the ConfigMap (key-value pairs)
+  #
+  # Contrato con la aplicación: son EXACTAMENTE las variables que lee
+  # src/main/resources/application.yml del repo dgicp-siip2/backend-srv (detalle en su
+  # docs/configuracion.md). Lo sensible (DB_USER, DB_PASSWORD) NO va aquí: va en el Secret.
+  # Estos son los valores de DEV; lo acoplado al cluster se sobreescribe en envs/values-<cluster>.yaml.
+  data:
+    # Debe coincidir con containerPort y con el targetPort del Service (8080).
+    HTTP_PORT: "8080"
+    # Perfil de Spring. NUNCA "dev" en la entidad: activa los DevSeeder y recrea el esquema.
+    SPRING_PROFILES_ACTIVE: "prod"
+
+    # --- Base de datos de negocio (Oracle) ---
+    DB_URL: "jdbc:oracle:thin:@10.0.128.56:3115/desadevhpdb"
+    DB_DRIVER_CLASS_NAME: "oracle.jdbc.OracleDriver"
+    # Esquema dueño de las tablas (Hibernate default_schema). El DB_USER del Secret es el *_POOL,
+    # que accede a este esquema por grants. CONFIRMAR con el DBA.
+    DB_SCHEMA: "<esquema-siip2-dev>"
+    # validate: la app NO crea ni borra tablas; si el esquema no existe, el pod no arranca.
+    # El esquema lo crea el DBA con el usuario dueño (el *_POOL no tiene permisos de DDL).
+    JPA_DDL_AUTO: "validate"
+    JPA_SHOW_SQL: "false"
+
+    # --- Motor de procesos (Flowable) ---
+    # Esquema propio de Flowable, separado del de negocio. CONFIRMAR con el DBA.
+    FLOWABLE_DB_SCHEMA: "<esquema-flowable-dev>"
+    # false: Flowable exige sus tablas ya creadas (mismo criterio que JPA_DDL_AUTO).
+    FLOWABLE_DB_SCHEMA_UPDATE: "false"
+
+    # --- Integración ---
+    # URL pública de api-gateway; solo alimenta los "servers" del OpenAPI (Swagger UI).
+    # CONFIRMAR cuando exista el despliegue de api-gateway en el cluster.
+    GATEWAY_URL: "<url-publica-api-gateway-dev>"
+
+    # --- Logging --- (niveles de Spring/Logback: TRACE, DEBUG, INFO, WARN, ERROR, OFF)
+    LOG_LEVEL: "WARN"
+
+    # --- Variables de la plantilla que backend-srv NO lee hoy ---
+    # Pilares del marco DINAFI (config/authz/auditoría/logger remoto), Keycloak y CORS:
+    # backend-srv no los integra (autentica api-gateway, audita en su propia base y no expone
+    # CORS porque solo lo invoca api-gateway). Se conservan para que el overlay generado por el
+    # scaffolder siga aplicando sin diferencias; no tienen efecto en la aplicación.
+    CONFIG_SERVICE_URL: "https://inventario-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/config/service"
+    AUTHZ_SERVICE_URL: "https://authorization-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/authz"
+    AUDIT_SERVICE_URL: "https://auditoria-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/audit"
+    LOG_SERVICE_URL: "https://auditoria-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/logs"
+    SECURITY_URL_KEYCLOAK: "keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv"
+    SECURITY_REALM: "MHINTERNO"
+    CORS_ALLOWED_ORIGINS: "*"
+    CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE,OPTIONS"
+    CORS_ALLOWED_HEADERS: "Content-Type,Authorization"
+    REMOTE_LOGGER_ENABLED: "true"
+
+# Verificacion post-despliegue. La lee el CICLO (task karate-verify), no la aplicacion.
+# La RAMA de este repo -config es el ambiente, asi que estos valores son de ESTE ambiente
+# y la promocion no los pisa: merge-*-image solo sincroniza image.tag e image.repository.
+# Vacios = no se verifica nada y el ciclo lo dice en el log; nunca se inventa una URL.
+verificacion:
+  # Lo lee el CICLO (task karate-verify y las pipelines de prueba), no la aplicacion:
+  # ningun template referencia .Values.verificacion, asi que el render de Helm no cambia.
+  # La RAMA de este repo -config ES el ambiente, de modo que estos valores son los de DEV.
+  #
+  # URL publica del servicio. Mismo patron que usa la propia plantilla para el origen de
+  # CORS, asi que sale correcto por construccion. NO se deduce a ojo: hacerlo fallo en 4
+  # de 8 servicios ya existentes, que viven en namespaces distintos, y una URL equivocada
+  # deja la verificacion colgada 900 s antes de rendirse.
+  baseUrl: "https://backend-srv-mh-dev-dgicp-siip2.apps.gcp-op-desa.cloud.mh.gob.sv"
+  # Emisor del token: el authentication-service del marco, que hace de fachada del
+  # Keycloak del ambiente. Mismo host que el resto de URLs del marco de este fichero.
+  # OJO con el path: /oidc/realm/ en SINGULAR. El plural devuelve 404.
+  oauth2TokenUrl: "https://authentication-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/oidc/realm/MHINTERNO/protocol/openid-connect/token"

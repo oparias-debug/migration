@@ -1,16 +1,17 @@
 <#
 .SYNOPSIS
-    Corre las pruebas de back y api-gateway (Maven) y de front (Vitest) en un solo comando.
+    Corre las pruebas de backend-srv y api-gateway (Maven) y de front (Vitest) en un solo comando.
 
 .DESCRIPTION
     Equivalente a correr a mano:
-      mvn clean verify                  (dentro de back/ y dentro de api-gateway/)
+      mvn clean verify                  (dentro de backend-srv/ y dentro de api-gateway/)
       npm run generate:api && npm run test   (desde front/)
-    "generate:api" corre siempre antes de "test": front/src/api/generated no se versiona
-    (ver REFERENCE.md), así que sin esto los tests del front fallan por imports sin resolver.
+    "generate:api" corre siempre antes de "test": front/src/api/generated se versiona, pero
+    puede quedar desincronizado de los .yaml; así los tests corren contra los contratos
+    actuales (ver front/docs/desarrollo.md).
 
 .PARAMETER SkipBack
-    No corre las pruebas de back ni de api-gateway.
+    No corre las pruebas de backend-srv ni de api-gateway.
 
 .PARAMETER SkipFront
     No corre las pruebas de front.
@@ -27,7 +28,7 @@
 
 .EXAMPLE
     .\scripts\run-tests.ps1
-    Corre back, api-gateway y front completos (con "mvn clean verify").
+    Corre backend-srv, api-gateway y front completos (con "mvn clean verify").
 
 .EXAMPLE
     .\scripts\run-tests.ps1 -SkipBack -Lint -Build
@@ -62,12 +63,12 @@ function Invoke-Step {
 }
 
 if (-not $SkipBack) {
-    # back y api-gateway son proyectos Maven independientes (cada uno con su propio repo en
+    # backend-srv y api-gateway son proyectos Maven independientes (cada uno con su propio repo en
     # la entidad), no hay pom agregador en la raíz: se corre mvn dentro de cada uno.
     $mvnArgs = @()
     if (-not $NoClean) { $mvnArgs += 'clean' }
     $mvnArgs += 'verify'
-    foreach ($module in @('back', 'api-gateway')) {
+    foreach ($module in @('backend-srv', 'api-gateway')) {
         Push-Location (Join-Path $repoRoot $module)
         try {
             Invoke-Step -Name "$($module): mvn $($mvnArgs -join ' ')" -Action { & mvn @mvnArgs }

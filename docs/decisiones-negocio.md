@@ -35,7 +35,7 @@ Ejecutora del usuario no se tienen en cuenta. Reemplaza a RQ-C-03 como criterio 
 - "Usuarios internos", "usuarios centrales" y "actores internos" son el mismo grupo.
 
 **Implementación.** Un único criterio en `ActorContexto.esUsuarioInterno(Usuario)`
-(`back/src/main/java/sv/gob/mh/siip/security/ActorContexto.java`), que ya usan
+(`backend-srv/src/main/java/sv/gob/mh/siip/security/ActorContexto.java`), que ya usan
 `PresupuestoOmService` (CU-PRE-18) y `BeneficiosProyectoService` (CU-PRE-20). CU-PRE-17 y CU-PRE-21
 todavía no ocultan campos por este motivo; cuando lo hagan, deben usar el mismo método.
 

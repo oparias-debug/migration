@@ -13,21 +13,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class GatewayAuditoriaAspect {
 
-    private static final Logger logger = LoggerFactory.getLogger(GatewayAuditoriaAspect.class);
+  private static final Logger logger = LoggerFactory.getLogger(GatewayAuditoriaAspect.class);
 
-    @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
-    public void restController() {
-    }
+  @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
+  public void restController() {
+  }
 
-    @Before("restController()")
-    public void auditarEntrada(JoinPoint joinPoint) {
+  @Before("restController()")
+  public void auditarEntrada(JoinPoint joinPoint) {
 
-        logger.info("API Gateway - Llamada entrante a: {} con estos argumentos {} ", joinPoint.getSignature(),
-                joinPoint.getArgs());
-    }
+    logger.info("API Gateway - Llamada entrante a: {} con estos argumentos {} ", joinPoint.getSignature(),
+        joinPoint.getArgs());
+  }
 
-    @After("restController()")
-    public void auditarSalida(JoinPoint joinPoint) {
-        logger.info("API Gateway - Llamada saliente de: {}", joinPoint.getSignature());
-    }
+  @After("restController()")
+  public void auditarSalida(JoinPoint joinPoint) {
+    logger.info("API Gateway - Llamada saliente de: {}", joinPoint.getSignature());
+  }
 }

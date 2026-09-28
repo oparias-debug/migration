@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   BORRADOR PARA REVISIÓN — NO ES UN PROCESO DEPLOYABLE, NO VIVE EN
-  back/src/main/resources/processes/ a propósito (esa carpeta se auto-despliega
+  backend-srv/src/main/resources/processes/ a propósito (esa carpeta se auto-despliega
   en Flowable al arrancar el back; este archivo NO debe copiarse ahí todavía).
 
   Qué es: una propuesta de reemplazo del tramo UT_FormulacionEvaluacion →
   UT_ProyectoFormulado → UT_RevisionViabilidad/gw2 → gw2b/UT_Elegibilidad →
-  UT_RevisionOT/gw3 de back/src/main/resources/processes/Proceso_SIIF.bpmn20.xml
+  UT_RevisionOT/gw3 de backend-srv/src/main/resources/processes/Proceso_SIIF.bpmn20.xml
   (hoy CU-PRE-04..23 + CU-PRE-24 + CU-PRE-25 + CU-PRE-26 pensados como UN solo
   paso de cada tipo para todo el proyecto) por un tramo con ese mismo ciclo
   completo REPETIDO una vez por etapa (Perfil, Prefactibilidad, Factibilidad,
@@ -105,7 +105,7 @@
       siguiente, no un simple "OT favorable" aislado como asumía la versión
       anterior de este borrador.
     - Dato adicional que esto explica: el rótulo actual de
-      back/src/main/resources/processes/Proceso_SIIF.bpmn20.xml en
+      backend-srv/src/main/resources/processes/Proceso_SIIF.bpmn20.xml en
       sf17_actualizar_ot ("Solicitar OT para otra etapa / Actualización",
       saliendo de gw4/UT_PostOT) ya anticipaba — en el proceso HOY desplegado,
       aunque hoy solo hay un UT_FormulacionEvaluacion lumped — que la Opinión

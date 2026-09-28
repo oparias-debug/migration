@@ -1,0 +1,48 @@
+# Configuración base (perfil por defecto: prod). Todo lo que cambia entre ambientes sale de
+# variables de entorno: en local las pone docker-compose.yml (.env de la raíz del monorepo) y
+# en la entidad las inyecta el chart de backend-srv-config (ConfigMap backend-srv-cmp +
+# Secret backend-srv-secret). Contrato completo de variables: docs/configuracion.md.
+#
+# Los valores por defecto de este archivo son los SEGUROS para un ambiente compartido: nunca
+# crean ni borran esquema. El perfil dev (application-dev.yml) es el que recrea todo.
+spring:
+  application.name: backend-srv
+  profiles.active: prod
+  jackson:
+    deserialization.fail-on-unknown-properties: true
+  datasource:
+    url: ${DB_URL}
+    driver-class-name: ${DB_DRIVER_CLASS_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    # validate: si el esquema no existe o no coincide con las entidades, el arranque falla
+    # (evidente) en vez de crear/borrar tablas en una base compartida.
+    hibernate.ddl-auto: ${JPA_DDL_AUTO:validate}
+    properties.hibernate.default_schema: ${DB_SCHEMA:public}
+    show-sql: ${JPA_SHOW_SQL:false}
+
+logging.level:
+  root: ${LOG_LEVEL:INFO}
+  org.springframework: ${LOG_LEVEL:INFO}
+
+# 8081 en local (docker-compose); el chart fija HTTP_PORT=8080, el containerPort del Deployment.
+server.port: ${HTTP_PORT:8081}
+
+# /actuator/health/liveness y /readiness: las usan las probes del Deployment del chart.
+management.endpoint.health.probes.enabled: true
+
+# El path interno del microservicio debe seguir siendo el estándar
+springdoc:
+  api-docs.path: /v3/api-docs
+  swagger-ui.path: /swagger-ui.html
+  swagger-ui.use-root-path: true
+
+# URL pública de api-gateway: solo se usa como "servers" del OpenAPI (Swagger UI).
+gateway.url: ${GATEWAY_URL:http://localhost:8080}
+
+flowable:
+  databaseSchema: ${FLOWABLE_DB_SCHEMA:flowable}
+  # false: Flowable exige que sus tablas ya existan y en la versión correcta. Debe ir de la
+  # mano con spring.jpa.hibernate.ddl-auto (ver application-dev.yml).
+  database-schema-update: ${FLOWABLE_DB_SCHEMA_UPDATE:false}

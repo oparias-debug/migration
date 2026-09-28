@@ -10,17 +10,17 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class CustomHeaderFilter implements GlobalFilter, Ordered {
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange,
-            GatewayFilterChain chain) {
-        return chain.filter(exchange)
-                .then(Mono.fromRunnable(() -> exchange.getResponse().getHeaders().add("X-Gateway-Info",
-                        "Procesado por el API Gateway del SIIP")));
-    }
+  @Override
+  public Mono<Void> filter(ServerWebExchange exchange,
+      GatewayFilterChain chain) {
+    return chain.filter(exchange)
+        .then(Mono.fromRunnable(() -> exchange.getResponse().getHeaders().add("X-Gateway-Info",
+            "Procesado por el API Gateway del SIIP")));
+  }
 
-    @Override
-    public int getOrder() {
-        // Prioridad del filtro
-        return 1;
-    }
+  @Override
+  public int getOrder() {
+    // Prioridad del filtro
+    return 1;
+  }
 }

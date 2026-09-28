@@ -22,33 +22,33 @@ import reactor.core.publisher.Mono;
 @Component
 public class UsuarioHeaderFilter implements GlobalFilter, Ordered {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
-    private static final String CLAIM_USUARIO = "preferred_username";
-    private static final int DESPLAZAMIENTO_ORDEN = 10;
+  private static final String HEADER_USUARIO = "X-Usuario";
+  private static final String CLAIM_USUARIO = "preferred_username";
+  private static final int DESPLAZAMIENTO_ORDEN = 10;
 
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        return exchange.getPrincipal()
-                .cast(JwtAuthenticationToken.class)
-                .map(JwtAuthenticationToken::getToken)
-                // flatMap + Mono.justOrEmpty (no .map): getClaimAsString devuelve null si el
-                // claim no está presente, y Reactor no permite que un mapper de .map() emita
-                // null (lanza NullPointerException: "The mapper ... returned a null value").
-                .flatMap((Jwt jwt) -> Mono.justOrEmpty(jwt.getClaimAsString(CLAIM_USUARIO)))
-                .filter((String username) -> !username.isBlank())
-                .map((String username) -> exchange.mutate()
-                        .request((ServerHttpRequest.Builder request) -> request
-                                .headers((HttpHeaders headers) -> {
-                                    headers.remove(HEADER_USUARIO);
-                                    headers.set(HEADER_USUARIO, username);
-                                }))
-                        .build())
-                .defaultIfEmpty(exchange)
-                .flatMap(chain::filter);
-    }
+  @Override
+  public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    return exchange.getPrincipal()
+        .cast(JwtAuthenticationToken.class)
+        .map(JwtAuthenticationToken::getToken)
+        // flatMap + Mono.justOrEmpty (no .map): getClaimAsString devuelve null si el
+        // claim no está presente, y Reactor no permite que un mapper de .map() emita
+        // null (lanza NullPointerException: "The mapper ... returned a null value").
+        .flatMap((Jwt jwt) -> Mono.justOrEmpty(jwt.getClaimAsString(CLAIM_USUARIO)))
+        .filter((String username) -> !username.isBlank())
+        .map((String username) -> exchange.mutate()
+            .request((ServerHttpRequest.Builder request) -> request
+                .headers((HttpHeaders headers) -> {
+                  headers.remove(HEADER_USUARIO);
+                  headers.set(HEADER_USUARIO, username);
+                }))
+            .build())
+        .defaultIfEmpty(exchange)
+        .flatMap(chain::filter);
+  }
 
-    @Override
-    public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE + DESPLAZAMIENTO_ORDEN;
-    }
+  @Override
+  public int getOrder() {
+    return Ordered.HIGHEST_PRECEDENCE + DESPLAZAMIENTO_ORDEN;
+  }
 }

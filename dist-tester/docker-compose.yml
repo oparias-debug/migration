@@ -3,10 +3,10 @@
 # Maven, Node ni nada más que Docker Desktop. No incluye sonarqube/sonarqube-db: son
 # herramientas de desarrollo, no hacen falta para probar la aplicación.
 services:
-  back:
+  backend-srv:
     image: ${IMAGE_REGISTRY}/siip-back:${IMAGE_TAG}
     platform: linux/amd64
-    container_name: siip-back
+    container_name: siip-backend-srv
     expose:
       - "8081"
     environment:
@@ -35,7 +35,7 @@ services:
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
     depends_on:
-      - back
+      - backend-srv
       - keycloak
     networks:
       - microred

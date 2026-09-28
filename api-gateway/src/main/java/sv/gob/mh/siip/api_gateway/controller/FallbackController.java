@@ -5,10 +5,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class FallbackController {
-    @GetMapping("/fallback/back")
-    public String fallbackBack() {
-        return """
+  @GetMapping("/fallback/back")
+  public String fallbackBack() {
+    return """
                 Servicio Back no disponible en este momento.
                 Por favor intente más tarde.""";
-    }
+  }
 }

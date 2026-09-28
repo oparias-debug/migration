@@ -1,6 +1,6 @@
 # SIIP — Guía para levantar el ambiente de pruebas
 
-Este paquete levanta el sistema completo (front + api-gateway + back + Keycloak + PostgreSQL)
+Este paquete levanta el sistema completo (front + api-gateway + backend-srv + Keycloak + PostgreSQL)
 usando imágenes Docker ya construidas — no hace falta el código fuente, Java, Node ni Maven,
 solo Docker Desktop.
 
@@ -44,7 +44,7 @@ La primera vez tarda unos minutos en bajar las imágenes. Cuando termine:
 - **api-gateway:** http://localhost:8080
 - **Keycloak (admin):** http://localhost:8085 (usuario `admin` / clave `admin`)
 
-Para ver logs: `docker compose logs -f back` (o `front`, `api-gateway`, `keycloak`).
+Para ver logs: `docker compose logs -f backend-srv` (o `front`, `api-gateway`, `keycloak`).
 Para apagar todo: `docker compose down` (agregá `-v` si además querés borrar los datos de
 la base y arrancar de cero la próxima vez).
 
@@ -103,5 +103,5 @@ Postgres (a menos que haya un cambio de esquema — en ese caso te lo van a avis
   `amd64` con Rosetta 2 — normal, no es un error.
 - **`docker compose pull` falla con `no matching manifest for linux/arm64/v8`:** el
   `docker-compose.yml` que tenés es una versión vieja, de antes de fijar `platform:
-  linux/amd64` en los servicios `back`/`api-gateway`/`front`/`keycloak` (las imágenes solo
+  linux/amd64` en los servicios `backend-srv`/`api-gateway`/`front`/`keycloak` (las imágenes solo
   existen para `amd64`). Pedí que te reenvíen la carpeta `dist-tester/` actualizada.

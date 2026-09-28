@@ -115,8 +115,10 @@ para que `docker compose up` no lo levante solo.
 ## Documentación
 
 [`docs/`](docs/index.md) se publica como TechDocs en el Developer Hub: [arquitectura](docs/architecture.md)
-del front. La documentación operativa del sistema completo vive en la raíz del monorepo `siip`
-(`README.md`, `SETUP.md`, `REFERENCE.md`, `CONTRIBUTING.md`, `CONTRIBUTING-front.md`).
+y [desarrollo](docs/desarrollo.md) (cliente generado desde OpenAPI, pruebas, especificaciones Gherkin,
+SonarQube). Los pasos del lado front para implementar un CU están en [CONTRIBUTING.md](CONTRIBUTING.md).
+Lo que abarca el sistema completo (levantar el stack, convenciones compartidas con el back) vive en la
+raíz del monorepo `siip` (`README.md`, `SETUP.md`, `CONTRIBUTING.md`).
 
 ## Pendientes / por revisar
 

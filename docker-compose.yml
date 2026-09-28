@@ -1,10 +1,12 @@
 services:
-  back:
+  # Mismo nombre que el Service de Kubernetes en la entidad (backend-srv-config), así
+  # api-gateway resuelve el mismo host en local y en los ambientes.
+  backend-srv:
     build:
-      context: ./back
+      context: ./backend-srv
       dockerfile: Dockerfile.local
-    container_name: siip-back
-    # Sin puerto publicado al host: back no tiene seguridad propia (confía en
+    container_name: siip-backend-srv
+    # Sin puerto publicado al host: backend-srv no tiene seguridad propia (confía en
     # api-gateway/Keycloak), así que solo debe ser alcanzable dentro de microred.
     expose:
       - "8081"
@@ -33,7 +35,7 @@ services:
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
     depends_on:
-      - back
+      - backend-srv
       - keycloak
     networks: 
       - microred
@@ -139,8 +141,8 @@ services:
     networks:
       - microred
 
-  # Servidor SonarQube (análisis estático + cobertura). Ver REFERENCE.md#análisis-estático-sonarqube
-  # para cómo correr el análisis de back/api-gateway (Maven) y front (npm) contra este servidor.
+  # Servidor SonarQube (análisis estático + cobertura). Ver REFERENCE.md#sonarqube-local
+  # para cómo correr el análisis de backend-srv/api-gateway (Maven) y front (npm) contra este servidor.
   sonarqube:
     image: sonarqube:community
     container_name: siip-sonarqube

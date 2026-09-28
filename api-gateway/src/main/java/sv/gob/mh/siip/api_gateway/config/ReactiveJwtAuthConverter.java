@@ -18,25 +18,25 @@ import reactor.core.publisher.Mono;
 
 public class ReactiveJwtAuthConverter implements Converter<Jwt, Mono<AbstractAuthenticationToken>> {
 
-    @Override
-    public Mono<AbstractAuthenticationToken> convert(@NonNull Jwt jwt) {
-        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+  @Override
+  public Mono<AbstractAuthenticationToken> convert(@NonNull Jwt jwt) {
+    Map<String, Object> realmAccess = jwt.getClaim("realm_access");
 
-        Object roles = Optional.ofNullable(realmAccess)
-                .map(r -> r.get("roles"))
-                .orElse(List.of());
-        List<String> rolesListStr = List.of();
-        if (roles instanceof List<?> rolesList) {
-            rolesListStr = rolesList.stream()
-                    .filter(String.class::isInstance)
-                    .map(String.class::cast)
-                    .toList();
-        }
-
-        Collection<GrantedAuthority> authorities = rolesListStr.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toList());
-
-        return Mono.just(new JwtAuthenticationToken(jwt, authorities));
+    Object roles = Optional.ofNullable(realmAccess)
+        .map(r -> r.get("roles"))
+        .orElse(List.of());
+    List<String> rolesListStr = List.of();
+    if (roles instanceof List<?> rolesList) {
+      rolesListStr = rolesList.stream()
+          .filter(String.class::isInstance)
+          .map(String.class::cast)
+          .toList();
     }
+
+    Collection<GrantedAuthority> authorities = rolesListStr.stream()
+        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+        .collect(Collectors.toList());
+
+    return Mono.just(new JwtAuthenticationToken(jwt, authorities));
+  }
 }

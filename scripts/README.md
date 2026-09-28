@@ -6,7 +6,7 @@ Esto es para vos (quien mantiene el ambiente), no para el tester — su instruct
 ## Qué hace
 
 `publish-images.ps1` buildea y sube a GitHub Container Registry (privado) las 4 imágenes que
-arma el proyecto: `back`, `api-gateway`, `front` y `keycloak`. `postgres` y `sonarqube` no se
+arma el proyecto: `backend-srv`, `api-gateway`, `front` y `keycloak`. `postgres` y `sonarqube` no se
 tocan acá — son imágenes públicas que el tester baja directo de Docker Hub.
 
 ## 1. Login a ghcr.io (una sola vez por máquina)
@@ -27,7 +27,7 @@ Desde la raíz del repo:
 .\scripts\publish-images.ps1
 ```
 
-Esto corre `mvn clean package -DskipTests` dentro de `back/` y de `api-gateway/`, compila el front con `docker compose run --rm front-build` (`-SkipFrontBuild` lo salta), buildea las 4 imágenes y las sube todas con tag
+Esto corre `mvn clean package -DskipTests` dentro de `backend-srv/` y de `api-gateway/`, compila el front con `docker compose run --rm front-build` (`-SkipFrontBuild` lo salta), buildea las 4 imágenes y las sube todas con tag
 `latest` — el mismo tag que usa `dist-tester/.env.example` (`IMAGE_TAG=latest`), así que el
 tester solo necesita `docker compose pull` para bajar lo nuevo, sin tocar nada de su lado.
 
@@ -39,7 +39,7 @@ Antes de correrlo, corré [run-tests.ps1](run-tests.ps1) (o al menos `mvn clean 
 | Parámetro | Para qué sirve |
 |---|---|
 | `-SkipPush` | Buildea local sin subir nada — para probar que el build funciona antes de publicar de verdad. |
-| `-SkipMavenBuild` | Reusa los `.jar` ya compilados (`back/target`, `api-gateway/target`) y solo rearma las imágenes Docker. Útil si ya corriste `mvn package` vos mismo. |
+| `-SkipMavenBuild` | Reusa los `.jar` ya compilados (`backend-srv/target`, `api-gateway/target`) y solo rearma las imágenes Docker. Útil si ya corriste `mvn package` vos mismo. |
 | `-Tag <valor>` | Publica con un tag específico en vez de `latest` (ver "Versionar" abajo). |
 | `-Owner <valor>` | Cambia el owner de ghcr.io (default `david-magnaperita`). Casi nunca hace falta tocarlo. |
 
@@ -83,7 +83,7 @@ ghcr.io esté bien.
 
 - **"unauthorized" al hacer push:** el login expiró o el token no tiene scope `write:packages`.
   Volvé a `docker login ghcr.io`.
-- **El build de back/api-gateway falla con clases que no existen:** correlo con `mvn clean
+- **El build de backend-srv/api-gateway falla con clases que no existen:** correlo con `mvn clean
   package` (no solo `package`) — hay un problema conocido de compilación incremental con el
   mapper de MapStruct que a veces deja archivos generados corruptos entre corridas sin `clean`.
 - **El tester sigue viendo la versión vieja después de avisarle:** confirmá que el push

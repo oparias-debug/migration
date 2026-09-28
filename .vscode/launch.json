@@ -15,7 +15,7 @@
             "name": "SiipApplication",
             "request": "launch",
             "mainClass": "sv.gob.mh.siip.SiipApplication",
-            "projectName": "back"
+            "projectName": "backend-srv"
         },
         {
             "type": "java",
@@ -41,7 +41,7 @@
             "name": "BackApplication",
             "request": "launch",
             "mainClass": "sv.gob.mh.siip.SiipApplication",
-            "projectName": "back",
+            "projectName": "backend-srv",
             "env": {
                 "DB_USER": "micro",
                 "DB_PASSWORD": "micro123",

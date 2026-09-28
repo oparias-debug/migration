@@ -2,13 +2,13 @@
 
 Esta guía es para quien recibe un `.feature` (Gherkin) y un `.openapi.yaml` y tiene que implementar el caso de uso (CU) correspondiente, o extender uno existente, siguiendo el patrón que ya usa `preinversion`/CU-PRE-01 de punta a punta.
 
-Para entender **por qué** el proyecto está armado así (microservicios, Flowable), ver **[README.md](./README.md)**. Para levantar el stack en tu máquina, ver **[SETUP.md](./SETUP.md)**. Para la mecánica de generación de código (OpenAPI → Java/TypeScript) y cómo están organizadas las pruebas, ver **[REFERENCE.md](./REFERENCE.md)**. Esta guía asume que ya tenés el stack levantado y se enfoca solo en **cómo agregar tu CU**.
+Para entender **por qué** el proyecto está armado así (microservicios, Flowable), ver **[README.md](./README.md)**. Para levantar el stack en tu máquina, ver **[SETUP.md](./SETUP.md)**. Para la mecánica de generación de código (OpenAPI → Java/TypeScript) y cómo están organizadas las pruebas, ver **[REFERENCE.md](./REFERENCE.md)**, que remite a la documentación de cada componente (`backend-srv/docs/`, `front/docs/`). Esta guía asume que ya tenés el stack levantado y se enfoca solo en **cómo agregar tu CU**.
 
-Esta guía cubre las convenciones compartidas y la parte de `back`. Para la parte de `front`, ver **[CONTRIBUTING-front.md](./CONTRIBUTING-front.md)**.
+Esta guía cubre las convenciones compartidas y la parte de `backend-srv`. Para la parte de `front`, ver **[front/CONTRIBUTING.md](./front/CONTRIBUTING.md)**.
 
 ## TL;DR
 
-1. Recibiste `back/src/test/resources/features/CU-XX-....feature` + `back/src/main/resources/openapi/<dominio>/CU-XX.openapi.yaml` (o los creaste vos siguiendo el patrón).
+1. Recibiste `backend-srv/src/test/resources/features/CU-XX-....feature` + `backend-srv/src/main/resources/openapi/<dominio>/CU-XX.openapi.yaml` (o los creaste vos siguiendo el patrón).
 2. Implementás el back (controller → service → repository, pasás los steps de Cucumber).
 3. Copiás ambos archivos, sin modificarlos, a `front/features/` y `front/openapi/<dominio>/`.
 4. Implementás el front (cliente TS generado → wrapper → pantalla → tests Vitest).
@@ -16,9 +16,9 @@ Esta guía cubre las convenciones compartidas y la parte de `back`. Para la part
 
 ## Antes de empezar
 
-- Revisá si el CU ya está documentado en `back/src/main/java/sv/gob/mh/siip/model/<dominio>/TRAZABILIDAD-<DOMINIO>.md` — ahí están las entidades JPA que le corresponden y su origen.
+- Revisá si el CU ya está documentado en `backend-srv/src/main/java/sv/gob/mh/siip/model/<dominio>/TRAZABILIDAD-<DOMINIO>.md` — ahí están las entidades JPA que le corresponden y su origen.
 - Si tenés el `.md` original del CU (el que entrega negocio) o un `contrato-CU-XX.md` con las ambigüedades ya resueltas, dejalo en `docs/casos-de-uso/` — los comentarios del `.openapi.yaml` los citan por nombre para documentar de dónde sale cada decisión.
-- Mirá `preinversion`/CU-PRE-01 como referencia completa de punta a punta: `back/src/main/resources/openapi/preinversion/CU-PRE-01.openapi.yaml`, `back/src/main/java/sv/gob/mh/siip/controller/PreinversionController.java`, `back/src/test/java/sv/gob/mh/siip/bdd/steps/preinversion/`, `front/src/api/preinversionApi.ts`, `front/src/features/preinversion/proyectos/`.
+- Mirá `preinversion`/CU-PRE-01 como referencia completa de punta a punta: `backend-srv/src/main/resources/openapi/preinversion/CU-PRE-01.openapi.yaml`, `backend-srv/src/main/java/sv/gob/mh/siip/controller/PreinversionController.java`, `backend-srv/src/test/java/sv/gob/mh/siip/bdd/steps/preinversion/`, `front/src/api/preinversionApi.ts`, `front/src/features/preinversion/proyectos/`.
 - El `.feature` y el `.openapi.yaml` que te entregan son el contrato ya acordado — no los reinterpretes ni les cambies el alcance por tu cuenta. Si algo del contrato no te cierra o te parece incompleto, avisá antes de implementar (escribile a david@magnaperitia.com); no lo resuelvas a tu criterio en el código, porque el `.feature`/`.openapi.yaml` también existe en el otro módulo (back o front) y quedarían desincronizados.
 - Si un término del `.feature` (un rol, una sigla, un estado) no te queda claro, revisá primero [GLOSSARY.md](./GLOSSARY.md) antes de preguntar — es el glosario acordado con negocio.
 - Evita usar la palabra todo en los comentarios del codigo para que Sonarqube no lo confunda con TODO que es un por hacer.
@@ -29,15 +29,15 @@ Esta guía cubre las convenciones compartidas y la parte de `back`. Para la part
 ✅ Podés tocar:
 - Tu `.feature` (si te toca escribirlo) y su copia idéntica en el otro módulo.
 - Tu `.openapi.yaml` y su copia idéntica en el otro módulo.
-- El `@RestController`/`Service`/`Repository` de tu dominio en `back`.
-- Los steps de Cucumber de tu dominio en `back/src/test/java/.../bdd/steps/<dominio>/`.
+- El `@RestController`/`Service`/`Repository` de tu dominio en `backend-srv`.
+- Los steps de Cucumber de tu dominio en `backend-srv/src/test/java/.../bdd/steps/<dominio>/`.
 
 🚫 No toques:
-- Código generado: `back/target/generated-sources/`. Se regenera solo; si lo editás a mano, se pierde en el próximo build.
+- Código generado: `backend-srv/target/generated-sources/`. Se regenera solo; si lo editás a mano, se pierde en el próximo build.
 - `.feature`/`.openapi.yaml` de otros dominios/CUs.
 - `RunCucumberTest.java` y `CucumberSpringConfiguration.java` — recogen los steps automáticamente, no necesitan cambios.
 
-Para lo que podés/no podés tocar en `front`, ver **[CONTRIBUTING-front.md](./CONTRIBUTING-front.md)**.
+Para lo que podés/no podés tocar en `front`, ver **[front/CONTRIBUTING.md](./front/CONTRIBUTING.md)**.
 
 ## Convención de branches y commits
 
@@ -46,16 +46,42 @@ Para lo que podés/no podés tocar en `front`, ver **[CONTRIBUTING-front.md](./C
 - Si el back y el front del mismo CU van en PRs separados, referenciá el PR del otro módulo en la descripción para que quien revisa pueda ver ambos lados del contrato.
 - Esto es lo que permite cruzar cada cambio con su entrada en `TRAZABILIDAD-<DOMINIO>.md` y evitar que dos personas toquen el mismo dominio sin darse cuenta.
 
+### Módulos con repositorio propio en la entidad (doble commit)
+
+`backend-srv/`, `backend-srv-config/` y `front/` tienen **su propio `.git`** apuntando al Gerrit del MH, y a la vez el monorepo `siip` sigue sus archivos. Así el monorepo sigue siendo autosuficiente (un clon + `docker compose up`, sin VPN), pero cada cambio en esas carpetas se registra en dos lugares, y nada obliga a que coincidan. Regla:
+
+1. **Primero el repo del módulo** (el que va a Gerrit), desde adentro de su carpeta:
+   ```
+   cd backend-srv
+   git add -A
+   git commit -m "CU-PRE-02: editar proyecto"
+   git push mhsv HEAD:refs/for/dev      # en backend-srv-config el remoto se llama origin
+   ```
+2. **Después el monorepo**, desde la raíz, con **el mismo mensaje**:
+   ```
+   git add backend-srv
+   git commit -m "CU-PRE-02: editar proyecto"
+   ```
+3. Si el cambio toca varios módulos (por ejemplo `backend-srv` + `backend-srv-config`), un commit en cada repo del módulo y **uno solo** en el monorepo que los agrupe.
+
+Para comprobar que ambos lados coinciden en una carpeta (debe imprimir nada):
+
+```
+diff <(git -C backend-srv ls-files | sort) <(git ls-files backend-srv | sed 's#^backend-srv/##' | sort)
+```
+
+> ⚠️ No renombres ni muevas el `.git` interno para "arreglar" algo: si git lo ve como carpeta normal, lo agrega al monorepo con toda la historia de Gerrit adentro. Y si incorporás un módulo nuevo que ya trae `.git`, `git add <carpeta>` no guarda los archivos sino un puntero vacío (*gitlink*, avisa `adding embedded git repository`). En ese caso consultá antes de commitear.
+
 ## El flujo completo, de un vistazo
 
 ```mermaid
 flowchart TD
-    A["1. .feature (Gherkin, español)\nback/src/test/resources/features/\n+ copia idéntica en front/features/"] --> B["2. .openapi.yaml (contrato REST)\nback/src/main/resources/openapi/&lt;dominio&gt;/CU-XX.openapi.yaml\n+ copia idéntica en front/openapi/&lt;dominio&gt;/"]
-    B --> C1["3a. mvn generate-sources (dentro de back/)\n-> interfaz Java + DTOs (target/generated-sources)"]
+    A["1. .feature (Gherkin, español)\nbackend-srv/src/test/resources/features/\n+ copia idéntica en front/features/"] --> B["2. .openapi.yaml (contrato REST)\nbackend-srv/src/main/resources/openapi/&lt;dominio&gt;/CU-XX.openapi.yaml\n+ copia idéntica en front/openapi/&lt;dominio&gt;/"]
+    B --> C1["3a. mvn generate-sources (dentro de backend-srv/)\n-> interfaz Java + DTOs (target/generated-sources)"]
     B --> C2["3b. npm run generate:api\n-> cliente typescript-axios (src/api/generated/)"]
-    C1 --> D1["4a. @RestController implements &lt;Tag&gt;Api\n(back/src/main/java/.../controller/)\ndelega en un Service"]
+    C1 --> D1["4a. @RestController implements &lt;Tag&gt;Api\n(backend-srv/src/main/java/.../controller/)\ndelega en un Service"]
     C2 --> D2["4b. src/api/&lt;dominio&gt;Api.ts (wrapper)\n+ pantalla en src/features/&lt;dominio&gt;/"]
-    A --> E1["5a. Steps Cucumber-JVM\nback/src/test/java/.../bdd/steps/&lt;dominio&gt;/"]
+    A --> E1["5a. Steps Cucumber-JVM\nbackend-srv/src/test/java/.../bdd/steps/&lt;dominio&gt;/"]
     A --> E2["5b. Tests Vitest junto al componente\n(*.test.tsx)"]
     D1 --> E1
     D2 --> E2
@@ -63,34 +89,34 @@ flowchart TD
 
 Los `.feature` son la **especificación funcional** (qué debe hacer el sistema, en lenguaje de negocio) y los `.openapi.yaml` son el **contrato técnico** (cómo se comunican back y front). Ambos se escriben **una sola vez** y se copian, sin modificar su contenido, a los dos módulos. No hay ningún script que los mantenga sincronizados automáticamente: la disciplina de copiarlos es manual.
 
-## Parte 1 — Backend (`back`)
+## Parte 1 — Backend (`backend-srv`)
 
-1. **Escribí (o ubicá) el `.feature`** en `back/src/test/resources/features/`. Un archivo por escenario/sub-flujo relacionado, prefijado con el código del CU (ej. `CU-PRE-01-solicitar-cup.feature`). Un solo `Feature:`/`Característica:` por archivo — ver [reglas de Gherkin](#reglas-de-gherkin-a-respetar) más abajo. Si algún escenario todavía no se va a implementar, etiquetalo `@wip` para que quede excluido de la ejecución.
-2. **Definí el contrato REST** en `back/src/main/resources/openapi/<dominio>/CU-XX.openapi.yaml` (creá el archivo si el CU es nuevo): `paths`, `operationId`, `tags` (el tag define el nombre de la interfaz Java generada) y los `schemas` en `components/schemas`.
-3. El plugin genera a partir de un archivo puntual por `<execution>` (no de un directorio completo), así que **todo `.yaml` nuevo necesita su propia `<execution>`** en el `openapi-generator-maven-plugin` de `back/pom.xml` — sea CU nuevo en un dominio existente o dominio nuevo. Copiá una `<execution>` existente y cambiá:
+1. **Escribí (o ubicá) el `.feature`** en `backend-srv/src/test/resources/features/`. Un archivo por escenario/sub-flujo relacionado, prefijado con el código del CU (ej. `CU-PRE-01-solicitar-cup.feature`). Un solo `Feature:`/`Característica:` por archivo — ver [reglas de Gherkin](#reglas-de-gherkin-a-respetar) más abajo. Si algún escenario todavía no se va a implementar, etiquetalo `@wip` para que quede excluido de la ejecución.
+2. **Definí el contrato REST** en `backend-srv/src/main/resources/openapi/<dominio>/CU-XX.openapi.yaml` (creá el archivo si el CU es nuevo): `paths`, `operationId`, `tags` (el tag define el nombre de la interfaz Java generada) y los `schemas` en `components/schemas`.
+3. El plugin genera a partir de un archivo puntual por `<execution>` (no de un directorio completo), así que **todo `.yaml` nuevo necesita su propia `<execution>`** en el `openapi-generator-maven-plugin` de `backend-srv/pom.xml` — sea CU nuevo en un dominio existente o dominio nuevo. Copiá una `<execution>` existente y cambiá:
    - `id`: único por execution (ej. `generate-preinversion-cu02-api`).
    - `inputSpec`: apuntando a tu `CU-XX.openapi.yaml`.
    - `apiPackage`/`modelPackage`: **solo si es un dominio nuevo**. Si tu CU es del mismo dominio que uno ya existente (ej. otro CU de `preinversion`), reutilizá los mismos `apiPackage`/`modelPackage` — el generador agrega ahí las interfaces/modelos nuevos sin pisar los existentes. ver ejemplo con CU-01
 4. Generá la interfaz Java y los DTOs:
    ```
-   cd back
+   cd backend-srv
    mvn generate-sources
    ```
 5. Implementá (o extendé) el `@RestController` que `implements` esa interfaz, delegando en un `Service` real — ver `PreinversionController.java`. Con `skipDefaultInterface=true`, si falta implementar un método nuevo **no compila**, es intencional.
-6. Implementá la lógica de negocio en el `Service`/`Repository` correspondientes bajo `back/src/main/java/sv/gob/mh/siip/model/<dominio>/`. Si tu CU necesita columnas o tablas nuevas, alcanza con modelarlas en la entidad JPA — el esquema se recrea solo (ver [nota sobre `ddl-auto` en SETUP.md](./SETUP.md#configuración-de-esquema-por-perfil)); no hace falta escribir ninguna migración.
-7. Volvé al `.feature`: quitale `@wip` a cada escenario que ya podés implementar, corré la suite (`mvn test -Dtest=RunCucumberTest` dentro de `back/`) para que Cucumber imprima el stub Java en consola ("You can implement these steps using the snippet(s) below"), y pegá ese stub en la clase de steps correspondiente bajo `back/src/test/java/sv/gob/mh/siip/bdd/steps/<dominio>/`, reemplazando `PendingException` por la implementación real (usando los beans `@Autowired` del contexto Spring de test).
-8. Corré `mvn verify` dentro de `back/` (o `mvn test -Dtest=RunCucumberTest` para solo BDD) hasta que todos los escenarios pasen en verde.
+6. Implementá la lógica de negocio en el `Service`/`Repository` correspondientes bajo `backend-srv/src/main/java/sv/gob/mh/siip/model/<dominio>/`. Si tu CU necesita columnas o tablas nuevas, alcanza con modelarlas en la entidad JPA — en local el esquema se recrea solo (ver [nota sobre `ddl-auto` en SETUP.md](./SETUP.md#configuración-de-esquema-por-perfil)); no hace falta escribir ninguna migración para desarrollar. En los ambientes de la entidad la app solo valida el esquema (`validate`): ver el pendiente de DDL en esa misma nota.
+7. Volvé al `.feature`: quitale `@wip` a cada escenario que ya podés implementar, corré la suite (`mvn test -Dtest=RunCucumberTest` dentro de `backend-srv/`) para que Cucumber imprima el stub Java en consola ("You can implement these steps using the snippet(s) below"), y pegá ese stub en la clase de steps correspondiente bajo `backend-srv/src/test/java/sv/gob/mh/siip/bdd/steps/<dominio>/`, reemplazando `PendingException` por la implementación real (usando los beans `@Autowired` del contexto Spring de test).
+8. Corré `mvn verify` dentro de `backend-srv/` (o `mvn test -Dtest=RunCucumberTest` para solo BDD) hasta que todos los escenarios pasen en verde.
 
 ## Parte 2 — Frontend (`front`)
 
-Ver **[CONTRIBUTING-front.md](./CONTRIBUTING-front.md)**.
+Ver **[front/CONTRIBUTING.md](./front/CONTRIBUTING.md)**.
 
 ## Reglas de Gherkin a respetar
 
 - **Un solo `Feature:` por archivo `.feature`.** Un archivo puede tener varios `Scenario:`/`Scenario Outline:`, pero *no* varios `Feature:` — si se necesita agrupar varios casos de uso relacionados, van en archivos separados con el mismo prefijo (ej. `CU-PRE-01.feature`, `CU-PRE-01-solicitar-cup.feature`, `CU-PRE-01-editar-proyecto.feature`...). Meter dos `Feature:` en el mismo archivo rompe el parseo de **todo** el módulo (`TestEngine with ID 'cucumber' failed to discover tests`) y tumba el build completo, no solo ese archivo.
 - Los `.feature` pueden escribirse en español anteponiendo `# language: es` como primera línea (usa `Característica/Escenario/Dado/Cuando/Entonces`) o dejarse en inglés (`Feature/Scenario/Given/When/Then`) sin esa línea — no mezclar ambos dentro del mismo archivo.
 - **Desde Cucumber 6+ ya no existe el modo "no estricto":** un paso `undefined` (sin step definition) o `pending` (con `PendingException`) **siempre hace fallar el build**, no solo se reporta. Si acabas de agregar un `.feature` nuevo sin implementar todavía sus steps, `mvn verify`/`mvn test` va a fallar apenas lo agregues — es esperado, no un bug.
-- `back/src/test/resources/features/*.feature` y `front/features/*.feature` deben mantenerse **idénticos** — al editar un escenario, actualizá el archivo en ambos lados.
+- `backend-srv/src/test/resources/features/*.feature` y `front/features/*.feature` deben mantenerse **idénticos** — al editar un escenario, actualizá el archivo en ambos lados.
 
 **Flujo para agregar un `.feature` como especificación antes de implementarlo:**
 
@@ -101,10 +127,10 @@ Ver **[CONTRIBUTING-front.md](./CONTRIBUTING-front.md)**.
 
 ## Puntos que suelen confundir a alguien nuevo
 
-- El `.feature` y el `.openapi.yaml` están **duplicados a propósito** en `back` y `front` — no hay generación cruzada entre módulos ni symlinks. Si editás uno, editá el otro a mano.
-- El código generado (interfaces Java en `back/target/generated-sources/`, cliente TS en `front/src/api/generated/`) **nunca se edita a mano** y **nunca se versiona** — se regenera en cada build/`npm run generate:api`.
-- Un `.feature` nuevo sin implementar hace fallar `mvn test`/`mvn verify` en `back` a menos que lo etiquetes `@wip` — no es un bug, es la señal de que falta implementar esos steps.
-- Un método nuevo en el `.yaml` que no se implementó en el `@RestController` rompe la compilación de `back` (por diseño, `skipDefaultInterface=true`) — es la forma de detectar contratos a medio implementar antes de llegar a runtime.
+- El `.feature` y el `.openapi.yaml` están **duplicados a propósito** en `backend-srv` y `front` — no hay generación cruzada entre módulos ni symlinks. Si editás uno, editá el otro a mano.
+- El código generado (interfaces Java en `backend-srv/target/generated-sources/`, cliente TS en `front/src/api/generated/`) **nunca se edita a mano** y **nunca se versiona** — se regenera en cada build/`npm run generate:api`.
+- Un `.feature` nuevo sin implementar hace fallar `mvn test`/`mvn verify` en `backend-srv` a menos que lo etiquetes `@wip` — no es un bug, es la señal de que falta implementar esos steps.
+- Un método nuevo en el `.yaml` que no se implementó en el `@RestController` rompe la compilación de `backend-srv` (por diseño, `skipDefaultInterface=true`) — es la forma de detectar contratos a medio implementar antes de llegar a runtime.
 - No hace falta preocuparse por migraciones de base de datos por ahora: agregar un campo a una entidad JPA alcanza, el esquema se recrea solo (ver nota en [SETUP.md](./SETUP.md#configuración-de-esquema-por-perfil)).
 
 ## Definition of Done
@@ -112,13 +138,13 @@ Ver **[CONTRIBUTING-front.md](./CONTRIBUTING-front.md)**.
 Antes de abrir el PR, confirmá:
 
 ```
-[ ] back: mvn verify pasa (BDD en verde; nada quedó @wip que debiera estar implementado)
-[ ] back: el @RestController implementa 100% de la interfaz generada (compila sin métodos faltantes)
+[ ] backend-srv: mvn verify pasa (BDD en verde; nada quedó @wip que debiera estar implementado)
+[ ] backend-srv: el @RestController implementa 100% de la interfaz generada (compila sin métodos faltantes)
 [ ] front: npm run lint pasa
 [ ] front: npm run test pasa
 [ ] front: npm run build pasa
-[ ] .feature idéntico en back/src/test/resources/features/ y front/features/
-[ ] .openapi.yaml idéntico en back/src/main/resources/openapi/ y front/openapi/
+[ ] .feature idéntico en backend-srv/src/test/resources/features/ y front/features/
+[ ] .openapi.yaml idéntico en backend-srv/src/main/resources/openapi/ y front/openapi/
 [ ] branch/PR nombrados con el código del CU
 [ ] TRAZABILIDAD-<DOMINIO>.md revisado/actualizado si el CU agregó entidades nuevas
 [ ] Escaneo de SonarQube corrido sobre tu cambio (back+api-gateway y/o front, según lo que hayas tocado) sin issues nuevos bloqueantes ni caída del Quality Gate
@@ -126,16 +152,16 @@ Antes de abrir el PR, confirmá:
 
 ### Actualizar los escaneos de SonarQube
 
-El servidor de SonarQube (servicio `sonarqube` en `docker-compose.yml`) debe estar arriba — ver [arranque y token](./REFERENCE.md#análisis-estático-sonarqube) en REFERENCE.md si todavía no lo tenés levantado. Antes de abrir el PR, corré el escaneo del/los módulo(s) que tocaste:
+El servidor de SonarQube (servicio `sonarqube` en `docker-compose.yml`) debe estar arriba — ver [arranque y token](./REFERENCE.md#sonarqube-local) en REFERENCE.md si todavía no lo tenés levantado. Antes de abrir el PR, corré el escaneo del/los módulo(s) que tocaste:
 
 ```
 
-# back (dgicp-siip2-backend-srv) y/o api-gateway (siip-api-gateway), cada uno en su carpeta:
+# backend-srv (dgicp-siip2-backend-srv) y/o api-gateway (siip-api-gateway), cada uno en su carpeta:
 $env:SONAR_HOST_URL = "http://localhost:9000"
 
 $env:SONAR_TOKEN = "$((Get-Content .env | Select-String '^SONAR_TOKEN=').ToString().Split('=')[1])"
 
-cd back          # o cd api-gateway
+cd backend-srv          # o cd api-gateway
 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
 cd ..
 
@@ -146,10 +172,10 @@ $env:SONAR_TOKEN = "$((Get-Content ..\.env | Select-String '^SONAR_TOKEN=').ToSt
 npm run sonar
 ```
 
-Entrá a http://localhost:9000 y revisá el dashboard del proyecto correspondiente (`dgicp-siip2-backend-srv`/`siip-api-gateway`/`dgicp-siip2-frontend-ui`): si el Quality Gate queda en rojo o aparecen issues **New Code** (bugs, vulnerabilidades, code smells bloqueantes) en las líneas que agregaste, resolvelos antes de pedir revisión — no hace falta salir a cero en deuda técnica preexistente, solo en lo que tu PR introduce. Ver [REFERENCE.md](./REFERENCE.md#análisis-estático-sonarqube) para detalles de configuración (exclusiones, cobertura, troubleshooting).
+Entrá a http://localhost:9000 y revisá el dashboard del proyecto correspondiente (`dgicp-siip2-backend-srv`/`siip-api-gateway`/`dgicp-siip2-frontend-ui`): si el Quality Gate queda en rojo o aparecen issues **New Code** (bugs, vulnerabilidades, code smells bloqueantes) en las líneas que agregaste, resolvelos antes de pedir revisión — no hace falta salir a cero en deuda técnica preexistente, solo en lo que tu PR introduce. Ver [REFERENCE.md](./REFERENCE.md#sonarqube-local) para detalles de configuración (exclusiones, cobertura, troubleshooting).
 
-#### ⚠️ `back` usa el project key institucional (`dgicp-siip2-backend-srv`)
+#### ⚠️ `backend-srv` usa el project key institucional (`dgicp-siip2-backend-srv`)
 
-`back/pom.xml` define `sonar.projectKey` = `dgicp-siip2-backend-srv` (el registrado para el pipeline de Tekton/Developer Hub) y `sonar.host.url` = servidor institucional (`alcm.mh.gob.sv`). Por eso el `$env:SONAR_HOST_URL` del bloque de arriba es **obligatorio** para `back`: sin él, el análisis se manda al servidor institucional en vez de tu SonarQube local (el perfil `sonar-host-desde-env` de `back/pom.xml` solo se activa si esa variable existe). Para `api-gateway` es redundante: su `pom.xml` ya apunta a `http://localhost:9000`.
+`backend-srv/pom.xml` define `sonar.projectKey` = `dgicp-siip2-backend-srv` (el registrado para el pipeline de Tekton/Developer Hub) y `sonar.host.url` = servidor institucional (`alcm.mh.gob.sv`). Por eso el `$env:SONAR_HOST_URL` del bloque de arriba es **obligatorio** para `backend-srv`: sin él, el análisis se manda al servidor institucional en vez de tu SonarQube local (el perfil `sonar-host-desde-env` de `backend-srv/pom.xml` solo se activa si esa variable existe). Para `api-gateway` es redundante: su `pom.xml` ya apunta a `http://localhost:9000`.
 
 Antes de revisar resultados, fijate en la URL `id=...` que imprime el comando al final (`ANALYSIS SUCCESSFUL, you can find the results at: ...`) — te dice a qué servidor y proyecto subió.

@@ -28,8 +28,10 @@ spring:
       default-filters:
         - TokenRelay
       server.webflux.routes:
-        - id: back
-          uri: http://back:8081
+        # El prefijo público /back/** es contrato con front: no cambia aunque el servicio se
+        # llame backend-srv. En la entidad: BACKEND_SRV_URL=http://backend-srv (Service, puerto 80).
+        - id: backend-srv
+          uri: ${BACKEND_SRV_URL:http://backend-srv:8081}
           predicates:
             - Path=/back/**
           filters:
@@ -44,7 +46,7 @@ springdoc:
     path: /swagger-ui.html
     config-url: /v3/api-docs/swagger-config
     urls:
-      - name: back
+      - name: backend-srv
         url: /back/v3/api-docs
 
 keycloak:
