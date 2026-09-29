@@ -1,0 +1,8 @@
+# Ignore everything by default
+*
+
+# Allow necessary files for build
+!pom.xml
+!src/
+!apps-certs.pem
+!target/

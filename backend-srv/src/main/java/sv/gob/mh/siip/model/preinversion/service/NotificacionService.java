@@ -62,6 +62,24 @@ public interface NotificacionService {
      */
     void notificarComentariosViabilidad(Proyecto proyecto, Usuario destinatario);
 
-    /** CU-PRE-24 FA02 paso 2.5: notifica al Tecnico URP que se emitió la Viabilidad del proyecto. */
-    void notificarEmisionViabilidad(Proyecto proyecto, Usuario destinatario);
+  /** CU-PRE-24 FA02 paso 2.5: notifica al Tecnico URP que se emitió la Viabilidad del proyecto. */
+  void notificarEmisionViabilidad(Proyecto proyecto, Usuario destinatario);
+
+  /**
+   * CU-PRE-25 FB1 paso 6: notifica al Tecnico URP y al Tecnico PRE que se emitió la Elegibilidad del
+   * proyecto y que queda habilitado el formulario de Opinión Técnica.
+   */
+  void notificarEmisionElegibilidad(Proyecto proyecto, List<Usuario> destinatarios);
+
+  /**
+   * CU-PRE-25 FB2 paso 2: notifica al Viabilizador que el Tecnico PRE emitió comentarios a la
+   * Elegibilidad desde CU-PRE-26 "Opinión Técnica".
+   */
+  void notificarComentariosOtElegibilidad(Proyecto proyecto, List<Usuario> destinatarios);
+
+  /**
+   * CU-PRE-25 FB2 paso 8: notifica al Tecnico PRE y al Tecnico SYMP que fueron atendidas las
+   * observaciones a la Elegibilidad.
+   */
+  void notificarObservacionesElegibilidadAtendidas(Proyecto proyecto, List<Usuario> destinatarios);
 }

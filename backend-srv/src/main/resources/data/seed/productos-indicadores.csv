@@ -1,0 +1,20 @@
+# Catálogo de Productos e Indicadores (Anexo C.6 de CU-PRE-3.5), usado por CU-PRE-03.5, CU-PRE-09
+# (RN07), CU-PRE-11 y CU-PRE-17. Hay una fila por indicador; el producto se repite en cada una.
+# es_indicador_principal: true/false.
+#
+# 1) Filas oficiales: el anexo solo transcribe un producto (2201021) con sus tres indicadores.
+codigo_producto;producto;descripcion;codigo_indicador;indicador;unidad_medida;es_indicador_principal
+2201021;Infraestructura educativa construida;Corresponde a la construcción y/o intervención de obra civil, para ampliación de capacidad instalada con el objeto de atender la demanda de matrícula oficial en un territorio, tanto en lote nuevo como en lote de sede existente.;220105100;Sedes educativas nuevas construidas;Número;true
+2201021;Infraestructura educativa construida;Corresponde a la construcción y/o intervención de obra civil, para ampliación de capacidad instalada con el objeto de atender la demanda de matrícula oficial en un territorio, tanto en lote nuevo como en lote de sede existente.;220105101;Sedes educativas nuevas construidas en zona urbana;Número;false
+2201021;Infraestructura educativa construida;Corresponde a la construcción y/o intervención de obra civil, para ampliación de capacidad instalada con el objeto de atender la demanda de matrícula oficial en un territorio, tanto en lote nuevo como en lote de sede existente.;220105102;Sedes educativas nuevas construidas en zona rural;Número;false
+#
+# 2) Datos de prueba, NO oficiales (códigos P-xx):
+#    - P-01 y P-02: los productos que usa PresupuestoDevSeeder (ficha de emergencia y Descripción Técnica).
+#    - P-03 a P-06: los productos de los mockups de CU-PRE-09 (Anexo A.1) y CU-PRE-11 (Anexo A.1). Los
+#      mockups muestran "ml" (metro lineal); se usa la unidad oficial más cercana del catálogo, "Metro (m)".
+P-01;Producto de prueba 1;Producto de prueba para desarrollo (no oficial).;P-01-I1;Indicador de prueba 1;Unidad (u);true
+P-02;Producto de prueba 2;Producto de prueba para desarrollo (no oficial).;P-02-I1;Indicador de prueba 2;Unidad (u);true
+P-03;Muro de contención construido;Dato de prueba tomado del mockup de CU-PRE-09 (no oficial).;P-03-I1;Metros de muro de contención construidos;Metro (m);true
+P-04;Red de alcantarillados sanitarios ampliada;Dato de prueba tomado del mockup de CU-PRE-09 (no oficial).;P-04-I1;Metros de red de alcantarillado ampliados;Metro (m);true
+P-05;Bordas construidas;Dato de prueba tomado del mockup de CU-PRE-11 (no oficial).;P-05-I1;Metros de borda construidos;Metro (m);true
+P-06;Bordas recubiertas;Dato de prueba tomado del mockup de CU-PRE-11 (no oficial).;P-06-I1;Metros cuadrados de borda recubiertos;Metro cuadrado (m²);true

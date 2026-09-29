@@ -15,16 +15,25 @@ import sv.gob.mh.siip.model.preinversion.dto.TipoCostoResumenDto;
 public interface DescripcionTecnicaMapper {
 
     @Mapping(target = "descripcionProyecto", source = "proyecto.descripcionProyecto")
+    @Mapping(target = "idProyecto", source = "proyecto.id")
+    // Las filas salen de los Componentes del proyecto; las arma DescripcionTecnicaServiceImpl
+    @Mapping(target = "filas", ignore = true)
     DescripcionTecnicaDto toDto(DescripcionTecnica entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "proyecto", ignore = true)
     @Mapping(target = "descripcion", source = "descripcionProyecto")
+    // El contrato (DescripcionTecnicaRequest) no expone estas columnas; hoy nadie las asigna
+    @Mapping(target = "especificaciones", ignore = true)
+    @Mapping(target = "vidaUtilAnios", ignore = true)
     DescripcionTecnica toEntity(DescripcionTecnicaRequestDto requestDto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "proyecto", ignore = true)
     @Mapping(target = "descripcion", source = "descripcionProyecto")
+    // Ignorarlas conserva el valor que ya tenga la entidad
+    @Mapping(target = "especificaciones", ignore = true)
+    @Mapping(target = "vidaUtilAnios", ignore = true)
     void updateEntityFromDto(DescripcionTecnicaRequestDto requestDto, @MappingTarget DescripcionTecnica entity);
 
     // Mapeo explicito delegando la transformación de TipoCostoResumenDto a mapComponenteToTipoCosto.

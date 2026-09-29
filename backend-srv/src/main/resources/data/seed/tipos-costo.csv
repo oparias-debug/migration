@@ -1,0 +1,20 @@
+# Catálogo "Tipo de Costos" (Anexo C.2 de CU-PRE-3.5). Catálogo oficial, "sujeto a actualización
+# por parte de la DGICP". Es también el catálogo del campo "Componente" de CU-PRE-11 (decisión del
+# contrato CU-PRE-11.openapi.yaml): contiene los 7 valores de su Anexo C.1 (Infraestructura,
+# Equipamiento, Capacitaciones, Administración, Consultorías, Terrenos, Otros) y el "Ambiental" que
+# muestra su mockup.
+# No hay código oficial: se usa "TC-" + nombre abreviado (máximo 20 caracteres), la convención que
+# ya usan los datos de prueba (TC-EQUIPAMIENTO).
+codigo;nombre
+TC-INFRAESTRUCTURA;Infraestructura
+TC-INFRA-INFORMATICA;Infraestructura Informática
+TC-EQUIPAMIENTO;Equipamiento
+TC-AMBIENTAL;Ambiental
+TC-CAPACITACIONES;Capacitaciones
+TC-ADMINISTRACION;Administración
+TC-CONSULTORIAS;Consultorías
+TC-SUPERVISION;Supervisión
+TC-IMPREVISTOS;Imprevistos
+TC-DERECHOS-VIA;Derechos de Vía
+TC-TERRENOS;Terrenos
+TC-OTROS;Otros

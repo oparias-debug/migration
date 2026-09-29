@@ -104,7 +104,15 @@ paths:
                 $ref: '#/components/schemas/AnalisisPoblacion'
         "400":
           description: >
-            RN respectiva incumplida. `Error.codigo` distingue el caso:
+            RN respectiva incumplida; no se guarda nada. `Error.codigo`
+            distingue el caso, en este orden de evaluación:
+            `CAMPOS_OBLIGATORIOS_PENDIENTES` (RN07: faltan "Ubicación" de
+            Afectada/Objetivo o "N° de personas" de Referencia/Afectada/
+            Objetivo; `Error.detalles[].campo` indica cada celda para
+            sombrearla en rojo), `VALIDACION_NEGOCIO` (algún "N° de
+            personas" negativo, `minimum: 0`),
+            `UBICACIONES_NO_COINCIDEN` (las tres filas deben tener el mismo
+            número de columnas agrupadas, RN09),
             `POBLACION_AFECTADA_MAYOR_QUE_REFERENCIA` (Anexo A.3) o
             `POBLACION_OBJETIVO_MAYOR_QUE_AFECTADA` (Anexo A.4). El texto de
             `Error.mensaje` no está fijado en este contrato: el CU tiene dos
@@ -163,6 +171,7 @@ components:
             (RN05: siempre bloqueada y vacía) — omitir o dejar nulo ahí.
         numeroPersonas:
           type: integer
+          minimum: 0
 
     CeldaUbicacion:
       type: object

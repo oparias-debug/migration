@@ -147,4 +147,31 @@ public class LoggingNotificacionService implements NotificacionService {
                     proyecto.getNombre(), proyecto.getId(), obtenerCorreoDestinatario(destinatario));
         }
     }
+
+    @Override
+    public void notificarEmisionElegibilidad(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-25 FB1] Se emitió la Elegibilidad del proyecto '{}' (id={}); "
+                    + "queda habilitada la Opinión Técnica -> Técnico URP / Técnico PRE: {}",
+                    proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarComentariosOtElegibilidad(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-25 FB2] La Opinión Técnica emitió comentarios a la Elegibilidad del proyecto '{}' "
+                    + "(id={}), formulario: /preinversion/proyectos/{}/elegibilidad -> Viabilizador: {}",
+                    proyecto.getNombre(), proyecto.getId(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarObservacionesElegibilidadAtendidas(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-25 FB2] Fueron atendidas las observaciones a la Elegibilidad del proyecto '{}' "
+                    + "(id={}) -> Técnico PRE / Técnico SYMP: {}",
+                    proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
 }

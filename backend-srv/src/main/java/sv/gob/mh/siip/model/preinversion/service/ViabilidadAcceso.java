@@ -97,15 +97,15 @@ public class ViabilidadAcceso {
                 documentos.tieneDocumentoPreinversion(proyecto.getId()));
     }
 
-    /**
-     * El actor solo accede a proyectos de su Unidad Ejecutora cuando tiene una asignada (RN01, igual
-     * que el resto de CU de Preinversión).
-     */
-    private static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
-        if (actor.getUnidadEjecutora() != null && (proyecto.getUnidadEjecutora() == null
-                || !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId()))) {
-            throw new AccesoDenegadoException(
-                    "El proyecto no pertenece a una Unidad Ejecutora dentro de las credenciales del actor.");
-        }
+  /**
+   * El actor solo accede a proyectos de su Unidad Ejecutora cuando tiene una asignada (RN01, igual
+   * que el resto de CU de Preinversión).
+   */
+  static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+    if (actor.getUnidadEjecutora() != null && (proyecto.getUnidadEjecutora() == null
+        || !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId()))) {
+      throw new AccesoDenegadoException(
+          "El proyecto no pertenece a una Unidad Ejecutora dentro de las credenciales del actor.");
     }
+  }
 }

@@ -70,7 +70,7 @@ public class ManejadorErroresGlobal {
     @ExceptionHandler(ReglaNegocioException.class)
     public ResponseEntity<ErrorDto> manejarReglaNegocio(ReglaNegocioException ex) {
         String codigo = ex.getCodigo() != null ? ex.getCodigo() : "REGLA_NEGOCIO";
-        return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, codigo, ex.getMessage(), null);
+        return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, codigo, ex.getMessage(), ex.getDetalles());
     }
 
     @ExceptionHandler(OperacionNoPermitidaException.class)

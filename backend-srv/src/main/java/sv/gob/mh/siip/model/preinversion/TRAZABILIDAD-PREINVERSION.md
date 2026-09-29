@@ -38,7 +38,8 @@ Módulo procesado: **Preinversión (WBS M-01 a M-08, 32 casos de uso, prefijo `P
 | `Viabilidad` | `VIABILIDAD` | M-06 | CU-PRE-24 (resultado de cada cierre de revisión: `OBSERVADO` al devolver, `VIABLE` al emitir) |
 | `RevisionViabilidad` + `ComentarioCampoViabilidad` (embebido) | `REVISION_VIABILIDAD` / `COMENTARIO_REVISION_VIABILIDAD` | M-06 | CU-PRE-24 (una revisión por solicitud; comentarios por campo y justificación; historial de devoluciones, RN10) |
 | `DocumentoViabilidad` | `DOCUMENTO_VIABILIDAD` | M-06 | CU-PRE-24 (Documento de Preinversión y otros documentos, RN02) |
-| `Elegibilidad` | `ELEGIBILIDAD` | M-06 | CU-PRE-25 |
+| `Elegibilidad` | `ELEGIBILIDAD` | M-06 | CU-PRE-25 (una fila por emisión: la primera cambia el estado a "Proyecto elegible"; las siguientes responden a comentarios de la OT, FB2) |
+| `CalificacionCriterioElegibilidad` + códigos de opción (colección) | `CALIFICACION_CRITERIO_ELEGIBILIDAD` / `CALIFICACION_ELEG_OPCION` | M-06 | CU-PRE-25 (columnas "¿Aplica?" y "Especificar" del Anexo A.1 por criterio; RN03, RN08) |
 | `OpinionTecnica` | `OPINION_TECNICA` | M-06 | CU-PRE-26 |
 | `ComentarioOpinionTecnica` | `COMENTARIO_OPINION_TECNICA` | M-06 | CU-PRE-26 (modelo mínimo creado desde CU-PRE-24 para validar RN11; CU-PRE-26 es su dueño funcional) |
 | `Priorizacion` | `PRIORIZACION` | M-06 | CU-PRE-26.5 |

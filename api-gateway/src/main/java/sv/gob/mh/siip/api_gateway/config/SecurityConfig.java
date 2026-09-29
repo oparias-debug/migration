@@ -27,7 +27,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/webjars/**", "/back/swagger-ui.html",
                                 "/back/swagger-ui/**",
-                                "/back/v3/api-docs/**").permitAll()
+                                "/back/v3/api-docs/**",
+                                "/admin/v3/api-docs/**",
+                                "/siipsafi/v3/api-docs/**").permitAll()
                                 .pathMatchers("/error/**", "/auth/**").permitAll()
                                 .anyExchange().authenticated())
                 .oauth2ResourceServer(

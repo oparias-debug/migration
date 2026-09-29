@@ -82,16 +82,16 @@ class CatalogoConsolidadoDevSeederTest {
 
         seeder.seed();
 
-        verify(parametroRepository, times(4)).save(any(Parametro.class));
-        verify(indicadorResultadoRepository, times(4)).save(any(IndicadorResultado.class));
-        verify(rangoInterpretacionPriorizacionRepository, times(4))
-                .save(any(RangoInterpretacionPriorizacion.class));
-        verify(criterioPriorizacionRepository, times(4)).save(any(CriterioPriorizacion.class));
-        verify(subcriterioPriorizacionRepository, times(7)).save(any(SubcriterioPriorizacion.class));
-        verify(escalaCalificacionSubcriterioRepository, times(49)).save(any(EscalaCalificacionSubcriterio.class));
-        verify(criterioElegibilidadRepository, times(6)).save(any(CriterioElegibilidad.class));
-        verify(entradaCatalogoEspecificarRepository, times(8)).save(any(EntradaCatalogoEspecificar.class));
-    }
+    verify(parametroRepository, times(4)).save(any(Parametro.class));
+    verify(indicadorResultadoRepository, times(4)).save(any(IndicadorResultado.class));
+    verify(rangoInterpretacionPriorizacionRepository, times(4))
+        .save(any(RangoInterpretacionPriorizacion.class));
+    verify(criterioPriorizacionRepository, times(4)).save(any(CriterioPriorizacion.class));
+    verify(subcriterioPriorizacionRepository, times(7)).save(any(SubcriterioPriorizacion.class));
+    verify(escalaCalificacionSubcriterioRepository, times(49)).save(any(EscalaCalificacionSubcriterio.class));
+    verify(criterioElegibilidadRepository, times(4)).save(any(CriterioElegibilidad.class));
+    verify(entradaCatalogoEspecificarRepository, times(8)).save(any(EntradaCatalogoEspecificar.class));
+  }
 
     @Test
     void seed_noDuplicaLaEscala_cuandoElSubcriterioNuevoYaTieneSusCalificaciones() {

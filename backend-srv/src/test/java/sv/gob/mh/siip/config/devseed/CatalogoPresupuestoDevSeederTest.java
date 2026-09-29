@@ -1,5 +1,7 @@
 package sv.gob.mh.siip.config.devseed;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -10,48 +12,56 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import sv.gob.mh.siip.model.preinversion.domain.InsumoTipo;
+import sv.gob.mh.siip.model.preinversion.domain.TipoCosto;
 import sv.gob.mh.siip.model.preinversion.domain.UnidadMedida;
+import sv.gob.mh.siip.model.preinversion.enums.TipoUnidadMedida;
 import sv.gob.mh.siip.model.preinversion.repository.InsumoTipoRepository;
+import sv.gob.mh.siip.model.preinversion.repository.TipoCostoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.UnidadMedidaRepository;
 
 class CatalogoPresupuestoDevSeederTest {
 
-    private InsumoTipoRepository insumoTipoRepository;
-    private UnidadMedidaRepository unidadMedidaRepository;
-    private CatalogoPresupuestoDevSeeder seeder;
+    private final InsumoTipoRepository insumos = mock(InsumoTipoRepository.class);
+    private final UnidadMedidaRepository unidades = mock(UnidadMedidaRepository.class);
+    private final TipoCostoRepository tiposCosto = mock(TipoCostoRepository.class);
 
-    @BeforeEach
-    void setUp() {
-        insumoTipoRepository = mock(InsumoTipoRepository.class);
-        unidadMedidaRepository = mock(UnidadMedidaRepository.class);
-        seeder = new CatalogoPresupuestoDevSeeder(insumoTipoRepository, unidadMedidaRepository);
-    }
+    private final CatalogoPresupuestoDevSeeder seeder = new CatalogoPresupuestoDevSeeder(insumos, unidades, tiposCosto);
 
     @Test
-    void seed_creaInsumosTipoYUnidadesMedida_cuandoNoExistenAun() {
-        when(insumoTipoRepository.findByCodigo(anyString())).thenReturn(Optional.empty());
-        when(unidadMedidaRepository.findByCategoriaAndNombre(anyString(), anyString()))
-                .thenReturn(Optional.empty());
+    void seed_conCatalogosVacios_siembraInsumosUnidadesYTiposDeCosto() {
+        when(insumos.findByCodigo(anyString())).thenReturn(Optional.empty());
+        when(unidades.findByCategoriaAndNombre(anyString(), anyString())).thenReturn(Optional.empty());
+        when(tiposCosto.findByCodigo(anyString())).thenReturn(Optional.empty());
 
         seeder.seed();
 
-        verify(insumoTipoRepository, times(8)).save(any(InsumoTipo.class));
-        verify(unidadMedidaRepository, times(10)).save(any(UnidadMedida.class));
+        verify(insumos, times(8)).save(any(InsumoTipo.class));
+        ArgumentCaptor<UnidadMedida> unidad = ArgumentCaptor.forClass(UnidadMedida.class);
+        verify(unidades, times(39)).save(unidad.capture());
+        assertThat(unidad.getAllValues()).filteredOn(u -> u.getTipo() == TipoUnidadMedida.SERVICIO).hasSize(5);
+        assertThat(unidad.getAllValues()).extracting(UnidadMedida::getNombre)
+                .contains("Metro cuadrado (m²)", "Porcentaje", "m² / año");
+
+        ArgumentCaptor<TipoCosto> tipo = ArgumentCaptor.forClass(TipoCosto.class);
+        verify(tiposCosto, times(12)).save(tipo.capture());
+        assertThat(tipo.getAllValues()).extracting(TipoCosto::getCodigo, TipoCosto::getNombre)
+                .contains(tuple("TC-EQUIPAMIENTO", "Equipamiento"), tuple("TC-AMBIENTAL", "Ambiental"));
     }
 
     @Test
-    void seed_esIdempotente_cuandoYaExisten() {
-        when(insumoTipoRepository.findByCodigo(anyString())).thenReturn(Optional.of(mock(InsumoTipo.class)));
-        when(unidadMedidaRepository.findByCategoriaAndNombre(anyString(), anyString()))
-                .thenReturn(Optional.of(mock(UnidadMedida.class)));
+    void seed_conCatalogosYaCargados_noDuplica() {
+        when(insumos.findByCodigo(anyString())).thenReturn(Optional.of(new InsumoTipo()));
+        when(unidades.findByCategoriaAndNombre(anyString(), anyString())).thenReturn(Optional.of(new UnidadMedida()));
+        when(tiposCosto.findByCodigo(anyString())).thenReturn(Optional.of(new TipoCosto()));
 
         seeder.seed();
 
-        verify(insumoTipoRepository, never()).save(any());
-        verify(unidadMedidaRepository, never()).save(any());
+        verify(insumos, never()).save(any());
+        verify(unidades, never()).save(any());
+        verify(tiposCosto, never()).save(any());
     }
 }

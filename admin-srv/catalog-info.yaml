@@ -1,0 +1,176 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Documento 1 · System — la aplicación (proyecto Tuleap) que agrupa los servicios
+# ═══════════════════════════════════════════════════════════════════════════
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: dgicp-siip
+  title: dgicp-siip
+  description: Aplicación (proyecto Tuleap) que agrupa los servicios de dgicp-siip
+  tags:
+    - dgicp
+    - dgicp-siip
+  annotations:
+    tuleap.org/project: dgicp-siip
+  links:
+    - url: https://alcm.mh.gob.sv/projects/dgicp-siip
+      title: Proyecto Tuleap
+      icon: web
+spec:
+  owner: dgicp
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name:  dgicp-siip-admin-srv
+  title: dgicp-siip-admin-srv
+  description: Servicio de Administración
+  
+  # Tags para clasificación y búsqueda
+  tags:
+    - spring-boot
+    - dgicp
+    - dgicp-siip
+  
+  # Labels para metadata adicional 
+  labels:
+    direction: dgicp
+    project-tuleap: dgicp-siip
+    project-gerrit: admin-srv
+    technology: spring-boot
+  
+  
+  # Anotaciones con referencias a sistemas externos
+  annotations:
+    # Repositorios de código
+    gerrit.mh.gob.sv/repo-app: dgicp-siip/admin-srv
+    gerrit.mh.gob.sv/repo-config: dgicp-siip/admin-srv-config
+    gerrit.mh.gob.sv/repo-ci: dgicp-microservicio/tekton
+    
+    # URLs de Gerrit
+    gerrit.mh.gob.sv/app-url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-siip/admin-srv
+    gerrit.mh.gob.sv/config-url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-siip/admin-srv-config
+    
+    # ArgoCD
+    argocd/app-selector: backstage-argocd-selector=dgicp-siip-admin-srv
+    argocd/instance-name: gitops-server
+
+    #Tektton
+    janus-idp.io/tekton : dgicp-siip-admin-srv
+
+    # OpenShift
+    openshift.io/app-name: dgicp-siip-admin-srv
+    
+    backstage.io/kubernetes-id: dgicp-siip-admin-srv
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/name=dgicp-siip-admin-srv
+    # Quay.io Registry
+    quay.io/repository: mh-dgicp-siip/admin-srv
+    
+    # SonarQube
+    sonarqube.org/project-key: admin-srv    
+    
+    # Tuleap
+    tuleap.org/project: dgicp-siip
+    
+    # Backstage integrations
+    backstage.io/techdocs-ref: url:https://catalog-srv-gitiles-mh-dev-dinafi-usi-devhub.apps.gcp-op-desa.cloud.mh.gob.sv/gitiles/dgicp-siip/admin-srv/+/refs/heads/dev/
+    backstage.io/source-location: url:https://catalog-srv-mh-dev-dinafi-usi-devhub.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/dgicp-siip/admin-srv/dev/
+
+  # Enlaces a recursos y herramientas
+  links:
+    # Aplicación desplegada
+
+    
+    - url: https://admin-srv-mh-dev-dgicp-siip.apps.gcp-op-desa.cloud.mh.gob.sv
+      title: Aplicación en OpenShift
+      icon: web
+    
+    # Repositorios Gerrit
+    - url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-siip/admin-srv
+      title: Repositorio Aplicación (Gerrit)
+      icon: code
+    
+    - url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-siip/admin-srv-config
+      title: Repositorio Configuración (Gerrit)
+      icon: settings
+    
+    - url: http://almsrv2.mh.gob.sv:8081/admin/repos/dgicp-microservicio/tekton
+      title: Repositorio CI/CD (Gerrit)
+      icon: build
+    
+    # ArgoCD
+    - url: https://openshift-gitops-server-openshift-gitops.apps.gcp-op-desa.cloud.mh.gob.sv/applications?labels=backstage-argocd-selector%3Ddgicp-siip-admin-srv
+      title: ArgoCD Application
+      icon: dashboard
+    
+    # OpenShift Console
+    - url: https://console-openshift-console.apps.gcp-op-desa.cloud.mh.gob.sv/k8s/cluster/projects/mh-dev-dgicp-siip
+      title: OpenShift Project
+      icon: cloud
+    
+    - url: https://console-openshift-console.apps.gcp-op-desa.cloud.mh.gob.sv/topology/ns/mh-dev-dgicp-siip
+      title: OpenShift Topology
+      icon: web
+    
+    # Quay Registry
+    - url: https://quay-registry-quay-quay-enterprise.apps.gcp-op-desa.cloud.mh.gob.sv/repository/mh-dgicp-siip/admin-srv
+      title: Quay Container Registry
+      icon: storage
+    
+    # Tuleap
+    - url: https://alcm.mh.gob.sv/projects/dgicp-siip
+      title: Proyecto Tuleap
+      icon: web
+    
+    # Tekton/EventListener
+    - url: http://el-dgicp-siip.apps.gcp-op-desa.cloud.mh.gob.sv
+      title: Tekton EventListener
+      icon: webhook
+
+# Especificación del componente
+spec:
+  type: service
+  lifecycle: development
+  owner: dgicp
+
+  # Pertenencia a la aplicación (System) que representa el proyecto Tuleap
+  system: dgicp-siip
+
+  # APIs que expone este componente (resueltas como entidades kind: API)
+  providesApis:
+    - dgicp-siip-admin-srv-api
+  
+  
+  # Información de la aplicación
+  profile:
+    displayName: admin-srv
+    application: dgicp-siip
+    direction: dgicp
+---
+# ═══════════════════════════════════════════════════════════════════════════
+# Documento 3 · API — contrato OpenAPI del servicio
+#   La definición (spec.definition.$text) se resuelve por el catalog-srv desde
+#   api/openapi.yaml del repositorio (endpoint .../api/{ruta} del proxy).
+# ═══════════════════════════════════════════════════════════════════════════
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: dgicp-siip-admin-srv-api
+  title: admin-srv API
+  description: API REST de admin-srv
+  tags:
+    - spring-boot
+    - dgicp
+    - dgicp-siip
+    - openapi
+  links:
+    - url: https://admin-srv-mh-dev-dgicp-siip.apps.gcp-op-desa.cloud.mh.gob.sv/q/swagger-ui
+      title: Swagger UI
+      icon: web
+spec:
+  type: openapi
+  lifecycle: development
+  owner: dgicp
+  system: dgicp-siip
+  definition:
+    $text: https://catalog-srv-mh-dev-dinafi-usi-devhub.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/dgicp-siip/admin-srv/dev/api/openapi.yaml

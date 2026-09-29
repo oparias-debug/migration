@@ -1,0 +1,14 @@
+# envs/values-gcp-op-desa.yaml -- overlay por cluster (ambiente dev, cluster gcp-op-desa).
+# Generado por Gen-ScaffolderEnvOverlays.js. Se aplica: helm -f values.yaml -f envs/values-gcp-op-desa.yaml
+# (ApplicationSet 05-cd-multicluster). Sobreescribe SOLO lo acoplado al cluster.
+# registry -> Quay 3t; URLs -> dominio/ns del cluster. OIDC/CORS/DB inferidos del patron base: CONFIRMAR con infra.
+image:
+  repository: "quay-quay-quay.apps.ocp-hub-3t.mh.gob.sv/mh-dgicp-siip2/siipsafi-srv"
+configMap:
+  data:
+    CONFIG_SERVICE_URL: "https://inventario-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/config/service"
+    AUTHZ_SERVICE_URL: "https://authorization-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/authz"
+    AUDIT_SERVICE_URL: "https://auditoria-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/audit"
+    LOG_SERVICE_URL: "https://auditoria-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/logs"
+    SECURITY_URL_KEYCLOAK: "keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv"
+    DB_URL: "jdbc:oracle:thin:@10.0.128.56:3115/desadevhpdb"

@@ -116,6 +116,9 @@ import sv.gob.mh.siip.security.ActorContexto;
  * quién se envía. Los pasos que describen presentación (links, tooltips, separador de miles,
  * navegación entre pantallas) verifican el dato del backend que la pantalla necesita para
  * mostrarlos: la presentación en sí corresponde al front.
+ *
+ * <p>Cuatro de estos textos también aparecen en los escenarios de CU-PRE-25 y Cucumber admite una sola
+ * definición por texto: en esos escenarios los pasos delegan en {@link Pre25Elegibilidad}.
  */
 public class Pre24Viabilidad {
 
@@ -146,33 +149,34 @@ public class Pre24Viabilidad {
     private static final double COSTO_OPERACION = 800D;
     private static final double VAN = 150_000.5D;
 
-    private final InstitucionRepository instituciones;
-    private final UnidadEjecutoraRepository unidades;
-    private final UsuarioRepository usuarios;
-    private final ProyectoRepository proyectos;
-    private final MacroSectorRepository macrosectores;
-    private final SectorActividadRepository sectores;
-    private final EjeTematicoRepository ejes;
-    private final RevisionViabilidadRepository revisiones;
-    private final ViabilidadRepository viabilidades;
-    private final ElegibilidadRepository elegibilidades;
-    private final OpinionTecnicaRepository opinionesTecnicas;
-    private final ComentarioOpinionTecnicaRepository comentariosOt;
-    private final IdentificacionRepository identificaciones;
-    private final DescripcionTecnicaRepository descripciones;
-    private final ComponenteRepository componentes;
-    private final AnalisisPoblacionRepository poblaciones;
-    private final PresupuestoProyectoRepository presupuestos;
-    private final IndicadorEvaluacionRepository indicadores;
-    private final MacroactividadPresupuestoRepository macroactividades;
-    private final PresupuestoOmConfiguracionRepository configuracionesOm;
-    private final ActividadOmRepository actividadesOm;
-    private final DocumentosViabilidad documentos;
-    private final FiltrosPosterioresViabilidad filtros;
-    private final FichaViabilidadEnsamblador ensamblador;
-    private final ActorContexto actorContexto;
-    private final IdentificacionService identificacionService;
-    private final TransactionTemplate transacciones;
+  private final InstitucionRepository instituciones;
+  private final UnidadEjecutoraRepository unidades;
+  private final UsuarioRepository usuarios;
+  private final ProyectoRepository proyectos;
+  private final MacroSectorRepository macrosectores;
+  private final SectorActividadRepository sectores;
+  private final EjeTematicoRepository ejes;
+  private final RevisionViabilidadRepository revisiones;
+  private final ViabilidadRepository viabilidades;
+  private final ElegibilidadRepository elegibilidades;
+  private final OpinionTecnicaRepository opinionesTecnicas;
+  private final ComentarioOpinionTecnicaRepository comentariosOt;
+  private final IdentificacionRepository identificaciones;
+  private final DescripcionTecnicaRepository descripciones;
+  private final ComponenteRepository componentes;
+  private final AnalisisPoblacionRepository poblaciones;
+  private final PresupuestoProyectoRepository presupuestos;
+  private final IndicadorEvaluacionRepository indicadores;
+  private final MacroactividadPresupuestoRepository macroactividades;
+  private final PresupuestoOmConfiguracionRepository configuracionesOm;
+  private final ActividadOmRepository actividadesOm;
+  private final DocumentosViabilidad documentos;
+  private final FiltrosPosterioresViabilidad filtros;
+  private final FichaViabilidadEnsamblador ensamblador;
+  private final ActorContexto actorContexto;
+  private final IdentificacionService identificacionService;
+  private final TransactionTemplate transacciones;
+  private final Pre25Elegibilidad elegibilidad;
 
     private NotificacionService notificaciones;
     private ViabilidadService service;
@@ -186,47 +190,49 @@ public class Pre24Viabilidad {
     private String opcionSeleccionada;
     private String botonPulsado;
 
-    public Pre24Viabilidad(InstitucionRepository instituciones, UnidadEjecutoraRepository unidades,
-            UsuarioRepository usuarios, ProyectoRepository proyectos, MacroSectorRepository macrosectores,
-            SectorActividadRepository sectores, EjeTematicoRepository ejes, RevisionViabilidadRepository revisiones,
-            ViabilidadRepository viabilidades, ElegibilidadRepository elegibilidades,
-            OpinionTecnicaRepository opinionesTecnicas, ComentarioOpinionTecnicaRepository comentariosOt,
-            IdentificacionRepository identificaciones, DescripcionTecnicaRepository descripciones,
-            ComponenteRepository componentes, AnalisisPoblacionRepository poblaciones,
-            PresupuestoProyectoRepository presupuestos, IndicadorEvaluacionRepository indicadores,
-            MacroactividadPresupuestoRepository macroactividades, PresupuestoOmConfiguracionRepository configuracionesOm,
-            ActividadOmRepository actividadesOm,
-            DocumentosViabilidad documentos, FiltrosPosterioresViabilidad filtros,
-            FichaViabilidadEnsamblador ensamblador, ActorContexto actorContexto,
-            IdentificacionService identificacionService, PlatformTransactionManager transactionManager) {
-        this.instituciones = instituciones;
-        this.unidades = unidades;
-        this.usuarios = usuarios;
-        this.proyectos = proyectos;
-        this.macrosectores = macrosectores;
-        this.sectores = sectores;
-        this.ejes = ejes;
-        this.revisiones = revisiones;
-        this.viabilidades = viabilidades;
-        this.elegibilidades = elegibilidades;
-        this.opinionesTecnicas = opinionesTecnicas;
-        this.comentariosOt = comentariosOt;
-        this.identificaciones = identificaciones;
-        this.descripciones = descripciones;
-        this.componentes = componentes;
-        this.poblaciones = poblaciones;
-        this.presupuestos = presupuestos;
-        this.indicadores = indicadores;
-        this.macroactividades = macroactividades;
-        this.configuracionesOm = configuracionesOm;
-        this.actividadesOm = actividadesOm;
-        this.documentos = documentos;
-        this.filtros = filtros;
-        this.ensamblador = ensamblador;
-        this.actorContexto = actorContexto;
-        this.identificacionService = identificacionService;
-        this.transacciones = new TransactionTemplate(transactionManager);
-    }
+  public Pre24Viabilidad(InstitucionRepository instituciones, UnidadEjecutoraRepository unidades,
+      UsuarioRepository usuarios, ProyectoRepository proyectos, MacroSectorRepository macrosectores,
+      SectorActividadRepository sectores, EjeTematicoRepository ejes, RevisionViabilidadRepository revisiones,
+      ViabilidadRepository viabilidades, ElegibilidadRepository elegibilidades,
+      OpinionTecnicaRepository opinionesTecnicas, ComentarioOpinionTecnicaRepository comentariosOt,
+      IdentificacionRepository identificaciones, DescripcionTecnicaRepository descripciones,
+      ComponenteRepository componentes, AnalisisPoblacionRepository poblaciones,
+      PresupuestoProyectoRepository presupuestos, IndicadorEvaluacionRepository indicadores,
+      MacroactividadPresupuestoRepository macroactividades, PresupuestoOmConfiguracionRepository configuracionesOm,
+      ActividadOmRepository actividadesOm,
+      DocumentosViabilidad documentos, FiltrosPosterioresViabilidad filtros,
+      FichaViabilidadEnsamblador ensamblador, ActorContexto actorContexto,
+      IdentificacionService identificacionService, PlatformTransactionManager transactionManager,
+      Pre25Elegibilidad elegibilidad) {
+    this.instituciones = instituciones;
+    this.unidades = unidades;
+    this.usuarios = usuarios;
+    this.proyectos = proyectos;
+    this.macrosectores = macrosectores;
+    this.sectores = sectores;
+    this.ejes = ejes;
+    this.revisiones = revisiones;
+    this.viabilidades = viabilidades;
+    this.elegibilidades = elegibilidades;
+    this.opinionesTecnicas = opinionesTecnicas;
+    this.comentariosOt = comentariosOt;
+    this.identificaciones = identificaciones;
+    this.descripciones = descripciones;
+    this.componentes = componentes;
+    this.poblaciones = poblaciones;
+    this.presupuestos = presupuestos;
+    this.indicadores = indicadores;
+    this.macroactividades = macroactividades;
+    this.configuracionesOm = configuracionesOm;
+    this.actividadesOm = actividadesOm;
+    this.documentos = documentos;
+    this.filtros = filtros;
+    this.ensamblador = ensamblador;
+    this.actorContexto = actorContexto;
+    this.identificacionService = identificacionService;
+    this.transacciones = new TransactionTemplate(transactionManager);
+    this.elegibilidad = elegibilidad;
+  }
 
     @Before("@CU-PRE-24")
     public void prepararEscenario() {
@@ -396,15 +402,19 @@ public class Pre24Viabilidad {
         registrarOtObservada(false);
     }
 
-    @Entonces("el Sistema muestra el mensaje {string}")
-    public void sistemaMuestraMensaje(String mensaje) {
-        if (emision != null) {
-            assertThat(mensaje).isEqualTo(MENSAJE_EMISION);
-        } else {
-            assertThat(error).isNotNull();
-            assertThat(error.getMessage()).isEqualTo(mensaje);
-        }
+  @Entonces("el Sistema muestra el mensaje {string}")
+  public void sistemaMuestraMensaje(String mensaje) {
+    if (elegibilidad.activo()) {
+      elegibilidad.sistemaMuestraMensaje(mensaje);
+      return;
     }
+    if (emision != null) {
+      assertThat(mensaje).isEqualTo(MENSAJE_EMISION);
+    } else {
+      assertThat(error).isNotNull();
+      assertThat(error.getMessage()).isEqualTo(mensaje);
+    }
+  }
 
     @Entonces("el Sistema no permite solicitar Viabilidad")
     public void sistemaNoPermiteSolicitar() {
@@ -569,21 +579,29 @@ public class Pre24Viabilidad {
         guardar(borrador);
     }
 
-    @Cuando("el Viabilizador da clic en el botón {string}")
-    public void viabilizadorDaClic(String boton) {
-        if (BOTON_EMITIR.equals(boton)) {
-            capturar(() -> emision = emitir());
-        } else {
-            assertThat(boton).isEqualTo(BOTON_ENVIAR);
-            capturar(this::enviar);
-        }
+  @Cuando("el Viabilizador da clic en el botón {string}")
+  public void viabilizadorDaClic(String boton) {
+    if (elegibilidad.activo()) {
+      elegibilidad.viabilizadorDaClic(boton);
+      return;
     }
+    if (BOTON_EMITIR.equals(boton)) {
+      capturar(() -> emision = emitir());
+    } else {
+      assertThat(boton).isEqualTo(BOTON_ENVIAR);
+      capturar(this::enviar);
+    }
+  }
 
-    @Entonces("el Sistema cambia el estado del proyecto a {string}")
-    public void sistemaCambiaEstado(String estado) {
-        assertThat(error).isNull();
-        assertThat(proyectoActual().getEstado().getEtiquetaUi()).isEqualToIgnoringCase(estado);
+  @Entonces("el Sistema cambia el estado del proyecto a {string}")
+  public void sistemaCambiaEstado(String estado) {
+    if (elegibilidad.activo()) {
+      elegibilidad.sistemaCambiaEstado(estado);
+      return;
     }
+    assertThat(error).isNull();
+    assertThat(proyectoActual().getEstado().getEtiquetaUi()).isEqualToIgnoringCase(estado);
+  }
 
     @Entonces("el Sistema habilita para edición los campos de CU-PRE-04 {string} hasta CU-PRE-23 {string}")
     public void sistemaHabilitaFormulacion(String desde, String hasta) {
@@ -636,10 +654,14 @@ public class Pre24Viabilidad {
         cargarDocumentoPreinversion();
     }
 
-    @Cuando("el Viabilizador accede a la pantalla del Anexo A.1 del proyecto")
-    public void viabilizadorAccedeAAnexoA1() {
-        ficha = fichaComo(viabilizador);
+  @Cuando("el Viabilizador accede a la pantalla del Anexo A.1 del proyecto")
+  public void viabilizadorAccedeAAnexoA1() {
+    if (elegibilidad.activo()) {
+      elegibilidad.viabilizadorAccedeAAnexoA1();
+      return;
     }
+    ficha = fichaComo(viabilizador);
+  }
 
     @Entonces("el botón {string} no está activo")
     public void botonNoActivo(String boton) {

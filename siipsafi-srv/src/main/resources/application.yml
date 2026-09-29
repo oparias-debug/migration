@@ -1,0 +1,119 @@
+server:
+  port: ${HTTP_PORT:8080}
+
+spring:
+  application:
+    name: dgicp-siip2-siipsafi-srv
+    # NOTE: Backstage replaces the parameters.* placeholders at project generation time.
+    # For local dev without templating, set: name: demo
+  
+  # OAuth2 Resource Server (JWT Validation)
+  # security.url.keycloak and security.realm are loaded from the external config server
+  # via ExternalConfigSource (EnvironmentPostProcessor). Defaults are for local dev.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://${SECURITY_URL_KEYCLOAK:keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv}/realms/${SECURITY_REALM:MHINTERNO}
+          jwk-set-uri: https://${SECURITY_URL_KEYCLOAK:keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv}/realms/${SECURITY_REALM:MHINTERNO}/protocol/openid-connect/certs
+
+  # Datasource Configuration (Oracle)
+  # Sin valores por defecto: las credenciales llegan del Secret <project_name>-secret,
+  # que el owner del proyecto crea una sola vez tras el aprovisionamiento.
+  # Si faltan, la aplicacion falla al arrancar en vez de intentar con una credencial invalida.
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+  
+  # JPA/Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.OracleDialect
+  
+
+# Service Configuration
+service:
+  name: dgicp-siip2-siipsafi-srv
+
+# External Config Service
+config:
+  service:
+    url: ${CONFIG_SERVICE_URL:https://inventario-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/config/service}
+
+# Authorization Service
+authz:
+  service:
+    url: ${AUTHZ_SERVICE_URL:https://authorization-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/authz}
+
+# Audit Service
+audit:
+  service:
+    url: ${AUDIT_SERVICE_URL:https://auditoria-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/audit}
+
+# Remote Logger Configuration
+remote:
+  logger:
+    enabled: true
+    url: ${LOG_SERVICE_URL:https://auditoria-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/logs}
+    level: WARNING
+
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+  allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
+  allowed-headers: ${CORS_ALLOWED_HEADERS:Content-Type,Authorization}
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    enabled: true
+  api-docs:
+    path: /v3/api-docs
+
+---
+# Dev Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # Desarrollo local: apunta a la BD de desa. Las credenciales siguen viniendo del
+  # entorno; 'changeme' es un marcador deliberado para que falle de forma evidente.
+  datasource:
+    url: ${DB_URL:jdbc:oracle:thin:@10.0.128.56:3115/desadevhpdb}
+    username: ${DB_USER:changeme}
+    password: ${DB_PASSWORD:changeme}
+
+cors:
+  allowed-origins: "*"
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: Content-Type,Authorization

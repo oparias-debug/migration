@@ -1,0 +1,12 @@
+# envs/values-gcp-op-preprod.yaml -- overlay por cluster (ambiente ppd, cluster gcp-op-preprod).
+# Generado por Gen-ScaffolderEnvOverlays.js. Se aplica: helm -f values.yaml -f envs/values-gcp-op-preprod.yaml
+# (ApplicationSet 05-cd-multicluster). Sobreescribe SOLO lo acoplado al cluster.
+# registry -> Quay 3t; URLs -> dominio/ns del cluster. OIDC/CORS/DB inferidos del patron base: CONFIRMAR con infra.
+image:
+  repository: "quay-quay-quay.apps.ocp-hub-3t.mh.gob.sv/mh-dgicp-siip2/frontend-ui"
+configMap:
+  data:
+    CONFIG_SERVICE_URL: "inventario-service-mh-ppd-dinafi-usi-frmk.apps.gcp-op-preprod.cloud.mh.gob.sv"
+    AUTHZ_SERVICE_URL: "https://authorization-service-mh-ppd-dinafi-usi-frmk.apps.gcp-op-preprod.cloud.mh.gob.sv/api/v1/authz"
+    AUDIT_SERVICE_URL: "https://auditoria-service-mh-ppd-dinafi-usi-frmk.apps.gcp-op-preprod.cloud.mh.gob.sv/api/v1/audit"
+    LOG_SERVICE_URL: "https://auditoria-service-mh-ppd-dinafi-usi-frmk.apps.gcp-op-preprod.cloud.mh.gob.sv/api/v1/logs"

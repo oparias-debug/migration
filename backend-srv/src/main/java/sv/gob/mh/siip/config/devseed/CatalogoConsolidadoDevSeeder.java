@@ -168,20 +168,22 @@ public class CatalogoConsolidadoDevSeeder implements DevSeeder {
         }
     }
 
-    private void sembrarCriteriosElegibilidad() {
-        for (Map<String, String> fila : CsvSeed.leer(CSV_CRITERIOS_ELEGIBILIDAD)) {
-            String codigo = fila.get(COLUMNA_CODIGO);
-            if (criterioElegibilidadRepository.findByCodigo(codigo).isEmpty()) {
-                String catalogo = fila.get("catalogo_especificar");
-                criterioElegibilidadRepository.save(CriterioElegibilidad.builder().codigo(codigo)
-                        .dimension(fila.get("dimension")).criterio(fila.get("criterio"))
-                        .tipoEspecificar(TipoEspecificar.valueOf(fila.get("tipo_especificar")))
-                        .catalogoEspecificar(catalogo == null ? null : TipoCatalogoEspecificar.valueOf(catalogo))
-                        .permiteSeleccionMultiple(Boolean.parseBoolean(fila.get("permite_seleccion_multiple")))
-                        .build());
-            }
-        }
+  private void sembrarCriteriosElegibilidad() {
+    for (Map<String, String> fila : CsvSeed.leer(CSV_CRITERIOS_ELEGIBILIDAD)) {
+      String codigo = fila.get(COLUMNA_CODIGO);
+      if (criterioElegibilidadRepository.findByCodigo(codigo).isEmpty()) {
+        String catalogo = fila.get("catalogo_especificar");
+        criterioElegibilidadRepository.save(CriterioElegibilidad.builder().codigo(codigo)
+            .numeroDimension(Integer.valueOf(fila.get("numero_dimension")))
+            .dimension(fila.get("dimension")).orden(Integer.valueOf(fila.get("orden")))
+            .criterio(fila.get("criterio")).pregunta(fila.get("pregunta"))
+            .tipoEspecificar(TipoEspecificar.valueOf(fila.get("tipo_especificar")))
+            .catalogoEspecificar(catalogo == null ? null : TipoCatalogoEspecificar.valueOf(catalogo))
+            .permiteSeleccionMultiple(Boolean.parseBoolean(fila.get("permite_seleccion_multiple")))
+            .build());
+      }
     }
+  }
 
     private void sembrarEntradasEspecificar() {
         for (Map<String, String> fila : CsvSeed.leer(CSV_ENTRADAS_ESPECIFICAR)) {

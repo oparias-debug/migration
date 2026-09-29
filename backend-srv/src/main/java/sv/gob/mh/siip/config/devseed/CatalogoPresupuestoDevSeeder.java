@@ -7,22 +7,27 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import sv.gob.mh.siip.model.preinversion.domain.InsumoTipo;
+import sv.gob.mh.siip.model.preinversion.domain.TipoCosto;
 import sv.gob.mh.siip.model.preinversion.domain.UnidadMedida;
 import sv.gob.mh.siip.model.preinversion.enums.TipoUnidadMedida;
 import sv.gob.mh.siip.model.preinversion.repository.InsumoTipoRepository;
+import sv.gob.mh.siip.model.preinversion.repository.TipoCostoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.UnidadMedidaRepository;
 
 /**
- * Catálogos "Insumo Tipo" (con Factor de Corrección) y "Unidad de Medida" (CU-ADM-02, Anexos
- * D.1/C.1 de CU-PRE-09), consumidos por CU-PRE-17/18 (Presupuesto). A diferencia de
- * {@link CatalogoProyectoDevSeeder}, el documento fuente de CU-PRE-17
- * (UC-PRE-17-Presupuesto_de_Inversion.md) referencia ambos catálogos por nombre pero nunca
- * transcribe su contenido real (ninguna fila detectada en "Catálogos Detectados", a diferencia
- * del Anexo F de CU-PRE-03.5): los valores son datos de prueba razonables, no el catálogo
- * oficial de la DGICP.
+ * Catálogos de costos y medidas consumidos por CU-PRE-11 (Descripción Técnica) y CU-PRE-17/18
+ * (Presupuesto):
+ * <ul>
+ * <li>"Insumo Tipo" (con Factor de Corrección): el documento de CU-PRE-17 lo referencia por nombre
+ * pero no transcribe su contenido, así que son datos de prueba razonables, no el catálogo oficial.</li>
+ * <li>"Unidad de Medida" (CU-ADM-02): catálogo oficial, Anexo D.1 de CU-PRE-11 (= Anexo C.1 de
+ * CU-PRE-09).</li>
+ * <li>"Tipo de Costos" (Anexo C.2 de CU-PRE-3.5): catálogo oficial; es también el del campo
+ * "Componente" de CU-PRE-11 (Anexo C.1), según el contrato CU-PRE-11.openapi.yaml.</li>
+ * </ul>
  *
- * <p>Los valores viven en {@code data/seed/insumos-tipo.csv} y {@code data/seed/unidades-medida.csv}
- * (ver {@link CsvSeed}); esta clase solo los carga.
+ * <p>Los valores viven en {@code data/seed/} (ver {@link CsvSeed}); esta clase solo los carga, sin
+ * duplicar los que ya existen.
  */
 @Component
 @Profile("dev")
@@ -31,14 +36,18 @@ public class CatalogoPresupuestoDevSeeder implements DevSeeder {
 
     public static final String CSV_INSUMOS_TIPO = "insumos-tipo.csv";
     public static final String CSV_UNIDADES_MEDIDA = "unidades-medida.csv";
+    public static final String CSV_TIPOS_COSTO = "tipos-costo.csv";
 
     private final InsumoTipoRepository insumoTipoRepository;
     private final UnidadMedidaRepository unidadMedidaRepository;
+    private final TipoCostoRepository tipoCostoRepository;
 
     public CatalogoPresupuestoDevSeeder(InsumoTipoRepository insumoTipoRepository,
-            UnidadMedidaRepository unidadMedidaRepository) {
+            UnidadMedidaRepository unidadMedidaRepository,
+            TipoCostoRepository tipoCostoRepository) {
         this.insumoTipoRepository = insumoTipoRepository;
         this.unidadMedidaRepository = unidadMedidaRepository;
+        this.tipoCostoRepository = tipoCostoRepository;
     }
 
     @Override
@@ -64,6 +73,13 @@ public class CatalogoPresupuestoDevSeeder implements DevSeeder {
                         .nombre(unidadMedida)
                         .descripcion(fila.get("descripcion"))
                         .build());
+            }
+        }
+
+        for (Map<String, String> fila : CsvSeed.leer(CSV_TIPOS_COSTO)) {
+            String codigo = fila.get("codigo");
+            if (tipoCostoRepository.findByCodigo(codigo).isEmpty()) {
+                tipoCostoRepository.save(TipoCosto.builder().codigo(codigo).nombre(fila.get("nombre")).build());
             }
         }
     }

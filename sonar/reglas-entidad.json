@@ -60,6 +60,9 @@
       { "regla": "java:S5977", "nota": "Tests should use fixed data instead of randomized data" },
       { "regla": "java:S1820", "nota": "Classes should not have too many fields" },
       { "regla": "java:S4551", "nota": "Enum values should be compared with '=='" },
+      { "regla": "java:S1166", "nota": "Exception handlers should preserve the original exceptions" },
+      { "regla": "java:S1162", "nota": "Checked exceptions should not be thrown" },
+      { "regla": "java:S2203", "nota": "\"collect\" should be used with \"Streams\" instead of \"list::add\"" },
       { "regla": "java:S3242", "nota": "Method parameters should be declared with base types" },
       { "regla": "java:S2384", "nota": "Private mutable members should not be stored or returned directly" },
       { "regla": "java:S1067", "params": { "max": "5" }, "nota": "Expressions should not be too complex" },
@@ -107,7 +110,8 @@
         { "regla": "typescript:S7735", "nota": "Unexpected negated condition" },
         { "regla": "typescript:S6480", "nota": "JSX props should not use arrow functions" },
         { "regla": "typescript:S126",  "nota": "Add the missing \"else\" clause" },
-        { "regla": "typescript:S3525", "nota": "Declare a \"X\" class and move this declaration of \"y\" into it (prototype assignments, src/test/setup.ts)" }
+        { "regla": "typescript:S3525", "nota": "Declare a \"X\" class and move this declaration of \"y\" into it (prototype assignments, src/test/setup.ts)" },
+        { "regla": "typescript:S4622", "params": { "threshold": "3" }, "nota": "Refactor this union type to have less than 3 elements." }
       ]
     },
     {

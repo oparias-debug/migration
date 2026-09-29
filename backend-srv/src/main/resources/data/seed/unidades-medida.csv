@@ -1,14 +1,45 @@
-# Catálogo "Unidad de Medida" (CU-ADM-02, Anexo C.1 de CU-PRE-09).
-# tipo: valor de TipoUnidadMedida (BIEN, SERVICIO, MIXTA). descripcion vacía = sin descripción.
-# Datos de prueba razonables, no el catálogo oficial de la DGICP (ver CatalogoPresupuestoDevSeeder).
+# Catálogo "Unidad de Medida" (CU-ADM-02). Catálogo oficial: Anexo D.1 de CU-PRE-11, idéntico al
+# Anexo C.1 de CU-PRE-09; los nombres se transcriben tal cual, con su abreviatura entre paréntesis.
+# tipo: valor de TipoUnidadMedida (BIEN, SERVICIO, MIXTA).
+# Nota: el catálogo no incluye "metro lineal"; la abreviatura "ml" corresponde a "Mililitro" aunque
+# los mockups de CU-PRE-09 y CU-PRE-11 la usan para obras lineales (ver Observaciones de ambos CU).
 tipo;categoria;unidad_medida;descripcion
-MIXTA;Longitud;Metro lineal;
-BIEN;Superficie;Metro cuadrado;
-BIEN;Volumen;Metro cúbico;
-BIEN;Peso;Kilogramo;
-BIEN;Volumen;Litro;
-MIXTA;Cantidad;Unidad;
-SERVICIO;Tiempo;Hora;
-SERVICIO;Tiempo;Mes;
-SERVICIO;Alcance;Global;Todo el alcance del contrato/servicio, sin desagregar por unidad física.
-MIXTA;Cantidad;Lote;
+BIEN;Conteo;Unidad (u);Medida básica para bienes individuales
+BIEN;Conteo;Pieza;Bien físico individual
+BIEN;Conteo;Artículo;Bien comercializable
+BIEN;Conteo;Ítem;Elemento individual de un conjunto
+BIEN;Conteo;Lote;Conjunto de unidades
+BIEN;Conteo;Paquete;Agrupación comercial
+BIEN;Conteo;Caja;Contenedor con varias unidades
+BIEN;Conteo;Docena;Conjunto de 12 unidades
+BIEN;Conteo;Juego / Set;Conjunto de piezas relacionadas
+BIEN;Conteo;Kit;Conjunto de insumos o herramientas
+BIEN;Peso;Gramo (g);Pequeñas cantidades
+BIEN;Peso;Kilogramo (kg);Medida estándar de peso
+BIEN;Peso;Quintal;Productos agrícolas
+BIEN;Peso;Tonelada (t);Grandes volúmenes
+BIEN;Peso;Libra (lb);Uso comercial
+BIEN;Longitud;Milímetro (mm);Componentes pequeños
+BIEN;Longitud;Centímetro (cm);Medidas menores
+BIEN;Longitud;Metro (m);Medida estándar
+BIEN;Longitud;Kilómetro (km);Grandes extensiones
+BIEN;Superficie;Metro cuadrado (m²);Construcción y áreas
+BIEN;Superficie;Hectárea (ha);Terrenos agrícolas
+BIEN;Superficie;Manzana;Uso catastral
+BIEN;Volumen;Mililitro (ml);Líquidos pequeños
+BIEN;Volumen;Litro (l);Líquidos comerciales
+BIEN;Volumen;Metro cúbico (m³);Obras y materiales
+BIEN;Volumen;Galón;Combustibles y líquidos
+BIEN;Capacidad;Watt (W);Potencia eléctrica
+BIEN;Capacidad;Kilowatt (kW);Equipos eléctricos
+BIEN;Capacidad;Kilovoltio-amperio (kVA);Capacidad instalada
+SERVICIO;Tiempo;Hora;Prestación por tiempo
+SERVICIO;Tiempo;Día;Servicios diarios
+SERVICIO;Tiempo;Mes;Servicios periódicos
+SERVICIO;Tiempo;Año;Proyección anual
+SERVICIO;Proporción;Porcentaje;Proporción, fracción o razón de una cantidad total dividida en 100 partes iguales
+MIXTA;Compuesta;Usuario / mes;Demanda periódica
+MIXTA;Compuesta;Atención / día;Capacidad operativa
+MIXTA;Compuesta;Servicio / año;Proyección anual
+MIXTA;Compuesta;Tonelada / mes;Flujo de bienes
+MIXTA;Compuesta;m² / año;Uso de infraestructura

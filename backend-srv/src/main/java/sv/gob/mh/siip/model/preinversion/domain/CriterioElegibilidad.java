@@ -43,17 +43,32 @@ public class CriterioElegibilidad {
     @Column(name = "ID_CRITERIO_ELEGIBILIDAD")
     private Long id;
 
-    @NotBlank
-    @Column(name = "CODIGO", nullable = false, length = 50, unique = true)
-    private String codigo;
+  @NotBlank
+  @Column(name = "CODIGO", nullable = false, length = 50, unique = true)
+  private String codigo;
 
-    @NotBlank
-    @Column(name = "DIMENSION", nullable = false, length = 250)
-    private String dimension;
+  /** Número de la dimensión en la ficha (p. ej. 1 para "1. Alineación estratégica"). */
+  @Column(name = "NUMERO_DIMENSION")
+  private Integer numeroDimension;
 
-    @NotBlank
-    @Column(name = "CRITERIO", nullable = false, length = 500)
-    private String criterio;
+  @NotBlank
+  @Column(name = "DIMENSION", nullable = false, length = 250)
+  private String dimension;
+
+  /** Posición del criterio dentro de su dimensión en la ficha de CU-PRE-25 (Anexo A.1). */
+  @Column(name = "ORDEN")
+  private Integer orden;
+
+  @NotBlank
+  @Column(name = "CRITERIO", nullable = false, length = 500)
+  private String criterio;
+
+  /**
+   * Pregunta guía de la columna "Especificar" (p. ej. "¿A cuáles ODS contribuye?", Anexo A.1 de
+   * CU-PRE-25). Si es nula, la ficha muestra el nombre del criterio.
+   */
+  @Column(name = "PREGUNTA", length = 500)
+  private String pregunta;
 
     @NotNull
     @Enumerated(EnumType.STRING)

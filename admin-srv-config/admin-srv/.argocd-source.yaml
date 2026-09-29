@@ -1,0 +1,11 @@
+# Override de ArgoCD: lo lee el repo-server al generar manifiestos del chart.
+# Fija el release name de Helm a un valor corto y unico dentro del namespace.
+#
+# Motivo: el scaffolder nombra la Application como "<env>-<application_name>-<project_name>".
+# Con prefijos como "test-" o "preprod-" ese nombre supera el limite de 53 chars de Helm
+# y rompe la generacion de manifiestos (release name "...": invalid release name ... 53).
+#
+# Usamos project_name: siempre <=53, unico por namespace (mh-<env>-<application_name>)
+# y coincide con fullnameOverride, asi labels y nombres de recursos quedan consistentes.
+helm:
+  releaseName: admin-srv

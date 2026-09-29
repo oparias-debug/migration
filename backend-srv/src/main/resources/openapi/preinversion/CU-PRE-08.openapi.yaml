@@ -55,7 +55,12 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/AreaInfluencia' }
         "400":
-          description: Solicitud invalida.
+          description: >
+            Solicitud invalida; no se guarda nada. `DISTRITO_INVALIDO`: un distrito vacio,
+            inexistente o cuyo nombre corresponde a varios distritos del catalogo (p. ej.
+            "San Lorenzo"); `FILA_DUPLICADA`: dos filas con el mismo distrito y la misma
+            ubicacion especifica. `Error.detalles[].campo` indica cada fila. El guardado admite
+            filas sin "Ubicacion especifica" (decision de negocio sobre RN05).
           content:
             application/json:
               schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
@@ -70,7 +75,7 @@ paths:
             application/json:
               schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
         "404":
-          description: Proyecto o distrito inexistente.
+          description: Proyecto inexistente.
           content:
             application/json:
               schema: { $ref: '../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error' }
@@ -88,7 +93,11 @@ paths:
       x-roles: [Técnico URP]
       responses:
         "200":
-          description: Filas derivadas de Poblacion Objetivo.
+          description: >
+            Filas propuestas a partir de las ubicaciones de Poblacion Objetivo (CU-PRE-07), sin
+            guardar. Si una ubicacion no identifica un unico distrito del catalogo (texto libre
+            como "Comunidad Rio Mar"), la fila trae region, departamento y distrito en null y el
+            texto como ubicacionEspecifica, para que el Tecnico URP elija el distrito.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AreaInfluencia' }
@@ -120,7 +129,9 @@ components:
       properties:
         distrito:
           type: string
-          description: Codigo o nombre del distrito del catalogo geografico.
+          description: >
+            Codigo (recomendado) o nombre del distrito del catalogo geografico. Un nombre que
+            corresponde a varios distritos se rechaza con `DISTRITO_INVALIDO`.
         ubicacionEspecifica:
           type: string
           maxLength: 1000
@@ -134,10 +145,13 @@ components:
     AreaInfluenciaFila:
       type: object
       required: [region, departamento, distrito]
+      description: >
+        Region, departamento y distrito solo vienen en null en las filas propuestas por el
+        autocompletado cuya ubicacion no identifica un distrito; las filas guardadas los traen siempre.
       properties:
         region: { type: string, nullable: true }
-        departamento: { type: string }
-        distrito: { type: string }
+        departamento: { type: string, nullable: true }
+        distrito: { type: string, nullable: true }
         ubicacionEspecifica: { type: string, nullable: true }
     AreaInfluencia:
       type: object

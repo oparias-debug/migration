@@ -1,0 +1,51 @@
+site_name: 'dgicp-siip2-siipsafi-srv'
+
+site_description: 'componente para integracion de siip con safi '
+
+# La navegacion sigue la ruta de adopcion del programador, en el orden en que la
+# recorre: desde que crea la aplicacion en el portal hasta que la promueve entre
+# ambientes. Cada entrada responde "que hago yo, que me da la plataforma, como lo
+# compruebo y que hago si falla".
+nav:
+  - Inicio: index.md
+  - 1. Creación de la aplicación: creacion-aplicacion.md
+  - 2. Arquitectura de la plantilla:
+    - Visión general: architecture.md
+    - Capa API: layer-api.md
+    - Capa de aplicación: layer-application.md
+    - Capa de dominio: layer-domain.md
+    - Capa de infraestructura: layer-infrastructure.md
+    - Capa compartida: layer-shared.md
+  - 3. Después de la plantilla: post-plantilla.md
+  - 4. Configuración de variables: helm-configuration.md
+  - 5. Pilares del marco:
+    - Configuración externa, logger remoto y propagación de JWT: framework-library.md
+    - Autenticación: security.md
+    - Autorización por permisos: autorizacion.md
+    - Adopción — mi pantalla y mi endpoint: autorizacion-adopcion.md
+    - Auditoría: audit-logging.md
+  - 6. Desarrollo:
+    - Flujo de trabajo: desarrollo.md
+    - Contrato de errores: error-contract.md
+    - Versionamiento y paginación: api-versioning-pagination.md
+    - Migración de base de datos: database-migration.md
+    - Programación asíncrona: async-programming.md
+    - Compilación nativa: native-compilation.md
+    - Servicios externos: integration-external-services.md
+    - API Management (3scale): integration-3scale.md
+    - Servicios externos (Camel): integration-camel.md
+    - Mensajería (Kafka): integration-kafka.md
+    - Caché distribuido (Data Grid): integration-datagrid.md
+    - Guía para agentes de IA: agent-guidelines.md
+  - 7. Ambiente local:
+    - Ejecución directa y con Podman: local-development.md
+    - Certificados TLS: tls-certificates.md
+  - 8. Despliegue:
+    - El ciclo de CI/CD: ci-cd-pipeline.md
+    - Operación en OpenShift: deployment.md
+  - 9. Creación de un ambiente: ambientes.md
+  - 10. Pruebas funcionales y de seguridad: testing.md
+  - 11. Paso entre ambientes: promocion.md
+
+plugins:
+  - techdocs-core

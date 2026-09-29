@@ -123,7 +123,7 @@ public class PresupuestoDevSeeder implements DevSeeder {
                 .descripcion("Equipamiento de prueba (BDD/dev).")
                 .codigoProducto("P-01")
                 .cantidad(CANTIDAD_POR_PRODUCTO)
-                .unidadMedida("Unidad")
+                .unidadMedida("Unidad (u)")
                 .build());
         componenteRepository.save(Componente.builder()
                 .proyecto(proyecto)
@@ -131,7 +131,7 @@ public class PresupuestoDevSeeder implements DevSeeder {
                 .descripcion("Equipamiento de prueba (BDD/dev).")
                 .codigoProducto("P-02")
                 .cantidad(CANTIDAD_POR_PRODUCTO)
-                .unidadMedida("Unidad")
+                .unidadMedida("Unidad (u)")
                 .build());
     }
 

@@ -23,6 +23,8 @@ Versión corta para tener el sistema andando y confirmar que todo quedó bien co
    ```
    cd backend-srv; mvn clean package -DskipTests; cd ..
    cd api-gateway; mvn clean package -DskipTests; cd ..
+   cd admin-srv; mvn clean package -DskipTests; cd ..
+   cd siipsafi-srv; mvn clean package -DskipTests; cd ..
    docker compose run --rm front-build
    docker-compose up --build -d
    ```
@@ -31,7 +33,7 @@ Versión corta para tener el sistema andando y confirmar que todo quedó bien co
    - http://localhost → pantalla de login de la SPA.
    - http://localhost:8080/swagger-ui.html → Swagger UI del API Gateway.
    - http://localhost:8085 → consola de Keycloak.
-5. **Smoke test de login:** en http://localhost, entrá con un usuario ya sembrado en `keycloak/realm-export.json` (realm `siip-api`) — por ejemplo `user` / `user123`, o `tecnico.pre` / `tecnicoPre123` si querés ver el módulo de Preinversión con ese rol. Si el login funciona y llegás al home, el stack completo (front → gateway → Keycloak → backend-srv → postgres) está bien conectado.
+5. **Smoke test de login:** en http://localhost, entrá con un usuario ya sembrado en `keycloak/realm-export.json` (realm `siip-api`) — por ejemplo `tecnico.pre` / `tecnicoPre123` (rol de Preinversión). Si el login funciona y llegás al home, el stack completo (front → gateway → Keycloak → backend-srv → postgres) está bien conectado.
 
 Si algo de esto falla, revisá `docker-compose logs -f <servicio>` antes que nada; y si seguís trabado, escribile a david@magnaperitia.com.
 
@@ -114,6 +116,8 @@ Cómo se arma la configuración de un ambiente:
 - Lo no sensible va al **ConfigMap `backend-srv-cmp`** (`configMap.data` del chart) y lo sensible (`DB_USER`, `DB_PASSWORD`) al **Secret `backend-srv-secret`**, que el chart crea vacío y el owner completa directamente en el cluster. Nada sensible va a git.
 - Ambos llegan al contenedor como variables de entorno (`envFrom`), con los mismos nombres que usa `docker-compose.yml` en local. La lista completa de variables y su valor en cada ambiente está en [`backend-srv/docs/configuracion.md`](./backend-srv/docs/configuracion.md) y en [`backend-srv-config/README.md`](./backend-srv-config/README.md).
 
+`front`, `admin-srv` y `siipsafi-srv` siguen la misma convención con `frontend-ui-config/` (`dgicp-siip2/frontend-ui-config`), `admin-srv-config/` (`dgicp-siip/admin-srv-config`) y `siipsafi-srv-config/` (`dgicp-siip2/siipsafi-srv-config`). Estos tres charts están todavía como los dejó el scaffolder: los valores `<...>` de sus overlays `envs/` hay que confirmarlos con infra.
+
 Regla práctica: **si agregás una propiedad a `application.yml` que cambia por ambiente**, leela de una variable de entorno (con un valor por defecto seguro), agregala al `.env`/`docker-compose.yml` para local y a `configMap.data` de `backend-srv-config` (o al Secret, si es sensible) en el mismo cambio.
 
 ## Compilación y despliegue
@@ -123,11 +127,13 @@ Regla práctica: **si agregás una propiedad a `application.yml` que cambia por 
 ```
 cd backend-srv; mvn clean package -DskipTests; cd ..
 cd api-gateway; mvn clean package -DskipTests; cd ..
+cd admin-srv; mvn clean package -DskipTests; cd ..
+cd siipsafi-srv; mvn clean package -DskipTests; cd ..
 docker compose run --rm front-build
 docker-compose up --build -d
 ```
 
-`backend-srv` y `api-gateway` son proyectos Maven independientes (no hay `pom.xml` agregador en la raíz: cada uno va a su propio repositorio en la entidad), así que se compilan por separado (`front` no es un proyecto Maven — ver más abajo — y `siip-comun` se fusionó dentro de `backend-srv`). `front` sigue el mismo patrón: su `Dockerfile` (el mismo que usa el pipeline de la entidad) no compila, solo empaqueta `front/dist/` en Apache HTTPD. `docker compose run --rm front-build` hace esa compilación (`npm ci && npm run build`) en un contenedor con Node y Java, así que no hace falta tenerlos en el host; va antes de `up` porque Compose construye todas las imágenes antes de levantar cualquier contenedor. Las dos imágenes base del front son públicas (`registry.access.redhat.com`), así que esto funciona fuera de la VPN del MH.
+`backend-srv`, `api-gateway`, `admin-srv` y `siipsafi-srv` son proyectos Maven independientes (no hay `pom.xml` agregador en la raíz: cada uno va a su propio repositorio en la entidad), así que se compilan por separado (`front` no es un proyecto Maven — ver más abajo — y `siip-comun` se fusionó dentro de `backend-srv`). `front` sigue el mismo patrón: su `Dockerfile` (el mismo que usa el pipeline de la entidad) no compila, solo empaqueta `front/dist/` en Apache HTTPD. `docker compose run --rm front-build` hace esa compilación (`npm ci && npm run build`) en un contenedor con Node y Java, así que no hace falta tenerlos en el host; va antes de `up` porque Compose construye todas las imágenes antes de levantar cualquier contenedor. Las dos imágenes base del front son públicas (`registry.access.redhat.com`), así que esto funciona fuera de la VPN del MH.
 
 ### Un solo módulo (por ejemplo, `backend-srv`)
 

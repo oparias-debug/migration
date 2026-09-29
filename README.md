@@ -26,12 +26,18 @@ El proyecto se compone de los siguientes microservicios. `backend-srv`, `api-gat
 | `api-gateway` | 8080 | Spring Cloud Gateway (WebFlux). Enruta las peticiones externas hacia `backend-srv`, aplica seguridad OAuth2/OIDC contra Keycloak, `TokenRelay`, *Circuit Breaker* y *Retry*, y expone `/auth/login`/`/auth/refresh` (con sus propios DTOs `LoginRequest`/`TokenResponse`, package `sv.gob.mh.siip.api_gateway.dto`) contra el token endpoint de Keycloak. Expone Swagger UI agregado. |
 | `backend-srv` | 8081 (solo interno) | Backend único del sistema: catálogos (departamentos, municipios, distritos, sectores, etapas, componentes ambientales, tablas de rangos, catálogos generales), gestión de usuarios/roles/permisos/grupos/objetos protegidos, gestión de proyectos, procesos de preinversión y **motor de workflow (Flowable BPM)** para el registro/aprobación de proyectos. Incluye sus propios DTOs/enums/utilidades (`sv.gob.mh.siip.dto`, `.enums`, `.util`) — antes vivían en el módulo `siip-comun`, fusionado aquí porque ya era su único consumidor real. No tiene Spring Security propio: confía en que solo `api-gateway` lo invoque, por eso no publica su puerto al host. |
 | `front` | 80 (interno 8080) | SPA en **React + Vite (TypeScript)**. Se sirve con **Apache HTTPD** sobre UBI 9 (`front/Dockerfile`, el mismo en local y en la entidad), que actúa como reverse-proxy same-origin de `/auth/**` y `/back/**` hacia `api-gateway` (evita tener que habilitar CORS). El `Dockerfile` solo empaqueta `dist/`: en la entidad lo compila el pipeline y en local el servicio `front-build` de `docker-compose.yml`. El login se autentica contra Keycloak a través de `api-gateway`. No es un proyecto Maven. |
+| `admin-srv` | 8080 (solo interno) | Servicio de administración (`dgicp-siip/admin-srv`). Hoy es **solo la plantilla del marco DINAFI**, la misma versión que `siipsafi-srv` (Spring Boot 3.5, sin lógica de negocio). A diferencia de `backend-srv`, valida el JWT por su cuenta, y trae autorización por permisos, auditoría y logger remoto. Se llega por `api-gateway` en `/admin/**`. |
+| `siipsafi-srv` | 8080 (solo interno) | Integración de SIIP con SAFI (`dgicp-siip2/siipsafi-srv`). También es **solo la plantilla DINAFI** (Spring Boot 3.5): valida el JWT, y trae autorización por permisos contra el `authorization-service` del MH, auditoría y logger remoto. Se llega por `api-gateway` en `/siipsafi/**`. |
 | `postgres` | 5432 | Base de datos PostgreSQL, con esquema de negocio (`public`) y esquema de Flowable (`flowable`). |
 | `keycloak` | 8085 | Proveedor de identidad (OIDC) para autenticación/autorización de usuarios y del propio API Gateway. |
 
 Todos los servicios comparten la red Docker `microred` y `backend-srv` espera a que `postgres` esté *healthy* antes de arrancar.
 
-`backend-srv-config` no es un servicio: es el repositorio (`dgicp-siip2/backend-srv-config`) con el chart Helm que despliega `backend-srv` en los ambientes de la entidad y guarda su configuración por ambiente (base de datos, esquemas, logging, recursos). En local esa misma configuración la dan `.env` y `docker-compose.yml`. Ver [SETUP.md § Configuración por ambiente](./SETUP.md#configuración-por-ambiente-en-la-entidad-backend-srv-config).
+`backend-srv-config` no es un servicio: es el repositorio (`dgicp-siip2/backend-srv-config`) con el chart Helm que despliega `backend-srv` en los ambientes de la entidad y guarda su configuración por ambiente (base de datos, esquemas, logging, recursos). En local esa misma configuración la dan `.env` y `docker-compose.yml`. Ver [SETUP.md § Configuración por ambiente](./SETUP.md#configuración-por-ambiente-en-la-entidad-backend-srv-config). `frontend-ui-config` (`dgicp-siip2/frontend-ui-config`) cumple el mismo rol para `front`.
+
+`admin-srv-config` (`dgicp-siip/admin-srv-config`) y `siipsafi-srv-config` (`dgicp-siip2/siipsafi-srv-config`) son los charts equivalentes para esos dos servicios. Ojo: `admin-srv` y `admin-srv-config` viven en el proyecto de Gerrit `dgicp-siip`, no en `dgicp-siip2` como el resto.
+
+Las plantillas DINAFI de `admin-srv` y `siipsafi-srv` están pensadas para Oracle y para los servicios del marco en la red del MH. En local, `docker-compose.yml` las redirige con variables `SPRING_*`, sin tocar su `application.yml`: usan el Postgres local (por eso sus `pom.xml` traen también el driver de Postgres) y el Keycloak local como emisor de tokens. Además se apaga la llamada de `siipsafi-srv` al config server y su logger remoto. Su `authorization-service` no está disponible en local: los endpoints con `@PermissionsAllowed` responden 403.
 
 > El prefijo público `/back/**` (front → api-gateway) **no** cambió con el renombre de la carpeta a `backend-srv`: es parte del contrato con `front` (basePath de los clientes generados). api-gateway lo reescribe hacia `BACKEND_SRV_URL` (por defecto `http://backend-srv:8081`).
 
@@ -42,6 +48,8 @@ flowchart LR
     Usuario -->|HTTP| Front["front: React SPA vía HTTPD (80)"]
     Front -->|proxy /auth, /back| Gateway["api-gateway (8080)"]
     Gateway --> Back["backend-srv (8081)"]
+    Gateway -->|/admin| Admin["admin-srv"]
+    Gateway -->|/siipsafi| Safi["siipsafi-srv"]
     Gateway <-->|validación de tokens / login| Keycloak["Keycloak (8085)"]
 ```
 

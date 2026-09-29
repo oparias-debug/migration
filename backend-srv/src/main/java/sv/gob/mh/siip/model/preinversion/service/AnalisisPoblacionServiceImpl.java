@@ -18,6 +18,7 @@ import sv.gob.mh.siip.model.preinversion.dto.AnalisisPoblacionDto;
 import sv.gob.mh.siip.model.preinversion.dto.AnalisisPoblacionRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.CeldaUbicacionDto;
 import sv.gob.mh.siip.model.preinversion.dto.CeldaUbicacionRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
 import sv.gob.mh.siip.model.preinversion.dto.FilaPoblacionDto;
 import sv.gob.mh.siip.model.preinversion.dto.FilaPoblacionRequestDto;
 import sv.gob.mh.siip.model.preinversion.repository.AnalisisPoblacionRepository;
@@ -30,6 +31,12 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
 
     private static final String CODIGO_AFECTADA_MAYOR_REFERENCIA = "POBLACION_AFECTADA_MAYOR_QUE_REFERENCIA";
     private static final String CODIGO_OBJETIVO_MAYOR_AFECTADA = "POBLACION_OBJETIVO_MAYOR_QUE_AFECTADA";
+    private static final String CODIGO_CAMPOS_PENDIENTES = "CAMPOS_OBLIGATORIOS_PENDIENTES";
+    private static final String CODIGO_NUMERO_NEGATIVO = "NUMERO_PERSONAS_NEGATIVO";
+    private static final String CODIGO_UBICACIONES_NO_COINCIDEN = "UBICACIONES_NO_COINCIDEN";
+    private static final String FILA_REFERENCIA = "poblacionReferencia";
+    private static final String FILA_AFECTADA = "poblacionAfectada";
+    private static final String FILA_OBJETIVO = "poblacionObjetivo";
     private static final double PORCENTAJE_TOTAL = 100D;
 
     private final ProyectoRepository proyectoRepository;
@@ -66,6 +73,9 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
         List<CeldaUbicacionRequestDto> ubicacionesAfectada = ubicacionesDe(request.getPoblacionAfectada());
         List<CeldaUbicacionRequestDto> ubicacionesObjetivo = ubicacionesDe(request.getPoblacionObjetivo());
 
+        exigirCompleto(ubicacionesReferencia, ubicacionesAfectada, ubicacionesObjetivo);
+        exigirNoNegativos(ubicacionesReferencia, ubicacionesAfectada, ubicacionesObjetivo);
+        exigirMismasUbicaciones(ubicacionesReferencia, ubicacionesAfectada, ubicacionesObjetivo);
         exigirNoExcede(ubicacionesReferencia, ubicacionesAfectada, CODIGO_AFECTADA_MAYOR_REFERENCIA,
                 "La cantidad de población afectada no puede ser mayor que la registrada "
                         + "en la población de referencia.");
@@ -113,9 +123,86 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
     }
 
     /**
+     * RN07 y Anexo B.1: son obligatorios la "Ubicación" de Afectada y Objetivo y el "N° de personas"
+     * de Referencia, Afectada y Objetivo; cada fila necesita al menos una ubicación. Se reportan todas
+     * las celdas pendientes a la vez para que el cliente sombree sus bordes en rojo.
+     */
+    private static void exigirCompleto(List<CeldaUbicacionRequestDto> referencia,
+            List<CeldaUbicacionRequestDto> afectada, List<CeldaUbicacionRequestDto> objetivo) {
+        List<ErrorDetalleDto> pendientes = new ArrayList<>();
+        agregarPendientes(FILA_REFERENCIA, referencia, false, pendientes);
+        agregarPendientes(FILA_AFECTADA, afectada, true, pendientes);
+        agregarPendientes(FILA_OBJETIVO, objetivo, true, pendientes);
+        if (!pendientes.isEmpty()) {
+            throw new ValidacionNegocioException(CODIGO_CAMPOS_PENDIENTES,
+                    "Existen campos obligatorios sin completar.", pendientes);
+        }
+    }
+
+    private static void agregarPendientes(String fila, List<CeldaUbicacionRequestDto> celdas,
+            boolean exigeUbicacion, List<ErrorDetalleDto> pendientes) {
+        if (celdas.isEmpty()) {
+            pendientes.add(detalle(fila + ".ubicaciones", "Debe registrar al menos una ubicación."));
+            return;
+        }
+        for (int i = 0; i < celdas.size(); i++) {
+            CeldaUbicacionRequestDto celda = celdas.get(i);
+            String prefijo = fila + ".ubicaciones[" + i + "].";
+            if (exigeUbicacion && (celda.getUbicacion() == null || celda.getUbicacion().isBlank())) {
+                pendientes.add(detalle(prefijo + "ubicacion", "Campo obligatorio."));
+            }
+            if (celda.getNumeroPersonas() == null) {
+                pendientes.add(detalle(prefijo + "numeroPersonas", "Campo obligatorio."));
+            }
+        }
+    }
+
+    /** El "N° de personas" es una cantidad: un negativo rompería los porcentajes y la Población en Espera. */
+    private static void exigirNoNegativos(List<CeldaUbicacionRequestDto> referencia,
+            List<CeldaUbicacionRequestDto> afectada, List<CeldaUbicacionRequestDto> objetivo) {
+        List<ErrorDetalleDto> negativos = new ArrayList<>();
+        agregarNegativos(FILA_REFERENCIA, referencia, negativos);
+        agregarNegativos(FILA_AFECTADA, afectada, negativos);
+        agregarNegativos(FILA_OBJETIVO, objetivo, negativos);
+        if (!negativos.isEmpty()) {
+            throw new ValidacionNegocioException(CODIGO_NUMERO_NEGATIVO,
+                    "El N° de personas no puede ser negativo.", negativos);
+        }
+    }
+
+    private static void agregarNegativos(String fila, List<CeldaUbicacionRequestDto> celdas,
+            List<ErrorDetalleDto> negativos) {
+        for (int i = 0; i < celdas.size(); i++) {
+            Integer numero = celdas.get(i).getNumeroPersonas();
+            if (numero != null && numero < 0) {
+                negativos.add(detalle(fila + ".ubicaciones[" + i + "].numeroPersonas", "No puede ser negativo."));
+            }
+        }
+    }
+
+    /**
+     * RN09: "Ubicación"/"N° de Personas" son columnas agrupadas de la tabla, así que las tres filas
+     * tienen las mismas columnas. Con la misma cantidad, la comparación posición a posición de FA-03
+     * cubre todas las ubicaciones y, por suma, también los totales.
+     */
+    private static void exigirMismasUbicaciones(List<CeldaUbicacionRequestDto> referencia,
+            List<CeldaUbicacionRequestDto> afectada, List<CeldaUbicacionRequestDto> objetivo) {
+        if (referencia.size() != afectada.size() || afectada.size() != objetivo.size()) {
+            throw new ValidacionNegocioException(CODIGO_UBICACIONES_NO_COINCIDEN,
+                    "Las filas de Población de Referencia, Afectada y Objetivo deben tener las mismas ubicaciones.",
+                    List.of(detalle("ubicaciones", "Referencia: " + referencia.size() + ", Afectada: "
+                            + afectada.size() + ", Objetivo: " + objetivo.size() + ".")));
+        }
+    }
+
+    private static ErrorDetalleDto detalle(String campo, String mensaje) {
+        return new ErrorDetalleDto().campo(campo).mensaje(mensaje);
+    }
+
+    /**
      * FA-03: compara, posicion a posicion (misma ubicacion), que {@code mayor} no exceda a
-     * {@code menor}. Solo se valida cuando ambos valores de la pareja estan presentes: un valor
-     * faltante es responsabilidad visual de RN07, no de esta regla de negocio.
+     * {@code menor}. Las validaciones anteriores garantizan que ambas filas tienen las mismas
+     * ubicaciones y que todos los numeros estan presentes.
      */
     private static void exigirNoExcede(List<CeldaUbicacionRequestDto> menor, List<CeldaUbicacionRequestDto> mayor,
             String codigo, String mensaje) {

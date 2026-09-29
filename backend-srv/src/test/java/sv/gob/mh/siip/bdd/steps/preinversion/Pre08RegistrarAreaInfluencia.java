@@ -24,6 +24,9 @@ import sv.gob.mh.siip.model.preinversion.service.AreaInfluenciaService;
 public class Pre08RegistrarAreaInfluencia {
 
     private static final String DISTRITO = "Distrito BDD PRE08";
+    private static final String DISTRITO_OTRO = "Distrito BDD PRE08 B";
+    private static final String DEPARTAMENTO_OTRO = "Departamento BDD PRE08 B";
+    private static final String REGION_OTRA = "Region BDD PRE08 B";
 
     private final ContextoProyectoBdd contextoProyecto;
     private final DepartamentoRepository departamentoRepository;
@@ -65,10 +68,27 @@ public class Pre08RegistrarAreaInfluencia {
             String nombreCasoUso) {
         assertThat(cu).isEqualTo(7);
         crearDistrito();
-        analisisPoblacionService.guardar(contextoProyecto.getProyectoActual().getId(),
-                new AnalisisPoblacionRequestDto()
-                        .poblacionObjetivo(new FilaPoblacionRequestDto().ubicaciones(List.of(
-                        new CeldaUbicacionRequestDto().ubicacion(DISTRITO).numeroPersonas(10)))));
+        registrarPoblacionObjetivo(DISTRITO);
+    }
+
+    @Dado("que la Población Objetivo tiene registrada la ubicación {string}, que no es un distrito del catálogo")
+    public void que_la_poblacion_objetivo_tiene_una_ubicacion_que_no_es_distrito(String ubicacion) {
+        crearDistrito();
+        assertThat(municipioRepository.findByNombreIgnoreCase(ubicacion)).isEmpty();
+        registrarPoblacionObjetivo(ubicacion);
+    }
+
+    @Entonces("el sistema propone {string} como {string} y deja {string}, {string} y {string} vacíos para que los complete")
+    public void el_sistema_propone_la_ubicacion_y_deja_vacios_los_campos(String ubicacion, String campoUbicacion,
+            String region, String departamento, String distrito) {
+        resultado = areaInfluenciaService.autocompletarDesdePoblacionObjetivo(
+                contextoProyecto.getProyectoActual().getId());
+        assertThat(resultado.getFilas()).singleElement().satisfies(fila -> {
+            assertThat(fila.getUbicacionEspecifica()).isEqualTo(ubicacion);
+            assertThat(fila.getRegion()).isNull();
+            assertThat(fila.getDepartamento()).isNull();
+            assertThat(fila.getDistrito()).isNull();
+        });
     }
 
     @Entonces("el sistema completa los campos {string}, {string}, {string} y {string} según lo registrado en CU-PRE-{int}")
@@ -91,20 +111,30 @@ public class Pre08RegistrarAreaInfluencia {
     @Dado("que los campos {string}, {string} y {string} ya fueron autocompletados")
     public void que_los_campos_ya_fueron_autocompletados(String region, String departamento, String distrito) {
         crearDistrito();
+        registrarPoblacionObjetivo(DISTRITO);
         resultado = areaInfluenciaService.autocompletarDesdePoblacionObjetivo(
                 contextoProyecto.getProyectoActual().getId());
-        assertThat(resultado.getFilas()).isEmpty();
+        assertThat(resultado.getFilas()).singleElement()
+                .satisfies(fila -> assertThat(fila.getDistrito()).isEqualTo(DISTRITO));
     }
 
-    @Entonces("dichos campos permanecen bloqueados para edición \\(RN08)")
-    public void dichos_campos_permanecen_bloqueados_para_edicion_rn08() {
-        assertThat(resultado).isNotNull();
+    @Cuando("el Técnico URP cambia el {string} de la fila por otro distrito del catálogo y guarda")
+    public void el_tecnico_urp_cambia_el_distrito_de_la_fila_y_guarda(String campo) {
+        crearOtroDistrito();
+        String ubicacionEspecifica = resultado.getFilas().get(0).getUbicacionEspecifica();
+        resultado = areaInfluenciaService.guardar(contextoProyecto.getProyectoActual().getId(),
+                new AreaInfluenciaRequestDto().filas(List.of(new AreaInfluenciaFilaRequestDto()
+                        .distrito(DISTRITO_OTRO).ubicacionEspecifica(ubicacionEspecifica))));
     }
 
-    @Entonces("si se requiere agregar otra Región, Departamento o Distrito, debe hacerse en CU-PRE-{int} {string}")
-    public void si_se_requiere_agregar_otra_ubicacion_debe_hacerse_en_cu_pre(Integer cu, String nombreCasoUso) {
-        assertThat(cu).isEqualTo(7);
-        assertThat(nombreCasoUso).isEqualTo("Población Objetivo");
+    @Entonces("el sistema guarda la fila con el nuevo distrito, su departamento y su región")
+    public void el_sistema_guarda_la_fila_con_el_nuevo_distrito() {
+        AreaInfluenciaDto guardado = areaInfluenciaService.obtener(contextoProyecto.getProyectoActual().getId());
+        assertThat(guardado.getFilas()).singleElement().satisfies(fila -> {
+            assertThat(fila.getDistrito()).isEqualTo(DISTRITO_OTRO);
+            assertThat(fila.getDepartamento()).isEqualTo(DEPARTAMENTO_OTRO);
+            assertThat(fila.getRegion()).isEqualTo(REGION_OTRA);
+        });
     }
 
     @Cuando("el Técnico URP acerca el cursor a un punto definido de la tabla")
@@ -147,13 +177,21 @@ public class Pre08RegistrarAreaInfluencia {
 
     @Cuando("el Técnico URP hace clic en el botón {string} sin haber completado los campos requeridos")
     public void el_tecnico_urp_hace_clic_en_el_boton_sin_haber_completado_los_campos_requeridos(String boton) {
+        crearDistrito();
         resultado = areaInfluenciaService.guardar(contextoProyecto.getProyectoActual().getId(),
-                new AreaInfluenciaRequestDto().filas(List.of()));
+                new AreaInfluenciaRequestDto().filas(List.of(
+                        new AreaInfluenciaFilaRequestDto().distrito(DISTRITO).ubicacionEspecifica(null))));
     }
 
-    @Entonces("el sistema sombrea en color rojo los bordes de los campos pendientes de completar \\(RN05)")
-    public void el_sistema_sombrea_en_color_rojo_los_bordes_de_los_campos_pendientes_de_completar_rn05() {
-        assertThat(resultado).isNotNull();
+    @Entonces("el sistema guarda la información aunque la {string} quede pendiente")
+    public void el_sistema_guarda_la_informacion_aunque_quede_pendiente(String campo) {
+        // Decisión de negocio (RN05): el guardado incompleto se admite; el sombreado en rojo es del cliente.
+        assertThat(campo).isEqualTo("Ubicación específica");
+        AreaInfluenciaDto guardado = areaInfluenciaService.obtener(contextoProyecto.getProyectoActual().getId());
+        assertThat(guardado.getFilas()).singleElement().satisfies(fila -> {
+            assertThat(fila.getDistrito()).isEqualTo(DISTRITO);
+            assertThat(fila.getUbicacionEspecifica()).isNull();
+        });
     }
 
     public boolean esEscenarioAreaInfluencia() {
@@ -176,11 +214,37 @@ public class Pre08RegistrarAreaInfluencia {
                 departamentoRepository.save(Departamento.builder()
                         .codigo("D" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre("Departamento BDD PRE08")
                         .region("Region BDD PRE08").build()));
-        if (municipioRepository.findAllByOrderByNombreAsc().stream()
-                .noneMatch(municipio -> DISTRITO.equals(municipio.getNombre()))) {
+        crearDistritoEn(DISTRITO, departamento);
+    }
+
+    /** Segundo distrito, en un departamento distinto, para verificar que al editar el distrito cambian también departamento y región. */
+    private void crearOtroDistrito() {
+        Departamento departamento = departamentoRepository.findAll().stream()
+                .filter(d -> DEPARTAMENTO_OTRO.equals(d.getNombre()))
+                .findFirst()
+                .orElseGet(() -> departamentoRepository.save(Departamento.builder()
+                        .codigo("E" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre(DEPARTAMENTO_OTRO)
+                        .region(REGION_OTRA).build()));
+        crearDistritoEn(DISTRITO_OTRO, departamento);
+    }
+
+    private void crearDistritoEn(String nombre, Departamento departamento) {
+        if (municipioRepository.findByNombreIgnoreCase(nombre).isEmpty()) {
             municipioRepository.save(Municipio.builder()
-                    .codigo("M" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre(DISTRITO)
+                    .codigo("M" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre(nombre)
                     .departamento(departamento).build());
         }
+    }
+
+    /** Registra en CU-PRE-07 una Población Objetivo con la ubicación indicada (y la tabla completa que exige). */
+    private void registrarPoblacionObjetivo(String ubicacionObjetivo) {
+        analisisPoblacionService.guardar(contextoProyecto.getProyectoActual().getId(),
+                new AnalisisPoblacionRequestDto()
+                        .poblacionReferencia(new FilaPoblacionRequestDto().ubicaciones(List.of(
+                                new CeldaUbicacionRequestDto().ubicacion(DISTRITO).numeroPersonas(100))))
+                        .poblacionAfectada(new FilaPoblacionRequestDto().ubicaciones(List.of(
+                                new CeldaUbicacionRequestDto().ubicacion(DISTRITO).numeroPersonas(40))))
+                        .poblacionObjetivo(new FilaPoblacionRequestDto().ubicaciones(List.of(
+                                new CeldaUbicacionRequestDto().ubicacion(ubicacionObjetivo).numeroPersonas(10)))));
     }
 }

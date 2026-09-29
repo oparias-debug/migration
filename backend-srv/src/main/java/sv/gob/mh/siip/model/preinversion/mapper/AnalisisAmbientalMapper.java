@@ -13,6 +13,7 @@ public interface AnalisisAmbientalMapper {
     // Mapeo del Padre: Del Entity al DTO (la entidad usa 'impactosAmbientales', el DTO usa 'filas')
     // Se calcula al vuelo en el servicio
     @Mapping(target = "totalCostoMedidasGestion", ignore = true)
+    @Mapping(target = "idProyecto", source = "proyecto.id")
     @Mapping(target = "filas", source = "impactosAmbientales")
     AnalisisAmbientalDto toDto(AnalisisAmbiental entity);
 
@@ -29,5 +30,9 @@ public interface AnalisisAmbientalMapper {
     @Mapping(target = "id", ignore = true)
     // Se inyecta en el stream del service
     @Mapping(target = "analisisAmbiental", ignore = true)
+    // El contrato (FilaImpactoAmbientalRequest) no expone estas columnas; hoy nadie las asigna
+    @Mapping(target = "categoriaAmbiental", ignore = true)
+    @Mapping(target = "permisosRequeridos", ignore = true)
+    @Mapping(target = "observaciones", ignore = true)
     ImpactosAmbientales toFilaEntity(FilaImpactoAmbientalRequestDto dto);
 }

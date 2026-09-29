@@ -106,10 +106,16 @@ paths:
                 $ref: '#/components/schemas/AnalisisMercado'
         "400":
           description: >
-            RN04: ninguna fila del array `filas` está completamente
-            diligenciada (producto, demanda, oferta, aniosAProyectar,
-            tasaDemanda, tasaOferta). Escenario BDD explícito, aunque sin
-            texto de mensaje literal documentado por el CU.
+            No se guarda nada. `Error.codigo`, en este orden de evaluación:
+            `ANALISIS_MERCADO_SIN_FILA_COMPLETA` (RN04: ninguna fila tiene
+            producto, demanda, oferta, aniosAProyectar, tasaDemanda y
+            tasaOferta; las filas totalmente vacías se descartan antes),
+            `PRODUCTO_NO_EN_CATALOGO` (RN07), `VALOR_FUERA_DE_RANGO`
+            (demanda u oferta negativas, menos de un año a proyectar o tasa
+            de -100 % o menos) o `PRODUCTO_REPETIDO` (el mismo producto en
+            dos filas). `Error.detalles[].campo` indica cada fila afectada.
+            Las filas incompletas se admiten mientras haya una completa
+            (RN05 es solo visual).
           content:
             application/json:
               schema:
@@ -170,14 +176,19 @@ components:
           description: "Anexo B.1: \"Rango: valores positivos\"."
         aniosAProyectar:
           type: integer
+          minimum: 1
           description: Campo "Años" — número de años a proyectar demanda y oferta.
         tasaDemanda:
           type: number
           format: double
+          minimum: -100
+          exclusiveMinimum: true
           description: Tasa de crecimiento de la demanda (porcentaje), específica del bien/servicio.
         tasaOferta:
           type: number
           format: double
+          minimum: -100
+          exclusiveMinimum: true
           description: Tasa de crecimiento de la oferta (porcentaje), específica del bien/servicio.
 
     FilaAnalisisMercado:
@@ -230,8 +241,10 @@ components:
           format: double
           nullable: true
           description: >
-            Calculado según la fórmula de proyección del Anexo B.1 a partir
-            de demanda (año base), tasaDemanda y aniosAProyectar.
+            Promedio del año base y de los años proyectados (Anexo B.1):
+            (D₀ + D₀(1+r)¹ + … + D₀(1+r)ᵗ) / (t + 1), con D₀ = demanda,
+            r = tasaDemanda en porcentaje y t = aniosAProyectar. No es el
+            valor del último año proyectado.
         promedioOferta:
           type: number
           format: double

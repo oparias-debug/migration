@@ -52,9 +52,27 @@ Característica: Registrar y guardar el análisis de la población
     Y no guarda la información registrada
     Y regresa a la pestaña anterior
 
+  Esquema del escenario: Ingreso inválido — las filas no tienen las mismas ubicaciones
+    # Interpretación de RN09 (no es texto literal del CU): "Ubicación" y "N° de Personas" son columnas
+    # agrupadas de una misma tabla, por lo que las filas de Referencia, Afectada y Objetivo tienen las
+    # mismas columnas. Sin esta regla, el total de una fila podría superar al de la fila con la que se
+    # compara en FA-03 (p. ej. dos ubicaciones afectadas de 80 frente a una de referencia de 100).
+    Dado que la fila "<fila con más ubicaciones>" tiene más ubicaciones registradas que la fila "<fila con menos ubicaciones>"
+    Cuando el Técnico URP hace clic en el botón "Guardar"
+    Entonces el sistema rechaza el guardado porque las filas deben tener las mismas ubicaciones
+    Y no guarda la información registrada
+
+    Ejemplos:
+      | fila con más ubicaciones | fila con menos ubicaciones |
+      | Población Afectada       | Población de Referencia    |
+      | Población Objetivo       | Población Afectada         |
+
   Esquema del escenario: Intentar guardar con un campo obligatorio incompleto
+    # Decisión de negocio: el CU no aclara si RN07 impide guardar o solo sombrea los campos pendientes.
+    # Se resolvió que el guardado incompleto se rechaza; el servidor indica cada celda pendiente.
     Cuando el Técnico URP hace clic en "Guardar" sin haber completado el campo "<campo>"
     Entonces el sistema sombrea en rojo el borde del campo "<campo>" (RN07)
+    Y no guarda la información registrada
 
     Ejemplos:
       | campo                              |

@@ -1,0 +1,90 @@
+{
+  "componentId": "dgicp-siip-admin-srv",
+  "resources": [
+    {
+      "code": "expedientes",
+      "name": "Expedientes",
+      "parentCode": null,
+      "layerResourceName": "recurso",
+      "menu": 0,
+      "orden": 10,
+      "attributes": "{}",
+      "permissions": [
+        {
+          "groupId": "EJEMPLO_GRUPO_ADMIN",
+          "operationName": "VIEW",
+          "effect": 1,
+          "conditions": "{}"
+        },
+        {
+          "groupId": "EJEMPLO_GRUPO_CONSULTA",
+          "operationName": "VIEW",
+          "effect": 1,
+          "conditions": "{}"
+        }
+      ]
+    },
+    {
+      "code": "expedientes-consulta",
+      "name": "Consulta de expedientes",
+      "parentCode": "expedientes",
+      "layerResourceName": "recurso",
+      "menu": 0,
+      "orden": 20,
+      "attributes": "{}",
+      "permissions": []
+    },
+    {
+      "code": "expedientes-registro",
+      "name": "Registro de expedientes",
+      "parentCode": "expedientes",
+      "layerResourceName": "recurso",
+      "menu": 0,
+      "orden": 30,
+      "attributes": "{}",
+      "permissions": [
+        {
+          "groupId": "EJEMPLO_GRUPO_ADMIN",
+          "operationName": "CREATE",
+          "effect": 1,
+          "conditions": "{}"
+        },
+        {
+          "groupId": "EJEMPLO_GRUPO_ADMIN",
+          "operationName": "UPDATE",
+          "effect": 1,
+          "conditions": "{}"
+        },
+        {
+          "groupId": "EJEMPLO_GRUPO_ADMIN",
+          "operationName": "DELETE",
+          "effect": 1,
+          "conditions": "{}"
+        },
+        {
+          "groupId": "EJEMPLO_GRUPO_CONSULTA",
+          "operationName": "DELETE",
+          "effect": 0,
+          "conditions": "{}"
+        }
+      ]
+    },
+    {
+      "code": "expedientes-reporte",
+      "name": "Reporte de expedientes",
+      "parentCode": "expedientes",
+      "layerResourceName": "recurso",
+      "menu": 0,
+      "orden": 40,
+      "attributes": "{}",
+      "permissions": [
+        {
+          "groupId": "EJEMPLO_GRUPO_ADMIN",
+          "operationName": "EXPORT",
+          "effect": 1,
+          "conditions": "{}"
+        }
+      ]
+    }
+  ]
+}

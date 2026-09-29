@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: admin-srv API
+  description: >-
+    API REST de admin-srv (dgicp-siip-admin-srv).
+    Contrato inicial generado por la plantilla con los endpoints demo de seguridad (OIDC/JWT)
+    y el health check de Quarkus. El contrato autoritativo lo genera Quarkus
+    (quarkus-smallrye-openapi) en /q/openapi y se reemplaza cuando el servicio agregue endpoints.
+  version: 1.0.0
+  contact:
+    name: Equipo de Desarrollo MH
+    email: desarrollo@mh.gob.sv
+  license:
+    name: Propietario - Ministerio de Hacienda de El Salvador
+servers:
+  - url: http://localhost:8080
+    description: Entorno local de desarrollo
+  - url: https://admin-srv-mh-dev-dgicp-siip.apps.gcp-op-desa.cloud.mh.gob.sv
+    description: OpenShift DEV (gcp-op-desa)
+tags:
+  - name: Seguridad
+    description: Endpoints demo de autenticación y autorización (OIDC/JWT)
+  - name: Health
+    description: Sondas de salud del servicio (Quarkus SmallRye Health)
+paths:
+  /api/v1/demo/security/publico:
+    get:
+      tags:
+        - Seguridad
+      summary: Recurso público
+      description: No exige autenticación. Primer nivel del ejemplo de seguridad.
+      operationId: publico
+      responses:
+        '200':
+          description: Mensaje de bienvenida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /api/v1/demo/security/autenticado:
+    get:
+      tags:
+        - Seguridad
+      summary: Recurso autenticado
+      description: Exige un token JWT válido. Devuelve los claims del token y la identidad resuelta.
+      operationId: autenticado
+      security:
+        - JWT: []
+      responses:
+        '200':
+          description: Claims del token e identidad del principal
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: No autenticado (token ausente o inválido)
+  /api/v1/demo/security/expedientes:
+    get:
+      tags:
+        - Seguridad
+      summary: Consultar expedientes
+      description: >-
+        Exige el permiso VIEW sobre el recurso `expedientes-consulta`. El permiso lo resuelve el
+        authorization-service con los grupos del token; no viaja en el JWT.
+      operationId: consultarExpedientes
+      security:
+        - JWT: []
+      responses:
+        '200':
+          description: Listado de expedientes
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: No autenticado
+        '403':
+          description: Autenticado, pero sin el permiso VIEW sobre expedientes-consulta
+  /api/v1/demo/security/expedientes/{id}:
+    delete:
+      tags:
+        - Seguridad
+      summary: Eliminar un expediente
+      description: >-
+        Exige el permiso DELETE sobre el recurso `expedientes-registro`. Con el padrón de ejemplo
+        cargado, el grupo administrador lo tiene y el de consulta lo tiene denegado: dos usuarios
+        autenticados, respuestas distintas.
+      operationId: eliminarExpediente
+      security:
+        - JWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del expediente
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Expediente eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: No autenticado
+        '403':
+          description: Autenticado, pero sin el permiso DELETE sobre expedientes-registro
+  /q/health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Estado agregado de las sondas de salud (liveness + readiness).
+      operationId: health
+      responses:
+        '200':
+          description: El servicio está saludable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+        '503':
+          description: El servicio no está saludable
+components:
+  securitySchemes:
+    JWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT emitido por Keycloak (OIDC) del Ministerio de Hacienda.
+  schemas:
+    Mensaje:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Hello World, pagina sin autenticación!'
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN]
+          example: UP
+        checks:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              status:
+                type: string
+                enum: [UP, DOWN]

@@ -10,5 +10,8 @@ public interface ProductoIndicadorCatalogoRepository extends JpaRepository<Produ
 
     List<ProductoIndicadorCatalogo> findAllByOrderByCodigoProductoAsc();
 
+    /** Cada fila del catálogo es un indicador: su código identifica la fila. */
+    boolean existsByCodigoIndicador(String codigoIndicador);
+
     List<ProductoIndicadorCatalogo> findByCodigoProductoIn(List<String> codigosProducto);
 }

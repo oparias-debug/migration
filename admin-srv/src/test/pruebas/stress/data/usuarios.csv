@@ -1,0 +1,9 @@
+username,password,email,role
+testuser1,Test123!,testuser1@test.com,USER
+testuser2,Test123!,testuser2@test.com,USER
+testuser3,Test123!,testuser3@test.com,USER
+testuser4,Test123!,testuser4@test.com,USER
+testuser5,Test123!,testuser5@test.com,USER
+adminuser,Admin123!,admin@test.com,ADMIN
+qauser,QA123!,qa@test.com,QA_TESTER
+devuser,Dev123!,dev@test.com,DEVELOPER

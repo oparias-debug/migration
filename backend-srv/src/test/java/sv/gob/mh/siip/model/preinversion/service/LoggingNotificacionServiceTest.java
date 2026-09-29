@@ -145,6 +145,27 @@ class LoggingNotificacionServiceTest {
     void notificarRespuestaInstitucion_incluyeUnidadAnioYCorreosDeLosDestinatarios() {
         service.notificarRespuestaInstitucion(25L, 2027, List.of(usuario("pre2@test.com")));
 
-        assertThat(ultimoMensaje()).contains("25", "2027", "pre2@test.com");
-    }
+    assertThat(ultimoMensaje()).contains("25", "2027", "pre2@test.com");
+  }
+
+  @Test
+  void notificarEmisionElegibilidad_incluyeProyectoYCorreosDeLosDestinatarios() {
+    service.notificarEmisionElegibilidad(proyecto(), List.of(usuario("urp25@test.com"), usuario("pre25@test.com")));
+
+    assertThat(ultimoMensaje()).contains("CU-PRE-25 FB1", "urp25@test.com", "pre25@test.com");
+  }
+
+  @Test
+  void notificarComentariosOtElegibilidad_incluyeElFormularioYLosViabilizadores() {
+    service.notificarComentariosOtElegibilidad(proyecto(), List.of(usuario("viab25@test.com")));
+
+    assertThat(ultimoMensaje()).contains("CU-PRE-25 FB2", "/elegibilidad", "viab25@test.com");
+  }
+
+  @Test
+  void notificarObservacionesElegibilidadAtendidas_indicaSinDestinatarios_cuandoListaVacia() {
+    service.notificarObservacionesElegibilidadAtendidas(proyecto(), List.of());
+
+    assertThat(ultimoMensaje()).contains("CU-PRE-25 FB2", "sin destinatarios activos con ese rol");
+  }
 }

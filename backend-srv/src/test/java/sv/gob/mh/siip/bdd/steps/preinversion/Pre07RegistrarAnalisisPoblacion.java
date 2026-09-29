@@ -1,5 +1,6 @@
 package sv.gob.mh.siip.bdd.steps.preinversion;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,6 +14,7 @@ import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.AnalisisPoblacionDto;
 import sv.gob.mh.siip.model.preinversion.dto.AnalisisPoblacionRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.CeldaUbicacionRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
 import sv.gob.mh.siip.model.preinversion.dto.FilaPoblacionRequestDto;
 import sv.gob.mh.siip.model.preinversion.service.AnalisisPoblacionService;
 
@@ -32,6 +34,12 @@ import sv.gob.mh.siip.model.preinversion.service.AnalisisPoblacionService;
  * verdadero.
  */
 public class Pre07RegistrarAnalisisPoblacion {
+
+    private static final String CAMPO_UBICACION_AFECTADA = "Ubicación (Población Afectada)";
+    private static final String CAMPO_UBICACION_OBJETIVO = "Ubicación (Población Objetivo)";
+    private static final String CAMPO_NUMERO_REFERENCIA = "N° de personas (Población de Referencia)";
+    private static final String CAMPO_NUMERO_AFECTADA = "N° de personas (Población Afectada)";
+    private static final String CAMPO_NUMERO_OBJETIVO = "N° de personas (Población Objetivo)";
 
     private final AnalisisPoblacionService analisisPoblacionService;
 
@@ -173,6 +181,33 @@ public class Pre07RegistrarAnalisisPoblacion {
                 .poblacionObjetivo(new FilaPoblacionRequestDto().ubicaciones(List.of(celdaObjetivo)));
     }
 
+    /**
+     * Interpretación de RN09 (ver comentario del escenario): parte de una tabla válida de una
+     * ubicación y agrega una columna solo a la fila indicada.
+     */
+    @Dado("que la fila {string} tiene más ubicaciones registradas que la fila {string}")
+    public void que_la_fila_tiene_mas_ubicaciones_que_otra(String filaMayor, String filaMenor) {
+        List<CeldaUbicacionRequestDto> referencia = new ArrayList<>(List.of(nuevaCelda(100)));
+        List<CeldaUbicacionRequestDto> afectada = new ArrayList<>(List.of(nuevaCelda(80)));
+        List<CeldaUbicacionRequestDto> objetivo = new ArrayList<>(List.of(nuevaCelda(30)));
+
+        switch (filaMayor) {
+            case "Población Afectada" -> afectada.add(nuevaCelda(80));
+            case "Población Objetivo" -> objetivo.add(nuevaCelda(30));
+            default -> throw new IllegalArgumentException("Fila no reconocida: " + filaMayor);
+        }
+
+        ultimaSolicitud = new AnalisisPoblacionRequestDto()
+                .poblacionReferencia(new FilaPoblacionRequestDto().ubicaciones(referencia))
+                .poblacionAfectada(new FilaPoblacionRequestDto().ubicaciones(afectada))
+                .poblacionObjetivo(new FilaPoblacionRequestDto().ubicaciones(objetivo));
+    }
+
+    @Entonces("el sistema rechaza el guardado porque las filas deben tener las mismas ubicaciones")
+    public void el_sistema_rechaza_el_guardado_por_ubicaciones_distintas() {
+        intentarGuardarYCapturarError("UBICACIONES_NO_COINCIDEN");
+    }
+
     @Entonces("el sistema muestra el modal de {string} descrito en el Anexo A.3")
     public void el_sistema_muestra_el_modal_de_ingreso_invalido_anexo_a3(String modal) {
         intentarGuardarYCapturarError("POBLACION_AFECTADA_MAYOR_QUE_REFERENCIA");
@@ -187,6 +222,8 @@ public class Pre07RegistrarAnalisisPoblacion {
     public void no_guarda_la_informacion_registrada() {
         AnalisisPoblacionDto dto = analisisPoblacionService.obtener(proyecto.getId());
         assertThat(dto.getPoblacionReferencia().getUbicaciones()).isEmpty();
+        // Último paso de los escenarios de rechazo (FA-03, RN07, RN09): libera el actor autenticado.
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Entonces("regresa a la pestaña anterior")
@@ -196,15 +233,18 @@ public class Pre07RegistrarAnalisisPoblacion {
 
     @Entonces("el sistema sombrea en rojo el borde del campo {string} \\(RN07\\)")
     public void el_sistema_sombrea_en_rojo_el_borde_del_campo_rn07(String campo) {
-        assertThat(guardado).isNotNull();
-        RequestContextHolder.resetRequestAttributes();
+        // El servidor rechaza el guardado e indica la celda pendiente; el cliente sombrea su borde.
+        assertThat(ultimaExcepcion).isNotNull();
+        assertThat(ultimaExcepcion.getCodigo()).isEqualTo("CAMPOS_OBLIGATORIOS_PENDIENTES");
+        assertThat(ultimaExcepcion.getDetalles()).extracting(ErrorDetalleDto::getCampo)
+                .containsExactly(rutaDelCampo(campo));
     }
 
     /**
      * Invocado por {@link Pre35RegistrarFichaEmergencia} para "el Técnico URP hace clic en
-     * {string} sin haber completado el campo {string}" (RN07): ninguno de los 5 campos listados
-     * en el Esquema del escenario es obligatorio a nivel de servidor, asi que se guarda una
-     * combinacion completa salvo el campo indicado, para confirmar que el servidor no la rechaza.
+     * {string} sin haber completado el campo {string}" (RN07): los 5 campos del Esquema del
+     * escenario son obligatorios (Anexo B.1), asi que se envia una combinacion completa salvo el
+     * campo indicado y se captura el rechazo del servidor.
      */
     public void guardarSinCompletarCampo(String campo) {
         CeldaUbicacionRequestDto celdaReferencia = nuevaCelda(100);
@@ -212,11 +252,11 @@ public class Pre07RegistrarAnalisisPoblacion {
         CeldaUbicacionRequestDto celdaObjetivo = nuevaCelda(30);
 
         switch (campo) {
-            case "Ubicación (Población Afectada)" -> celdaAfectada.setUbicacion(null);
-            case "Ubicación (Población Objetivo)" -> celdaObjetivo.setUbicacion(null);
-            case "N° de personas (Población de Referencia)" -> celdaReferencia.setNumeroPersonas(null);
-            case "N° de personas (Población Afectada)" -> celdaAfectada.setNumeroPersonas(null);
-            case "N° de personas (Población Objetivo)" -> celdaObjetivo.setNumeroPersonas(null);
+            case CAMPO_UBICACION_AFECTADA -> celdaAfectada.setUbicacion(null);
+            case CAMPO_UBICACION_OBJETIVO -> celdaObjetivo.setUbicacion(null);
+            case CAMPO_NUMERO_REFERENCIA -> celdaReferencia.setNumeroPersonas(null);
+            case CAMPO_NUMERO_AFECTADA -> celdaAfectada.setNumeroPersonas(null);
+            case CAMPO_NUMERO_OBJETIVO -> celdaObjetivo.setNumeroPersonas(null);
             default -> throw new IllegalArgumentException("Campo no reconocido: " + campo);
         }
 
@@ -227,7 +267,23 @@ public class Pre07RegistrarAnalisisPoblacion {
                 .poblacionObjetivo(new FilaPoblacionRequestDto().descripcion("Descripción de prueba BDD")
                         .ubicaciones(List.of(celdaObjetivo)));
 
-        guardado = analisisPoblacionService.guardar(proyecto.getId(), request);
+        try {
+            analisisPoblacionService.guardar(proyecto.getId(), request);
+            ultimaExcepcion = null;
+        } catch (ValidacionNegocioException ex) {
+            ultimaExcepcion = ex;
+        }
+    }
+
+    private static String rutaDelCampo(String campo) {
+        return switch (campo) {
+            case CAMPO_UBICACION_AFECTADA -> "poblacionAfectada.ubicaciones[0].ubicacion";
+            case CAMPO_UBICACION_OBJETIVO -> "poblacionObjetivo.ubicaciones[0].ubicacion";
+            case CAMPO_NUMERO_REFERENCIA -> "poblacionReferencia.ubicaciones[0].numeroPersonas";
+            case CAMPO_NUMERO_AFECTADA -> "poblacionAfectada.ubicaciones[0].numeroPersonas";
+            case CAMPO_NUMERO_OBJETIVO -> "poblacionObjetivo.ubicaciones[0].numeroPersonas";
+            default -> throw new IllegalArgumentException("Campo no reconocido: " + campo);
+        };
     }
 
     private void intentarGuardarYCapturarError(String codigoEsperado) {

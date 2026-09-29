@@ -75,15 +75,31 @@ class ManejadorErroresGlobalTest {
         ResponseEntity<ErrorDto> sinCodigo = manejadorErroresGlobal
                 .manejarReglaNegocio(new ReglaNegocioException(null, "Regla incumplida"));
 
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, conCodigo.getStatusCode());
-        ErrorDto body = conCodigo.getBody();
-        assertNotNull(body);
-        assertEquals("DOCUMENTO_PREINVERSION_REQUERIDO", body.getCodigo());
-        assertEquals("Falta el documento", body.getMensaje());
-        ErrorDto generico = sinCodigo.getBody();
-        assertNotNull(generico);
-        assertEquals("REGLA_NEGOCIO", generico.getCodigo());
-    }
+    assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, conCodigo.getStatusCode());
+    ErrorDto body = conCodigo.getBody();
+    assertNotNull(body);
+    assertEquals("DOCUMENTO_PREINVERSION_REQUERIDO", body.getCodigo());
+    assertEquals("Falta el documento", body.getMensaje());
+    ErrorDto generico = sinCodigo.getBody();
+    assertNotNull(generico);
+    assertEquals("REGLA_NEGOCIO", generico.getCodigo());
+  }
+
+  @Test
+  @DisplayName("Debería incluir los detalles de ReglaNegocioException en la respuesta 422")
+  void testManejarReglaNegocioConDetalles() {
+    ErrorDetalleDto detalle = new ErrorDetalleDto().campo("respuestas[criterioId=2]").mensaje("Sin especificar");
+
+    ResponseEntity<ErrorDto> respuesta = manejadorErroresGlobal
+        .manejarReglaNegocio(new ReglaNegocioException("ESPECIFICAR_INCOMPLETO", "Falta especificar",
+            List.of(detalle)));
+
+    ErrorDto body = respuesta.getBody();
+    assertNotNull(body);
+    assertEquals("ESPECIFICAR_INCOMPLETO", body.getCodigo());
+    assertEquals(1, body.getDetalles().size());
+    assertEquals("respuestas[criterioId=2]", body.getDetalles().get(0).getCampo());
+  }
 
     @Test
     @DisplayName("Debería manejar NoAutenticadoException y retornar status 401")

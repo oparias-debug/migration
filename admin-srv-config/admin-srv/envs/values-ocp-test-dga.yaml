@@ -1,0 +1,14 @@
+# envs/values-ocp-test-dga.yaml -- overlay por cluster (ambiente tst, cluster ocp-test-dga).
+# Generado por Gen-ScaffolderEnvOverlays.js. Se aplica: helm -f values.yaml -f envs/values-ocp-test-dga.yaml
+# (ApplicationSet 05-cd-multicluster). Sobreescribe SOLO lo acoplado al cluster.
+# registry -> Quay 3t; URLs -> dominio/ns del cluster. OIDC/CORS/DB inferidos del patron base: CONFIRMAR con infra.
+image:
+  repository: "quay-quay-quay.apps.ocp-hub-3t.mh.gob.sv/mh-dgicp-siip/admin-srv"
+configMap:
+  data:
+    CONFIG_SERVICE_URL: "https://inventario-service-mh-tst-dinafi-usi-frmk.apps.ocp-test-dga.mh.gob.sv/api/v1/config/service"
+    AUTHZ_SERVICE_URL: "https://authorization-service-mh-tst-dinafi-usi-frmk.apps.ocp-test-dga.mh.gob.sv/api/v1/authz"
+    AUDIT_SERVICE_URL: "https://auditoria-service-mh-tst-dinafi-usi-frmk.apps.ocp-test-dga.mh.gob.sv/api/v1/audit"
+    LOG_SERVICE_URL: "https://auditoria-service-mh-tst-dinafi-usi-frmk.apps.ocp-test-dga.mh.gob.sv/api/v1/logs"
+    SECURITY_URL_KEYCLOAK: "keycloak-mh-test.apps.gcp-op-desa.cloud.mh.gob.sv"
+    DB_URL: "jdbc:oracle:thin:@<host-bd-tst>:1521/<sid-tst>"

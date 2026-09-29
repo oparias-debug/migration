@@ -1,0 +1,270 @@
+# Catálogo de ubicaciones geográficas (Anexo C.5 de CU-PRE-3.5; el mismo que el Anexo C.1 de CU-PRE-07
+# y CU-PRE-08). Catálogo oficial: 262 distritos en 14 departamentos.
+# No se incluyen las filas "<Departamento> - Nivel departamental" ni "Nivel nacional": el servicio de
+# catálogos las genera a partir de los departamentos (CatalogosSeleccionEtapasServiceImpl).
+# Los códigos no son oficiales: el del departamento sigue el orden del anexo (01 Ahuachapán ...
+# 14 La Unión) y el del distrito es "<departamento>-<orden dentro del departamento en el anexo>".
+# "Santa Tecla" aparece en el anexo como "Santa Tecla antes: Nueva San Salvador".
+codigo_departamento;departamento;region;codigo_distrito;distrito
+01;Ahuachapán;Occidental;01-01;Ahuachapán
+01;Ahuachapán;Occidental;01-02;Apaneca
+01;Ahuachapán;Occidental;01-03;Concepción de Ataco
+01;Ahuachapán;Occidental;01-04;Tacuba
+01;Ahuachapán;Occidental;01-05;Atiquizaya
+01;Ahuachapán;Occidental;01-06;El Refugio
+01;Ahuachapán;Occidental;01-07;San Lorenzo
+01;Ahuachapán;Occidental;01-08;Turín
+01;Ahuachapán;Occidental;01-09;Guaymango
+01;Ahuachapán;Occidental;01-10;Jujutla
+01;Ahuachapán;Occidental;01-11;San Francisco Menéndez
+01;Ahuachapán;Occidental;01-12;San Pedro Puxtla
+02;Santa Ana;Occidental;02-01;Santa Ana
+02;Santa Ana;Occidental;02-02;Coatepeque
+02;Santa Ana;Occidental;02-03;El Congo
+02;Santa Ana;Occidental;02-04;Masahuat
+02;Santa Ana;Occidental;02-05;Metapán
+02;Santa Ana;Occidental;02-06;Santa Rosa Guachipilín
+02;Santa Ana;Occidental;02-07;Texistepeque
+02;Santa Ana;Occidental;02-08;Candelaria de la Frontera
+02;Santa Ana;Occidental;02-09;Chalchuapa
+02;Santa Ana;Occidental;02-10;El Porvenir
+02;Santa Ana;Occidental;02-11;San Antonio Pajonal
+02;Santa Ana;Occidental;02-12;San Sebastián Salitrillo
+02;Santa Ana;Occidental;02-13;Santiago de la Frontera
+03;Sonsonate;Occidental;03-01;Nahulingo
+03;Sonsonate;Occidental;03-02;San Antonio del Monte
+03;Sonsonate;Occidental;03-03;Santo Domingo de Guzmán
+03;Sonsonate;Occidental;03-04;Sonsonate
+03;Sonsonate;Occidental;03-05;Sonzacate
+03;Sonsonate;Occidental;03-06;Armenia
+03;Sonsonate;Occidental;03-07;Caluco
+03;Sonsonate;Occidental;03-08;Cuisnahuat
+03;Sonsonate;Occidental;03-09;Santa Isabel Ishuatán
+03;Sonsonate;Occidental;03-10;Izalco
+03;Sonsonate;Occidental;03-11;San Julián
+03;Sonsonate;Occidental;03-12;Juayúa
+03;Sonsonate;Occidental;03-13;Nahuizalco
+03;Sonsonate;Occidental;03-14;Salcoatitán
+03;Sonsonate;Occidental;03-15;Santa Catarina Masahuat
+03;Sonsonate;Occidental;03-16;Acajutla
+04;Chalatenango;Central;04-01;Agua Caliente
+04;Chalatenango;Central;04-02;Dulce Nombre de María
+04;Chalatenango;Central;04-03;El Paraíso
+04;Chalatenango;Central;04-04;La Reina
+04;Chalatenango;Central;04-05;Nueva Concepción
+04;Chalatenango;Central;04-06;San Fernando
+04;Chalatenango;Central;04-07;San Francisco Morazán
+04;Chalatenango;Central;04-08;San Rafael
+04;Chalatenango;Central;04-09;Santa Rita
+04;Chalatenango;Central;04-10;Tejutla
+04;Chalatenango;Central;04-11;Citalá
+04;Chalatenango;Central;04-12;San Ignacio
+04;Chalatenango;Central;04-13;La Palma
+04;Chalatenango;Central;04-14;Arcatao
+04;Chalatenango;Central;04-15;Azacualpa
+04;Chalatenango;Central;04-16;Comalapa
+04;Chalatenango;Central;04-17;Concepción Quezaltepeque
+04;Chalatenango;Central;04-18;Chalatenango
+04;Chalatenango;Central;04-19;El Carrizal
+04;Chalatenango;Central;04-20;La Laguna
+04;Chalatenango;Central;04-21;Las Vueltas
+04;Chalatenango;Central;04-22;Nombre de Jesús
+04;Chalatenango;Central;04-23;Nueva Trinidad
+04;Chalatenango;Central;04-24;Ojos de Agua
+04;Chalatenango;Central;04-25;Potonico
+04;Chalatenango;Central;04-26;San Antonio de la Cruz
+04;Chalatenango;Central;04-27;San Antonio Los Ranchos
+04;Chalatenango;Central;04-28;San Isidro Labrador
+04;Chalatenango;Central;04-29;San Francisco Lempa
+04;Chalatenango;Central;04-30;San José Cancasque / Cancasque
+04;Chalatenango;Central;04-31;San José Las Flores / Las Flores
+04;Chalatenango;Central;04-32;San Luis del Carmen
+04;Chalatenango;Central;04-33;San Miguel de Mercedes
+05;La Libertad;Central;05-01;Ciudad Arce
+05;La Libertad;Central;05-02;San Juan Opico
+05;La Libertad;Central;05-03;Chiltiupán
+05;La Libertad;Central;05-04;Jicalapa
+05;La Libertad;Central;05-05;La Libertad
+05;La Libertad;Central;05-06;Tamanique
+05;La Libertad;Central;05-07;Teotepeque
+05;La Libertad;Central;05-08;Antiguo Cuscatlán
+05;La Libertad;Central;05-09;Huizúcar
+05;La Libertad;Central;05-10;Nuevo Cuscatlán
+05;La Libertad;Central;05-11;San José Villanueva
+05;La Libertad;Central;05-12;Zaragoza
+05;La Libertad;Central;05-13;Quezaltepeque
+05;La Libertad;Central;05-14;San Matías
+05;La Libertad;Central;05-15;San Pablo Tacachico
+05;La Libertad;Central;05-16;Colón
+05;La Libertad;Central;05-17;Jayaque
+05;La Libertad;Central;05-18;Sacacoyo
+05;La Libertad;Central;05-19;Talnique
+05;La Libertad;Central;05-20;Tepecoyo
+05;La Libertad;Central;05-21;Comasagua
+05;La Libertad;Central;05-22;Santa Tecla
+06;San Salvador;Central;06-01;Ayutuxtepeque
+06;San Salvador;Central;06-02;Cuscatancingo
+06;San Salvador;Central;06-03;Mejicanos
+06;San Salvador;Central;06-04;San Salvador
+06;San Salvador;Central;06-05;Delgado
+06;San Salvador;Central;06-06;Ilopango
+06;San Salvador;Central;06-07;San Martín
+06;San Salvador;Central;06-08;Soyapango
+06;San Salvador;Central;06-09;Tonacatepeque
+06;San Salvador;Central;06-10;Aguilares
+06;San Salvador;Central;06-11;El Paisnal
+06;San Salvador;Central;06-12;Guazapa
+06;San Salvador;Central;06-13;Apopa
+06;San Salvador;Central;06-14;Nejapa
+06;San Salvador;Central;06-15;Panchimalco
+06;San Salvador;Central;06-16;Rosario de Mora
+06;San Salvador;Central;06-17;San Marcos
+06;San Salvador;Central;06-18;Santiago Texacuangos
+06;San Salvador;Central;06-19;Santo Tomás
+07;Cuscatlán;Central;07-01;Oratorio de Concepción
+07;Cuscatlán;Central;07-02;San Bartolomé Perulapía
+07;Cuscatlán;Central;07-03;San José Guayabal
+07;Cuscatlán;Central;07-04;San Pedro Perulapán
+07;Cuscatlán;Central;07-05;Suchitoto
+07;Cuscatlán;Central;07-06;Candelaria
+07;Cuscatlán;Central;07-07;Cojutepeque
+07;Cuscatlán;Central;07-08;El Carmen
+07;Cuscatlán;Central;07-09;El Rosario
+07;Cuscatlán;Central;07-10;Monte San Juan
+07;Cuscatlán;Central;07-11;San Cristóbal
+07;Cuscatlán;Central;07-12;San Rafael Cedros
+07;Cuscatlán;Central;07-13;San Ramón
+07;Cuscatlán;Central;07-14;Santa Cruz Analquito
+07;Cuscatlán;Central;07-15;Santa Cruz Michapa
+07;Cuscatlán;Central;07-16;Tenancingo
+08;La Paz;Central;08-01;El Rosario / Rosario de La Paz
+08;La Paz;Central;08-02;Jerusalén
+08;La Paz;Central;08-03;Mercedes La Ceiba
+08;La Paz;Central;08-04;Paraíso de Osorio
+08;La Paz;Central;08-05;San Antonio Masahuat
+08;La Paz;Central;08-06;San Emigdio
+08;La Paz;Central;08-07;San Juan Tepezontes
+08;La Paz;Central;08-08;San Miguel Tepezontes
+08;La Paz;Central;08-09;San Pedro Nonualco
+08;La Paz;Central;08-10;Santa María Ostuma
+08;La Paz;Central;08-11;Santiago Nonualco
+08;La Paz;Central;08-12;San Luis La Herradura
+08;La Paz;Central;08-13;San Juan Nonualco
+08;La Paz;Central;08-14;San Rafael Obrajuelo
+08;La Paz;Central;08-15;Zacatecoluca
+08;La Paz;Central;08-16;Cuyultitán
+08;La Paz;Central;08-17;Olocuilta
+08;La Paz;Central;08-18;San Francisco Chinameca
+08;La Paz;Central;08-19;San Juan Talpa
+08;La Paz;Central;08-20;San Luis Talpa
+08;La Paz;Central;08-21;San Pedro Masahuat
+08;La Paz;Central;08-22;Tapalhuaca
+09;Cabañas;Central;09-01;Dolores / Villa Dolores
+09;Cabañas;Central;09-02;Guacotecti
+09;Cabañas;Central;09-03;San Isidro
+09;Cabañas;Central;09-04;Sensuntepeque
+09;Cabañas;Central;09-05;Victoria
+09;Cabañas;Central;09-06;Cinquera
+09;Cabañas;Central;09-07;Ilobasco
+09;Cabañas;Central;09-08;Jutiapa
+09;Cabañas;Central;09-09;Tejutepeque
+10;San Vicente;Central;10-01;Apastepeque
+10;San Vicente;Central;10-02;San Esteban Catarina
+10;San Vicente;Central;10-03;San Ildefonso
+10;San Vicente;Central;10-04;San Lorenzo
+10;San Vicente;Central;10-05;San Sebastián
+10;San Vicente;Central;10-06;Santa Clara
+10;San Vicente;Central;10-07;Santo Domingo
+10;San Vicente;Central;10-08;Guadalupe
+10;San Vicente;Central;10-09;San Cayetano Istepeque
+10;San Vicente;Central;10-10;San Vicente
+10;San Vicente;Central;10-11;Tecoluca
+10;San Vicente;Central;10-12;Tepetitán
+10;San Vicente;Central;10-13;Verapaz
+11;Usulután;Oriental;11-01;California
+11;Usulután;Oriental;11-02;Concepción Batres
+11;Usulután;Oriental;11-03;Ereguayquín
+11;Usulután;Oriental;11-04;Jucuarán
+11;Usulután;Oriental;11-05;Ozatlán
+11;Usulután;Oriental;11-06;Usulután
+11;Usulután;Oriental;11-07;San Dionisio
+11;Usulután;Oriental;11-08;Santa Elena
+11;Usulután;Oriental;11-09;Santa María
+11;Usulután;Oriental;11-10;Tecapán
+11;Usulután;Oriental;11-11;Alegría
+11;Usulután;Oriental;11-12;Berlín
+11;Usulután;Oriental;11-13;El Triunfo
+11;Usulután;Oriental;11-14;Estanzuelas
+11;Usulután;Oriental;11-15;Jucuapa
+11;Usulután;Oriental;11-16;Mercedes Umaña
+11;Usulután;Oriental;11-17;Nueva Granada
+11;Usulután;Oriental;11-18;San Buenaventura
+11;Usulután;Oriental;11-19;Santiago de María
+11;Usulután;Oriental;11-20;Jiquilisco
+11;Usulután;Oriental;11-21;Puerto El Triunfo
+11;Usulután;Oriental;11-22;San Agustín
+11;Usulután;Oriental;11-23;San Francisco Javier
+12;San Miguel;Oriental;12-01;Comacarán
+12;San Miguel;Oriental;12-02;Moncagua
+12;San Miguel;Oriental;12-03;Chirilagua
+12;San Miguel;Oriental;12-04;Quelepa
+12;San Miguel;Oriental;12-05;San Miguel
+12;San Miguel;Oriental;12-06;Uluazapa
+12;San Miguel;Oriental;12-07;Carolina
+12;San Miguel;Oriental;12-08;Ciudad Barrios
+12;San Miguel;Oriental;12-09;Chapeltique
+12;San Miguel;Oriental;12-10;Nuevo Edén de San Juan
+12;San Miguel;Oriental;12-11;San Antonio del Mosco
+12;San Miguel;Oriental;12-12;San Gerardo
+12;San Miguel;Oriental;12-13;San Luis de La Reina
+12;San Miguel;Oriental;12-14;Sesori
+12;San Miguel;Oriental;12-15;Chinameca
+12;San Miguel;Oriental;12-16;El Tránsito
+12;San Miguel;Oriental;12-17;Lolotique
+12;San Miguel;Oriental;12-18;Nueva Guadalupe
+12;San Miguel;Oriental;12-19;San Jorge
+12;San Miguel;Oriental;12-20;San Rafael Oriente
+13;Morazán;Oriental;13-01;Arambala
+13;Morazán;Oriental;13-02;Cacaopera
+13;Morazán;Oriental;13-03;Corinto
+13;Morazán;Oriental;13-04;El Rosario
+13;Morazán;Oriental;13-05;Joateca
+13;Morazán;Oriental;13-06;Jocoaitique
+13;Morazán;Oriental;13-07;Meanguera
+13;Morazán;Oriental;13-08;Perquín
+13;Morazán;Oriental;13-09;San Fernando
+13;Morazán;Oriental;13-10;San Isidro
+13;Morazán;Oriental;13-11;Torola
+13;Morazán;Oriental;13-12;Chilanga
+13;Morazán;Oriental;13-13;Delicias de Concepción
+13;Morazán;Oriental;13-14;El Divisadero
+13;Morazán;Oriental;13-15;Gualococti
+13;Morazán;Oriental;13-16;Guatajiagua
+13;Morazán;Oriental;13-17;Jocoro
+13;Morazán;Oriental;13-18;Lolotiquillo
+13;Morazán;Oriental;13-19;Osicala
+13;Morazán;Oriental;13-20;San Carlos
+13;Morazán;Oriental;13-21;San Francisco Gotera
+13;Morazán;Oriental;13-22;San Simón
+13;Morazán;Oriental;13-23;Sensembra
+13;Morazán;Oriental;13-24;Sociedad
+13;Morazán;Oriental;13-25;Yamabal
+13;Morazán;Oriental;13-26;Yoloaiquín
+14;La Unión;Oriental;14-01;Anamorós
+14;La Unión;Oriental;14-02;Bolívar
+14;La Unión;Oriental;14-03;Concepción de Oriente
+14;La Unión;Oriental;14-04;El Sauce
+14;La Unión;Oriental;14-05;Lislique
+14;La Unión;Oriental;14-06;Nueva Esparta
+14;La Unión;Oriental;14-07;Pasaquina
+14;La Unión;Oriental;14-08;Polorós
+14;La Unión;Oriental;14-09;San José La Fuente
+14;La Unión;Oriental;14-10;Santa Rosa de Lima
+14;La Unión;Oriental;14-11;Conchagua
+14;La Unión;Oriental;14-12;El Carmen
+14;La Unión;Oriental;14-13;Intipucá
+14;La Unión;Oriental;14-14;La Unión
+14;La Unión;Oriental;14-15;Meanguera del Golfo
+14;La Unión;Oriental;14-16;San Alejo
+14;La Unión;Oriental;14-17;Yayantique
+14;La Unión;Oriental;14-18;Yucuaiquín

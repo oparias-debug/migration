@@ -1,0 +1,430 @@
+openapi: 3.0.3
+info:
+  title: SIIP v2 — Fragmento CU-PRE-25 Elegibilidad
+  version: 0.1.0
+  description: |
+    Fragmento de contrato generado a partir de CU-PRE-25 "Elegibilidad" (análisis v1.3, documento
+    fuente v1.0 AGOSTO 2026) y sus historias HU-PRE-25-01 (calificar criterios), HU-PRE-25-02
+    (emitir elegibilidad) y HU-PRE-25-03 (atender comentarios OT).
+    Los componentes compartidos (Error, bearerAuth, ProyectoId y respuestas estándar) se copian
+    idénticos al fragmento CU-PRE-24 para que el fragmento sea standalone y el merge no genere diferencias.
+  x-caso-uso: CU-PRE-25
+tags:
+  - name: viabilizador-elegibilidad
+    description: |
+      Operaciones de Elegibilidad cuyo actor principal es el Viabilizador (provisional — módulo/WBS no
+      definido). Tag propio para no regenerar la interfaz `ViabilizadorApi` de CU-PRE-24.
+paths:
+  /proyectos/{proyectoId}/elegibilidad:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    get:
+      tags: [viabilizador-elegibilidad]
+      operationId: consultarFichaElegibilidad
+      summary: Consultar los criterios de Elegibilidad del proyecto (Anexo A.1)
+      description: |
+        Devuelve las dimensiones y criterios de Elegibilidad configurados, con su pregunta guía, el
+        tipo de respuesta de "Especificar", las opciones de catálogo cuando aplica, la calificación
+        registrada y las acciones disponibles para el usuario autenticado.
+        El contrato no fija cuántas dimensiones o criterios existen: los devuelve el backend según la
+        configuración vigente (hoy confirmada solo la dimensión "1. Alineación estratégica").
+        Trazabilidad: FB1 pasos 2–3; HU-PRE-25-01 "Acceso al formulario de elegibilidad desde 'Captura
+        de proyectos'" y "Solo el Viabilizador registra y guarda la calificación de criterios" (acceso
+        de consulta de Técnico URP, Técnico PRE y Técnico SYMP).
+      security:
+        - bearerAuth: []
+      x-roles: [VIABILIZADOR, TECNICO_URP, TECNICO_PRE, TECNICO_SYMP]
+      responses:
+        '200':
+          description: Ficha de Elegibilidad del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FichaElegibilidadResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          description: |
+            El rol del usuario no está autorizado para consultar la ficha de Elegibilidad
+            (ver `x-roles`; RN02 de CU-PRE-25). Código `ACCESO_DENEGADO`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+  /proyectos/{proyectoId}/elegibilidad/calificacion:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    put:
+      tags: [viabilizador-elegibilidad]
+      operationId: guardarCalificacionElegibilidad
+      summary: Guardar la calificación de criterios ("¿Aplica?" y "Especificar")
+      description: |
+        FB1 pasos 4–5; FA01; RN01, RN03, RN05, RN08. Reemplaza la calificación vigente con las
+        respuestas enviadas. Si algún criterio con `aplica = true` no tiene "Especificar" completo, no
+        se guarda nada y se responde 422 (RN03). La respuesta incluye las acciones disponibles.
+      security:
+        - bearerAuth: []
+      x-roles: [VIABILIZADOR]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardarCalificacionElegibilidadRequest'
+      responses:
+        '200':
+          description: Calificación guardada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuardarCalificacionElegibilidadResponse'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          description: |
+            Solo el Viabilizador registra y guarda la calificación de criterios (RN01, RN05 de CU-PRE-25;
+            HU-PRE-25-01 "Solo el Viabilizador registra y guarda la calificación de criterios").
+            Código `ACCESO_DENEGADO`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '409':
+          description: |
+            La ficha de Elegibilidad está bloqueada: el proyecto fue enviado a CU-PRE-26 y el Técnico PRE
+            no ha enviado comentarios (RN07, RN09; HU-PRE-25-03 "La pantalla de elegibilidad permanece
+            bloqueada tras el primer envío a Opinión Técnica"). Código: `FICHA_ELEGIBILIDAD_DESHABILITADA`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                fichaDeshabilitada:
+                  $ref: '#/components/examples/FichaElegibilidadDeshabilitada'
+        '422':
+          description: |
+            Hay criterios seleccionados sin información en "Especificar" (RN03; HU-PRE-25-01 "Validación
+            de la columna 'Especificar' al guardar"). `detalles[].campo` indica el `criterioId` afectado.
+            Código: `ESPECIFICAR_INCOMPLETO`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                especificarIncompleto:
+                  value:
+                    codigo: ESPECIFICAR_INCOMPLETO
+                    mensaje: Se debe completar la información de la columna 'Especificar' para los criterios seleccionados
+                    timestamp: '2026-09-25T10:15:30Z'
+                    detalles:
+                      - campo: respuestas[criterioId=2]
+                        mensaje: Criterio seleccionado sin información en 'Especificar'.
+  /proyectos/{proyectoId}/elegibilidad/emisiones:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [viabilizador-elegibilidad]
+      operationId: emitirElegibilidad
+      summary: Emitir la Elegibilidad del proyecto
+      description: |
+        FB1 pasos 5–6; FB2 pasos 7–8; RN04, RN15. Primera emisión: cambia el estado a "Proyecto
+        Elegible", notifica al Técnico URP y al Técnico PRE y habilita el formulario de CU-PRE-26.
+        Nueva emisión tras comentarios de OT: valida que todos los comentarios tengan "Respuesta
+        Institución" y notifica al Técnico PRE y al Técnico SYMP. En ambos casos bloquea "¿Aplica?" y
+        "Especificar". El mensaje del Anexo A.3 lo muestra el cliente.
+        Sin cuerpo: la calificación ya fue guardada con `guardarCalificacionElegibilidad`.
+      security:
+        - bearerAuth: []
+      x-roles: [VIABILIZADOR]
+      responses:
+        '200':
+          description: Elegibilidad emitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmitirElegibilidadResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          description: |
+            Solo el Viabilizador emite la Elegibilidad (FB1 paso 5, FB2 paso 7 y tabla de Permisos de
+            CU-PRE-25). Código `ACCESO_DENEGADO`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '409':
+          description: |
+            La ficha de Elegibilidad está bloqueada (RN07, RN09; HU-PRE-25-03).
+            Código: `FICHA_ELEGIBILIDAD_DESHABILITADA`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                fichaDeshabilitada:
+                  $ref: '#/components/examples/FichaElegibilidadDeshabilitada'
+        '422':
+          description: |
+            Nueva emisión con comentarios de la Opinión Técnica sin "Respuesta Institución" (RN15;
+            HU-PRE-25-03 "Rechazo de la nueva emisión con comentarios de OT sin responder").
+            Código: `COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER` (mismo código que CU-PRE-24, mensaje propio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                comentariosOpinionTecnicaSinResponder:
+                  value:
+                    codigo: COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER
+                    mensaje: Es necesario responder los comentarios de la Opinión Técnica previo a la emisión de elegibilidad
+                    timestamp: '2026-09-25T10:15:30Z'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ProyectoId:
+      name: proyectoId
+      in: path
+      required: true
+      description: Identificador interno del Proyecto (tipo pendiente de confirmar contra el modelo de dominio).
+      schema:
+        type: integer
+        format: int64
+  examples:
+    FichaElegibilidadDeshabilitada:
+      value:
+        codigo: FICHA_ELEGIBILIDAD_DESHABILITADA
+        mensaje: La ficha de Elegibilidad está bloqueada; solo se habilita cuando la Opinión Técnica envía comentarios.
+        timestamp: '2026-09-25T10:15:30Z'
+  responses:
+    SolicitudInvalida:
+      description: Solicitud mal formada o con campos inválidos. Código `SOLICITUD_INVALIDA`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NoAutenticado:
+      description: Token ausente o inválido. Código `NO_AUTENTICADO`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AccesoDenegado:
+      description: |
+        El rol del usuario no está autorizado para la operación (ver `x-roles`; RN06, RN07).
+        Código `ACCESO_DENEGADO`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ProyectoNoEncontrado:
+      description: El proyecto no existe. Código `PROYECTO_NO_ENCONTRADO`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      description: Esquema de error estándar del proyecto para toda respuesta 4xx/5xx.
+      required: [codigo, mensaje, timestamp]
+      properties:
+        codigo:
+          type: string
+          description: Código de error estable en UPPER_SNAKE_CASE.
+          example: DOCUMENTO_PREINVERSION_REQUERIDO
+        mensaje:
+          type: string
+          description: Mensaje legible para el usuario.
+        timestamp:
+          type: string
+          format: date-time
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetalle'
+    ErrorDetalle:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+          description: Propiedad del request a la que se refiere el detalle, si aplica.
+        mensaje:
+          type: string
+    TipoEspecificar:
+      type: string
+      description: |
+        Forma de responder la columna "Especificar" de un criterio (Anexo B.1).
+        LISTADO_CATALOGO — selección de opciones de un catálogo (C.1, C.2); TEXTO_LIBRE — texto.
+      enum: [LISTADO_CATALOGO, TEXTO_LIBRE]
+    OpcionCatalogo:
+      type: object
+      required: [codigo, nombre]
+      properties:
+        codigo:
+          type: string
+          example: ODS-01
+        nombre:
+          type: string
+          example: Fin de la pobreza
+    RespuestaCriterioElegibilidad:
+      type: object
+      description: Calificación registrada para un criterio.
+      required: [criterioId, aplica, especificarOpciones]
+      properties:
+        criterioId:
+          type: integer
+          format: int64
+        aplica:
+          type: boolean
+          description: Columna "¿Aplica?".
+        especificarTexto:
+          type: string
+          nullable: true
+          description: Respuesta de "Especificar" cuando el criterio es TEXTO_LIBRE.
+        especificarOpciones:
+          type: array
+          description: Respuesta de "Especificar" cuando el criterio es LISTADO_CATALOGO.
+          items:
+            $ref: '#/components/schemas/OpcionCatalogo'
+    CriterioElegibilidad:
+      type: object
+      required: [criterioId, nombre, pregunta, tipoEspecificar, seleccionMultiple]
+      properties:
+        criterioId:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+          example: Contribución a metas Objetivos de Desarrollo Sostenible
+        pregunta:
+          type: string
+          description: Pregunta guía de la columna "Especificar".
+          example: ¿A cuáles ODS contribuye?
+        tipoEspecificar:
+          $ref: '#/components/schemas/TipoEspecificar'
+        seleccionMultiple:
+          type: boolean
+          description: Si el listado admite más de una opción (RN08). Solo aplica a LISTADO_CATALOGO.
+        codigoCatalogo:
+          type: string
+          nullable: true
+          description: Catálogo del Anexo C que alimenta el listado (p. ej. "C.1", "C.2").
+        opciones:
+          type: array
+          description: Opciones del catálogo; vacío para TEXTO_LIBRE.
+          items:
+            $ref: '#/components/schemas/OpcionCatalogo'
+        respuesta:
+          allOf:
+            - $ref: '#/components/schemas/RespuestaCriterioElegibilidad'
+          nullable: true
+          description: Calificación guardada; null si el criterio no se ha calificado.
+    DimensionElegibilidad:
+      type: object
+      required: [numero, nombre, criterios]
+      properties:
+        numero:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          example: Alineación estratégica
+        criterios:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriterioElegibilidad'
+    AccionesDisponiblesElegibilidad:
+      type: object
+      description: |
+        Acciones habilitadas para el usuario autenticado según su rol y el estado de la gestión.
+        El backend vuelve a validar en cada operación.
+      required: [guardarCalificacion, emitirElegibilidad]
+      properties:
+        guardarCalificacion:
+          type: boolean
+          description: Solo Viabilizador, con la ficha habilitada (RN01, RN05, RN09).
+        emitirElegibilidad:
+          type: boolean
+          description: Solo Viabilizador, con la ficha habilitada (FB1 paso 5, RN09).
+    FichaElegibilidadResponse:
+      type: object
+      required: [proyectoId, estadoProyecto, dimensiones, accionesDisponibles]
+      properties:
+        proyectoId:
+          type: integer
+          format: int64
+        estadoProyecto:
+          type: string
+          description: |
+            Estado actual del Proyecto. Valores mencionados en el CU: "Proyecto viable", "Proyecto Elegible".
+            El catálogo completo pertenece al modelo de dominio.
+        dimensiones:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionElegibilidad'
+        accionesDisponibles:
+          $ref: '#/components/schemas/AccionesDisponiblesElegibilidad'
+    RespuestaCriterioElegibilidadRequest:
+      type: object
+      required: [criterioId, aplica]
+      properties:
+        criterioId:
+          type: integer
+          format: int64
+        aplica:
+          type: boolean
+        especificarTexto:
+          type: string
+          nullable: true
+          description: Obligatorio si `aplica = true` y el criterio es TEXTO_LIBRE (RN03).
+        especificarCodigosOpcion:
+          type: array
+          description: |
+            Códigos de opción del catálogo del criterio. Obligatorio (al menos uno) si `aplica = true`
+            y el criterio es LISTADO_CATALOGO (RN03); más de uno solo si `seleccionMultiple` (RN08).
+          items:
+            type: string
+    GuardarCalificacionElegibilidadRequest:
+      type: object
+      required: [respuestas]
+      properties:
+        respuestas:
+          type: array
+          description: Reemplaza la calificación vigente. Un elemento por criterio calificado.
+          items:
+            $ref: '#/components/schemas/RespuestaCriterioElegibilidadRequest'
+    GuardarCalificacionElegibilidadResponse:
+      type: object
+      required: [respuestas, accionesDisponibles]
+      properties:
+        respuestas:
+          type: array
+          items:
+            $ref: '#/components/schemas/RespuestaCriterioElegibilidad'
+        accionesDisponibles:
+          $ref: '#/components/schemas/AccionesDisponiblesElegibilidad'
+    EmitirElegibilidadResponse:
+      type: object
+      required: [proyectoId, estadoProyecto]
+      properties:
+        proyectoId:
+          type: integer
+          format: int64
+        estadoProyecto:
+          type: string
+          description: Estado resultante. En la primera emisión, "Proyecto Elegible"; en la nueva emisión, el CU no lo define.
+          example: Proyecto Elegible

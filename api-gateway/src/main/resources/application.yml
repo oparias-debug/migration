@@ -37,6 +37,22 @@ spring:
           filters:
             - RemoveRequestHeader=Cookie
             - RewritePath=/back/(?<segment>.*), /${segment}
+        # admin-srv y siipsafi-srv, a diferencia de backend-srv, validan el JWT por su cuenta
+        # (plantilla DINAFI): el token del cliente les llega tal cual en Authorization.
+        - id: admin-srv
+          uri: ${ADMIN_SRV_URL:http://admin-srv:8080}
+          predicates:
+            - Path=/admin/**
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/admin/(?<segment>.*), /${segment}
+        - id: siipsafi-srv
+          uri: ${SIIPSAFI_SRV_URL:http://siipsafi-srv:8080}
+          predicates:
+            - Path=/siipsafi/**
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/siipsafi/(?<segment>.*), /${segment}
 
 springdoc:
   swagger-ui:
@@ -48,6 +64,10 @@ springdoc:
     urls:
       - name: backend-srv
         url: /back/v3/api-docs
+      - name: admin-srv
+        url: /admin/v3/api-docs
+      - name: siipsafi-srv
+        url: /siipsafi/v3/api-docs
 
 keycloak:
   internal-url: ${KEYCLOAK_INTERNAL_URL}  

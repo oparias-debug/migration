@@ -1,0 +1,28 @@
+{{- if .Values.route.enabled }}
+{{- $routeName := include "frontend-ui.fullname" . -}}
+{{- $hostLabel := printf "%s-%s" $routeName .Release.Namespace -}}
+{{- if and (not .Values.route.host) (gt (len $hostLabel) 63) }}
+{{- fail (printf "Route host invalido: '%s' (%d chars) excede 63. Acorta project_gerrit/project_tuleap/direccion o define route.host." $hostLabel (len $hostLabel)) }}
+{{- end }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ $routeName }}
+  labels:
+    {{- include "frontend-ui.labels" . | nindent 4 }}
+spec:
+  {{- with .Values.route.host }}
+  host: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.route.path }}
+  path: {{ . | quote }}
+  {{- end }}
+  to:
+    kind: Service
+    name: {{ $routeName }}
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+  wildcardPolicy: None
+{{- end }}

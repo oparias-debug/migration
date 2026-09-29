@@ -48,14 +48,14 @@ Para lo que podés/no podés tocar en `front`, ver **[front/CONTRIBUTING.md](./f
 
 ### Módulos con repositorio propio en la entidad (doble commit)
 
-`backend-srv/`, `backend-srv-config/` y `front/` tienen **su propio `.git`** apuntando al Gerrit del MH, y a la vez el monorepo `siip` sigue sus archivos. Así el monorepo sigue siendo autosuficiente (un clon + `docker compose up`, sin VPN), pero cada cambio en esas carpetas se registra en dos lugares, y nada obliga a que coincidan. Regla:
+`backend-srv/`, `backend-srv-config/`, `front/`, `frontend-ui-config/`, `admin-srv/`, `admin-srv-config/`, `siipsafi-srv/` y `siipsafi-srv-config/` tienen **su propio `.git`** apuntando al Gerrit del MH, y a la vez el monorepo `siip` sigue sus archivos. Así el monorepo sigue siendo autosuficiente (un clon + `docker compose up`, sin VPN), pero cada cambio en esas carpetas se registra en dos lugares, y nada obliga a que coincidan. Regla:
 
 1. **Primero el repo del módulo** (el que va a Gerrit), desde adentro de su carpeta:
    ```
    cd backend-srv
    git add -A
    git commit -m "CU-PRE-02: editar proyecto"
-   git push mhsv HEAD:refs/for/dev      # en backend-srv-config el remoto se llama origin
+   git push mhsv HEAD:refs/for/dev      # en todos los módulos el remoto de Gerrit se llama mhsv
    ```
 2. **Después el monorepo**, desde la raíz, con **el mismo mensaje**:
    ```

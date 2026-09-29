@@ -152,7 +152,9 @@ public class Pre06Consultar {
                     .poblacionReferencia(new FilaPoblacionRequestDto().ubicaciones(List.of(
                             new CeldaUbicacionRequestDto().ubicacion("Ubicación de prueba BDD").numeroPersonas(100))))
                     .poblacionAfectada(new FilaPoblacionRequestDto().ubicaciones(List.of(
-                            new CeldaUbicacionRequestDto().ubicacion("Ubicación de prueba BDD").numeroPersonas(80)))));
+                            new CeldaUbicacionRequestDto().ubicacion("Ubicación de prueba BDD").numeroPersonas(80))))
+                    .poblacionObjetivo(new FilaPoblacionRequestDto().ubicaciones(List.of(
+                            new CeldaUbicacionRequestDto().ubicacion("Ubicación de prueba BDD").numeroPersonas(30)))));
         } else if (esAreaInfluencia) {
             guardadoAreaInfluencia = areaInfluenciaService.guardar(proyecto.getId(), new AreaInfluenciaRequestDto()
                     .filas(List.of(new AreaInfluenciaFilaRequestDto()

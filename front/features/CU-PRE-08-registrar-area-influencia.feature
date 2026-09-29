@@ -15,10 +15,18 @@ Característica: Registrar el área de influencia del proyecto
     Entonces el sistema completa los campos "Región", "Departamento", "Distrito" y "Ubicación Específica" según lo registrado en CU-PRE-07
     Y se mantiene en la pantalla "Área de Influencia" (RN07, FA-03)
 
-  Escenario: Región, Departamento y Distrito permanecen bloqueados para edición
+  Escenario: Autocompletar una ubicación de Población Objetivo que no es un distrito del catálogo
+    # En CU-PRE-07 la ubicación de la Población Objetivo se registra como texto libre (mockup: "Comunidad Río Mar").
+    Dado que la Población Objetivo tiene registrada la ubicación "Comunidad Río Mar", que no es un distrito del catálogo
+    Cuando el Técnico URP hace clic en el botón "Traer ubicación de Población Objetivo"
+    Entonces el sistema propone "Comunidad Río Mar" como "Ubicación Específica" y deja "Región", "Departamento" y "Distrito" vacíos para que los complete
+
+  Escenario: Región, Departamento y Distrito autocompletados pueden editarse (RN07)
+    # Decisión de negocio sobre la contradicción RN07/RN08 del CU: prevalece RN07, que permite "editar dicha
+    # información o agregar otra ubicación". RN08 (Región, Departamento y Distrito bloqueados) no se aplica.
     Dado que los campos "Región", "Departamento" y "Distrito" ya fueron autocompletados
-    Entonces dichos campos permanecen bloqueados para edición (RN08)
-    Y si se requiere agregar otra Región, Departamento o Distrito, debe hacerse en CU-PRE-07 "Población Objetivo"
+    Cuando el Técnico URP cambia el "Distrito" de la fila por otro distrito del catálogo y guarda
+    Entonces el sistema guarda la fila con el nuevo distrito, su departamento y su región
 
   Escenario: Agregar una fila de ubicación específica
     Cuando el Técnico URP acerca el cursor a un punto definido de la tabla
@@ -37,10 +45,11 @@ Característica: Registrar el área de influencia del proyecto
     Entonces el sistema guarda la información registrada
     Y se mantiene en la pantalla "Área de Influencia"
 
-  Escenario: Intentar guardar con campos pendientes de completar
+  Escenario: Guardar con campos pendientes de completar
+    # Decisión de negocio: el guardado incompleto se admite. El sombreado en rojo de los campos pendientes
+    # (RN05) lo hace el cliente; el servidor no lo rechaza.
     Cuando el Técnico URP hace clic en el botón "Guardar" sin haber completado los campos requeridos
-    Entonces el sistema sombrea en color rojo los bordes de los campos pendientes de completar (RN05)
+    Entonces el sistema guarda la información aunque la "Ubicación específica" quede pendiente
 
-  # ⚠️ Escenario pendiente: existe una contradicción no resuelta entre RN07 (sugiere que los cuatro campos autocompletados, incluida Región/Departamento/Distrito, podrían editarse) y RN08 (indica explícitamente que Región/Departamento/Distrito permanecen bloqueados). Se modeló la interpretación de RN08, consistente con la tabla de Campos del Anexo B.1; no se genera un escenario que permita editar esos tres campos (ver Datos Pendientes de Definir del CU original).
   # ⚠️ Escenario pendiente: el ícono de ayuda contextual "?" (RN06) no tiene un texto de mensaje transcrito en el documento. No se genera un escenario con contenido de backend no verificable.
-  # ⚠️ Escenario pendiente: la tabla de Validaciones no especifica cuáles campos son exactamente obligatorios ni el texto del mensaje asociado al resaltado en rojo (RN05); no se inventa esa información.
+  # ⚠️ Escenario pendiente: el CU no especifica el texto del mensaje asociado al resaltado en rojo (RN05); no se inventa esa información.
