@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * SIIP v2 - CU-ADM-01 Administración de Catálogos
- * Fragmento OpenAPI generado a partir de CU-ADM-01 (Administración de Catálogos), las 13 historias HU-ADM-01-01..13, sus 13 archivos .feature y el modelo de dominio (Catalog / CatalogField / CatalogRecord / CatalogRecordValue). Convención de naming: operationId y segmentos de path en español (siguiendo la convención del CU y del ejemplo del rol: verbo+sustantivo, ej. \"crearCatalogo\"); nombres de propiedades de schema en inglés, calcados literalmente del modelo de dominio (code, name, parent, active, fromDate, toDate, fields, qualifier, values), porque el rol exige no inventar sinónimos de las entidades ya decididas en el ER. 
+ * SIIP v2 — CU-ADM-01 Administración de Catálogos (fragmento)
+ * Fragmento de contrato generado a partir de `CU-ADM-01-administracion-catalogos.md`, las 14 historias `CU-ADM-01-*.feature` y `modelo-dominio-catalogos.md` (v2.0). Válido de forma standalone; se mezcla después en el contrato consolidado del proyecto.  Convenciones: - `operationId` en camelCase (verbo + sustantivo) → nombre del método Java y de la función TS. - Schemas en PascalCase; propiedades JSON en camelCase con los nombres del modelo de dominio   (`code`, `name`, `parent`, `active`, `fromDate`, `toDate`, `fields`, `qualifier`,   `posicion`, `parentRecord`, `values`, `field`, `valor`). - 400 = solicitud mal formada; 422 = solicitud bien formada que viola una regla de negocio;   409 = el estado actual del recurso impide la operación. 
  *
  * The version of the OpenAPI document: 1.0.0
  * 
@@ -24,7 +24,7 @@ import type { RequestArgs } from './base';
 import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerMap } from './base';
 
 /**
- * Estado de vigencia, calcado del enum de dominio com.example.catalogo.domain.model.ActiveStatus (Reglas 9, 12, 13, 14) 
+ * Estado de vigencia de un Catalog o CatalogRecord (Reglas 9, 12, 13, 14).
  */
 
 export const ActiveStatus = {
@@ -35,55 +35,44 @@ export const ActiveStatus = {
 export type ActiveStatus = typeof ActiveStatus[keyof typeof ActiveStatus];
 
 
-export interface BuscarListaRegistros200Response {
-    'content'?: Array<CatalogRecord>;
-    'totalElements'?: number;
-    'totalPages'?: number;
-    /**
-     * Índice de página actual (base 0)
-     */
-    'number'?: number;
-    'size'?: number;
-}
 /**
- * Calcado de com.example.catalogo.domain.model.Catalog. El id (Long) surrogate del ORM no se expone: el catalogMaster direcciona por `code` (único, Regla 17/21) 
+ * Catálogo hijo como `{código, nombre}` (Regla 15).
  */
-export interface Catalog {
-    'code'?: string;
-    'name'?: string;
-    /**
-     * Código del catálogo padre (simplificación de la referencia de objeto Catalog.parent del ORM, para evitar anidamiento recursivo en la respuesta) 
-     */
-    'parent'?: string | null;
-    'active'?: ActiveStatus;
-    'fromDate'?: string | null;
-    'toDate'?: string | null;
-    'fields'?: Array<CatalogField>;
+export interface CatalogChildResponse {
+    'code': string;
+    'name': string;
 }
-
-
 export interface CatalogCreateRequest {
+    /**
+     * Código único e inmutable del catálogo.
+     */
     'code': string;
     'name': string;
     /**
-     * Código de un catálogo existente en el catalogMaster
+     * Código del catálogo padre (opcional). Debe existir (HU-ADM-01-01).
      */
     'parent'?: string | null;
     'active'?: ActiveStatus;
     'fromDate'?: string | null;
+    /**
+     * Si es la fecha actual o pasada, el catálogo se crea `INACTIVE` (Regla 14).
+     */
     'toDate'?: string | null;
     /**
-     * Debe incluir al menos un CatalogField con qualifier=KEY (Regla 2) y ninguno con nombre repetido (Regla 3) 
+     * Campos del catálogo, en orden de `posicion`. Las reglas R18 (al menos uno), R2 (al menos un KEY) y R3 (nombres únicos) se validan en el dominio y se reportan con 422 y el código de error correspondiente. 
      */
-    'fields': Array<CatalogField>;
+    'fields': Array<CatalogFieldRequest>;
 }
 
 
 /**
- * Actualización de descriptores (HU-ADM-01-05: name, parent, active, valid). El campo \"code\" queda deliberadamente fuera de este schema (additionalProperties: false) para que un intento de incluirlo sea rechazado por contrato, reforzando la Regla 17 a nivel de esquema además de a nivel de servicio. 
+ * Actualización parcial de descriptores. Solo se modifican las propiedades presentes. `code` no es actualizable (Regla 17). 
  */
 export interface CatalogDescriptorsUpdateRequest {
     'name'?: string;
+    /**
+     * Código del nuevo catálogo padre, o `null` para desvincularlo.
+     */
     'parent'?: string | null;
     'active'?: ActiveStatus;
     'fromDate'?: string | null;
@@ -92,72 +81,138 @@ export interface CatalogDescriptorsUpdateRequest {
 
 
 export interface CatalogExistenceResponse {
-    'name'?: string;
-    'exists'?: boolean;
-}
-/**
- * Calcado de com.example.catalogo.domain.model.CatalogField
- */
-export interface CatalogField {
     /**
-     * Único dentro del catálogo (Regla 3, constraint uk_catalog_field_name)
+     * Nombre consultado.
      */
     'name': string;
-    'qualifier': FieldQualifier;
     /**
-     * Orden de despliegue; determina cuál es el \"primer campo no KEY\" para las Reglas 4 y 5 (CatalogField.position) 
+     * `true` si existe un catálogo con ese nombre; `false` si no está definido.
      */
-    'position'?: number;
+    'exists': boolean;
+}
+export interface CatalogFieldRequest {
+    'name': string;
+    'qualifier': FieldQualifier;
+}
+
+
+export interface CatalogFieldResponse {
+    'name': string;
+    'qualifier': FieldQualifier;
+    'posicion': number;
 }
 
 
 export interface CatalogFieldsUpdateRequest {
-    'fields': Array<CatalogField>;
-}
-/**
- * Representación API de com.example.catalogo.domain.model.CatalogRecord. El id (Long) surrogate no se expone: el registro se direcciona por catalogCode + key. El campo `key` y el mapa `values` (fieldName -> value) son una simplificación de la colección List~CatalogRecordValue~ del ORM (cada CatalogRecordValue referencia su CatalogField); se colapsan aquí en un mapa por ergonomía de API. `values` contiene solo los campos solicitados (Reglas 4 y 5), no necesariamente todos los definidos en el catálogo. 
- */
-export interface CatalogRecord {
     /**
-     * Valor del CatalogField con qualifier=KEY
+     * Lista completa y ordenada de campos que reemplaza a la actual.
      */
-    'key'?: string;
-    /**
-     * Mapa nombreDeCatalogField -> valor
-     */
-    'values'?: { [key: string]: string; };
-    'active'?: ActiveStatus;
-    'fromDate'?: string | null;
-    'toDate'?: string | null;
+    'fields': Array<CatalogFieldRequest>;
 }
-
-
 export interface CatalogRecordCreateRequest {
     /**
-     * Debe incluir el valor de todos los CatalogField del catálogo, incluido el de qualifier=KEY (Reglas 1 y 8); si falta alguno, 400 
+     * Valor KEY del registro padre en el catálogo padre. Obligatorio si el catálogo tiene padre (Reglas 8, 23). 
      */
-    'values': { [key: string]: string; };
-    'active'?: ActiveStatus;
+    'parentRecord'?: string | null;
     'fromDate'?: string | null;
     'toDate'?: string | null;
+    /**
+     * Un valor por cada campo definido del catálogo, incluido el KEY (Reglas 1, 8).
+     */
+    'values': Array<CatalogRecordValueRequest>;
+}
+/**
+ * Proyección de un registro con solo los campos solicitados (Reglas 4, 5). `active` es el estado efectivo: `INACTIVE` si el catálogo o el registro lo está (Regla 12). 
+ */
+export interface CatalogRecordFieldValuesResponse {
+    /**
+     * Valor KEY del registro, para correlacionar los elementos del listado.
+     */
+    'keyValue': string;
+    'active': ActiveStatus;
+    'values': Array<CatalogRecordValueResponse>;
+}
+
+
+/**
+ * Registro completo de un catálogo.
+ */
+export interface CatalogRecordResponse {
+    /**
+     * Código del catálogo al que pertenece el registro.
+     */
+    'catalog': string;
+    /**
+     * Valor KEY del registro padre en el catálogo padre, o `null`.
+     */
+    'parentRecord'?: string | null;
+    'active': ActiveStatus;
+    'fromDate'?: string | null;
+    'toDate'?: string | null;
+    'values': Array<CatalogRecordValueResponse>;
 }
 
 
 export interface CatalogRecordUpdateRequest {
     /**
-     * Mapa nombreDeCatalogField -> nuevo valor, restringido a campos con qualifier=FIELD (Regla 16). Incluir el nombre del campo qualifier=KEY en este mapa produce 400 (CatalogRecord.updateValue() lo rechaza) 
+     * Valores nuevos de campos no KEY (Regla 16).
      */
-    'values': { [key: string]: string; };
+    'values': Array<CatalogRecordValueRequest>;
 }
+export interface CatalogRecordValueRequest {
+    /**
+     * Nombre del campo (`CatalogField.name`).
+     */
+    'field': string;
+    'valor': string;
+}
+export interface CatalogRecordValueResponse {
+    'field': string;
+    'qualifier': FieldQualifier;
+    'valor': string;
+}
+
+
 /**
- * Proyección mínima de un Catalog, usada para Catalog.children (HU-ADM-01-08, Regla 15) 
+ * Definición completa de un catálogo.
  */
-export interface CatalogSummary {
-    'code'?: string;
-    'name'?: string;
+export interface CatalogResponse {
+    'code': string;
+    'name': string;
+    /**
+     * Código del catálogo padre, o `null` si no tiene.
+     */
+    'parent'?: string | null;
+    'active': ActiveStatus;
+    'fromDate'?: string | null;
+    'toDate'?: string | null;
+    'fields': Array<CatalogFieldResponse>;
+}
+
+
+/**
+ * Elemento del listado de catálogos (sin campos).
+ */
+export interface CatalogSummaryResponse {
+    'code': string;
+    'name': string;
+    'parent'?: string | null;
+    'active': ActiveStatus;
+    'fromDate'?: string | null;
+    'toDate'?: string | null;
+}
+
+
+export interface ErrorDetail {
+    /**
+     * Ruta de la propiedad o parámetro afectado (ej. `fields[2].name`, `parentRecord`).
+     */
+    'campo'?: string;
+    'codigo'?: string;
+    'mensaje': string;
 }
 /**
- * Calificador de un CatalogField, calcado del enum de dominio com.example.catalogo.domain.model.FieldQualifier (Reglas 2, 4, 16) 
+ * Calificador de un campo de catálogo (Reglas 2, 4, 16).
  */
 
 export const FieldQualifier = {
@@ -169,62 +224,39 @@ export type FieldQualifier = typeof FieldQualifier[keyof typeof FieldQualifier];
 
 
 /**
- * Payload compartido por la inactivación de Catalog y de CatalogRecord (Regla 9): Catalog.inactivate()/setToDate() y CatalogRecord.inactivate()/setToDate() tienen la misma forma en el modelo de dominio 
+ * Cuerpo opcional de inactivación. Omitir `toDate` aplica la Regla 9a (INACTIVE + toDate = hoy); informarla aplica la Regla 9b (debe ser la fecha actual o una pasada). 
  */
 export interface InactivationRequest {
-    'active'?: ActiveStatus;
-    /**
-     * Fijar en una fecha actual o pasada dispara las Reglas 9b y 14
-     */
     'toDate'?: string;
 }
-
-
-export interface ListarCatalogos200Response {
-    'content'?: Array<Catalog>;
-    'totalElements'?: number;
-    'totalPages'?: number;
-    /**
-     * Índice de página actual (base 0)
-     */
-    'number'?: number;
-    'size'?: number;
-}
 /**
- * Esquema estándar de error del proyecto SIIP v2, reutilizable por todos los CU
+ * Esquema único de error del proyecto SIIP v2, usado en todas las respuestas 4xx/5xx.
  */
 export interface ModelError {
     /**
-     * Código de error de negocio (ej. CATALOGO_NO_ENCONTRADO, CAMPO_KEY_REQUERIDO)
+     * Código de error estable, en MAYÚSCULAS_CON_GUION_BAJO (ver catálogo de códigos del contrato).
      */
     'codigo': string;
+    /**
+     * Mensaje legible para el usuario.
+     */
     'mensaje': string;
     'timestamp': string;
-    'detalles'?: Array<string>;
-}
-/**
- * Envoltorio genérico de paginación reutilizable por cualquier CU. Nombres de propiedad alineados a la serialización JSON estándar de org.springframework.data.domain.Page (Spring Data, stack declarado en el modelo de dominio), no inventados 
- */
-export interface PageableResponse {
-    'content'?: Array<any>;
-    'totalElements'?: number;
-    'totalPages'?: number;
     /**
-     * Índice de página actual (base 0)
+     * Detalles opcionales (campo afectado, valor, operación alternativa).
      */
-    'number'?: number;
-    'size'?: number;
+    'detalles'?: Array<ErrorDetail>;
 }
 
 /**
- * CatalogApi - axios parameter creator
+ * AdministracionCatalogosApi - axios parameter creator
  */
-export const CatalogApiAxiosParamCreator = function (configuration?: Configuration) {
+export const AdministracionCatalogosApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
-         * @summary Reemplaza la definición de campos (CatalogField: qualifier KEY/FIELD) de un catálogo sin registros (HU-ADM-01-06, Reglas 2, 3 y 19) 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Reemplaza la lista completa de campos (`FIELD`/`KEY`) del catálogo. Solo se permite si el catálogo no contiene registros (Regla 19). La nueva lista debe tener al menos un campo (R18), al menos un `KEY` (R2) y nombres únicos (R3). El orden del arreglo define `posicion`. 
+         * @summary Actualizar los campos de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
          * @param {CatalogFieldsUpdateRequest} catalogFieldsUpdateRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -265,9 +297,9 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
-         * @summary Actualiza name, parent, active y/o vigencia (fromDate/toDate) de un catálogo (HU-ADM-01-05, Reglas 17 y 22). El código no forma parte de este payload. 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Actualiza parcialmente `name`, `parent`, `active`, `fromDate` y/o `toDate` (Reglas 17 y 22). El código es inmutable: si el cuerpo incluye `code`, la operación se rechaza con `CODIGO_CATALOGO_INMUTABLE` (R17, E4). `parent: null` desvincula el catálogo de su padre. 
+         * @summary Actualizar los descriptores de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
          * @param {CatalogDescriptorsUpdateRequest} catalogDescriptorsUpdateRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -308,15 +340,152 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
-         * @summary Recupera un catálogo por su código (HU-ADM-01-02, Regla 21)
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Actualiza el valor de uno o más campos no KEY del registro (Regla 16). Incluir en `values` un campo con calificador KEY rechaza la operación con `CAMPO_KEY_INMUTABLE` (R16, E4). 
+         * @summary Actualizar un registro de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
+         * @param {CatalogRecordUpdateRequest} catalogRecordUpdateRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        consultarCatalogo: async (code: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        actualizarRegistro: async (code: string, keyValue: string, catalogRecordUpdateRequest: CatalogRecordUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'code' is not null or undefined
-            assertParamExists('consultarCatalogo', 'code', code)
+            assertParamExists('actualizarRegistro', 'code', code)
+            // verify required parameter 'keyValue' is not null or undefined
+            assertParamExists('actualizarRegistro', 'keyValue', keyValue)
+            // verify required parameter 'catalogRecordUpdateRequest' is not null or undefined
+            assertParamExists('actualizarRegistro', 'catalogRecordUpdateRequest', catalogRecordUpdateRequest)
+            const localVarPath = `/catalogos/{code}/registros/{keyValue}`
+                .replace('{code}', encodeURIComponent(String(code)))
+                .replace('{keyValue}', encodeURIComponent(String(keyValue)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(catalogRecordUpdateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retorna, para todos los registros del catálogo, los valores de los campos solicitados en `fields`; si no se indica `fields`, el valor del primer campo no KEY (Regla 5). Si el catálogo está `INACTIVE`, `active` es `INACTIVE` en todos los elementos (Regla 12). 
+         * @summary Buscar la lista de registros de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {Array<string>} [fields] Lista de nombres de campo a retornar, separados por coma (&#x60;?fields&#x3D;descripcion,sigla&#x60;). Si se omite, se retorna el primer campo no KEY según &#x60;posicion&#x60; (Reglas 4, 5). 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        buscarListaRegistros: async (code: string, fields?: Array<string>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('buscarListaRegistros', 'code', code)
+            const localVarPath = `/catalogos/{code}/registros`
+                .replace('{code}', encodeURIComponent(String(code)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (fields) {
+                localVarQueryParameter['fields'] = fields.join(COLLECTION_FORMATS.csv);
+            }
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retorna los valores de los campos solicitados en `fields` del registro cuyo KEY es `keyValue`; si no se indica `fields`, el valor del primer campo no KEY (Regla 4). Si el catálogo o el registro está `INACTIVE`, `active` es `INACTIVE` (Regla 12). 
+         * @summary Buscar un registro específico por su clave
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
+         * @param {Array<string>} [fields] Lista de nombres de campo a retornar, separados por coma (&#x60;?fields&#x3D;descripcion,sigla&#x60;). Si se omite, se retorna el primer campo no KEY según &#x60;posicion&#x60; (Reglas 4, 5). 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        buscarRegistroPorClave: async (code: string, keyValue: string, fields?: Array<string>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('buscarRegistroPorClave', 'code', code)
+            // verify required parameter 'keyValue' is not null or undefined
+            assertParamExists('buscarRegistroPorClave', 'keyValue', keyValue)
+            const localVarPath = `/catalogos/{code}/registros/{keyValue}`
+                .replace('{code}', encodeURIComponent(String(code)))
+                .replace('{keyValue}', encodeURIComponent(String(keyValue)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (fields) {
+                localVarQueryParameter['fields'] = fields.join(COLLECTION_FORMATS.csv);
+            }
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retorna la definición completa del catálogo (nombre, padre, estado, vigencia y campos) (Regla 21).
+         * @summary Consultar un catálogo por código
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        consultarCatalogoPorCodigo: async (code: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('consultarCatalogoPorCodigo', 'code', code)
             const localVarPath = `/catalogos/{code}`
                 .replace('{code}', encodeURIComponent(String(code)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -346,9 +515,9 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
-         * @summary Consulta los catálogos hijos (Catalog.children) de un catálogo padre (HU-ADM-01-08, Regla 15)
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Retorna la lista `{code, name}` de los catálogos hijos directos; lista vacía si no tiene (Reglas 15, 24).
+         * @summary Consultar los catálogos hijos de un catálogo padre
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -384,8 +553,50 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
-         * @summary Crea un nuevo catálogo en el catalogMaster (HU-ADM-01-01)
+         * Retorna los registros del/los catálogo(s) hijo(s) enlazados al registro `keyValue` del catálogo `code`; lista vacía si no tiene (Reglas 23, 24). Si el catálogo `code` no tiene catálogo hijo definido se reporta `CATALOGO_SIN_CATALOGO_HIJO`. Cada elemento indica su catálogo (`catalog`) y su estado efectivo (`active`, Regla 12). 
+         * @summary Consultar los registros hijos de un registro padre
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        consultarRegistrosHijos: async (code: string, keyValue: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('consultarRegistrosHijos', 'code', code)
+            // verify required parameter 'keyValue' is not null or undefined
+            assertParamExists('consultarRegistrosHijos', 'keyValue', keyValue)
+            const localVarPath = `/catalogos/{code}/registros/{keyValue}/hijos`
+                .replace('{code}', encodeURIComponent(String(code)))
+                .replace('{keyValue}', encodeURIComponent(String(keyValue)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Crea un catálogo con código, nombre, padre opcional, estado, vigencia y campos. El orden del arreglo `fields` define la `posicion` de cada campo (criterio de \"primer campo no KEY\", Reglas 4 y 5). Si no se informan fechas de vigencia el estado queda `ACTIVE` (Regla 13); si `toDate` es hoy o pasada queda `INACTIVE` (Regla 14). 
+         * @summary Crear un catálogo
          * @param {CatalogCreateRequest} catalogCreateRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -423,9 +634,52 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
-         * @summary Rechaza explícitamente la eliminación física de un catálogo; solo se admite inactivación (HU-ADM-01-07, Regla 10 — ver escenario \"Rechazar la eliminación física de un catálogo\") 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Crea un registro indicando un valor para cada campo definido del catálogo, incluido el KEY (Reglas 1, 8). Si el catálogo tiene padre, `parentRecord` (valor KEY de un registro del catálogo padre) es obligatorio y el registro queda enlazado a él (Regla 23, E8). Sin fechas de vigencia el registro queda `ACTIVE` (Regla 13). 
+         * @summary Crear un registro de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {CatalogRecordCreateRequest} catalogRecordCreateRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        crearRegistro: async (code: string, catalogRecordCreateRequest: CatalogRecordCreateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('crearRegistro', 'code', code)
+            // verify required parameter 'catalogRecordCreateRequest' is not null or undefined
+            assertParamExists('crearRegistro', 'catalogRecordCreateRequest', catalogRecordCreateRequest)
+            const localVarPath = `/catalogos/{code}/registros`
+                .replace('{code}', encodeURIComponent(String(code)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(catalogRecordCreateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Operación declarada solo para representar explícitamente la Regla 10 / Excepción E7: un catálogo no puede eliminarse. Siempre responde 405 y ofrece `inactivarCatalogo` en `detalles`. El backend no debe implementar borrado físico. 
+         * @summary Eliminar un catálogo (no permitido)
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -461,19 +715,59 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
-         * @summary Transición de estado explícita: inactiva un catálogo fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-07. 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {InactivationRequest} inactivationRequest 
+         * Operación declarada solo para representar explícitamente la Regla 11 / Excepción E7: un registro no puede eliminarse. Siempre responde 405 y ofrece `inactivarRegistro` en `detalles`. El backend no debe implementar borrado físico. 
+         * @summary Eliminar un registro (no permitido)
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        inactivarCatalogo: async (code: string, inactivationRequest: InactivationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        eliminarRegistro: async (code: string, keyValue: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('eliminarRegistro', 'code', code)
+            // verify required parameter 'keyValue' is not null or undefined
+            assertParamExists('eliminarRegistro', 'keyValue', keyValue)
+            const localVarPath = `/catalogos/{code}/registros/{keyValue}`
+                .replace('{code}', encodeURIComponent(String(code)))
+                .replace('{keyValue}', encodeURIComponent(String(keyValue)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el catálogo queda `INACTIVE` (Reglas 9b, 14). A partir de ese momento toda búsqueda de sus registros retorna `INACTIVE` (Regla 12). 
+         * @summary Inactivar un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {InactivationRequest} [inactivationRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        inactivarCatalogo: async (code: string, inactivationRequest?: InactivationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'code' is not null or undefined
             assertParamExists('inactivarCatalogo', 'code', code)
-            // verify required parameter 'inactivationRequest' is not null or undefined
-            assertParamExists('inactivarCatalogo', 'inactivationRequest', inactivationRequest)
-            const localVarPath = `/catalogos/{code}/inactivacion`
+            const localVarPath = `/catalogos/{code}/inactivaciones`
                 .replace('{code}', encodeURIComponent(String(code)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -504,14 +798,57 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
-         * @summary Lista todos los catálogos del catalogMaster, incluyendo inactivos (HU-ADM-01-03)
-         * @param {number} [page] Índice de página, base 0 (convención Spring Data Pageable)
-         * @param {number} [size] Tamaño de página (convención Spring Data Pageable)
+         * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el registro queda `INACTIVE` (Reglas 9b, 14). 
+         * @summary Inactivar un registro de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
+         * @param {InactivationRequest} [inactivationRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listarCatalogos: async (page?: number, size?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        inactivarRegistro: async (code: string, keyValue: string, inactivationRequest?: InactivationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('inactivarRegistro', 'code', code)
+            // verify required parameter 'keyValue' is not null or undefined
+            assertParamExists('inactivarRegistro', 'keyValue', keyValue)
+            const localVarPath = `/catalogos/{code}/registros/{keyValue}/inactivaciones`
+                .replace('{code}', encodeURIComponent(String(code)))
+                .replace('{keyValue}', encodeURIComponent(String(keyValue)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(inactivationRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retorna todos los catálogos del catalogMaster, incluidos los `INACTIVE` (Regla 20).
+         * @summary Listar los catálogos disponibles
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listarCatalogos: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/catalogos`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -528,14 +865,6 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-            if (page !== undefined) {
-                localVarQueryParameter['page'] = page;
-            }
-
-            if (size !== undefined) {
-                localVarQueryParameter['size'] = size;
-            }
-
             localVarHeaderParameter['Accept'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -548,16 +877,16 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * 
-         * @summary Verifica si existe un catálogo con un nombre específico (HU-ADM-01-04, Regla 6)
-         * @param {string} name Nombre de catálogo a verificar
+         * Indica si existe en el catalogMaster un catálogo con el nombre dado (Regla 6). Responde siempre 200: `exists = false` es el resultado \"no está definido\", no un error. 
+         * @summary Verificar existencia de un catálogo por nombre
+         * @param {string} name Nombre del catálogo a verificar.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         verificarExistenciaCatalogo: async (name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'name' is not null or undefined
             assertParamExists('verificarExistenciaCatalogo', 'name', name)
-            const localVarPath = `/catalogos/verificacion-existencia`;
+            const localVarPath = `/catalogos/existencia`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -592,327 +921,557 @@ export const CatalogApiAxiosParamCreator = function (configuration?: Configurati
 };
 
 /**
- * CatalogApi - functional programming interface
+ * AdministracionCatalogosApi - functional programming interface
  */
-export const CatalogApiFp = function(configuration?: Configuration) {
-    const localVarAxiosParamCreator = CatalogApiAxiosParamCreator(configuration)
+export const AdministracionCatalogosApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = AdministracionCatalogosApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
-         * @summary Reemplaza la definición de campos (CatalogField: qualifier KEY/FIELD) de un catálogo sin registros (HU-ADM-01-06, Reglas 2, 3 y 19) 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Reemplaza la lista completa de campos (`FIELD`/`KEY`) del catálogo. Solo se permite si el catálogo no contiene registros (Regla 19). La nueva lista debe tener al menos un campo (R18), al menos un `KEY` (R2) y nombres únicos (R3). El orden del arreglo define `posicion`. 
+         * @summary Actualizar los campos de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
          * @param {CatalogFieldsUpdateRequest} catalogFieldsUpdateRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async actualizarCamposCatalogo(code: string, catalogFieldsUpdateRequest: CatalogFieldsUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Catalog>> {
+        async actualizarCamposCatalogo(code: string, catalogFieldsUpdateRequest: CatalogFieldsUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.actualizarCamposCatalogo(code, catalogFieldsUpdateRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.actualizarCamposCatalogo']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.actualizarCamposCatalogo']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Actualiza name, parent, active y/o vigencia (fromDate/toDate) de un catálogo (HU-ADM-01-05, Reglas 17 y 22). El código no forma parte de este payload. 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Actualiza parcialmente `name`, `parent`, `active`, `fromDate` y/o `toDate` (Reglas 17 y 22). El código es inmutable: si el cuerpo incluye `code`, la operación se rechaza con `CODIGO_CATALOGO_INMUTABLE` (R17, E4). `parent: null` desvincula el catálogo de su padre. 
+         * @summary Actualizar los descriptores de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
          * @param {CatalogDescriptorsUpdateRequest} catalogDescriptorsUpdateRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async actualizarDescriptoresCatalogo(code: string, catalogDescriptorsUpdateRequest: CatalogDescriptorsUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Catalog>> {
+        async actualizarDescriptoresCatalogo(code: string, catalogDescriptorsUpdateRequest: CatalogDescriptorsUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.actualizarDescriptoresCatalogo(code, catalogDescriptorsUpdateRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.actualizarDescriptoresCatalogo']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.actualizarDescriptoresCatalogo']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Recupera un catálogo por su código (HU-ADM-01-02, Regla 21)
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Actualiza el valor de uno o más campos no KEY del registro (Regla 16). Incluir en `values` un campo con calificador KEY rechaza la operación con `CAMPO_KEY_INMUTABLE` (R16, E4). 
+         * @summary Actualizar un registro de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
+         * @param {CatalogRecordUpdateRequest} catalogRecordUpdateRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async consultarCatalogo(code: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Catalog>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.consultarCatalogo(code, options);
+        async actualizarRegistro(code: string, keyValue: string, catalogRecordUpdateRequest: CatalogRecordUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogRecordResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.actualizarRegistro(code, keyValue, catalogRecordUpdateRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.consultarCatalogo']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.actualizarRegistro']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Consulta los catálogos hijos (Catalog.children) de un catálogo padre (HU-ADM-01-08, Regla 15)
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Retorna, para todos los registros del catálogo, los valores de los campos solicitados en `fields`; si no se indica `fields`, el valor del primer campo no KEY (Regla 5). Si el catálogo está `INACTIVE`, `active` es `INACTIVE` en todos los elementos (Regla 12). 
+         * @summary Buscar la lista de registros de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {Array<string>} [fields] Lista de nombres de campo a retornar, separados por coma (&#x60;?fields&#x3D;descripcion,sigla&#x60;). Si se omite, se retorna el primer campo no KEY según &#x60;posicion&#x60; (Reglas 4, 5). 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async consultarCatalogosHijos(code: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CatalogSummary>>> {
+        async buscarListaRegistros(code: string, fields?: Array<string>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CatalogRecordFieldValuesResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.buscarListaRegistros(code, fields, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.buscarListaRegistros']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Retorna los valores de los campos solicitados en `fields` del registro cuyo KEY es `keyValue`; si no se indica `fields`, el valor del primer campo no KEY (Regla 4). Si el catálogo o el registro está `INACTIVE`, `active` es `INACTIVE` (Regla 12). 
+         * @summary Buscar un registro específico por su clave
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
+         * @param {Array<string>} [fields] Lista de nombres de campo a retornar, separados por coma (&#x60;?fields&#x3D;descripcion,sigla&#x60;). Si se omite, se retorna el primer campo no KEY según &#x60;posicion&#x60; (Reglas 4, 5). 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async buscarRegistroPorClave(code: string, keyValue: string, fields?: Array<string>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogRecordFieldValuesResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.buscarRegistroPorClave(code, keyValue, fields, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.buscarRegistroPorClave']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Retorna la definición completa del catálogo (nombre, padre, estado, vigencia y campos) (Regla 21).
+         * @summary Consultar un catálogo por código
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async consultarCatalogoPorCodigo(code: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.consultarCatalogoPorCodigo(code, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.consultarCatalogoPorCodigo']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Retorna la lista `{code, name}` de los catálogos hijos directos; lista vacía si no tiene (Reglas 15, 24).
+         * @summary Consultar los catálogos hijos de un catálogo padre
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async consultarCatalogosHijos(code: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CatalogChildResponse>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.consultarCatalogosHijos(code, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.consultarCatalogosHijos']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.consultarCatalogosHijos']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Crea un nuevo catálogo en el catalogMaster (HU-ADM-01-01)
+         * Retorna los registros del/los catálogo(s) hijo(s) enlazados al registro `keyValue` del catálogo `code`; lista vacía si no tiene (Reglas 23, 24). Si el catálogo `code` no tiene catálogo hijo definido se reporta `CATALOGO_SIN_CATALOGO_HIJO`. Cada elemento indica su catálogo (`catalog`) y su estado efectivo (`active`, Regla 12). 
+         * @summary Consultar los registros hijos de un registro padre
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async consultarRegistrosHijos(code: string, keyValue: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CatalogRecordResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.consultarRegistrosHijos(code, keyValue, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.consultarRegistrosHijos']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Crea un catálogo con código, nombre, padre opcional, estado, vigencia y campos. El orden del arreglo `fields` define la `posicion` de cada campo (criterio de \"primer campo no KEY\", Reglas 4 y 5). Si no se informan fechas de vigencia el estado queda `ACTIVE` (Regla 13); si `toDate` es hoy o pasada queda `INACTIVE` (Regla 14). 
+         * @summary Crear un catálogo
          * @param {CatalogCreateRequest} catalogCreateRequest 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async crearCatalogo(catalogCreateRequest: CatalogCreateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Catalog>> {
+        async crearCatalogo(catalogCreateRequest: CatalogCreateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.crearCatalogo(catalogCreateRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.crearCatalogo']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.crearCatalogo']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Rechaza explícitamente la eliminación física de un catálogo; solo se admite inactivación (HU-ADM-01-07, Regla 10 — ver escenario \"Rechazar la eliminación física de un catálogo\") 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
+         * Crea un registro indicando un valor para cada campo definido del catálogo, incluido el KEY (Reglas 1, 8). Si el catálogo tiene padre, `parentRecord` (valor KEY de un registro del catálogo padre) es obligatorio y el registro queda enlazado a él (Regla 23, E8). Sin fechas de vigencia el registro queda `ACTIVE` (Regla 13). 
+         * @summary Crear un registro de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {CatalogRecordCreateRequest} catalogRecordCreateRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async crearRegistro(code: string, catalogRecordCreateRequest: CatalogRecordCreateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogRecordResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.crearRegistro(code, catalogRecordCreateRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.crearRegistro']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Operación declarada solo para representar explícitamente la Regla 10 / Excepción E7: un catálogo no puede eliminarse. Siempre responde 405 y ofrece `inactivarCatalogo` en `detalles`. El backend no debe implementar borrado físico. 
+         * @summary Eliminar un catálogo (no permitido)
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         async eliminarCatalogo(code: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.eliminarCatalogo(code, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.eliminarCatalogo']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.eliminarCatalogo']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Transición de estado explícita: inactiva un catálogo fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-07. 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {InactivationRequest} inactivationRequest 
+         * Operación declarada solo para representar explícitamente la Regla 11 / Excepción E7: un registro no puede eliminarse. Siempre responde 405 y ofrece `inactivarRegistro` en `detalles`. El backend no debe implementar borrado físico. 
+         * @summary Eliminar un registro (no permitido)
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async inactivarCatalogo(code: string, inactivationRequest: InactivationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Catalog>> {
+        async eliminarRegistro(code: string, keyValue: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.eliminarRegistro(code, keyValue, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.eliminarRegistro']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el catálogo queda `INACTIVE` (Reglas 9b, 14). A partir de ese momento toda búsqueda de sus registros retorna `INACTIVE` (Regla 12). 
+         * @summary Inactivar un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {InactivationRequest} [inactivationRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async inactivarCatalogo(code: string, inactivationRequest?: InactivationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.inactivarCatalogo(code, inactivationRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.inactivarCatalogo']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.inactivarCatalogo']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Lista todos los catálogos del catalogMaster, incluyendo inactivos (HU-ADM-01-03)
-         * @param {number} [page] Índice de página, base 0 (convención Spring Data Pageable)
-         * @param {number} [size] Tamaño de página (convención Spring Data Pageable)
+         * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el registro queda `INACTIVE` (Reglas 9b, 14). 
+         * @summary Inactivar un registro de un catálogo
+         * @param {string} code Código del catálogo (&#x60;Catalog.code&#x60;).
+         * @param {string} keyValue Valor del campo KEY del registro dentro del catálogo.
+         * @param {InactivationRequest} [inactivationRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listarCatalogos(page?: number, size?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListarCatalogos200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listarCatalogos(page, size, options);
+        async inactivarRegistro(code: string, keyValue: string, inactivationRequest?: InactivationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogRecordResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.inactivarRegistro(code, keyValue, inactivationRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.listarCatalogos']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.inactivarRegistro']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Verifica si existe un catálogo con un nombre específico (HU-ADM-01-04, Regla 6)
-         * @param {string} name Nombre de catálogo a verificar
+         * Retorna todos los catálogos del catalogMaster, incluidos los `INACTIVE` (Regla 20).
+         * @summary Listar los catálogos disponibles
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listarCatalogos(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CatalogSummaryResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listarCatalogos(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.listarCatalogos']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Indica si existe en el catalogMaster un catálogo con el nombre dado (Regla 6). Responde siempre 200: `exists = false` es el resultado \"no está definido\", no un error. 
+         * @summary Verificar existencia de un catálogo por nombre
+         * @param {string} name Nombre del catálogo a verificar.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         async verificarExistenciaCatalogo(name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogExistenceResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.verificarExistenciaCatalogo(name, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogApi.verificarExistenciaCatalogo']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['AdministracionCatalogosApi.verificarExistenciaCatalogo']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
 
 /**
- * CatalogApi - factory interface
+ * AdministracionCatalogosApi - factory interface
  */
-export const CatalogApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    const localVarFp = CatalogApiFp(configuration)
+export const AdministracionCatalogosApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = AdministracionCatalogosApiFp(configuration)
     return {
         /**
-         * 
-         * @summary Reemplaza la definición de campos (CatalogField: qualifier KEY/FIELD) de un catálogo sin registros (HU-ADM-01-06, Reglas 2, 3 y 19) 
-         * @param {CatalogApiActualizarCamposCatalogoRequest} requestParameters Request parameters.
+         * Reemplaza la lista completa de campos (`FIELD`/`KEY`) del catálogo. Solo se permite si el catálogo no contiene registros (Regla 19). La nueva lista debe tener al menos un campo (R18), al menos un `KEY` (R2) y nombres únicos (R3). El orden del arreglo define `posicion`. 
+         * @summary Actualizar los campos de un catálogo
+         * @param {AdministracionCatalogosApiActualizarCamposCatalogoRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        actualizarCamposCatalogo(requestParameters: CatalogApiActualizarCamposCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog> {
+        actualizarCamposCatalogo(requestParameters: AdministracionCatalogosApiActualizarCamposCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse> {
             return localVarFp.actualizarCamposCatalogo(requestParameters.code, requestParameters.catalogFieldsUpdateRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Actualiza name, parent, active y/o vigencia (fromDate/toDate) de un catálogo (HU-ADM-01-05, Reglas 17 y 22). El código no forma parte de este payload. 
-         * @param {CatalogApiActualizarDescriptoresCatalogoRequest} requestParameters Request parameters.
+         * Actualiza parcialmente `name`, `parent`, `active`, `fromDate` y/o `toDate` (Reglas 17 y 22). El código es inmutable: si el cuerpo incluye `code`, la operación se rechaza con `CODIGO_CATALOGO_INMUTABLE` (R17, E4). `parent: null` desvincula el catálogo de su padre. 
+         * @summary Actualizar los descriptores de un catálogo
+         * @param {AdministracionCatalogosApiActualizarDescriptoresCatalogoRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        actualizarDescriptoresCatalogo(requestParameters: CatalogApiActualizarDescriptoresCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog> {
+        actualizarDescriptoresCatalogo(requestParameters: AdministracionCatalogosApiActualizarDescriptoresCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse> {
             return localVarFp.actualizarDescriptoresCatalogo(requestParameters.code, requestParameters.catalogDescriptorsUpdateRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Recupera un catálogo por su código (HU-ADM-01-02, Regla 21)
-         * @param {CatalogApiConsultarCatalogoRequest} requestParameters Request parameters.
+         * Actualiza el valor de uno o más campos no KEY del registro (Regla 16). Incluir en `values` un campo con calificador KEY rechaza la operación con `CAMPO_KEY_INMUTABLE` (R16, E4). 
+         * @summary Actualizar un registro de un catálogo
+         * @param {AdministracionCatalogosApiActualizarRegistroRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        consultarCatalogo(requestParameters: CatalogApiConsultarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog> {
-            return localVarFp.consultarCatalogo(requestParameters.code, options).then((request) => request(axios, basePath));
+        actualizarRegistro(requestParameters: AdministracionCatalogosApiActualizarRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecordResponse> {
+            return localVarFp.actualizarRegistro(requestParameters.code, requestParameters.keyValue, requestParameters.catalogRecordUpdateRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Consulta los catálogos hijos (Catalog.children) de un catálogo padre (HU-ADM-01-08, Regla 15)
-         * @param {CatalogApiConsultarCatalogosHijosRequest} requestParameters Request parameters.
+         * Retorna, para todos los registros del catálogo, los valores de los campos solicitados en `fields`; si no se indica `fields`, el valor del primer campo no KEY (Regla 5). Si el catálogo está `INACTIVE`, `active` es `INACTIVE` en todos los elementos (Regla 12). 
+         * @summary Buscar la lista de registros de un catálogo
+         * @param {AdministracionCatalogosApiBuscarListaRegistrosRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        consultarCatalogosHijos(requestParameters: CatalogApiConsultarCatalogosHijosRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogSummary>> {
+        buscarListaRegistros(requestParameters: AdministracionCatalogosApiBuscarListaRegistrosRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogRecordFieldValuesResponse>> {
+            return localVarFp.buscarListaRegistros(requestParameters.code, requestParameters.fields, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Retorna los valores de los campos solicitados en `fields` del registro cuyo KEY es `keyValue`; si no se indica `fields`, el valor del primer campo no KEY (Regla 4). Si el catálogo o el registro está `INACTIVE`, `active` es `INACTIVE` (Regla 12). 
+         * @summary Buscar un registro específico por su clave
+         * @param {AdministracionCatalogosApiBuscarRegistroPorClaveRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        buscarRegistroPorClave(requestParameters: AdministracionCatalogosApiBuscarRegistroPorClaveRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecordFieldValuesResponse> {
+            return localVarFp.buscarRegistroPorClave(requestParameters.code, requestParameters.keyValue, requestParameters.fields, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Retorna la definición completa del catálogo (nombre, padre, estado, vigencia y campos) (Regla 21).
+         * @summary Consultar un catálogo por código
+         * @param {AdministracionCatalogosApiConsultarCatalogoPorCodigoRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        consultarCatalogoPorCodigo(requestParameters: AdministracionCatalogosApiConsultarCatalogoPorCodigoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse> {
+            return localVarFp.consultarCatalogoPorCodigo(requestParameters.code, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Retorna la lista `{code, name}` de los catálogos hijos directos; lista vacía si no tiene (Reglas 15, 24).
+         * @summary Consultar los catálogos hijos de un catálogo padre
+         * @param {AdministracionCatalogosApiConsultarCatalogosHijosRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        consultarCatalogosHijos(requestParameters: AdministracionCatalogosApiConsultarCatalogosHijosRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogChildResponse>> {
             return localVarFp.consultarCatalogosHijos(requestParameters.code, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Crea un nuevo catálogo en el catalogMaster (HU-ADM-01-01)
-         * @param {CatalogApiCrearCatalogoRequest} requestParameters Request parameters.
+         * Retorna los registros del/los catálogo(s) hijo(s) enlazados al registro `keyValue` del catálogo `code`; lista vacía si no tiene (Reglas 23, 24). Si el catálogo `code` no tiene catálogo hijo definido se reporta `CATALOGO_SIN_CATALOGO_HIJO`. Cada elemento indica su catálogo (`catalog`) y su estado efectivo (`active`, Regla 12). 
+         * @summary Consultar los registros hijos de un registro padre
+         * @param {AdministracionCatalogosApiConsultarRegistrosHijosRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        crearCatalogo(requestParameters: CatalogApiCrearCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog> {
+        consultarRegistrosHijos(requestParameters: AdministracionCatalogosApiConsultarRegistrosHijosRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogRecordResponse>> {
+            return localVarFp.consultarRegistrosHijos(requestParameters.code, requestParameters.keyValue, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Crea un catálogo con código, nombre, padre opcional, estado, vigencia y campos. El orden del arreglo `fields` define la `posicion` de cada campo (criterio de \"primer campo no KEY\", Reglas 4 y 5). Si no se informan fechas de vigencia el estado queda `ACTIVE` (Regla 13); si `toDate` es hoy o pasada queda `INACTIVE` (Regla 14). 
+         * @summary Crear un catálogo
+         * @param {AdministracionCatalogosApiCrearCatalogoRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        crearCatalogo(requestParameters: AdministracionCatalogosApiCrearCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse> {
             return localVarFp.crearCatalogo(requestParameters.catalogCreateRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Rechaza explícitamente la eliminación física de un catálogo; solo se admite inactivación (HU-ADM-01-07, Regla 10 — ver escenario \"Rechazar la eliminación física de un catálogo\") 
-         * @param {CatalogApiEliminarCatalogoRequest} requestParameters Request parameters.
+         * Crea un registro indicando un valor para cada campo definido del catálogo, incluido el KEY (Reglas 1, 8). Si el catálogo tiene padre, `parentRecord` (valor KEY de un registro del catálogo padre) es obligatorio y el registro queda enlazado a él (Regla 23, E8). Sin fechas de vigencia el registro queda `ACTIVE` (Regla 13). 
+         * @summary Crear un registro de un catálogo
+         * @param {AdministracionCatalogosApiCrearRegistroRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        eliminarCatalogo(requestParameters: CatalogApiEliminarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+        crearRegistro(requestParameters: AdministracionCatalogosApiCrearRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecordResponse> {
+            return localVarFp.crearRegistro(requestParameters.code, requestParameters.catalogRecordCreateRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Operación declarada solo para representar explícitamente la Regla 10 / Excepción E7: un catálogo no puede eliminarse. Siempre responde 405 y ofrece `inactivarCatalogo` en `detalles`. El backend no debe implementar borrado físico. 
+         * @summary Eliminar un catálogo (no permitido)
+         * @param {AdministracionCatalogosApiEliminarCatalogoRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        eliminarCatalogo(requestParameters: AdministracionCatalogosApiEliminarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.eliminarCatalogo(requestParameters.code, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Transición de estado explícita: inactiva un catálogo fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-07. 
-         * @param {CatalogApiInactivarCatalogoRequest} requestParameters Request parameters.
+         * Operación declarada solo para representar explícitamente la Regla 11 / Excepción E7: un registro no puede eliminarse. Siempre responde 405 y ofrece `inactivarRegistro` en `detalles`. El backend no debe implementar borrado físico. 
+         * @summary Eliminar un registro (no permitido)
+         * @param {AdministracionCatalogosApiEliminarRegistroRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        inactivarCatalogo(requestParameters: CatalogApiInactivarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog> {
+        eliminarRegistro(requestParameters: AdministracionCatalogosApiEliminarRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.eliminarRegistro(requestParameters.code, requestParameters.keyValue, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el catálogo queda `INACTIVE` (Reglas 9b, 14). A partir de ese momento toda búsqueda de sus registros retorna `INACTIVE` (Regla 12). 
+         * @summary Inactivar un catálogo
+         * @param {AdministracionCatalogosApiInactivarCatalogoRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        inactivarCatalogo(requestParameters: AdministracionCatalogosApiInactivarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse> {
             return localVarFp.inactivarCatalogo(requestParameters.code, requestParameters.inactivationRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Lista todos los catálogos del catalogMaster, incluyendo inactivos (HU-ADM-01-03)
-         * @param {CatalogApiListarCatalogosRequest} requestParameters Request parameters.
+         * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el registro queda `INACTIVE` (Reglas 9b, 14). 
+         * @summary Inactivar un registro de un catálogo
+         * @param {AdministracionCatalogosApiInactivarRegistroRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listarCatalogos(requestParameters: CatalogApiListarCatalogosRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListarCatalogos200Response> {
-            return localVarFp.listarCatalogos(requestParameters.page, requestParameters.size, options).then((request) => request(axios, basePath));
+        inactivarRegistro(requestParameters: AdministracionCatalogosApiInactivarRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecordResponse> {
+            return localVarFp.inactivarRegistro(requestParameters.code, requestParameters.keyValue, requestParameters.inactivationRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Verifica si existe un catálogo con un nombre específico (HU-ADM-01-04, Regla 6)
-         * @param {CatalogApiVerificarExistenciaCatalogoRequest} requestParameters Request parameters.
+         * Retorna todos los catálogos del catalogMaster, incluidos los `INACTIVE` (Regla 20).
+         * @summary Listar los catálogos disponibles
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        verificarExistenciaCatalogo(requestParameters: CatalogApiVerificarExistenciaCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogExistenceResponse> {
+        listarCatalogos(options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogSummaryResponse>> {
+            return localVarFp.listarCatalogos(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Indica si existe en el catalogMaster un catálogo con el nombre dado (Regla 6). Responde siempre 200: `exists = false` es el resultado \"no está definido\", no un error. 
+         * @summary Verificar existencia de un catálogo por nombre
+         * @param {AdministracionCatalogosApiVerificarExistenciaCatalogoRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        verificarExistenciaCatalogo(requestParameters: AdministracionCatalogosApiVerificarExistenciaCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogExistenceResponse> {
             return localVarFp.verificarExistenciaCatalogo(requestParameters.name, options).then((request) => request(axios, basePath));
         },
     };
 };
 
 /**
- * CatalogApi - interface
+ * AdministracionCatalogosApi - interface
  */
-export interface CatalogApiInterface {
+export interface AdministracionCatalogosApiInterface {
     /**
-     * 
-     * @summary Reemplaza la definición de campos (CatalogField: qualifier KEY/FIELD) de un catálogo sin registros (HU-ADM-01-06, Reglas 2, 3 y 19) 
-     * @param {CatalogApiActualizarCamposCatalogoRequest} requestParameters Request parameters.
+     * Reemplaza la lista completa de campos (`FIELD`/`KEY`) del catálogo. Solo se permite si el catálogo no contiene registros (Regla 19). La nueva lista debe tener al menos un campo (R18), al menos un `KEY` (R2) y nombres únicos (R3). El orden del arreglo define `posicion`. 
+     * @summary Actualizar los campos de un catálogo
+     * @param {AdministracionCatalogosApiActualizarCamposCatalogoRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    actualizarCamposCatalogo(requestParameters: CatalogApiActualizarCamposCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog>;
+    actualizarCamposCatalogo(requestParameters: AdministracionCatalogosApiActualizarCamposCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse>;
 
     /**
-     * 
-     * @summary Actualiza name, parent, active y/o vigencia (fromDate/toDate) de un catálogo (HU-ADM-01-05, Reglas 17 y 22). El código no forma parte de este payload. 
-     * @param {CatalogApiActualizarDescriptoresCatalogoRequest} requestParameters Request parameters.
+     * Actualiza parcialmente `name`, `parent`, `active`, `fromDate` y/o `toDate` (Reglas 17 y 22). El código es inmutable: si el cuerpo incluye `code`, la operación se rechaza con `CODIGO_CATALOGO_INMUTABLE` (R17, E4). `parent: null` desvincula el catálogo de su padre. 
+     * @summary Actualizar los descriptores de un catálogo
+     * @param {AdministracionCatalogosApiActualizarDescriptoresCatalogoRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    actualizarDescriptoresCatalogo(requestParameters: CatalogApiActualizarDescriptoresCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog>;
+    actualizarDescriptoresCatalogo(requestParameters: AdministracionCatalogosApiActualizarDescriptoresCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse>;
 
     /**
-     * 
-     * @summary Recupera un catálogo por su código (HU-ADM-01-02, Regla 21)
-     * @param {CatalogApiConsultarCatalogoRequest} requestParameters Request parameters.
+     * Actualiza el valor de uno o más campos no KEY del registro (Regla 16). Incluir en `values` un campo con calificador KEY rechaza la operación con `CAMPO_KEY_INMUTABLE` (R16, E4). 
+     * @summary Actualizar un registro de un catálogo
+     * @param {AdministracionCatalogosApiActualizarRegistroRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    consultarCatalogo(requestParameters: CatalogApiConsultarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog>;
+    actualizarRegistro(requestParameters: AdministracionCatalogosApiActualizarRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecordResponse>;
 
     /**
-     * 
-     * @summary Consulta los catálogos hijos (Catalog.children) de un catálogo padre (HU-ADM-01-08, Regla 15)
-     * @param {CatalogApiConsultarCatalogosHijosRequest} requestParameters Request parameters.
+     * Retorna, para todos los registros del catálogo, los valores de los campos solicitados en `fields`; si no se indica `fields`, el valor del primer campo no KEY (Regla 5). Si el catálogo está `INACTIVE`, `active` es `INACTIVE` en todos los elementos (Regla 12). 
+     * @summary Buscar la lista de registros de un catálogo
+     * @param {AdministracionCatalogosApiBuscarListaRegistrosRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    consultarCatalogosHijos(requestParameters: CatalogApiConsultarCatalogosHijosRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogSummary>>;
+    buscarListaRegistros(requestParameters: AdministracionCatalogosApiBuscarListaRegistrosRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogRecordFieldValuesResponse>>;
 
     /**
-     * 
-     * @summary Crea un nuevo catálogo en el catalogMaster (HU-ADM-01-01)
-     * @param {CatalogApiCrearCatalogoRequest} requestParameters Request parameters.
+     * Retorna los valores de los campos solicitados en `fields` del registro cuyo KEY es `keyValue`; si no se indica `fields`, el valor del primer campo no KEY (Regla 4). Si el catálogo o el registro está `INACTIVE`, `active` es `INACTIVE` (Regla 12). 
+     * @summary Buscar un registro específico por su clave
+     * @param {AdministracionCatalogosApiBuscarRegistroPorClaveRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    crearCatalogo(requestParameters: CatalogApiCrearCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog>;
+    buscarRegistroPorClave(requestParameters: AdministracionCatalogosApiBuscarRegistroPorClaveRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecordFieldValuesResponse>;
 
     /**
-     * 
-     * @summary Rechaza explícitamente la eliminación física de un catálogo; solo se admite inactivación (HU-ADM-01-07, Regla 10 — ver escenario \"Rechazar la eliminación física de un catálogo\") 
-     * @param {CatalogApiEliminarCatalogoRequest} requestParameters Request parameters.
+     * Retorna la definición completa del catálogo (nombre, padre, estado, vigencia y campos) (Regla 21).
+     * @summary Consultar un catálogo por código
+     * @param {AdministracionCatalogosApiConsultarCatalogoPorCodigoRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    eliminarCatalogo(requestParameters: CatalogApiEliminarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+    consultarCatalogoPorCodigo(requestParameters: AdministracionCatalogosApiConsultarCatalogoPorCodigoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse>;
 
     /**
-     * 
-     * @summary Transición de estado explícita: inactiva un catálogo fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-07. 
-     * @param {CatalogApiInactivarCatalogoRequest} requestParameters Request parameters.
+     * Retorna la lista `{code, name}` de los catálogos hijos directos; lista vacía si no tiene (Reglas 15, 24).
+     * @summary Consultar los catálogos hijos de un catálogo padre
+     * @param {AdministracionCatalogosApiConsultarCatalogosHijosRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    inactivarCatalogo(requestParameters: CatalogApiInactivarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<Catalog>;
+    consultarCatalogosHijos(requestParameters: AdministracionCatalogosApiConsultarCatalogosHijosRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogChildResponse>>;
 
     /**
-     * 
-     * @summary Lista todos los catálogos del catalogMaster, incluyendo inactivos (HU-ADM-01-03)
-     * @param {CatalogApiListarCatalogosRequest} requestParameters Request parameters.
+     * Retorna los registros del/los catálogo(s) hijo(s) enlazados al registro `keyValue` del catálogo `code`; lista vacía si no tiene (Reglas 23, 24). Si el catálogo `code` no tiene catálogo hijo definido se reporta `CATALOGO_SIN_CATALOGO_HIJO`. Cada elemento indica su catálogo (`catalog`) y su estado efectivo (`active`, Regla 12). 
+     * @summary Consultar los registros hijos de un registro padre
+     * @param {AdministracionCatalogosApiConsultarRegistrosHijosRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    listarCatalogos(requestParameters?: CatalogApiListarCatalogosRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListarCatalogos200Response>;
+    consultarRegistrosHijos(requestParameters: AdministracionCatalogosApiConsultarRegistrosHijosRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogRecordResponse>>;
 
     /**
-     * 
-     * @summary Verifica si existe un catálogo con un nombre específico (HU-ADM-01-04, Regla 6)
-     * @param {CatalogApiVerificarExistenciaCatalogoRequest} requestParameters Request parameters.
+     * Crea un catálogo con código, nombre, padre opcional, estado, vigencia y campos. El orden del arreglo `fields` define la `posicion` de cada campo (criterio de \"primer campo no KEY\", Reglas 4 y 5). Si no se informan fechas de vigencia el estado queda `ACTIVE` (Regla 13); si `toDate` es hoy o pasada queda `INACTIVE` (Regla 14). 
+     * @summary Crear un catálogo
+     * @param {AdministracionCatalogosApiCrearCatalogoRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    verificarExistenciaCatalogo(requestParameters: CatalogApiVerificarExistenciaCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogExistenceResponse>;
+    crearCatalogo(requestParameters: AdministracionCatalogosApiCrearCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse>;
+
+    /**
+     * Crea un registro indicando un valor para cada campo definido del catálogo, incluido el KEY (Reglas 1, 8). Si el catálogo tiene padre, `parentRecord` (valor KEY de un registro del catálogo padre) es obligatorio y el registro queda enlazado a él (Regla 23, E8). Sin fechas de vigencia el registro queda `ACTIVE` (Regla 13). 
+     * @summary Crear un registro de un catálogo
+     * @param {AdministracionCatalogosApiCrearRegistroRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    crearRegistro(requestParameters: AdministracionCatalogosApiCrearRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecordResponse>;
+
+    /**
+     * Operación declarada solo para representar explícitamente la Regla 10 / Excepción E7: un catálogo no puede eliminarse. Siempre responde 405 y ofrece `inactivarCatalogo` en `detalles`. El backend no debe implementar borrado físico. 
+     * @summary Eliminar un catálogo (no permitido)
+     * @param {AdministracionCatalogosApiEliminarCatalogoRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    eliminarCatalogo(requestParameters: AdministracionCatalogosApiEliminarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * Operación declarada solo para representar explícitamente la Regla 11 / Excepción E7: un registro no puede eliminarse. Siempre responde 405 y ofrece `inactivarRegistro` en `detalles`. El backend no debe implementar borrado físico. 
+     * @summary Eliminar un registro (no permitido)
+     * @param {AdministracionCatalogosApiEliminarRegistroRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    eliminarRegistro(requestParameters: AdministracionCatalogosApiEliminarRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
+
+    /**
+     * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el catálogo queda `INACTIVE` (Reglas 9b, 14). A partir de ese momento toda búsqueda de sus registros retorna `INACTIVE` (Regla 12). 
+     * @summary Inactivar un catálogo
+     * @param {AdministracionCatalogosApiInactivarCatalogoRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    inactivarCatalogo(requestParameters: AdministracionCatalogosApiInactivarCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogResponse>;
+
+    /**
+     * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el registro queda `INACTIVE` (Reglas 9b, 14). 
+     * @summary Inactivar un registro de un catálogo
+     * @param {AdministracionCatalogosApiInactivarRegistroRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    inactivarRegistro(requestParameters: AdministracionCatalogosApiInactivarRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecordResponse>;
+
+    /**
+     * Retorna todos los catálogos del catalogMaster, incluidos los `INACTIVE` (Regla 20).
+     * @summary Listar los catálogos disponibles
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listarCatalogos(options?: RawAxiosRequestConfig): AxiosPromise<Array<CatalogSummaryResponse>>;
+
+    /**
+     * Indica si existe en el catalogMaster un catálogo con el nombre dado (Regla 6). Responde siempre 200: `exists = false` es el resultado \"no está definido\", no un error. 
+     * @summary Verificar existencia de un catálogo por nombre
+     * @param {AdministracionCatalogosApiVerificarExistenciaCatalogoRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    verificarExistenciaCatalogo(requestParameters: AdministracionCatalogosApiVerificarExistenciaCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogExistenceResponse>;
 
 }
 
 /**
- * Request parameters for actualizarCamposCatalogo operation in CatalogApi.
+ * Request parameters for actualizarCamposCatalogo operation in AdministracionCatalogosApi.
  */
-export interface CatalogApiActualizarCamposCatalogoRequest {
+export interface AdministracionCatalogosApiActualizarCamposCatalogoRequest {
     /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
      */
     readonly code: string
 
@@ -920,11 +1479,11 @@ export interface CatalogApiActualizarCamposCatalogoRequest {
 }
 
 /**
- * Request parameters for actualizarDescriptoresCatalogo operation in CatalogApi.
+ * Request parameters for actualizarDescriptoresCatalogo operation in AdministracionCatalogosApi.
  */
-export interface CatalogApiActualizarDescriptoresCatalogoRequest {
+export interface AdministracionCatalogosApiActualizarDescriptoresCatalogoRequest {
     /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
      */
     readonly code: string
 
@@ -932,767 +1491,105 @@ export interface CatalogApiActualizarDescriptoresCatalogoRequest {
 }
 
 /**
- * Request parameters for consultarCatalogo operation in CatalogApi.
+ * Request parameters for actualizarRegistro operation in AdministracionCatalogosApi.
  */
-export interface CatalogApiConsultarCatalogoRequest {
+export interface AdministracionCatalogosApiActualizarRegistroRequest {
     /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
-     */
-    readonly code: string
-}
-
-/**
- * Request parameters for consultarCatalogosHijos operation in CatalogApi.
- */
-export interface CatalogApiConsultarCatalogosHijosRequest {
-    /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
-     */
-    readonly code: string
-}
-
-/**
- * Request parameters for crearCatalogo operation in CatalogApi.
- */
-export interface CatalogApiCrearCatalogoRequest {
-    readonly catalogCreateRequest: CatalogCreateRequest
-}
-
-/**
- * Request parameters for eliminarCatalogo operation in CatalogApi.
- */
-export interface CatalogApiEliminarCatalogoRequest {
-    /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
-     */
-    readonly code: string
-}
-
-/**
- * Request parameters for inactivarCatalogo operation in CatalogApi.
- */
-export interface CatalogApiInactivarCatalogoRequest {
-    /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
-     */
-    readonly code: string
-
-    readonly inactivationRequest: InactivationRequest
-}
-
-/**
- * Request parameters for listarCatalogos operation in CatalogApi.
- */
-export interface CatalogApiListarCatalogosRequest {
-    /**
-     * Índice de página, base 0 (convención Spring Data Pageable)
-     */
-    readonly page?: number
-
-    /**
-     * Tamaño de página (convención Spring Data Pageable)
-     */
-    readonly size?: number
-}
-
-/**
- * Request parameters for verificarExistenciaCatalogo operation in CatalogApi.
- */
-export interface CatalogApiVerificarExistenciaCatalogoRequest {
-    /**
-     * Nombre de catálogo a verificar
-     */
-    readonly name: string
-}
-
-/**
- * CatalogApi - object-oriented interface
- */
-export class CatalogApi extends BaseAPI implements CatalogApiInterface {
-    /**
-     * 
-     * @summary Reemplaza la definición de campos (CatalogField: qualifier KEY/FIELD) de un catálogo sin registros (HU-ADM-01-06, Reglas 2, 3 y 19) 
-     * @param {CatalogApiActualizarCamposCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public actualizarCamposCatalogo(requestParameters: CatalogApiActualizarCamposCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).actualizarCamposCatalogo(requestParameters.code, requestParameters.catalogFieldsUpdateRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Actualiza name, parent, active y/o vigencia (fromDate/toDate) de un catálogo (HU-ADM-01-05, Reglas 17 y 22). El código no forma parte de este payload. 
-     * @param {CatalogApiActualizarDescriptoresCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public actualizarDescriptoresCatalogo(requestParameters: CatalogApiActualizarDescriptoresCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).actualizarDescriptoresCatalogo(requestParameters.code, requestParameters.catalogDescriptorsUpdateRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Recupera un catálogo por su código (HU-ADM-01-02, Regla 21)
-     * @param {CatalogApiConsultarCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public consultarCatalogo(requestParameters: CatalogApiConsultarCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).consultarCatalogo(requestParameters.code, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Consulta los catálogos hijos (Catalog.children) de un catálogo padre (HU-ADM-01-08, Regla 15)
-     * @param {CatalogApiConsultarCatalogosHijosRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public consultarCatalogosHijos(requestParameters: CatalogApiConsultarCatalogosHijosRequest, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).consultarCatalogosHijos(requestParameters.code, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Crea un nuevo catálogo en el catalogMaster (HU-ADM-01-01)
-     * @param {CatalogApiCrearCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public crearCatalogo(requestParameters: CatalogApiCrearCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).crearCatalogo(requestParameters.catalogCreateRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Rechaza explícitamente la eliminación física de un catálogo; solo se admite inactivación (HU-ADM-01-07, Regla 10 — ver escenario \"Rechazar la eliminación física de un catálogo\") 
-     * @param {CatalogApiEliminarCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public eliminarCatalogo(requestParameters: CatalogApiEliminarCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).eliminarCatalogo(requestParameters.code, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Transición de estado explícita: inactiva un catálogo fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-07. 
-     * @param {CatalogApiInactivarCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public inactivarCatalogo(requestParameters: CatalogApiInactivarCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).inactivarCatalogo(requestParameters.code, requestParameters.inactivationRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Lista todos los catálogos del catalogMaster, incluyendo inactivos (HU-ADM-01-03)
-     * @param {CatalogApiListarCatalogosRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public listarCatalogos(requestParameters: CatalogApiListarCatalogosRequest = {}, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).listarCatalogos(requestParameters.page, requestParameters.size, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Verifica si existe un catálogo con un nombre específico (HU-ADM-01-04, Regla 6)
-     * @param {CatalogApiVerificarExistenciaCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public verificarExistenciaCatalogo(requestParameters: CatalogApiVerificarExistenciaCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogApiFp(this.configuration).verificarExistenciaCatalogo(requestParameters.name, options).then((request) => request(this.axios, this.basePath));
-    }
-}
-
-
-
-/**
- * CatalogRecordApi - axios parameter creator
- */
-export const CatalogRecordApiAxiosParamCreator = function (configuration?: Configuration) {
-    return {
-        /**
-         * 
-         * @summary Actualiza el valor de CatalogField no KEY de un registro (HU-ADM-01-12, Regla 16)
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {string} key Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-         * @param {CatalogRecordUpdateRequest} catalogRecordUpdateRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        actualizarRegistro: async (code: string, key: string, catalogRecordUpdateRequest: CatalogRecordUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'code' is not null or undefined
-            assertParamExists('actualizarRegistro', 'code', code)
-            // verify required parameter 'key' is not null or undefined
-            assertParamExists('actualizarRegistro', 'key', key)
-            // verify required parameter 'catalogRecordUpdateRequest' is not null or undefined
-            assertParamExists('actualizarRegistro', 'catalogRecordUpdateRequest', catalogRecordUpdateRequest)
-            const localVarPath = `/catalogos/{code}/registros/{key}`
-                .replace('{code}', encodeURIComponent(String(code)))
-                .replace('{key}', encodeURIComponent(String(key)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(catalogRecordUpdateRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Busca la lista de CatalogRecord de un catálogo, con lista opcional de nombres de CatalogField (HU-ADM-01-11, Reglas 5 y 12) 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {Array<string>} [fields] Lista de nombres de CatalogField a retornar. Si se omite, se retorna el valor del primer campo no KEY según su &#x60;position&#x60; (Reglas 4 y 5) 
-         * @param {number} [page] Índice de página, base 0 (convención Spring Data Pageable)
-         * @param {number} [size] Tamaño de página (convención Spring Data Pageable)
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        buscarListaRegistros: async (code: string, fields?: Array<string>, page?: number, size?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'code' is not null or undefined
-            assertParamExists('buscarListaRegistros', 'code', code)
-            const localVarPath = `/catalogos/{code}/registros`
-                .replace('{code}', encodeURIComponent(String(code)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            if (fields) {
-                localVarQueryParameter['fields'] = fields;
-            }
-
-            if (page !== undefined) {
-                localVarQueryParameter['page'] = page;
-            }
-
-            if (size !== undefined) {
-                localVarQueryParameter['size'] = size;
-            }
-
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Busca un CatalogRecord por el valor de su CatalogField con qualifier=KEY, con lista opcional de nombres de campos (HU-ADM-01-10, Reglas 4 y 12) 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {string} key Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-         * @param {Array<string>} [fields] Lista de nombres de CatalogField a retornar. Si se omite, se retorna el valor del primer campo no KEY según su &#x60;position&#x60; (Reglas 4 y 5) 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        buscarRegistroPorClave: async (code: string, key: string, fields?: Array<string>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'code' is not null or undefined
-            assertParamExists('buscarRegistroPorClave', 'code', code)
-            // verify required parameter 'key' is not null or undefined
-            assertParamExists('buscarRegistroPorClave', 'key', key)
-            const localVarPath = `/catalogos/{code}/registros/{key}`
-                .replace('{code}', encodeURIComponent(String(code)))
-                .replace('{key}', encodeURIComponent(String(key)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            if (fields) {
-                localVarQueryParameter['fields'] = fields;
-            }
-
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Crea un nuevo CatalogRecord, con valor para todos los CatalogField del catálogo incluido KEY (HU-ADM-01-09, Reglas 1, 8, 13) 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {CatalogRecordCreateRequest} catalogRecordCreateRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        crearRegistroCatalogo: async (code: string, catalogRecordCreateRequest: CatalogRecordCreateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'code' is not null or undefined
-            assertParamExists('crearRegistroCatalogo', 'code', code)
-            // verify required parameter 'catalogRecordCreateRequest' is not null or undefined
-            assertParamExists('crearRegistroCatalogo', 'catalogRecordCreateRequest', catalogRecordCreateRequest)
-            const localVarPath = `/catalogos/{code}/registros`
-                .replace('{code}', encodeURIComponent(String(code)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(catalogRecordCreateRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Rechaza explícitamente la eliminación física de un registro; solo se admite inactivación (HU-ADM-01-13, Regla 11 — ver escenario \"Rechazar la eliminación física de un registro\") 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {string} key Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        eliminarRegistroCatalogo: async (code: string, key: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'code' is not null or undefined
-            assertParamExists('eliminarRegistroCatalogo', 'code', code)
-            // verify required parameter 'key' is not null or undefined
-            assertParamExists('eliminarRegistroCatalogo', 'key', key)
-            const localVarPath = `/catalogos/{code}/registros/{key}`
-                .replace('{code}', encodeURIComponent(String(code)))
-                .replace('{key}', encodeURIComponent(String(key)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Transición de estado explícita: inactiva un registro fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-13. 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {string} key Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-         * @param {InactivationRequest} inactivationRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        inactivarRegistroCatalogo: async (code: string, key: string, inactivationRequest: InactivationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'code' is not null or undefined
-            assertParamExists('inactivarRegistroCatalogo', 'code', code)
-            // verify required parameter 'key' is not null or undefined
-            assertParamExists('inactivarRegistroCatalogo', 'key', key)
-            // verify required parameter 'inactivationRequest' is not null or undefined
-            assertParamExists('inactivarRegistroCatalogo', 'inactivationRequest', inactivationRequest)
-            const localVarPath = `/catalogos/{code}/registros/{key}/inactivacion`
-                .replace('{code}', encodeURIComponent(String(code)))
-                .replace('{key}', encodeURIComponent(String(key)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication bearerAuth required
-            // http bearer authentication required
-            await setBearerAuthToObject(localVarHeaderParameter, configuration)
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            localVarHeaderParameter['Accept'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(inactivationRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-    }
-};
-
-/**
- * CatalogRecordApi - functional programming interface
- */
-export const CatalogRecordApiFp = function(configuration?: Configuration) {
-    const localVarAxiosParamCreator = CatalogRecordApiAxiosParamCreator(configuration)
-    return {
-        /**
-         * 
-         * @summary Actualiza el valor de CatalogField no KEY de un registro (HU-ADM-01-12, Regla 16)
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {string} key Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-         * @param {CatalogRecordUpdateRequest} catalogRecordUpdateRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async actualizarRegistro(code: string, key: string, catalogRecordUpdateRequest: CatalogRecordUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogRecord>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.actualizarRegistro(code, key, catalogRecordUpdateRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogRecordApi.actualizarRegistro']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @summary Busca la lista de CatalogRecord de un catálogo, con lista opcional de nombres de CatalogField (HU-ADM-01-11, Reglas 5 y 12) 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {Array<string>} [fields] Lista de nombres de CatalogField a retornar. Si se omite, se retorna el valor del primer campo no KEY según su &#x60;position&#x60; (Reglas 4 y 5) 
-         * @param {number} [page] Índice de página, base 0 (convención Spring Data Pageable)
-         * @param {number} [size] Tamaño de página (convención Spring Data Pageable)
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async buscarListaRegistros(code: string, fields?: Array<string>, page?: number, size?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<BuscarListaRegistros200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.buscarListaRegistros(code, fields, page, size, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogRecordApi.buscarListaRegistros']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @summary Busca un CatalogRecord por el valor de su CatalogField con qualifier=KEY, con lista opcional de nombres de campos (HU-ADM-01-10, Reglas 4 y 12) 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {string} key Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-         * @param {Array<string>} [fields] Lista de nombres de CatalogField a retornar. Si se omite, se retorna el valor del primer campo no KEY según su &#x60;position&#x60; (Reglas 4 y 5) 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async buscarRegistroPorClave(code: string, key: string, fields?: Array<string>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogRecord>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.buscarRegistroPorClave(code, key, fields, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogRecordApi.buscarRegistroPorClave']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @summary Crea un nuevo CatalogRecord, con valor para todos los CatalogField del catálogo incluido KEY (HU-ADM-01-09, Reglas 1, 8, 13) 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {CatalogRecordCreateRequest} catalogRecordCreateRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async crearRegistroCatalogo(code: string, catalogRecordCreateRequest: CatalogRecordCreateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogRecord>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.crearRegistroCatalogo(code, catalogRecordCreateRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogRecordApi.crearRegistroCatalogo']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @summary Rechaza explícitamente la eliminación física de un registro; solo se admite inactivación (HU-ADM-01-13, Regla 11 — ver escenario \"Rechazar la eliminación física de un registro\") 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {string} key Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async eliminarRegistroCatalogo(code: string, key: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.eliminarRegistroCatalogo(code, key, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogRecordApi.eliminarRegistroCatalogo']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
-         * 
-         * @summary Transición de estado explícita: inactiva un registro fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-13. 
-         * @param {string} code Código único e inmutable del catálogo (Catalog.code, Regla 17)
-         * @param {string} key Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-         * @param {InactivationRequest} inactivationRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async inactivarRegistroCatalogo(code: string, key: string, inactivationRequest: InactivationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CatalogRecord>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.inactivarRegistroCatalogo(code, key, inactivationRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['CatalogRecordApi.inactivarRegistroCatalogo']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-    }
-};
-
-/**
- * CatalogRecordApi - factory interface
- */
-export const CatalogRecordApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    const localVarFp = CatalogRecordApiFp(configuration)
-    return {
-        /**
-         * 
-         * @summary Actualiza el valor de CatalogField no KEY de un registro (HU-ADM-01-12, Regla 16)
-         * @param {CatalogRecordApiActualizarRegistroRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        actualizarRegistro(requestParameters: CatalogRecordApiActualizarRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecord> {
-            return localVarFp.actualizarRegistro(requestParameters.code, requestParameters.key, requestParameters.catalogRecordUpdateRequest, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @summary Busca la lista de CatalogRecord de un catálogo, con lista opcional de nombres de CatalogField (HU-ADM-01-11, Reglas 5 y 12) 
-         * @param {CatalogRecordApiBuscarListaRegistrosRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        buscarListaRegistros(requestParameters: CatalogRecordApiBuscarListaRegistrosRequest, options?: RawAxiosRequestConfig): AxiosPromise<BuscarListaRegistros200Response> {
-            return localVarFp.buscarListaRegistros(requestParameters.code, requestParameters.fields, requestParameters.page, requestParameters.size, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @summary Busca un CatalogRecord por el valor de su CatalogField con qualifier=KEY, con lista opcional de nombres de campos (HU-ADM-01-10, Reglas 4 y 12) 
-         * @param {CatalogRecordApiBuscarRegistroPorClaveRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        buscarRegistroPorClave(requestParameters: CatalogRecordApiBuscarRegistroPorClaveRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecord> {
-            return localVarFp.buscarRegistroPorClave(requestParameters.code, requestParameters.key, requestParameters.fields, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @summary Crea un nuevo CatalogRecord, con valor para todos los CatalogField del catálogo incluido KEY (HU-ADM-01-09, Reglas 1, 8, 13) 
-         * @param {CatalogRecordApiCrearRegistroCatalogoRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        crearRegistroCatalogo(requestParameters: CatalogRecordApiCrearRegistroCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecord> {
-            return localVarFp.crearRegistroCatalogo(requestParameters.code, requestParameters.catalogRecordCreateRequest, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @summary Rechaza explícitamente la eliminación física de un registro; solo se admite inactivación (HU-ADM-01-13, Regla 11 — ver escenario \"Rechazar la eliminación física de un registro\") 
-         * @param {CatalogRecordApiEliminarRegistroCatalogoRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        eliminarRegistroCatalogo(requestParameters: CatalogRecordApiEliminarRegistroCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.eliminarRegistroCatalogo(requestParameters.code, requestParameters.key, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @summary Transición de estado explícita: inactiva un registro fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-13. 
-         * @param {CatalogRecordApiInactivarRegistroCatalogoRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        inactivarRegistroCatalogo(requestParameters: CatalogRecordApiInactivarRegistroCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecord> {
-            return localVarFp.inactivarRegistroCatalogo(requestParameters.code, requestParameters.key, requestParameters.inactivationRequest, options).then((request) => request(axios, basePath));
-        },
-    };
-};
-
-/**
- * CatalogRecordApi - interface
- */
-export interface CatalogRecordApiInterface {
-    /**
-     * 
-     * @summary Actualiza el valor de CatalogField no KEY de un registro (HU-ADM-01-12, Regla 16)
-     * @param {CatalogRecordApiActualizarRegistroRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    actualizarRegistro(requestParameters: CatalogRecordApiActualizarRegistroRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecord>;
-
-    /**
-     * 
-     * @summary Busca la lista de CatalogRecord de un catálogo, con lista opcional de nombres de CatalogField (HU-ADM-01-11, Reglas 5 y 12) 
-     * @param {CatalogRecordApiBuscarListaRegistrosRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    buscarListaRegistros(requestParameters: CatalogRecordApiBuscarListaRegistrosRequest, options?: RawAxiosRequestConfig): AxiosPromise<BuscarListaRegistros200Response>;
-
-    /**
-     * 
-     * @summary Busca un CatalogRecord por el valor de su CatalogField con qualifier=KEY, con lista opcional de nombres de campos (HU-ADM-01-10, Reglas 4 y 12) 
-     * @param {CatalogRecordApiBuscarRegistroPorClaveRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    buscarRegistroPorClave(requestParameters: CatalogRecordApiBuscarRegistroPorClaveRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecord>;
-
-    /**
-     * 
-     * @summary Crea un nuevo CatalogRecord, con valor para todos los CatalogField del catálogo incluido KEY (HU-ADM-01-09, Reglas 1, 8, 13) 
-     * @param {CatalogRecordApiCrearRegistroCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    crearRegistroCatalogo(requestParameters: CatalogRecordApiCrearRegistroCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecord>;
-
-    /**
-     * 
-     * @summary Rechaza explícitamente la eliminación física de un registro; solo se admite inactivación (HU-ADM-01-13, Regla 11 — ver escenario \"Rechazar la eliminación física de un registro\") 
-     * @param {CatalogRecordApiEliminarRegistroCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    eliminarRegistroCatalogo(requestParameters: CatalogRecordApiEliminarRegistroCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<void>;
-
-    /**
-     * 
-     * @summary Transición de estado explícita: inactiva un registro fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-13. 
-     * @param {CatalogRecordApiInactivarRegistroCatalogoRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    inactivarRegistroCatalogo(requestParameters: CatalogRecordApiInactivarRegistroCatalogoRequest, options?: RawAxiosRequestConfig): AxiosPromise<CatalogRecord>;
-
-}
-
-/**
- * Request parameters for actualizarRegistro operation in CatalogRecordApi.
- */
-export interface CatalogRecordApiActualizarRegistroRequest {
-    /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
      */
     readonly code: string
 
     /**
-     * Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
+     * Valor del campo KEY del registro dentro del catálogo.
      */
-    readonly key: string
+    readonly keyValue: string
 
     readonly catalogRecordUpdateRequest: CatalogRecordUpdateRequest
 }
 
 /**
- * Request parameters for buscarListaRegistros operation in CatalogRecordApi.
+ * Request parameters for buscarListaRegistros operation in AdministracionCatalogosApi.
  */
-export interface CatalogRecordApiBuscarListaRegistrosRequest {
+export interface AdministracionCatalogosApiBuscarListaRegistrosRequest {
     /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
      */
     readonly code: string
 
     /**
-     * Lista de nombres de CatalogField a retornar. Si se omite, se retorna el valor del primer campo no KEY según su &#x60;position&#x60; (Reglas 4 y 5) 
-     */
-    readonly fields?: Array<string>
-
-    /**
-     * Índice de página, base 0 (convención Spring Data Pageable)
-     */
-    readonly page?: number
-
-    /**
-     * Tamaño de página (convención Spring Data Pageable)
-     */
-    readonly size?: number
-}
-
-/**
- * Request parameters for buscarRegistroPorClave operation in CatalogRecordApi.
- */
-export interface CatalogRecordApiBuscarRegistroPorClaveRequest {
-    /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
-     */
-    readonly code: string
-
-    /**
-     * Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
-     */
-    readonly key: string
-
-    /**
-     * Lista de nombres de CatalogField a retornar. Si se omite, se retorna el valor del primer campo no KEY según su &#x60;position&#x60; (Reglas 4 y 5) 
+     * Lista de nombres de campo a retornar, separados por coma (&#x60;?fields&#x3D;descripcion,sigla&#x60;). Si se omite, se retorna el primer campo no KEY según &#x60;posicion&#x60; (Reglas 4, 5). 
      */
     readonly fields?: Array<string>
 }
 
 /**
- * Request parameters for crearRegistroCatalogo operation in CatalogRecordApi.
+ * Request parameters for buscarRegistroPorClave operation in AdministracionCatalogosApi.
  */
-export interface CatalogRecordApiCrearRegistroCatalogoRequest {
+export interface AdministracionCatalogosApiBuscarRegistroPorClaveRequest {
     /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
+     */
+    readonly code: string
+
+    /**
+     * Valor del campo KEY del registro dentro del catálogo.
+     */
+    readonly keyValue: string
+
+    /**
+     * Lista de nombres de campo a retornar, separados por coma (&#x60;?fields&#x3D;descripcion,sigla&#x60;). Si se omite, se retorna el primer campo no KEY según &#x60;posicion&#x60; (Reglas 4, 5). 
+     */
+    readonly fields?: Array<string>
+}
+
+/**
+ * Request parameters for consultarCatalogoPorCodigo operation in AdministracionCatalogosApi.
+ */
+export interface AdministracionCatalogosApiConsultarCatalogoPorCodigoRequest {
+    /**
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
+     */
+    readonly code: string
+}
+
+/**
+ * Request parameters for consultarCatalogosHijos operation in AdministracionCatalogosApi.
+ */
+export interface AdministracionCatalogosApiConsultarCatalogosHijosRequest {
+    /**
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
+     */
+    readonly code: string
+}
+
+/**
+ * Request parameters for consultarRegistrosHijos operation in AdministracionCatalogosApi.
+ */
+export interface AdministracionCatalogosApiConsultarRegistrosHijosRequest {
+    /**
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
+     */
+    readonly code: string
+
+    /**
+     * Valor del campo KEY del registro dentro del catálogo.
+     */
+    readonly keyValue: string
+}
+
+/**
+ * Request parameters for crearCatalogo operation in AdministracionCatalogosApi.
+ */
+export interface AdministracionCatalogosApiCrearCatalogoRequest {
+    readonly catalogCreateRequest: CatalogCreateRequest
+}
+
+/**
+ * Request parameters for crearRegistro operation in AdministracionCatalogosApi.
+ */
+export interface AdministracionCatalogosApiCrearRegistroRequest {
+    /**
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
      */
     readonly code: string
 
@@ -1700,105 +1597,246 @@ export interface CatalogRecordApiCrearRegistroCatalogoRequest {
 }
 
 /**
- * Request parameters for eliminarRegistroCatalogo operation in CatalogRecordApi.
+ * Request parameters for eliminarCatalogo operation in AdministracionCatalogosApi.
  */
-export interface CatalogRecordApiEliminarRegistroCatalogoRequest {
+export interface AdministracionCatalogosApiEliminarCatalogoRequest {
     /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
+     */
+    readonly code: string
+}
+
+/**
+ * Request parameters for eliminarRegistro operation in AdministracionCatalogosApi.
+ */
+export interface AdministracionCatalogosApiEliminarRegistroRequest {
+    /**
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
      */
     readonly code: string
 
     /**
-     * Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
+     * Valor del campo KEY del registro dentro del catálogo.
      */
-    readonly key: string
+    readonly keyValue: string
 }
 
 /**
- * Request parameters for inactivarRegistroCatalogo operation in CatalogRecordApi.
+ * Request parameters for inactivarCatalogo operation in AdministracionCatalogosApi.
  */
-export interface CatalogRecordApiInactivarRegistroCatalogoRequest {
+export interface AdministracionCatalogosApiInactivarCatalogoRequest {
     /**
-     * Código único e inmutable del catálogo (Catalog.code, Regla 17)
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
+     */
+    readonly code: string
+
+    readonly inactivationRequest?: InactivationRequest
+}
+
+/**
+ * Request parameters for inactivarRegistro operation in AdministracionCatalogosApi.
+ */
+export interface AdministracionCatalogosApiInactivarRegistroRequest {
+    /**
+     * Código del catálogo (&#x60;Catalog.code&#x60;).
      */
     readonly code: string
 
     /**
-     * Valor del CatalogField con qualifier&#x3D;KEY que identifica al registro
+     * Valor del campo KEY del registro dentro del catálogo.
      */
-    readonly key: string
+    readonly keyValue: string
 
-    readonly inactivationRequest: InactivationRequest
+    readonly inactivationRequest?: InactivationRequest
 }
 
 /**
- * CatalogRecordApi - object-oriented interface
+ * Request parameters for verificarExistenciaCatalogo operation in AdministracionCatalogosApi.
  */
-export class CatalogRecordApi extends BaseAPI implements CatalogRecordApiInterface {
+export interface AdministracionCatalogosApiVerificarExistenciaCatalogoRequest {
     /**
-     * 
-     * @summary Actualiza el valor de CatalogField no KEY de un registro (HU-ADM-01-12, Regla 16)
-     * @param {CatalogRecordApiActualizarRegistroRequest} requestParameters Request parameters.
+     * Nombre del catálogo a verificar.
+     */
+    readonly name: string
+}
+
+/**
+ * AdministracionCatalogosApi - object-oriented interface
+ */
+export class AdministracionCatalogosApi extends BaseAPI implements AdministracionCatalogosApiInterface {
+    /**
+     * Reemplaza la lista completa de campos (`FIELD`/`KEY`) del catálogo. Solo se permite si el catálogo no contiene registros (Regla 19). La nueva lista debe tener al menos un campo (R18), al menos un `KEY` (R2) y nombres únicos (R3). El orden del arreglo define `posicion`. 
+     * @summary Actualizar los campos de un catálogo
+     * @param {AdministracionCatalogosApiActualizarCamposCatalogoRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public actualizarRegistro(requestParameters: CatalogRecordApiActualizarRegistroRequest, options?: RawAxiosRequestConfig) {
-        return CatalogRecordApiFp(this.configuration).actualizarRegistro(requestParameters.code, requestParameters.key, requestParameters.catalogRecordUpdateRequest, options).then((request) => request(this.axios, this.basePath));
+    public actualizarCamposCatalogo(requestParameters: AdministracionCatalogosApiActualizarCamposCatalogoRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).actualizarCamposCatalogo(requestParameters.code, requestParameters.catalogFieldsUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * 
-     * @summary Busca la lista de CatalogRecord de un catálogo, con lista opcional de nombres de CatalogField (HU-ADM-01-11, Reglas 5 y 12) 
-     * @param {CatalogRecordApiBuscarListaRegistrosRequest} requestParameters Request parameters.
+     * Actualiza parcialmente `name`, `parent`, `active`, `fromDate` y/o `toDate` (Reglas 17 y 22). El código es inmutable: si el cuerpo incluye `code`, la operación se rechaza con `CODIGO_CATALOGO_INMUTABLE` (R17, E4). `parent: null` desvincula el catálogo de su padre. 
+     * @summary Actualizar los descriptores de un catálogo
+     * @param {AdministracionCatalogosApiActualizarDescriptoresCatalogoRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public buscarListaRegistros(requestParameters: CatalogRecordApiBuscarListaRegistrosRequest, options?: RawAxiosRequestConfig) {
-        return CatalogRecordApiFp(this.configuration).buscarListaRegistros(requestParameters.code, requestParameters.fields, requestParameters.page, requestParameters.size, options).then((request) => request(this.axios, this.basePath));
+    public actualizarDescriptoresCatalogo(requestParameters: AdministracionCatalogosApiActualizarDescriptoresCatalogoRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).actualizarDescriptoresCatalogo(requestParameters.code, requestParameters.catalogDescriptorsUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * 
-     * @summary Busca un CatalogRecord por el valor de su CatalogField con qualifier=KEY, con lista opcional de nombres de campos (HU-ADM-01-10, Reglas 4 y 12) 
-     * @param {CatalogRecordApiBuscarRegistroPorClaveRequest} requestParameters Request parameters.
+     * Actualiza el valor de uno o más campos no KEY del registro (Regla 16). Incluir en `values` un campo con calificador KEY rechaza la operación con `CAMPO_KEY_INMUTABLE` (R16, E4). 
+     * @summary Actualizar un registro de un catálogo
+     * @param {AdministracionCatalogosApiActualizarRegistroRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public buscarRegistroPorClave(requestParameters: CatalogRecordApiBuscarRegistroPorClaveRequest, options?: RawAxiosRequestConfig) {
-        return CatalogRecordApiFp(this.configuration).buscarRegistroPorClave(requestParameters.code, requestParameters.key, requestParameters.fields, options).then((request) => request(this.axios, this.basePath));
+    public actualizarRegistro(requestParameters: AdministracionCatalogosApiActualizarRegistroRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).actualizarRegistro(requestParameters.code, requestParameters.keyValue, requestParameters.catalogRecordUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * 
-     * @summary Crea un nuevo CatalogRecord, con valor para todos los CatalogField del catálogo incluido KEY (HU-ADM-01-09, Reglas 1, 8, 13) 
-     * @param {CatalogRecordApiCrearRegistroCatalogoRequest} requestParameters Request parameters.
+     * Retorna, para todos los registros del catálogo, los valores de los campos solicitados en `fields`; si no se indica `fields`, el valor del primer campo no KEY (Regla 5). Si el catálogo está `INACTIVE`, `active` es `INACTIVE` en todos los elementos (Regla 12). 
+     * @summary Buscar la lista de registros de un catálogo
+     * @param {AdministracionCatalogosApiBuscarListaRegistrosRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public crearRegistroCatalogo(requestParameters: CatalogRecordApiCrearRegistroCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogRecordApiFp(this.configuration).crearRegistroCatalogo(requestParameters.code, requestParameters.catalogRecordCreateRequest, options).then((request) => request(this.axios, this.basePath));
+    public buscarListaRegistros(requestParameters: AdministracionCatalogosApiBuscarListaRegistrosRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).buscarListaRegistros(requestParameters.code, requestParameters.fields, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * 
-     * @summary Rechaza explícitamente la eliminación física de un registro; solo se admite inactivación (HU-ADM-01-13, Regla 11 — ver escenario \"Rechazar la eliminación física de un registro\") 
-     * @param {CatalogRecordApiEliminarRegistroCatalogoRequest} requestParameters Request parameters.
+     * Retorna los valores de los campos solicitados en `fields` del registro cuyo KEY es `keyValue`; si no se indica `fields`, el valor del primer campo no KEY (Regla 4). Si el catálogo o el registro está `INACTIVE`, `active` es `INACTIVE` (Regla 12). 
+     * @summary Buscar un registro específico por su clave
+     * @param {AdministracionCatalogosApiBuscarRegistroPorClaveRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public eliminarRegistroCatalogo(requestParameters: CatalogRecordApiEliminarRegistroCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogRecordApiFp(this.configuration).eliminarRegistroCatalogo(requestParameters.code, requestParameters.key, options).then((request) => request(this.axios, this.basePath));
+    public buscarRegistroPorClave(requestParameters: AdministracionCatalogosApiBuscarRegistroPorClaveRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).buscarRegistroPorClave(requestParameters.code, requestParameters.keyValue, requestParameters.fields, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * 
-     * @summary Transición de estado explícita: inactiva un registro fijando active=INACTIVE (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente (Reglas 9b y 14). HU-ADM-01-13. 
-     * @param {CatalogRecordApiInactivarRegistroCatalogoRequest} requestParameters Request parameters.
+     * Retorna la definición completa del catálogo (nombre, padre, estado, vigencia y campos) (Regla 21).
+     * @summary Consultar un catálogo por código
+     * @param {AdministracionCatalogosApiConsultarCatalogoPorCodigoRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public inactivarRegistroCatalogo(requestParameters: CatalogRecordApiInactivarRegistroCatalogoRequest, options?: RawAxiosRequestConfig) {
-        return CatalogRecordApiFp(this.configuration).inactivarRegistroCatalogo(requestParameters.code, requestParameters.key, requestParameters.inactivationRequest, options).then((request) => request(this.axios, this.basePath));
+    public consultarCatalogoPorCodigo(requestParameters: AdministracionCatalogosApiConsultarCatalogoPorCodigoRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).consultarCatalogoPorCodigo(requestParameters.code, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Retorna la lista `{code, name}` de los catálogos hijos directos; lista vacía si no tiene (Reglas 15, 24).
+     * @summary Consultar los catálogos hijos de un catálogo padre
+     * @param {AdministracionCatalogosApiConsultarCatalogosHijosRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public consultarCatalogosHijos(requestParameters: AdministracionCatalogosApiConsultarCatalogosHijosRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).consultarCatalogosHijos(requestParameters.code, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Retorna los registros del/los catálogo(s) hijo(s) enlazados al registro `keyValue` del catálogo `code`; lista vacía si no tiene (Reglas 23, 24). Si el catálogo `code` no tiene catálogo hijo definido se reporta `CATALOGO_SIN_CATALOGO_HIJO`. Cada elemento indica su catálogo (`catalog`) y su estado efectivo (`active`, Regla 12). 
+     * @summary Consultar los registros hijos de un registro padre
+     * @param {AdministracionCatalogosApiConsultarRegistrosHijosRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public consultarRegistrosHijos(requestParameters: AdministracionCatalogosApiConsultarRegistrosHijosRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).consultarRegistrosHijos(requestParameters.code, requestParameters.keyValue, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Crea un catálogo con código, nombre, padre opcional, estado, vigencia y campos. El orden del arreglo `fields` define la `posicion` de cada campo (criterio de \"primer campo no KEY\", Reglas 4 y 5). Si no se informan fechas de vigencia el estado queda `ACTIVE` (Regla 13); si `toDate` es hoy o pasada queda `INACTIVE` (Regla 14). 
+     * @summary Crear un catálogo
+     * @param {AdministracionCatalogosApiCrearCatalogoRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public crearCatalogo(requestParameters: AdministracionCatalogosApiCrearCatalogoRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).crearCatalogo(requestParameters.catalogCreateRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Crea un registro indicando un valor para cada campo definido del catálogo, incluido el KEY (Reglas 1, 8). Si el catálogo tiene padre, `parentRecord` (valor KEY de un registro del catálogo padre) es obligatorio y el registro queda enlazado a él (Regla 23, E8). Sin fechas de vigencia el registro queda `ACTIVE` (Regla 13). 
+     * @summary Crear un registro de un catálogo
+     * @param {AdministracionCatalogosApiCrearRegistroRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public crearRegistro(requestParameters: AdministracionCatalogosApiCrearRegistroRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).crearRegistro(requestParameters.code, requestParameters.catalogRecordCreateRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Operación declarada solo para representar explícitamente la Regla 10 / Excepción E7: un catálogo no puede eliminarse. Siempre responde 405 y ofrece `inactivarCatalogo` en `detalles`. El backend no debe implementar borrado físico. 
+     * @summary Eliminar un catálogo (no permitido)
+     * @param {AdministracionCatalogosApiEliminarCatalogoRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public eliminarCatalogo(requestParameters: AdministracionCatalogosApiEliminarCatalogoRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).eliminarCatalogo(requestParameters.code, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Operación declarada solo para representar explícitamente la Regla 11 / Excepción E7: un registro no puede eliminarse. Siempre responde 405 y ofrece `inactivarRegistro` en `detalles`. El backend no debe implementar borrado físico. 
+     * @summary Eliminar un registro (no permitido)
+     * @param {AdministracionCatalogosApiEliminarRegistroRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public eliminarRegistro(requestParameters: AdministracionCatalogosApiEliminarRegistroRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).eliminarRegistro(requestParameters.code, requestParameters.keyValue, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el catálogo queda `INACTIVE` (Reglas 9b, 14). A partir de ese momento toda búsqueda de sus registros retorna `INACTIVE` (Regla 12). 
+     * @summary Inactivar un catálogo
+     * @param {AdministracionCatalogosApiInactivarCatalogoRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public inactivarCatalogo(requestParameters: AdministracionCatalogosApiInactivarCatalogoRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).inactivarCatalogo(requestParameters.code, requestParameters.inactivationRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Transición de estado explícita ACTIVE → INACTIVE (baja lógica). - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a). - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el registro queda `INACTIVE` (Reglas 9b, 14). 
+     * @summary Inactivar un registro de un catálogo
+     * @param {AdministracionCatalogosApiInactivarRegistroRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public inactivarRegistro(requestParameters: AdministracionCatalogosApiInactivarRegistroRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).inactivarRegistro(requestParameters.code, requestParameters.keyValue, requestParameters.inactivationRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Retorna todos los catálogos del catalogMaster, incluidos los `INACTIVE` (Regla 20).
+     * @summary Listar los catálogos disponibles
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public listarCatalogos(options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).listarCatalogos(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Indica si existe en el catalogMaster un catálogo con el nombre dado (Regla 6). Responde siempre 200: `exists = false` es el resultado \"no está definido\", no un error. 
+     * @summary Verificar existencia de un catálogo por nombre
+     * @param {AdministracionCatalogosApiVerificarExistenciaCatalogoRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public verificarExistenciaCatalogo(requestParameters: AdministracionCatalogosApiVerificarExistenciaCatalogoRequest, options?: RawAxiosRequestConfig) {
+        return AdministracionCatalogosApiFp(this.configuration).verificarExistenciaCatalogo(requestParameters.name, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

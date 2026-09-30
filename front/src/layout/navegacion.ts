@@ -170,7 +170,7 @@ export const MODULOS: readonly Modulo[] = [
       // desde la sincronización de roles del 18/09 los dos existen en Keycloak.
       { clave: 'calendario', texto: 'menu.calendario', ruta: '/administracion/calendario', rolesRequeridos: ['ADMINISTRADOR', 'ADMINISTRADOR_CALENDARIO'] },
       // Sólo para el rol que el back del CU-ADM-01 acepta; a cualquier otro le respondería 403.
-      { clave: 'catalogos', texto: 'menu.catalogos', ruta: '/catalogos-generales', rolesRequeridos: ['ADMINISTRADOR_DE_CATALOGOS'] },
+      { clave: 'catalogos', texto: 'menu.catalogos', ruta: '/catalogos-generales', rolesRequeridos: ['ADMINISTRADOR_DE_CATALOGOS', 'ADMINISTRADOR_DEL_SISTEMA'] },
     ],
   },
 ];

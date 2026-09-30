@@ -1,21 +1,30 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
-import { registrosCatalogoApi, type CatalogRecord } from '../../../api/administracionApi';
+import { registrosCatalogoApi, type CatalogRecordFieldValuesResponse } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import type { CampoEditable } from './CamposEditor';
 import { coincide } from './busqueda';
 
 const CLAVE = 'administracion.catalogos';
 /**
- * Se traen de una vez todos los registros del catálogo. El contrato no tiene
- * parámetro de búsqueda, así que buscar por fracciones de palabra sólo puede
- * hacerse sobre lo que esté cargado; además la tabla mostraba sólo los primeros
- * 20 y no había manera de llegar al resto. Con esto se cubre un catálogo de
- * cientos de registros; si alguno pasa de este tope se avisa en pantalla.
+ * El contrato no pagina los registros: `buscarListaRegistros` devuelve la lista
+ * entera. Se pagina y se busca aquí, sobre lo recibido. Antes la tabla pedía 20
+ * y no había manera de llegar al resto.
  */
-const TOPE_REGISTROS = 1000;
 const POR_PAGINA = 20;
+
+/**
+ * Los valores de un registro llegan como lista de {campo, valor} y en la
+ * pantalla se manejan como un mapa nombre -> valor, que es como se rellena el
+ * formulario y como se comparan las columnas.
+ */
+const aMapa = (valores: CatalogRecordFieldValuesResponse['values']): Record<string, string> =>
+  Object.fromEntries((valores ?? []).map((v) => [v.field, v.valor]));
+
+/** El camino de vuelta: lo que espera el servidor al crear o actualizar. */
+const aLista = (valores: Record<string, string>) =>
+  Object.entries(valores).map(([field, valor]) => ({ field, valor }));
 
 /**
  * Registros de un catálogo: los datos que después se eligen en las pantallas del
@@ -25,24 +34,21 @@ const POR_PAGINA = 20;
  */
 export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string; readonly campos: readonly CampoEditable[] }) {
   const { t } = useTranslation();
-  const [registros, setRegistros] = useState<(CatalogRecord & { key: string })[]>([]);
+  const [registros, setRegistros] = useState<CatalogRecordFieldValuesResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [valores, setValores] = useState<Record<string, string>>({});
   const [editando, setEditando] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [pagina, setPagina] = useState(0);
-  /** Cuántos hay en total, para avisar si no caben todos. */
-  const [total, setTotal] = useState(0);
 
   const nombres = campos.map((c) => c.nombre);
 
   const cargar = useCallback(() => {
     registrosCatalogoApi
-      .buscarListaRegistros({ code: codigo, fields: campos.map((c) => c.nombre), page: 0, size: TOPE_REGISTROS })
+      .buscarListaRegistros({ code: codigo, fields: campos.map((c) => c.nombre) })
       .then(({ data }) => {
-        setRegistros((data.content ?? []).filter((r): r is CatalogRecord & { key: string } => Boolean(r.key)));
-        setTotal(data.totalElements ?? 0);
+        setRegistros((data ?? []).filter((r) => Boolean(r.keyValue)));
         setError(null);
       })
       .catch((error_) => setError(mensajeDeError(toErrorApi(error_), t)));
@@ -73,11 +79,14 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
         const sinClave = Object.fromEntries(Object.entries(valores).filter(([n]) => !claves.has(n)));
         await registrosCatalogoApi.actualizarRegistro({
           code: codigo,
-          key: editando,
-          catalogRecordUpdateRequest: { values: sinClave },
+          keyValue: editando,
+          catalogRecordUpdateRequest: { values: aLista(sinClave) },
         });
       } else {
-        await registrosCatalogoApi.crearRegistroCatalogo({ code: codigo, catalogRecordCreateRequest: { values: valores } });
+        await registrosCatalogoApi.crearRegistro({
+          code: codigo,
+          catalogRecordCreateRequest: { values: aLista(valores) },
+        });
       }
       await Swal.fire({ icon: 'success', text: t(`${CLAVE}.registroGuardado`) });
       limpiar();
@@ -102,7 +111,7 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
 
   // La búsqueda mira la clave y todos los valores del registro, por fracciones
   // de palabra y sin distinguir tildes ni mayúsculas.
-  const filtrados = registros.filter((r) => coincide(busqueda, r.key, ...Object.values(r.values ?? {})));
+  const filtrados = registros.filter((r) => coincide(busqueda, r.keyValue, ...Object.values(aMapa(r.values))));
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginaVigente = Math.min(pagina, totalPaginas - 1);
   const enPagina = filtrados.slice(paginaVigente * POR_PAGINA, (paginaVigente + 1) * POR_PAGINA);
@@ -129,12 +138,6 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
         </div>
       )}
 
-      {/* El catálogo tiene más registros de los que caben de una vez: la
-          búsqueda sólo mira los traídos, así que conviene decirlo. */}
-      {total > registros.length && (
-        <p className="nota">{t(`${CLAVE}.registrosParciales`, { traidos: registros.length, total })}</p>
-      )}
-
       {registros.length > 0 && filtrados.length === 0 && (
         <p className="nota">{t(`${CLAVE}.sinCoincidencias`, { busqueda })}</p>
       )}
@@ -153,19 +156,19 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
             </thead>
             <tbody>
               {enPagina.map((r) => (
-                <tr key={r.key}>
+                <tr key={r.keyValue}>
                   {nombres.map((n) => (
-                    <td key={n}>{r.values?.[n] ?? '—'}</td>
+                    <td key={n}>{aMapa(r.values)[n] ?? '—'}</td>
                   ))}
                   <td>{t(`${CLAVE}.estados.${r.active}`)}</td>
                   <td>
                     <button
                       type="button"
                       className="btn secundario"
-                      aria-label={t(`${CLAVE}.editarRegistro`, { clave: r.key })}
+                      aria-label={t(`${CLAVE}.editarRegistro`, { clave: r.keyValue })}
                       onClick={() => {
-                        setEditando(r.key);
-                        setValores({ ...r.values });
+                        setEditando(r.keyValue);
+                        setValores(aMapa(r.values));
                       }}
                     >
                       {t('common.editar')}
@@ -173,14 +176,14 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
                     <button
                       type="button"
                       className="btn secundario"
-                      aria-label={t(`${CLAVE}.inactivarRegistro`, { clave: r.key })}
+                      aria-label={t(`${CLAVE}.inactivarRegistro`, { clave: r.keyValue })}
                       disabled={r.active === 'INACTIVE'}
                       onClick={() =>
                         accion(
-                          registrosCatalogoApi.inactivarRegistroCatalogo({
+                          registrosCatalogoApi.inactivarRegistro({
                             code: codigo,
-                            key: r.key,
-                            inactivationRequest: { active: 'INACTIVE' },
+                            keyValue: r.keyValue,
+                            inactivationRequest: {},
                           }),
                           `${CLAVE}.registroInactivado`,
                         )

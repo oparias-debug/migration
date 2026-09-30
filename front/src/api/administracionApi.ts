@@ -1,4 +1,4 @@
-import { CatalogApi, CatalogRecordApi } from './generated/administracion-catalogos-admin';
+import { AdministracionCatalogosApi } from './generated/administracion-catalogos-admin';
 import { CalendariosConsultasApi, CalendariosGestinApi } from './generated/administracion-calendario';
 import { createHttpClient } from './httpClient';
 
@@ -22,13 +22,23 @@ const administracionAxios = createHttpClient('/back');
 const CATALOGOS_BASE = import.meta.env.VITE_CATALOGOS_BASE ?? '/admin/api/v1';
 const catalogosAxios = createHttpClient(CATALOGOS_BASE);
 
-// CU-ADM-01 (Administración de Catálogos). El generador lo partió en dos clases,
-// una por tag del contrato: los catálogos (su definición) y sus registros (los datos).
-export const catalogosApi = new CatalogApi(undefined, undefined, catalogosAxios);
-export const registrosCatalogoApi = new CatalogRecordApi(undefined, undefined, catalogosAxios);
+// CU-ADM-01 (Administración de Catálogos). El contrato de admin-srv usa un solo
+// tag, así que el generador deja una sola clase: antes eran dos, una para los
+// catálogos y otra para sus registros. Se mantienen los dos nombres de siempre
+// para no renombrar en cada pantalla lo que es el mismo cliente.
+export const catalogosApi = new AdministracionCatalogosApi(undefined, undefined, catalogosAxios);
+export const registrosCatalogoApi = catalogosApi;
 
 export { ActiveStatus, FieldQualifier } from './generated/administracion-catalogos-admin';
-export type { Catalog, CatalogField, CatalogRecord, CatalogSummary } from './generated/administracion-catalogos-admin';
+export type {
+  CatalogResponse,
+  CatalogSummaryResponse,
+  CatalogChildResponse,
+  CatalogFieldResponse,
+  CatalogRecordFieldValuesResponse,
+  CatalogRecordValueResponse,
+  CatalogRecordResponse,
+} from './generated/administracion-catalogos-admin';
 
 // CU-ADM-04 (Gestión de Calendario). El generador lo partió en dos clases, una
 // por tag: el mantenimiento del calendario y las consultas de cálculo, que el

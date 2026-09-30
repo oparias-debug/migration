@@ -1,31 +1,53 @@
 openapi: 3.0.3
 info:
-  title: SIIP v2 - CU-ADM-01 Administración de Catálogos
-  description: >
-    Fragmento OpenAPI generado a partir de CU-ADM-01 (Administración de Catálogos),
-    las 13 historias HU-ADM-01-01..13, sus 13 archivos .feature y el modelo de
-    dominio (Catalog / CatalogField / CatalogRecord / CatalogRecordValue).
-    Convención de naming: operationId y segmentos de path en español (siguiendo la
-    convención del CU y del ejemplo del rol: verbo+sustantivo, ej. "crearCatalogo");
-    nombres de propiedades de schema en inglés, calcados literalmente del modelo de
-    dominio (code, name, parent, active, fromDate, toDate, fields, qualifier, values),
-    porque el rol exige no inventar sinónimos de las entidades ya decididas en el ER.
-  version: "1.0.0"
+  title: SIIP v2 — CU-ADM-01 Administración de Catálogos (fragmento)
+  version: 1.0.0
+  description: |
+    Fragmento de contrato generado a partir de `CU-ADM-01-administracion-catalogos.md`,
+    las 14 historias `CU-ADM-01-*.feature` y `modelo-dominio-catalogos.md` (v2.0).
+    Válido de forma standalone; se mezcla después en el contrato consolidado del proyecto.
+
+    Convenciones:
+    - `operationId` en camelCase (verbo + sustantivo) → nombre del método Java y de la función TS.
+    - Schemas en PascalCase; propiedades JSON en camelCase con los nombres del modelo de dominio
+      (`code`, `name`, `parent`, `active`, `fromDate`, `toDate`, `fields`, `qualifier`,
+      `posicion`, `parentRecord`, `values`, `field`, `valor`).
+    - 400 = solicitud mal formada; 422 = solicitud bien formada que viola una regla de negocio;
+      409 = el estado actual del recurso impide la operación.
+  x-cu: CU-ADM-01
+  x-fuentes:
+    - CU-ADM-01-administracion-catalogos.md
+    - historias-CU-ADM-01.md
+    - modelo-dominio-catalogos.md
+
 tags:
-  - name: Catalog
-    description: Operaciones sobre el catalogMaster (creación, consulta, actualización, inactivación)
-  - name: CatalogRecord
-    description: Operaciones sobre los registros de un catálogo
+  - name: AdministracionCatalogos
+    description: |
+      Módulo de Administración de Catálogos (catalogMaster). Nombre provisional derivado del
+      prefijo ADM del CU; ajustar cuando se defina la WBS del Gestor del Dominio.
+
+security:
+  - bearerAuth: []
 
 paths:
-
   /catalogos:
     post:
+      tags: [AdministracionCatalogos]
       operationId: crearCatalogo
-      summary: Crea un nuevo catálogo en el catalogMaster (HU-ADM-01-01)
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
+      summary: Crear un catálogo
+      description: |
+        Crea un catálogo con código, nombre, padre opcional, estado, vigencia y campos.
+        El orden del arreglo `fields` define la `posicion` de cada campo (criterio de
+        "primer campo no KEY", Reglas 4 y 5). Si no se informan fechas de vigencia el
+        estado queda `ACTIVE` (Regla 13); si `toDate` es hoy o pasada queda `INACTIVE` (Regla 14).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-01
+        feature: CU-ADM-01-crear-catalogo.feature
+        reglas: [2, 3, 7, 13, 18, 23]
+        excepciones: [E6]
       requestBody:
         required: true
         content:
@@ -34,124 +56,179 @@ paths:
               $ref: '#/components/schemas/CatalogCreateRequest'
       responses:
         '201':
-          description: Catálogo creado correctamente (si no se informan fechas de vigencia, active=ACTIVE, Regla 13)
+          description: Catálogo creado.
+          headers:
+            Location:
+              description: URI del catálogo creado (`/catalogos/{code}`).
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Catalog'
+                $ref: '#/components/schemas/CatalogResponse'
         '400':
-          description: >
-            Ningún campo con qualifier=KEY (Regla 2), nombres de campo duplicados (Regla 3),
-            o ningún campo definido (Regla 18)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: El catálogo indicado como parent no existe en el catalogMaster
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          description: |
+            Regla de negocio violada. Códigos posibles:
+            `CATALOGO_SIN_CAMPOS` (R18, E6), `CATALOGO_SIN_CAMPO_KEY` (R2, E6),
+            `NOMBRE_CAMPO_DUPLICADO` (R3), `CATALOGO_PADRE_INEXISTENTE` (HU-ADM-01-01).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                sinCampos:
+                  value:
+                    codigo: CATALOGO_SIN_CAMPOS
+                    mensaje: Un catálogo debe tener al menos un campo.
+                    timestamp: '2026-09-28T10:00:00Z'
+                sinCampoKey:
+                  value:
+                    codigo: CATALOGO_SIN_CAMPO_KEY
+                    mensaje: Un catálogo debe tener al menos un campo KEY.
+                    timestamp: '2026-09-28T10:00:00Z'
+                nombreCampoDuplicado:
+                  value:
+                    codigo: NOMBRE_CAMPO_DUPLICADO
+                    mensaje: Los campos de un catálogo deben tener nombres diferentes.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - campo: fields[2].name
+                        codigo: NOMBRE_CAMPO_DUPLICADO
+                        mensaje: descripcion
+                catalogoPadreInexistente:
+                  value:
+                    codigo: CATALOGO_PADRE_INEXISTENTE
+                    mensaje: El catálogo padre indicado no existe.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - campo: parent
+                        codigo: CATALOGO_PADRE_INEXISTENTE
+                        mensaje: CAT-PADRE
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     get:
+      tags: [AdministracionCatalogos]
       operationId: listarCatalogos
-      summary: Lista todos los catálogos del catalogMaster, incluyendo inactivos (HU-ADM-01-03)
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Size'
+      summary: Listar los catálogos disponibles
+      description: Retorna todos los catálogos del catalogMaster, incluidos los `INACTIVE` (Regla 20).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-03
+        feature: CU-ADM-01-listar-catalogos.feature
+        reglas: [20]
       responses:
         '200':
-          description: Listado de catálogos (activos e inactivos)
+          description: Listado completo de catálogos.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/PageableResponse'
-                  - type: object
-                    properties:
-                      content:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Catalog'
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogSummaryResponse'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
-  /catalogos/verificacion-existencia:
+  /catalogos/existencia:
     get:
+      tags: [AdministracionCatalogos]
       operationId: verificarExistenciaCatalogo
-      summary: Verifica si existe un catálogo con un nombre específico (HU-ADM-01-04, Regla 6)
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
+      summary: Verificar existencia de un catálogo por nombre
+      description: |
+        Indica si existe en el catalogMaster un catálogo con el nombre dado (Regla 6).
+        Responde siempre 200: `exists = false` es el resultado "no está definido", no un error.
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-04
+        feature: CU-ADM-01-verificar-existencia-catalogo.feature
+        reglas: [6]
       parameters:
         - name: name
           in: query
           required: true
-          description: Nombre de catálogo a verificar
+          description: Nombre del catálogo a verificar.
           schema:
             type: string
+            minLength: 1
+            maxLength: 255
       responses:
         '200':
-          description: >
-            Resultado de la verificación. exists=true si el nombre ya está registrado en el
-            catalogMaster; exists=false si no está definido (ambos son respuestas 200,
-            no hay escenario de error en CatalogRepository.existsByNameIgnoreCase)
+          description: Resultado de la verificación.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CatalogExistenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /catalogos/{code}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
     get:
-      operationId: consultarCatalogo
-      summary: Recupera un catálogo por su código (HU-ADM-01-02, Regla 21)
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
+      tags: [AdministracionCatalogos]
+      operationId: consultarCatalogoPorCodigo
+      summary: Consultar un catálogo por código
+      description: Retorna la definición completa del catálogo (nombre, padre, estado, vigencia y campos) (Regla 21).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-02
+        feature: CU-ADM-01-consultar-catalogo-por-codigo.feature
+        reglas: [21]
+        excepciones: [E1]
       responses:
         '200':
-          description: Definición completa del catálogo (name, parent, active, fromDate, toDate, fields)
+          description: Definición completa del catálogo.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Catalog'
-        '404':
-          description: El código de catálogo no existe (Regla 21)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/CatalogResponse'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     patch:
+      tags: [AdministracionCatalogos]
       operationId: actualizarDescriptoresCatalogo
-      summary: >
-        Actualiza name, parent, active y/o vigencia (fromDate/toDate) de un catálogo
-        (HU-ADM-01-05, Reglas 17 y 22). El código no forma parte de este payload.
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
+      summary: Actualizar los descriptores de un catálogo
+      description: |
+        Actualiza parcialmente `name`, `parent`, `active`, `fromDate` y/o `toDate` (Reglas 17 y 22).
+        El código es inmutable: si el cuerpo incluye `code`, la operación se rechaza con
+        `CODIGO_CATALOGO_INMUTABLE` (R17, E4). `parent: null` desvincula el catálogo de su padre.
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-05
+        feature: CU-ADM-01-actualizar-descriptores-catalogo.feature
+        reglas: [14, 17, 22]
+        excepciones: [E1, E4]
       requestBody:
         required: true
         content:
@@ -160,68 +237,100 @@ paths:
               $ref: '#/components/schemas/CatalogDescriptorsUpdateRequest'
       responses:
         '200':
-          description: Descriptores actualizados correctamente
+          description: Descriptores actualizados.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Catalog'
+                $ref: '#/components/schemas/CatalogResponse'
         '400':
-          description: >
-            El payload incluye el campo "code" (inmutable, Regla 17) o no incluye ningún
-            descriptor a actualizar
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: >
-            El código de catálogo no existe. No hay un escenario explícito en
-            actualizar-descriptores-catalogo.feature para este caso; se infiere por
-            analogía con la Regla 21 (ver contrato-CU-ADM-01.md, sección 4)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogNotFound'
+        '422':
+          description: 'Regla de negocio violada. Código: `CODIGO_CATALOGO_INMUTABLE` (R17, E4).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                codigoInmutable:
+                  value:
+                    codigo: CODIGO_CATALOGO_INMUTABLE
+                    mensaje: El código de un catálogo no puede actualizarse.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - campo: code
+                        codigo: CODIGO_CATALOGO_INMUTABLE
+                        mensaje: CAT-A
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     delete:
+      tags: [AdministracionCatalogos]
       operationId: eliminarCatalogo
-      summary: >
-        Rechaza explícitamente la eliminación física de un catálogo; solo se admite inactivación
-        (HU-ADM-01-07, Regla 10 — ver escenario "Rechazar la eliminación física de un catálogo")
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
+      summary: Eliminar un catálogo (no permitido)
+      description: |
+        Operación declarada solo para representar explícitamente la Regla 10 / Excepción E7:
+        un catálogo no puede eliminarse. Siempre responde 405 y ofrece `inactivarCatalogo`
+        en `detalles`. El backend no debe implementar borrado físico.
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-07
+        feature: CU-ADM-01-inactivar-catalogo.feature
+        reglas: [10]
+        excepciones: [E7]
       responses:
-        '400':
-          description: >
-            Operación rechazada - un catálogo no puede eliminarse, solo inactivarse (Regla 10).
-            Usar POST /catalogos/{code}/inactivacion.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '405':
+          description: Eliminación no permitida; usar la inactivación (R10, E7).
+          headers:
+            Allow:
+              description: Métodos permitidos sobre el recurso.
+              schema:
+                type: string
+                example: GET, PATCH
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
-        '403':
-          $ref: '#/components/responses/SinPermiso'
+              examples:
+                eliminacionNoPermitida:
+                  value:
+                    codigo: ELIMINACION_NO_PERMITIDA
+                    mensaje: Un catálogo no puede eliminarse, solo inactivarse.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - codigo: OPERACION_ALTERNATIVA
+                        mensaje: inactivarCatalogo
 
   /catalogos/{code}/campos:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
     put:
+      tags: [AdministracionCatalogos]
       operationId: actualizarCamposCatalogo
-      summary: >
-        Reemplaza la definición de campos (CatalogField: qualifier KEY/FIELD) de un catálogo
-        sin registros (HU-ADM-01-06, Reglas 2, 3 y 19)
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
+      summary: Actualizar los campos de un catálogo
+      description: |
+        Reemplaza la lista completa de campos (`FIELD`/`KEY`) del catálogo. Solo se permite si
+        el catálogo no contiene registros (Regla 19). La nueva lista debe tener al menos un campo
+        (R18), al menos un `KEY` (R2) y nombres únicos (R3). El orden del arreglo define `posicion`.
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-06
+        feature: CU-ADM-01-actualizar-campos-catalogo.feature
+        reglas: [2, 3, 18, 19]
+        excepciones: [E1, E5]
       requestBody:
         required: true
         content:
@@ -230,120 +339,153 @@ paths:
               $ref: '#/components/schemas/CatalogFieldsUpdateRequest'
       responses:
         '200':
-          description: "Campos actualizados correctamente (Regla 3 validada: nombres únicos)"
+          description: Campos actualizados; retorna la definición completa del catálogo.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Catalog'
+                $ref: '#/components/schemas/CatalogResponse'
         '400':
-          description: >
-            Nombres de campo duplicados (Regla 3) o la modificación deja al catálogo sin
-            ningún campo qualifier=KEY (Regla 2)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: >
-            El código de catálogo no existe. Inferido por analogía con la Regla 21; no hay
-            escenario explícito en actualizar-campos-catalogo.feature
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: >
-            El catálogo ya contiene registros (records no vacío); los CatalogField no pueden
-            actualizarse en ese caso (Regla 19)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogNotFound'
+        '409':
+          description: 'El catálogo ya contiene registros. Código: `CATALOGO_CON_REGISTROS` (R19, E5).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                catalogoConRegistros:
+                  value:
+                    codigo: CATALOGO_CON_REGISTROS
+                    mensaje: No se pueden modificar los campos, el catálogo ya contiene registros.
+                    timestamp: '2026-09-28T10:00:00Z'
+        '422':
+          description: |
+            Regla de negocio violada. Códigos posibles:
+            `CATALOGO_SIN_CAMPOS` (R18), `CATALOGO_SIN_CAMPO_KEY` (R2), `NOMBRE_CAMPO_DUPLICADO` (R3).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                sinCampoKey:
+                  value:
+                    codigo: CATALOGO_SIN_CAMPO_KEY
+                    mensaje: Un catálogo debe tener al menos un campo KEY.
+                    timestamp: '2026-09-28T10:00:00Z'
+                nombreCampoDuplicado:
+                  value:
+                    codigo: NOMBRE_CAMPO_DUPLICADO
+                    mensaje: Los campos de un catálogo deben tener nombres diferentes.
+                    timestamp: '2026-09-28T10:00:00Z'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
-  /catalogos/{code}/inactivacion:
+  /catalogos/{code}/inactivaciones:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
     post:
+      tags: [AdministracionCatalogos]
       operationId: inactivarCatalogo
-      summary: >
-        Transición de estado explícita: inactiva un catálogo fijando active=INACTIVE
-        (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente
-        (Reglas 9b y 14). HU-ADM-01-07.
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
+      summary: Inactivar un catálogo
+      description: |
+        Transición de estado explícita ACTIVE → INACTIVE (baja lógica).
+        - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a).
+        - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el catálogo queda `INACTIVE` (Reglas 9b, 14).
+        A partir de ese momento toda búsqueda de sus registros retorna `INACTIVE` (Regla 12).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-07
+        feature: CU-ADM-01-inactivar-catalogo.feature
+        reglas: [9, 12, 14]
+        excepciones: [E1]
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/InactivationRequest'
       responses:
         '200':
-          description: Catálogo inactivado correctamente
+          description: Catálogo inactivado.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Catalog'
-        '404':
-          description: >
-            El código de catálogo no existe. Inferido por analogía con la Regla 21; no hay
-            escenario explícito en inactivar-catalogo.feature para este caso
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/CatalogResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogNotFound'
+        '422':
+          $ref: '#/components/responses/InactivationDateInFuture'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /catalogos/{code}/hijos:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
     get:
+      tags: [AdministracionCatalogos]
       operationId: consultarCatalogosHijos
-      summary: Consulta los catálogos hijos (Catalog.children) de un catálogo padre (HU-ADM-01-08, Regla 15)
-      tags: [Catalog]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
+      summary: Consultar los catálogos hijos de un catálogo padre
+      description: Retorna la lista `{code, name}` de los catálogos hijos directos; lista vacía si no tiene (Reglas 15, 24).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-08
+        feature: CU-ADM-01-consultar-catalogos-hijos.feature
+        reglas: [15, 24]
+        excepciones: [E1]
       responses:
         '200':
-          description: Lista de catálogos hijos (code, name); lista vacía si no tiene hijos
+          description: Catálogos hijos (posiblemente vacía).
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CatalogSummary'
-        '404':
-          description: >
-            El código de catálogo (padre) no existe. Inferido por analogía con la Regla 21;
-            no hay escenario explícito en consultar-catalogos-hijos.feature para este caso
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                  $ref: '#/components/schemas/CatalogChildResponse'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /catalogos/{code}/registros:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
     post:
-      operationId: crearRegistroCatalogo
-      summary: >
-        Crea un nuevo CatalogRecord, con valor para todos los CatalogField del catálogo
-        incluido KEY (HU-ADM-01-09, Reglas 1, 8, 13)
-      tags: [CatalogRecord]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
+      tags: [AdministracionCatalogos]
+      operationId: crearRegistro
+      summary: Crear un registro de un catálogo
+      description: |
+        Crea un registro indicando un valor para cada campo definido del catálogo, incluido el KEY
+        (Reglas 1, 8). Si el catálogo tiene padre, `parentRecord` (valor KEY de un registro del
+        catálogo padre) es obligatorio y el registro queda enlazado a él (Regla 23, E8).
+        Sin fechas de vigencia el registro queda `ACTIVE` (Regla 13).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-09
+        feature: CU-ADM-01-crear-registro.feature
+        reglas: [1, 8, 13, 23]
+        excepciones: [E1, E8]
       requestBody:
         required: true
         content:
@@ -352,121 +494,165 @@ paths:
               $ref: '#/components/schemas/CatalogRecordCreateRequest'
       responses:
         '201':
-          description: Registro creado correctamente (si no se informan fechas de vigencia, active=ACTIVE, Regla 13)
+          description: Registro creado.
+          headers:
+            Location:
+              description: URI del registro creado (`/catalogos/{code}/registros/{keyValue}`).
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CatalogRecord'
+                $ref: '#/components/schemas/CatalogRecordResponse'
         '400':
-          description: Falta el valor de alguno de los CatalogField definidos para el catálogo
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: >
-            El código de catálogo no existe. Inferido por analogía con la Regla 21; no hay
-            escenario explícito en crear-registro.feature para este caso
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogNotFound'
+        '422':
+          description: |
+            Regla de negocio violada. Códigos posibles:
+            `VALOR_CAMPO_FALTANTE` (R8), `REGISTRO_PADRE_REQUERIDO` (R8, R23, E8),
+            `REGISTRO_PADRE_INEXISTENTE` (R8, R23, E8).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                valorCampoFaltante:
+                  value:
+                    codigo: VALOR_CAMPO_FALTANTE
+                    mensaje: Falta el valor de un campo definido del catálogo.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - campo: values
+                        codigo: VALOR_CAMPO_FALTANTE
+                        mensaje: descripcion
+                registroPadreRequerido:
+                  value:
+                    codigo: REGISTRO_PADRE_REQUERIDO
+                    mensaje: El catálogo tiene padre; se requiere el registro padre.
+                    timestamp: '2026-09-28T10:00:00Z'
+                registroPadreInexistente:
+                  value:
+                    codigo: REGISTRO_PADRE_INEXISTENTE
+                    mensaje: El registro padre indicado no existe en el catálogo padre.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - campo: parentRecord
+                        codigo: REGISTRO_PADRE_INEXISTENTE
+                        mensaje: P99
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     get:
+      tags: [AdministracionCatalogos]
       operationId: buscarListaRegistros
-      summary: >
-        Busca la lista de CatalogRecord de un catálogo, con lista opcional de nombres de
-        CatalogField (HU-ADM-01-11, Reglas 5 y 12)
-      tags: [CatalogRecord]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
+      summary: Buscar la lista de registros de un catálogo
+      description: |
+        Retorna, para todos los registros del catálogo, los valores de los campos solicitados en
+        `fields`; si no se indica `fields`, el valor del primer campo no KEY (Regla 5).
+        Si el catálogo está `INACTIVE`, `active` es `INACTIVE` en todos los elementos (Regla 12).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-11
+        feature: CU-ADM-01-buscar-lista-registros.feature
+        reglas: [5, 12]
+        excepciones: [E1]
       parameters:
-        - $ref: '#/components/parameters/CatalogCode'
-        - $ref: '#/components/parameters/Fields'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/FieldNames'
       responses:
         '200':
-          description: >
-            Valores de cada CatalogField solicitado (o el primer campo no KEY, según
-            posición/`position`, si no se especifica lista) para cada registro. Si el
-            catálogo tiene active=INACTIVE, todos los registros se retornan con
-            active=INACTIVE (Regla 12, CatalogRecord.effectiveStatus()). No hay escenario
-            de error en buscar-lista-registros.feature para esta operación.
+          description: Valores solicitados de cada registro.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/PageableResponse'
-                  - type: object
-                    properties:
-                      content:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/CatalogRecord'
-        '404':
-          description: >
-            El código de catálogo no existe. Inferido por analogía con la Regla 21; no hay
-            escenario explícito para este caso en buscar-lista-registros.feature
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogRecordFieldValuesResponse'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
-  /catalogos/{code}/registros/{key}:
+  /catalogos/{code}/registros/{keyValue}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/KeyValue'
     get:
+      tags: [AdministracionCatalogos]
       operationId: buscarRegistroPorClave
-      summary: >
-        Busca un CatalogRecord por el valor de su CatalogField con qualifier=KEY, con lista
-        opcional de nombres de campos (HU-ADM-01-10, Reglas 4 y 12)
-      tags: [CatalogRecord]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
+      summary: Buscar un registro específico por su clave
+      description: |
+        Retorna los valores de los campos solicitados en `fields` del registro cuyo KEY es
+        `keyValue`; si no se indica `fields`, el valor del primer campo no KEY (Regla 4).
+        Si el catálogo o el registro está `INACTIVE`, `active` es `INACTIVE` (Regla 12).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-10
+        feature: CU-ADM-01-buscar-registro-por-clave.feature
+        reglas: [4, 12]
+        excepciones: [E1, E2, E3]
       parameters:
-        - $ref: '#/components/parameters/CatalogCode'
-        - $ref: '#/components/parameters/RecordKey'
-        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/FieldNames'
       responses:
         '200':
-          description: >
-            Valor de cada campo solicitado (o el primer campo no KEY si no se especifica
-            lista). Si el catálogo o el registro tienen active=INACTIVE, se retorna
-            active=INACTIVE (Regla 12)
+          description: Valores solicitados del registro.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CatalogRecord'
+                $ref: '#/components/schemas/CatalogRecordFieldValuesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: >
-            El valor de key no corresponde a ningún registro, o alguno de los nombres de
-            campo solicitados no existe en el catálogo (ambos escenarios explícitos de
-            buscar-registro-por-clave.feature, Regla 4)
+          $ref: '#/components/responses/CatalogOrRecordNotFound'
+        '422':
+          description: 'Se solicitó un campo que no existe en el catálogo. Código: `CAMPO_INEXISTENTE` (R4, E3).'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
-        '403':
-          $ref: '#/components/responses/SinPermiso'
+              examples:
+                campoInexistente:
+                  value:
+                    codigo: CAMPO_INEXISTENTE
+                    mensaje: El campo solicitado no existe en el catálogo.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - campo: fields
+                        codigo: CAMPO_INEXISTENTE
+                        mensaje: campo_inexistente
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     patch:
+      tags: [AdministracionCatalogos]
       operationId: actualizarRegistro
-      summary: Actualiza el valor de CatalogField no KEY de un registro (HU-ADM-01-12, Regla 16)
-      tags: [CatalogRecord]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
-        - $ref: '#/components/parameters/RecordKey'
+      summary: Actualizar un registro de un catálogo
+      description: |
+        Actualiza el valor de uno o más campos no KEY del registro (Regla 16). Incluir en `values`
+        un campo con calificador KEY rechaza la operación con `CAMPO_KEY_INMUTABLE` (R16, E4).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-12
+        feature: CU-ADM-01-actualizar-registro.feature
+        reglas: [16]
+        excepciones: [E1, E4]
       requestBody:
         required: true
         content:
@@ -475,435 +661,615 @@ paths:
               $ref: '#/components/schemas/CatalogRecordUpdateRequest'
       responses:
         '200':
-          description: Registro actualizado correctamente
+          description: Registro actualizado.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CatalogRecord'
+                $ref: '#/components/schemas/CatalogRecordResponse'
         '400':
-          description: Se intentó modificar el valor del campo qualifier=KEY del registro (Regla 16)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: >
-            El catálogo o el registro no existen. Inferido por analogía con la Regla 21;
-            no hay escenario explícito en actualizar-registro.feature para este caso
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/NoAutenticado'
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogOrRecordNotFound'
+        '422':
+          description: 'Regla de negocio violada. Código: `CAMPO_KEY_INMUTABLE` (R16, E4).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                campoKeyInmutable:
+                  value:
+                    codigo: CAMPO_KEY_INMUTABLE
+                    mensaje: El campo KEY de un registro no puede actualizarse.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - campo: values[0].field
+                        codigo: CAMPO_KEY_INMUTABLE
+                        mensaje: codigo
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     delete:
-      operationId: eliminarRegistroCatalogo
-      summary: >
-        Rechaza explícitamente la eliminación física de un registro; solo se admite
-        inactivación (HU-ADM-01-13, Regla 11 — ver escenario "Rechazar la eliminación física
-        de un registro")
-      tags: [CatalogRecord]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
-        - $ref: '#/components/parameters/RecordKey'
+      tags: [AdministracionCatalogos]
+      operationId: eliminarRegistro
+      summary: Eliminar un registro (no permitido)
+      description: |
+        Operación declarada solo para representar explícitamente la Regla 11 / Excepción E7:
+        un registro no puede eliminarse. Siempre responde 405 y ofrece `inactivarRegistro`
+        en `detalles`. El backend no debe implementar borrado físico.
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-13
+        feature: CU-ADM-01-inactivar-registro.feature
+        reglas: [11]
+        excepciones: [E7]
       responses:
-        '400':
-          description: >
-            Operación rechazada - un registro no puede eliminarse, solo inactivarse (Regla 11).
-            Usar POST /catalogos/{code}/registros/{key}/inactivacion.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '405':
+          description: Eliminación no permitida; usar la inactivación (R11, E7).
+          headers:
+            Allow:
+              description: Métodos permitidos sobre el recurso.
+              schema:
+                type: string
+                example: GET, PATCH
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
-        '403':
-          $ref: '#/components/responses/SinPermiso'
+              examples:
+                eliminacionNoPermitida:
+                  value:
+                    codigo: ELIMINACION_NO_PERMITIDA
+                    mensaje: Un registro de catálogo no puede eliminarse, solo inactivarse.
+                    timestamp: '2026-09-28T10:00:00Z'
+                    detalles:
+                      - codigo: OPERACION_ALTERNATIVA
+                        mensaje: inactivarRegistro
 
-  /catalogos/{code}/registros/{key}/inactivacion:
+  /catalogos/{code}/registros/{keyValue}/inactivaciones:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/KeyValue'
     post:
-      operationId: inactivarRegistroCatalogo
-      summary: >
-        Transición de estado explícita: inactiva un registro fijando active=INACTIVE
-        (auto-fija toDate=hoy, Regla 9a) o fijando toDate en el pasado/presente
-        (Reglas 9b y 14). HU-ADM-01-13.
-      tags: [CatalogRecord]
-      security: [{ bearerAuth: [] }]
-      x-roles: [ADMINISTRADOR_DE_CATALOGOS]
-      parameters:
-        - $ref: '#/components/parameters/CatalogCode'
-        - $ref: '#/components/parameters/RecordKey'
+      tags: [AdministracionCatalogos]
+      operationId: inactivarRegistro
+      summary: Inactivar un registro de un catálogo
+      description: |
+        Transición de estado explícita ACTIVE → INACTIVE (baja lógica).
+        - Sin `toDate` (o cuerpo vacío): fija `active = INACTIVE` y `toDate` = fecha actual (Regla 9a).
+        - Con `toDate` igual a la fecha actual o pasada: fija `toDate` y el registro queda `INACTIVE` (Reglas 9b, 14).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-13
+        feature: CU-ADM-01-inactivar-registro.feature
+        reglas: [9, 14]
+        excepciones: [E1]
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/InactivationRequest'
       responses:
         '200':
-          description: Registro inactivado correctamente
+          description: Registro inactivado.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CatalogRecord'
+                $ref: '#/components/schemas/CatalogRecordResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
-          description: >
-            El catálogo o el registro no existen. Inferido por analogía con la Regla 21;
-            no hay escenario explícito en inactivar-registro.feature para este caso
+          $ref: '#/components/responses/CatalogOrRecordNotFound'
+        '422':
+          $ref: '#/components/responses/InactivationDateInFuture'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /catalogos/{code}/registros/{keyValue}/hijos:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/KeyValue'
+    get:
+      tags: [AdministracionCatalogos]
+      operationId: consultarRegistrosHijos
+      summary: Consultar los registros hijos de un registro padre
+      description: |
+        Retorna los registros del/los catálogo(s) hijo(s) enlazados al registro `keyValue` del
+        catálogo `code`; lista vacía si no tiene (Reglas 23, 24). Si el catálogo `code` no tiene
+        catálogo hijo definido se reporta `CATALOGO_SIN_CATALOGO_HIJO`. Cada elemento indica su
+        catálogo (`catalog`) y su estado efectivo (`active`, Regla 12).
+      security:
+        - bearerAuth: []
+      x-roles: [ADMINISTRADOR_DEL_SISTEMA]
+      x-trazabilidad:
+        historia: HU-ADM-01-14
+        feature: CU-ADM-01-consultar-registros-hijos.feature
+        reglas: [12, 23, 24]
+        excepciones: [E1]
+      responses:
+        '200':
+          description: Registros hijos (posiblemente vacía).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogRecordResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CatalogOrRecordNotFound'
+        '422':
+          description: 'El catálogo no tiene catálogo hijo definido. Código: `CATALOGO_SIN_CATALOGO_HIJO` (R24, HU-ADM-01-14).'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
-        '403':
-          $ref: '#/components/responses/SinPermiso'
+              examples:
+                catalogoSinCatalogoHijo:
+                  value:
+                    codigo: CATALOGO_SIN_CATALOGO_HIJO
+                    mensaje: El catálogo de este registro no tiene catálogo hijo definido.
+                    timestamp: '2026-09-28T10:00:00Z'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
   parameters:
     CatalogCode:
       name: code
       in: path
       required: true
-      description: Código único e inmutable del catálogo (Catalog.code, Regla 17)
+      description: Código del catálogo (`Catalog.code`).
       schema:
         type: string
-    RecordKey:
-      name: key
+        minLength: 1
+        maxLength: 64
+    KeyValue:
+      name: keyValue
       in: path
       required: true
-      description: Valor del CatalogField con qualifier=KEY que identifica al registro
+      description: Valor del campo KEY del registro dentro del catálogo.
       schema:
         type: string
-    Fields:
+        minLength: 1
+    FieldNames:
       name: fields
       in: query
       required: false
-      description: >
-        Lista de nombres de CatalogField a retornar. Si se omite, se retorna el valor del
-        primer campo no KEY según su `position` (Reglas 4 y 5)
+      description: |
+        Lista de nombres de campo a retornar, separados por coma (`?fields=descripcion,sigla`).
+        Si se omite, se retorna el primer campo no KEY según `posicion` (Reglas 4, 5).
       style: form
-      explode: true
+      explode: false
       schema:
         type: array
         items:
           type: string
-    Page:
-      name: page
-      in: query
-      required: false
-      description: Índice de página, base 0 (convención Spring Data Pageable)
-      schema:
-        type: integer
-        minimum: 0
-        default: 0
-    Size:
-      name: size
-      in: query
-      required: false
-      description: Tamaño de página (convención Spring Data Pageable)
-      schema:
-        type: integer
-        minimum: 1
-        default: 20
 
   responses:
-    NoAutenticado:
-      description: No se proporcionó un token válido
+    BadRequest:
+      description: 'Solicitud mal formada o que no cumple el schema. Código: `SOLICITUD_INVALIDA`.'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    SinPermiso:
-      description: >
-        El actor autenticado no tiene el rol requerido para esta operación. Respuesta
-        genérica de plataforma: ninguna HU/.feature de CU-ADM-01 define un escenario de
-        rechazo por falta de permisos (ver historias-CU-ADM-01.md, nota general).
+    Unauthorized:
+      description: 'Token ausente, inválido o expirado. Código: `NO_AUTENTICADO`.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: 'El usuario no tiene permisos de administración de catálogos. Código: `SIN_PERMISOS`.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            sinPermisos:
+              value:
+                codigo: SIN_PERMISOS
+                mensaje: El usuario no tiene permisos para esta operación.
+                timestamp: '2026-09-28T10:00:00Z'
+    CatalogNotFound:
+      description: 'El código del catálogo no existe. Código: `CATALOGO_INEXISTENTE` (R21, E1).'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            catalogoInexistente:
+              value:
+                codigo: CATALOGO_INEXISTENTE
+                mensaje: El catálogo indicado no existe.
+                timestamp: '2026-09-28T10:00:00Z'
+                detalles:
+                  - campo: code
+                    codigo: CATALOGO_INEXISTENTE
+                    mensaje: CAT-X
+    CatalogOrRecordNotFound:
+      description: |
+        El catálogo o el registro no existe. Códigos posibles:
+        `CATALOGO_INEXISTENTE` (R21, E1), `REGISTRO_INEXISTENTE` (R4, E2).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            catalogoInexistente:
+              value:
+                codigo: CATALOGO_INEXISTENTE
+                mensaje: El catálogo indicado no existe.
+                timestamp: '2026-09-28T10:00:00Z'
+            registroInexistente:
+              value:
+                codigo: REGISTRO_INEXISTENTE
+                mensaje: No existe un registro con el valor KEY indicado.
+                timestamp: '2026-09-28T10:00:00Z'
+                detalles:
+                  - campo: keyValue
+                    codigo: REGISTRO_INEXISTENTE
+                    mensaje: '99'
+    InactivationDateInFuture:
+      description: |
+        La `toDate` indicada es futura; la inactivación por fecha solo admite la fecha actual o
+        una pasada. Código: `FECHA_INACTIVACION_FUTURA` (R9b).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: 'Error no controlado. Código: `ERROR_INTERNO`.'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
 
   schemas:
-
-    ActiveStatus:
-      type: string
-      description: >
-        Estado de vigencia, calcado del enum de dominio com.example.catalogo.domain.model.ActiveStatus
-        (Reglas 9, 12, 13, 14)
-      enum: [ACTIVE, INACTIVE]
-
-    FieldQualifier:
-      type: string
-      description: >
-        Calificador de un CatalogField, calcado del enum de dominio
-        com.example.catalogo.domain.model.FieldQualifier (Reglas 2, 4, 16)
-      enum: [KEY, FIELD]
-
-    CatalogField:
-      type: object
-      description: Calcado de com.example.catalogo.domain.model.CatalogField
-      required: [name, qualifier]
-      properties:
-        name:
-          type: string
-          description: Único dentro del catálogo (Regla 3, constraint uk_catalog_field_name)
-        qualifier:
-          $ref: '#/components/schemas/FieldQualifier'
-        position:
-          type: integer
-          description: >
-            Orden de despliegue; determina cuál es el "primer campo no KEY" para las
-            Reglas 4 y 5 (CatalogField.position)
-
-    Catalog:
-      type: object
-      description: >
-        Calcado de com.example.catalogo.domain.model.Catalog. El id (Long) surrogate del
-        ORM no se expone: el catalogMaster direcciona por `code` (único, Regla 17/21)
-      properties:
-        code:
-          type: string
-        name:
-          type: string
-        parent:
-          type: string
-          nullable: true
-          description: >
-            Código del catálogo padre (simplificación de la referencia de objeto
-            Catalog.parent del ORM, para evitar anidamiento recursivo en la respuesta)
-        active:
-          $ref: '#/components/schemas/ActiveStatus'
-        fromDate:
-          type: string
-          format: date
-          nullable: true
-        toDate:
-          type: string
-          format: date
-          nullable: true
-        fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/CatalogField'
-
-    CatalogSummary:
-      type: object
-      description: >
-        Proyección mínima de un Catalog, usada para Catalog.children (HU-ADM-01-08, Regla 15)
-      properties:
-        code:
-          type: string
-        name:
-          type: string
-
-    CatalogCreateRequest:
-      type: object
-      required: [code, name, fields]
-      properties:
-        code:
-          type: string
-        name:
-          type: string
-        parent:
-          type: string
-          nullable: true
-          description: Código de un catálogo existente en el catalogMaster
-        active:
-          $ref: '#/components/schemas/ActiveStatus'
-        fromDate:
-          type: string
-          format: date
-          nullable: true
-        toDate:
-          type: string
-          format: date
-          nullable: true
-        fields:
-          type: array
-          minItems: 1
-          description: >
-            Debe incluir al menos un CatalogField con qualifier=KEY (Regla 2) y ninguno
-            con nombre repetido (Regla 3)
-          items:
-            $ref: '#/components/schemas/CatalogField'
-
-    CatalogDescriptorsUpdateRequest:
-      type: object
-      description: >
-        Actualización de descriptores (HU-ADM-01-05: name, parent, active, valid). El
-        campo "code" queda deliberadamente fuera de este schema (additionalProperties:
-        false) para que un intento de incluirlo sea rechazado por contrato,
-        reforzando la Regla 17 a nivel de esquema además de a nivel de servicio.
-      additionalProperties: false
-      minProperties: 1
-      properties:
-        name:
-          type: string
-        parent:
-          type: string
-          nullable: true
-        active:
-          $ref: '#/components/schemas/ActiveStatus'
-        fromDate:
-          type: string
-          format: date
-          nullable: true
-        toDate:
-          type: string
-          format: date
-          nullable: true
-
-    CatalogFieldsUpdateRequest:
-      type: object
-      required: [fields]
-      properties:
-        fields:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/CatalogField'
-
-    InactivationRequest:
-      type: object
-      description: >
-        Payload compartido por la inactivación de Catalog y de CatalogRecord (Regla 9):
-        Catalog.inactivate()/setToDate() y CatalogRecord.inactivate()/setToDate() tienen
-        la misma forma en el modelo de dominio
-      properties:
-        active:
-          $ref: '#/components/schemas/ActiveStatus'
-          description: Fijar en INACTIVE dispara la Regla 9a (auto toDate = hoy)
-        toDate:
-          type: string
-          format: date
-          description: Fijar en una fecha actual o pasada dispara las Reglas 9b y 14
-
-    CatalogExistenceResponse:
-      type: object
-      properties:
-        name:
-          type: string
-        exists:
-          type: boolean
-
-    CatalogRecord:
-      type: object
-      description: >
-        Representación API de com.example.catalogo.domain.model.CatalogRecord. El id
-        (Long) surrogate no se expone: el registro se direcciona por catalogCode + key.
-        El campo `key` y el mapa `values` (fieldName -> value) son una simplificación de
-        la colección List~CatalogRecordValue~ del ORM (cada CatalogRecordValue referencia
-        su CatalogField); se colapsan aquí en un mapa por ergonomía de API. `values`
-        contiene solo los campos solicitados (Reglas 4 y 5), no necesariamente todos los
-        definidos en el catálogo.
-      properties:
-        key:
-          type: string
-          description: Valor del CatalogField con qualifier=KEY
-        values:
-          type: object
-          additionalProperties:
-            type: string
-          description: Mapa nombreDeCatalogField -> valor
-        active:
-          $ref: '#/components/schemas/ActiveStatus'
-          description: >
-            Estado efectivo (CatalogRecord.effectiveStatus()): si el Catalog contenedor
-            está INACTIVE, este valor es siempre INACTIVE sin importar el estado propio
-            del registro (Regla 12)
-        fromDate:
-          type: string
-          format: date
-          nullable: true
-        toDate:
-          type: string
-          format: date
-          nullable: true
-
-    CatalogRecordCreateRequest:
-      type: object
-      required: [values]
-      properties:
-        values:
-          type: object
-          additionalProperties:
-            type: string
-          description: >
-            Debe incluir el valor de todos los CatalogField del catálogo, incluido el de
-            qualifier=KEY (Reglas 1 y 8); si falta alguno, 400
-        active:
-          $ref: '#/components/schemas/ActiveStatus'
-        fromDate:
-          type: string
-          format: date
-          nullable: true
-        toDate:
-          type: string
-          format: date
-          nullable: true
-
-    CatalogRecordUpdateRequest:
-      type: object
-      required: [values]
-      properties:
-        values:
-          type: object
-          additionalProperties:
-            type: string
-          description: >
-            Mapa nombreDeCatalogField -> nuevo valor, restringido a campos con
-            qualifier=FIELD (Regla 16). Incluir el nombre del campo qualifier=KEY en
-            este mapa produce 400 (CatalogRecord.updateValue() lo rechaza)
-
-    PageableResponse:
-      type: object
-      description: >
-        Envoltorio genérico de paginación reutilizable por cualquier CU. Nombres de
-        propiedad alineados a la serialización JSON estándar de
-        org.springframework.data.domain.Page (Spring Data, stack declarado en el
-        modelo de dominio), no inventados
-      properties:
-        content:
-          type: array
-          items: {}
-        totalElements:
-          type: integer
-          format: int64
-        totalPages:
-          type: integer
-        number:
-          type: integer
-          description: Índice de página actual (base 0)
-        size:
-          type: integer
-
+    # ---------- Estándar del proyecto ----------
     Error:
       type: object
-      description: Esquema estándar de error del proyecto SIIP v2, reutilizable por todos los CU
+      description: Esquema único de error del proyecto SIIP v2, usado en todas las respuestas 4xx/5xx.
       required: [codigo, mensaje, timestamp]
       properties:
         codigo:
           type: string
-          description: Código de error de negocio (ej. CATALOGO_NO_ENCONTRADO, CAMPO_KEY_REQUERIDO)
+          description: Código de error estable, en MAYÚSCULAS_CON_GUION_BAJO (ver catálogo de códigos del contrato).
+          example: CATALOGO_INEXISTENTE
         mensaje:
           type: string
+          description: Mensaje legible para el usuario.
         timestamp:
           type: string
           format: date-time
         detalles:
           type: array
+          description: Detalles opcionales (campo afectado, valor, operación alternativa).
           items:
-            type: string
+            $ref: '#/components/schemas/ErrorDetail'
+    ErrorDetail:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+          description: Ruta de la propiedad o parámetro afectado (ej. `fields[2].name`, `parentRecord`).
+        codigo:
+          type: string
+        mensaje:
+          type: string
 
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    # ---------- Enumeraciones del dominio ----------
+    ActiveStatus:
+      type: string
+      description: Estado de vigencia de un Catalog o CatalogRecord (Reglas 9, 12, 13, 14).
+      enum: [ACTIVE, INACTIVE]
+    FieldQualifier:
+      type: string
+      description: Calificador de un campo de catálogo (Reglas 2, 4, 16).
+      enum: [KEY, FIELD]
+
+    # ---------- Catalog ----------
+    CatalogCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [code, name, fields]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Código único e inmutable del catálogo.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        parent:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Código del catálogo padre (opcional). Debe existir (HU-ADM-01-01).
+        active:
+          $ref: '#/components/schemas/ActiveStatus'
+        fromDate:
+          type: string
+          format: date
+          nullable: true
+        toDate:
+          type: string
+          format: date
+          nullable: true
+          description: Si es la fecha actual o pasada, el catálogo se crea `INACTIVE` (Regla 14).
+        fields:
+          type: array
+          description: |
+            Campos del catálogo, en orden de `posicion`. Las reglas R18 (al menos uno),
+            R2 (al menos un KEY) y R3 (nombres únicos) se validan en el dominio y se
+            reportan con 422 y el código de error correspondiente.
+          items:
+            $ref: '#/components/schemas/CatalogFieldRequest'
+    CatalogDescriptorsUpdateRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Actualización parcial de descriptores. Solo se modifican las propiedades presentes.
+        `code` no es actualizable (Regla 17).
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        parent:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Código del nuevo catálogo padre, o `null` para desvincularlo.
+        active:
+          $ref: '#/components/schemas/ActiveStatus'
+        fromDate:
+          type: string
+          format: date
+          nullable: true
+        toDate:
+          type: string
+          format: date
+          nullable: true
+    CatalogFieldsUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [fields]
+      properties:
+        fields:
+          type: array
+          description: Lista completa y ordenada de campos que reemplaza a la actual.
+          items:
+            $ref: '#/components/schemas/CatalogFieldRequest'
+    CatalogFieldRequest:
+      type: object
+      additionalProperties: false
+      required: [name, qualifier]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        qualifier:
+          $ref: '#/components/schemas/FieldQualifier'
+    CatalogFieldResponse:
+      type: object
+      required: [name, qualifier, posicion]
+      properties:
+        name:
+          type: string
+        qualifier:
+          $ref: '#/components/schemas/FieldQualifier'
+        posicion:
+          type: integer
+          format: int32
+          minimum: 1
+    CatalogResponse:
+      type: object
+      description: Definición completa de un catálogo.
+      required: [code, name, active, fields]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        parent:
+          type: string
+          nullable: true
+          description: Código del catálogo padre, o `null` si no tiene.
+        active:
+          $ref: '#/components/schemas/ActiveStatus'
+        fromDate:
+          type: string
+          format: date
+          nullable: true
+        toDate:
+          type: string
+          format: date
+          nullable: true
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogFieldResponse'
+    CatalogSummaryResponse:
+      type: object
+      description: Elemento del listado de catálogos (sin campos).
+      required: [code, name, active]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        parent:
+          type: string
+          nullable: true
+        active:
+          $ref: '#/components/schemas/ActiveStatus'
+        fromDate:
+          type: string
+          format: date
+          nullable: true
+        toDate:
+          type: string
+          format: date
+          nullable: true
+    CatalogChildResponse:
+      type: object
+      description: Catálogo hijo como `{código, nombre}` (Regla 15).
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+    CatalogExistenceResponse:
+      type: object
+      required: [name, exists]
+      properties:
+        name:
+          type: string
+          description: Nombre consultado.
+        exists:
+          type: boolean
+          description: '`true` si existe un catálogo con ese nombre; `false` si no está definido.'
+    InactivationRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Cuerpo opcional de inactivación. Omitir `toDate` aplica la Regla 9a (INACTIVE + toDate = hoy);
+        informarla aplica la Regla 9b (debe ser la fecha actual o una pasada).
+      properties:
+        toDate:
+          type: string
+          format: date
+
+    # ---------- CatalogRecord ----------
+    CatalogRecordValueRequest:
+      type: object
+      additionalProperties: false
+      required: [field, valor]
+      properties:
+        field:
+          type: string
+          minLength: 1
+          description: Nombre del campo (`CatalogField.name`).
+        valor:
+          type: string
+    CatalogRecordValueResponse:
+      type: object
+      required: [field, qualifier, valor]
+      properties:
+        field:
+          type: string
+        qualifier:
+          $ref: '#/components/schemas/FieldQualifier'
+        valor:
+          type: string
+    CatalogRecordCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [values]
+      properties:
+        parentRecord:
+          type: string
+          nullable: true
+          description: |
+            Valor KEY del registro padre en el catálogo padre. Obligatorio si el catálogo tiene
+            padre (Reglas 8, 23).
+        fromDate:
+          type: string
+          format: date
+          nullable: true
+        toDate:
+          type: string
+          format: date
+          nullable: true
+        values:
+          type: array
+          minItems: 1
+          description: Un valor por cada campo definido del catálogo, incluido el KEY (Reglas 1, 8).
+          items:
+            $ref: '#/components/schemas/CatalogRecordValueRequest'
+    CatalogRecordUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [values]
+      properties:
+        values:
+          type: array
+          minItems: 1
+          description: Valores nuevos de campos no KEY (Regla 16).
+          items:
+            $ref: '#/components/schemas/CatalogRecordValueRequest'
+    CatalogRecordResponse:
+      type: object
+      description: Registro completo de un catálogo.
+      required: [catalog, active, values]
+      properties:
+        catalog:
+          type: string
+          description: Código del catálogo al que pertenece el registro.
+        parentRecord:
+          type: string
+          nullable: true
+          description: Valor KEY del registro padre en el catálogo padre, o `null`.
+        active:
+          $ref: '#/components/schemas/ActiveStatus'
+        fromDate:
+          type: string
+          format: date
+          nullable: true
+        toDate:
+          type: string
+          format: date
+          nullable: true
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogRecordValueResponse'
+    CatalogRecordFieldValuesResponse:
+      type: object
+      description: |
+        Proyección de un registro con solo los campos solicitados (Reglas 4, 5). `active` es el
+        estado efectivo: `INACTIVE` si el catálogo o el registro lo está (Regla 12).
+      required: [keyValue, active, values]
+      properties:
+        keyValue:
+          type: string
+          description: Valor KEY del registro, para correlacionar los elementos del listado.
+        active:
+          $ref: '#/components/schemas/ActiveStatus'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogRecordValueResponse'

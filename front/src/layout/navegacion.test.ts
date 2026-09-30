@@ -105,9 +105,14 @@ describe('ubicarEnMenu', () => {
   it('una ruta que no está en el menú', () => {
     expect(ubicarEnMenu('/no-existe')).toBeNull();
   });
-  it('Catálogos sólo aparece para el rol que el back del CU-ADM-01 acepta', () => {
+  /**
+   * Los dos roles del CU-ADM-01 mientras dure la mudanza a admin-srv: su
+   * contrato pide ADMINISTRADOR_DEL_SISTEMA y backend-srv sigue pidiendo
+   * ADMINISTRADOR_DE_CATALOGOS, que hoy es el único que existe en Keycloak.
+   */
+  it('Catálogos aparece para los roles que acepta el back del CU-ADM-01', () => {
     const admin = MODULOS.find((m) => m.clave === 'admin');
     const catalogos = admin?.submenu?.find((s) => s.clave === 'catalogos');
-    expect(catalogos?.rolesRequeridos).toEqual(['ADMINISTRADOR_DE_CATALOGOS']);
+    expect(catalogos?.rolesRequeridos).toEqual(['ADMINISTRADOR_DE_CATALOGOS', 'ADMINISTRADOR_DEL_SISTEMA']);
   });
 });

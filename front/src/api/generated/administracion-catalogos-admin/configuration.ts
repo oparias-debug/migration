@@ -1,7 +1,7 @@
 /* tslint:disable */
 /**
- * SIIP v2 - CU-ADM-01 Administración de Catálogos
- * Fragmento OpenAPI generado a partir de CU-ADM-01 (Administración de Catálogos), las 13 historias HU-ADM-01-01..13, sus 13 archivos .feature y el modelo de dominio (Catalog / CatalogField / CatalogRecord / CatalogRecordValue). Convención de naming: operationId y segmentos de path en español (siguiendo la convención del CU y del ejemplo del rol: verbo+sustantivo, ej. \"crearCatalogo\"); nombres de propiedades de schema en inglés, calcados literalmente del modelo de dominio (code, name, parent, active, fromDate, toDate, fields, qualifier, values), porque el rol exige no inventar sinónimos de las entidades ya decididas en el ER. 
+ * SIIP v2 — CU-ADM-01 Administración de Catálogos (fragmento)
+ * Fragmento de contrato generado a partir de `CU-ADM-01-administracion-catalogos.md`, las 14 historias `CU-ADM-01-*.feature` y `modelo-dominio-catalogos.md` (v2.0). Válido de forma standalone; se mezcla después en el contrato consolidado del proyecto.  Convenciones: - `operationId` en camelCase (verbo + sustantivo) → nombre del método Java y de la función TS. - Schemas en PascalCase; propiedades JSON en camelCase con los nombres del modelo de dominio   (`code`, `name`, `parent`, `active`, `fromDate`, `toDate`, `fields`, `qualifier`,   `posicion`, `parentRecord`, `values`, `field`, `valor`). - 400 = solicitud mal formada; 422 = solicitud bien formada que viola una regla de negocio;   409 = el estado actual del recurso impide la operación. 
  *
  * The version of the OpenAPI document: 1.0.0
  * 

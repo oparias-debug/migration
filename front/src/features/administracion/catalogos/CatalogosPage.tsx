@@ -2,23 +2,27 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
-import { catalogosApi, type Catalog } from '../../../api/administracionApi';
+import { catalogosApi, type CatalogSummaryResponse } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { coincide } from './busqueda';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { CamposEditor, aCampoContrato, problemaDeCampos, type CampoEditable } from './CamposEditor';
 
-/** Actor del CU-ADM-01: el back exige este rol en todas sus operaciones. */
-export const ROL_ADMIN_CATALOGOS = 'ADMINISTRADOR_DE_CATALOGOS';
+/**
+ * Actores del CU-ADM-01. El contrato de admin-srv pide ADMINISTRADOR_DEL_SISTEMA;
+ * backend-srv, que es quien sirve los catálogos en los entornos que todavía no
+ * tienen admin-srv detrás, sigue pidiendo ADMINISTRADOR_DE_CATALOGOS, y hoy es
+ * el único rol que existe en Keycloak. Se aceptan los dos: esto sólo decide si
+ * la pantalla se ofrece; quien manda es el servidor.
+ */
+export const ROLES_ADMIN_CATALOGOS = ['ADMINISTRADOR_DE_CATALOGOS', 'ADMINISTRADOR_DEL_SISTEMA'];
 const CLAVE = 'administracion.catalogos';
 /**
- * Se traen todos los catálogos de una vez y se pagina aquí. El contrato no tiene
- * parámetro de búsqueda en `listarCatalogos`, así que buscar por fracciones de
- * palabra sólo puede hacerse sobre lo cargado; un catálogo maestro son decenas
- * de entradas, no miles, así que caben.
+ * El contrato no pagina: `listarCatalogos` no recibe página ni tamaño y devuelve
+ * la lista entera. Se pagina y se busca aquí, sobre lo recibido; un catálogo
+ * maestro son decenas de entradas, no miles.
  */
-const TOPE_CATALOGOS = 500;
 const POR_PAGINA = 10;
 
 /**
@@ -30,7 +34,7 @@ export function CatalogosPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
   const navigate = useNavigate();
-  const [catalogos, setCatalogos] = useState<Catalog[]>([]);
+  const [catalogos, setCatalogos] = useState<CatalogSummaryResponse[]>([]);
   const [pagina, setPagina] = useState(0);
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
@@ -40,16 +44,16 @@ export function CatalogosPage() {
   const cargar = useCallback(() => {
     setCargando(true);
     catalogosApi
-      .listarCatalogos({ page: 0, size: TOPE_CATALOGOS })
+      .listarCatalogos()
       .then(({ data }) => {
-        setCatalogos(data.content ?? []);
+        setCatalogos(data ?? []);
         setErrorCarga(null);
       })
       .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
   }, [t]);
 
-  const puedeAdministrar = hasRole(ROL_ADMIN_CATALOGOS);
+  const puedeAdministrar = ROLES_ADMIN_CATALOGOS.some(hasRole);
   useEffect(() => {
     if (puedeAdministrar) cargar();
   }, [cargar, puedeAdministrar]);
@@ -123,7 +127,6 @@ export function CatalogosPage() {
                       que un catálogo fuera hijo de otro. */}
                   <th>{t(`${CLAVE}.catalogoPadre`)}</th>
                   <th>{t(`${CLAVE}.estado`)}</th>
-                  <th>{t(`${CLAVE}.campos`)}</th>
                   <th>{t('common.acciones')}</th>
                 </tr>
               </thead>
@@ -134,7 +137,6 @@ export function CatalogosPage() {
                     <td>{c.name}</td>
                     <td className="mono">{c.parent ?? '—'}</td>
                     <td>{t(`${CLAVE}.estados.${c.active}`)}</td>
-                    <td>{(c.fields ?? []).length}</td>
                     <td>
                       <button
                         type="button"

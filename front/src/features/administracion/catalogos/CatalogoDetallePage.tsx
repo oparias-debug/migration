@@ -2,21 +2,21 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
-import { catalogosApi, type Catalog, type CatalogSummary } from '../../../api/administracionApi';
+import { catalogosApi, type CatalogResponse, type CatalogChildResponse } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { CamposEditor, aCampoContrato, problemaDeCampos, type CampoEditable } from './CamposEditor';
-import { ROL_ADMIN_CATALOGOS } from './CatalogosPage';
+import { ROLES_ADMIN_CATALOGOS } from './CatalogosPage';
 import { RegistrosCatalogo } from './RegistrosCatalogo';
 import { BandaRuta } from '../../../layout/BandaRuta';
 import { cadenaDeAncestros, type Eslabon } from './cadenaDeCatalogos';
 
 const CLAVE = 'administracion.catalogos';
 
-const aCamposEditables = (catalogo: Catalog): CampoEditable[] =>
+const aCamposEditables = (catalogo: CatalogResponse): CampoEditable[] =>
   [...(catalogo.fields ?? [])]
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    .sort((a, b) => (a.posicion ?? 0) - (b.posicion ?? 0))
     .map((f) => ({ nombre: f.name ?? '', clave: f.qualifier === 'KEY' }));
 
 /**
@@ -31,7 +31,7 @@ export function CatalogoDetallePage() {
   const { hasRole } = useAuth();
   const navigate = useNavigate();
   const { codigo = '' } = useParams<{ codigo: string }>();
-  const [catalogo, setCatalogo] = useState<Catalog | null>(null);
+  const [catalogo, setCatalogo] = useState<CatalogResponse | null>(null);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [nombre, setNombre] = useState('');
   const [padre, setPadre] = useState('');
@@ -45,7 +45,7 @@ export function CatalogoDetallePage() {
    * sus hijos, así que la jerarquía no se veía por ninguna parte
    * (observación del 30/09/2026: "no se están visualizando los catálogos hijos").
    */
-  const [hijos, setHijos] = useState<CatalogSummary[]>([]);
+  const [hijos, setHijos] = useState<CatalogChildResponse[]>([]);
   /**
    * Los catálogos por encima de éste, para la miga de pan. La banda de ruta de
    * arriba sale de la URL y no puede saber de quién cuelga un catálogo, que es
@@ -55,7 +55,7 @@ export function CatalogoDetallePage() {
 
   const cargar = useCallback(() => {
     catalogosApi
-      .consultarCatalogo({ code: codigo })
+      .consultarCatalogoPorCodigo({ code: codigo })
       .then(({ data }) => {
         setCatalogo(data);
         setNombre(data.name ?? '');
@@ -74,7 +74,7 @@ export function CatalogoDetallePage() {
       .catch(() => setHijos([]));
   }, [codigo, t]);
 
-  const puedeAdministrar = hasRole(ROL_ADMIN_CATALOGOS);
+  const puedeAdministrar = ROLES_ADMIN_CATALOGOS.some(hasRole);
   useEffect(() => {
     if (puedeAdministrar) cargar();
   }, [cargar, puedeAdministrar]);
@@ -140,7 +140,7 @@ export function CatalogoDetallePage() {
   };
 
   const inactivar = () =>
-    avisar(catalogosApi.inactivarCatalogo({ code: codigo, inactivationRequest: { active: 'INACTIVE' } }), `${CLAVE}.inactivado`);
+    avisar(catalogosApi.inactivarCatalogo({ code: codigo, inactivationRequest: {} }), `${CLAVE}.inactivado`);
 
 
   return (

@@ -32,7 +32,7 @@ export async function cadenaDeAncestros(codigoPadre: string | null | undefined):
   while (actual && !vistos.has(actual) && ancestros.length < MAXIMO) {
     vistos.add(actual);
     try {
-      const { data } = await catalogosApi.consultarCatalogo({ code: actual });
+      const { data } = await catalogosApi.consultarCatalogoPorCodigo({ code: actual });
       ancestros.push({ code: data.code ?? actual, name: data.name ?? actual });
       actual = data.parent?.trim() || null;
     } catch {

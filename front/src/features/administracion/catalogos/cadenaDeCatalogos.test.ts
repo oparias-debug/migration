@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const consultarCatalogo = vi.fn();
+const consultarCatalogoPorCodigo = vi.fn();
 vi.mock('../../../api/administracionApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../api/administracionApi')>()),
-  catalogosApi: { consultarCatalogo: (...a: unknown[]) => consultarCatalogo(...a) },
+  catalogosApi: { consultarCatalogoPorCodigo: (...a: unknown[]) => consultarCatalogoPorCodigo(...a) },
 }));
 
 const { cadenaDeAncestros } = await import('./cadenaDeCatalogos');
@@ -16,8 +16,8 @@ const ARBOL: Record<string, { code: string; name: string; parent: string | null 
 };
 
 beforeEach(() => {
-  consultarCatalogo.mockReset();
-  consultarCatalogo.mockImplementation(({ code }: { code: string }) =>
+  consultarCatalogoPorCodigo.mockReset();
+  consultarCatalogoPorCodigo.mockImplementation(({ code }: { code: string }) =>
     ARBOL[code] ? Promise.resolve({ data: ARBOL[code] }) : Promise.reject(new Error('no existe')),
   );
 });
@@ -33,7 +33,7 @@ describe('cadena de catálogos por encima de uno', () => {
   it('sin padre no hay cadena', async () => {
     expect(await cadenaDeAncestros(null)).toEqual([]);
     expect(await cadenaDeAncestros('   ')).toEqual([]);
-    expect(consultarCatalogo).not.toHaveBeenCalled();
+    expect(consultarCatalogoPorCodigo).not.toHaveBeenCalled();
   });
 
   /**
@@ -41,7 +41,7 @@ describe('cadena de catálogos por encima de uno', () => {
    * Sin la cuenta de visitados esto no terminaría.
    */
   it('un ciclo no la deja dando vueltas', async () => {
-    consultarCatalogo.mockImplementation(({ code }: { code: string }) =>
+    consultarCatalogoPorCodigo.mockImplementation(({ code }: { code: string }) =>
       Promise.resolve({ data: { code, name: code, parent: code === 'A' ? 'B' : 'A' } }),
     );
     const cadena = await cadenaDeAncestros('A');
@@ -49,14 +49,14 @@ describe('cadena de catálogos por encima de uno', () => {
   });
 
   it('un catálogo que se apunta a sí mismo tampoco', async () => {
-    consultarCatalogo.mockResolvedValue({ data: { code: 'A', name: 'A', parent: 'A' } });
+    consultarCatalogoPorCodigo.mockResolvedValue({ data: { code: 'A', name: 'A', parent: 'A' } });
     expect(await cadenaDeAncestros('A')).toEqual([{ code: 'A', name: 'A' }]);
   });
 
   // Una miga de pan incompleta sigue sirviendo.
   it('si un eslabón no se puede leer, devuelve lo reunido', async () => {
     expect(await cadenaDeAncestros('DESCONOCIDO')).toEqual([]);
-    consultarCatalogo.mockImplementation(({ code }: { code: string }) =>
+    consultarCatalogoPorCodigo.mockImplementation(({ code }: { code: string }) =>
       code === 'DEPARTAMENTO'
         ? Promise.resolve({ data: { code, name: 'Departamento', parent: 'ROTO' } })
         : Promise.reject(new Error('no existe')),
