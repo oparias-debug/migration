@@ -462,6 +462,29 @@ tbody tr { cursor: pointer; -webkit-user-select: none; user-select: none; }
    fila crítica se leía igual que cualquier otra. */
 .e-error  { color: var(--error); }
 
+/* Calificación del riesgo (CU-PRE-15, Anexo C.2). La leyenda del caso de uso son
+   cuatro celdas rellenas, no cuatro textos de color: el amarillo y el ámbar no se
+   leen como texto sobre blanco, y el caso de uso distingue "Medio" de "Alto"
+   precisamente por ahí. Se rellena la marca y se le quita el punto. */
+.marca-estado.calificacion { padding: 2px 10px; border-radius: 4px; color: var(--n900); }
+.marca-estado.calificacion::before { display: none; }
+.cal-bajo     { background: #b0dfa0; }
+.cal-medio    { background: #ff0; }
+.cal-alto     { background: #ffc000; }
+/* El rojo de la leyenda es #f00, que con texto encima no llega al contraste
+   mínimo ni en blanco (4.0) ni en oscuro (4.4). Se usa el rojo del sistema, que
+   se lee igual de rojo y sí lo cumple (5.6). */
+.cal-muy-alto { background: var(--error); color: #fff; }
+
+/* Cabecera de un capítulo: CUP, nombre e institución en una línea. Son datos que
+   asigna el servidor, así que no necesitan campo de formulario. */
+.cabecera-proyecto {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px;
+  margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--n200);
+  font-size: 13px; color: var(--n700);
+}
+.cabecera-proyecto strong { color: var(--menu); font-size: 15px; }
+
 /* Vuelta al menú del macroproceso. Va suelta sobre el contenido, alineada con
    él, para que se vea al entrar sin competir con el título de la pantalla. */
 .volver-modulo {

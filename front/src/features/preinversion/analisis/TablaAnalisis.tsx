@@ -1,5 +1,22 @@
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Importe con separador de miles, que es como lo piden los casos de uso
+ * (CU-PRE-14, 15 y 16: "el sistema deberá agregar el separador de miles").
+ * Se aplica al salir del campo, no mientras se escribe: reformatear cada tecla
+ * mueve el cursor. Lo que no sea un número se devuelve tal cual, para no borrar
+ * lo que alguien esté escribiendo.
+ */
+function conMiles(texto: string): string {
+  const limpio = texto.replaceAll(',', '').trim();
+  if (limpio === '') return '';
+  const n = Number(limpio);
+  if (!Number.isFinite(n)) return texto;
+  const [entera, decimal] = limpio.split('.');
+  const conSeparador = Number(entera).toLocaleString('en-US');
+  return decimal === undefined ? conSeparador : `${conSeparador}.${decimal}`;
+}
+
 /** Una columna de la tabla: cómo se escribe y cómo se lee. */
 export interface ColumnaAnalisis<F> {
   readonly clave: keyof F & string;
@@ -64,7 +81,13 @@ export function TablaAnalisis<F extends Record<string, unknown>>({
                   {t(c.etiqueta)}
                 </th>
               ))}
-              {puedeEditar && permiteAgregar && <th>{t('common.acciones')}</th>}
+              {/* La columna de "Quitar" va sin título: el rótulo ocupa ancho y no
+                  dice nada que el botón no diga. Queda para lectores de pantalla. */}
+              {puedeEditar && permiteAgregar && (
+                <th>
+                  <span className="sr-only">{t('common.acciones')}</span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -123,6 +146,7 @@ export function TablaAnalisis<F extends Record<string, unknown>>({
                         value={valor}
                         disabled={!puedeEditar}
                         onChange={(e) => cambiar(indice, c.clave, e.target.value)}
+                        onBlur={c.tipo === 'numero' ? (e) => cambiar(indice, c.clave, conMiles(e.target.value)) : undefined}
                       />
                     </td>
                   );

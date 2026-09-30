@@ -46,8 +46,8 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
     for (const nombre of [
       '1.2 Creación ruta de preinversión',
       '1.3 Formulación y evaluación',
-      '1.4 Programación del proyecto',
-      '1.5 Gestión del proyecto',
+      '1.4 Programación',
+      '1.5 Gestión de la iniciativa',
     ]) {
       expect(screen.getByRole('button', { name: nombre })).toBeInTheDocument();
     }
@@ -59,8 +59,8 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
     montar(IDENTIFICACION);
     const rotulos = [...document.querySelectorAll('.pasos-seccion-titulo')].map((e) => e.textContent?.trim());
     expect(rotulos).toEqual([
-      '1.3.1 Registrar identificación',
-      '1.3.2 Registrar formulación',
+      '1.3.1 Identificación',
+      '1.3.2 Formulación',
       '1.3.3 Evaluación ex ante',
     ]);
     await screen.findByText('Hospital de Santa Ana');
@@ -143,7 +143,7 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
 
   it('cambiar de proceso muestra sus capítulos sin salir de la pantalla', async () => {
     montar(IDENTIFICACION);
-    fireEvent.click(screen.getByRole('button', { name: '1.5 Gestión del proyecto' }));
+    fireEvent.click(screen.getByRole('button', { name: '1.5 Gestión de la iniciativa' }));
     expect(screen.getByText('Viabilidad')).toBeInTheDocument();
     expect(screen.getByText('pantalla identificación')).toBeInTheDocument();
     await screen.findByText('Hospital de Santa Ana');
@@ -151,7 +151,7 @@ describe('PasosProyectoLayout · árbol del sistema', () => {
 
   it('?grupo= abre la barra en ese proceso', async () => {
     montar('/preinversion/proyectos/7/ruta-preinversion?grupo=programacion');
-    expect(screen.getByRole('button', { name: '1.4 Programación del proyecto' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '1.4 Programación' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -205,7 +205,7 @@ describe('pasosProyecto', () => {
     expect(ubicarPaso('/preinversion/proyectos/nuevo')).toBeNull();
   });
 
-  // Rocío: "Registrar formulación abarca 9 capítulos… te ubicas por la codificación".
+  // El cliente: "Registrar formulación abarca 9 capítulos… te ubicas por la codificación".
   it('Formulación tiene los 9 capítulos de identificación y formulación, más la evaluación ex ante', () => {
     const formulacion = GRUPOS_PASOS.find((g) => g.clave === 'formulacion');
     expect(formulacion).toBeDefined();

@@ -172,10 +172,11 @@ describe('Análisis Legal (CU-PRE-16)', () => {
   });
 });
 
-// El color de la calificación vive en base.css (.e-error): si la clase deja de
-// aplicarse, un riesgo "Muy alto" se lee igual que uno "Bajo".
+// Los cuatro colores son los de la leyenda del Anexo C.2 del caso de uso; el
+// amarillo de "Medio" y el ámbar de "Alto" sólo se distinguen si la celda se
+// rellena, así que la clase importa tanto como el texto.
 describe('CU-PRE-15 · la calificación se distingue por color', () => {
-  it('un riesgo muy alto lleva la marca de error', async () => {
+  it('un riesgo muy alto lleva el color de "Muy alto" de la leyenda', async () => {
     obtenerAnalisisRiesgo.mockResolvedValue({
       data: {
         idProyecto: 7,
@@ -186,6 +187,60 @@ describe('CU-PRE-15 · la calificación se distingue por color', () => {
     });
     montar('analisis-riesgo', AnalisisRiesgoPage);
     const marca = await screen.findByText('Muy alto');
-    expect(marca).toHaveClass('marca-estado', 'e-error');
+    expect(marca).toHaveClass('marca-estado', 'calificacion', 'cal-muy-alto');
+  });
+});
+
+/**
+ * Los tres casos de uso del capítulo 1.3.2 piden lo mismo para los importes:
+ * "el sistema deberá agregar el separador de miles (,)".
+ */
+describe('presentación de los importes y de la tabla', () => {
+  it('agrega el separador de miles al salir del campo', async () => {
+    obtenerAnalisisRiesgo.mockResolvedValue({
+      data: { idProyecto: 7, tieneRiesgosDesastres: true, filas: [{ descripcionRiesgo: 'Sismo' }] },
+    });
+    montar('analisis-riesgo', AnalisisRiesgoPage);
+
+    const costo = await screen.findByLabelText('Costo de la acción (US$) 1');
+    fireEvent.change(costo, { target: { value: '1250000' } });
+    fireEvent.blur(costo);
+
+    await waitFor(() => expect(costo).toHaveValue('1,250,000'));
+  });
+
+  it('conserva los decimales al separar', async () => {
+    obtenerAnalisisRiesgo.mockResolvedValue({
+      data: { idProyecto: 7, tieneRiesgosDesastres: true, filas: [{ descripcionRiesgo: 'Sismo' }] },
+    });
+    montar('analisis-riesgo', AnalisisRiesgoPage);
+
+    const costo = await screen.findByLabelText('Costo de la acción (US$) 1');
+    fireEvent.change(costo, { target: { value: '9876.54' } });
+    fireEvent.blur(costo);
+
+    await waitFor(() => expect(costo).toHaveValue('9,876.54'));
+  });
+
+  it('un campo vacío se queda vacío', async () => {
+    obtenerAnalisisRiesgo.mockResolvedValue({
+      data: { idProyecto: 7, tieneRiesgosDesastres: true, filas: [{ descripcionRiesgo: 'Sismo' }] },
+    });
+    montar('analisis-riesgo', AnalisisRiesgoPage);
+
+    const costo = await screen.findByLabelText('Costo de la acción (US$) 1');
+    fireEvent.blur(costo);
+
+    await waitFor(() => expect(costo).toHaveValue(''));
+  });
+
+  // La columna de "Quitar" no lleva título a la vista, pero sí para quien usa lector de pantalla.
+  it('la columna de acciones no muestra su título', async () => {
+    obtenerAnalisisRiesgo.mockResolvedValue({ data: { idProyecto: 7, filas: [] } });
+    montar('analisis-riesgo', AnalisisRiesgoPage);
+
+    await screen.findByText('Análisis de Riesgos');
+    const titulo = screen.getByText('Acciones');
+    expect(titulo).toHaveClass('sr-only');
   });
 });

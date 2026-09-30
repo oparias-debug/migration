@@ -12,12 +12,12 @@ import type { ColumnaAnalisis } from './TablaAnalisis';
 const CLAVE = 'preinversion.analisisRiesgo';
 type Fila = Record<string, unknown>;
 
-/** Color de la calificación, según la leyenda del Anexo A.1. */
+/** Los cuatro colores de la leyenda del Anexo C.2 del caso de uso. */
 const TONO: Record<string, string> = {
-  BAJO: 'e-ok',
-  MEDIO: 'e-aviso',
-  ALTO: 'e-aviso',
-  MUY_ALTO: 'e-error',
+  BAJO: 'calificacion cal-bajo',
+  MEDIO: 'calificacion cal-medio',
+  ALTO: 'calificacion cal-alto',
+  MUY_ALTO: 'calificacion cal-muy-alto',
 };
 
 /** Pantalla "Análisis de Riesgos" (CU-PRE-15, Anexo A.1), capítulo 1.3.2.4. */

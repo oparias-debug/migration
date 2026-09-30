@@ -71,18 +71,23 @@ describe('IdentificacionPage · CU-PRE-04', () => {
 
   // Antecedentes: "el sistema muestra los campos no editables Unidad Ejecutora,
   // Nombre del proyecto y CUP".
-  it('muestra la cabecera que asigna el servidor, y no deja editarla', async () => {
+  // Van en una línea y en el orden CUP, nombre y unidad ejecutora, sin campos de
+  // formulario: son datos del servidor y ocupaban el alto del capítulo.
+  it('muestra la cabecera que asigna el servidor, como texto y no como campos', async () => {
     montar();
-    const ue = await screen.findByDisplayValue('MINSAL');
-    expect(ue).toHaveAttribute('readonly');
-    expect(screen.getByDisplayValue('CUP-2026-0007')).toHaveAttribute('readonly');
-    expect(screen.getByDisplayValue('Equipamiento del hospital de Santa Ana')).toHaveAttribute('readonly');
+    const cabecera = (await screen.findByText('MINSAL')).closest('.cabecera-proyecto');
+    expect(cabecera).not.toBeNull();
+    expect(cabecera).toHaveTextContent('CUP-2026-0007');
+    expect(cabecera).toHaveTextContent('Equipamiento del hospital de Santa Ana');
+    expect(cabecera?.querySelector('input')).toBeNull();
+    // El orden que pidió el cliente: CUP, nombre y unidad ejecutora.
+    expect(cabecera?.textContent).toMatch(/CUP-2026-0007.*Equipamiento del hospital de Santa Ana.*MINSAL/s);
   });
 
   it('guarda lo registrado y avisa (camino feliz)', async () => {
     guardarIdentificacion.mockResolvedValue({ data: { ...IDENTIFICACION_VACIA, antecedentes: 'Un antecedente' } });
     montar();
-    await screen.findByDisplayValue('MINSAL');
+    await screen.findByText('MINSAL');
 
     fireEvent.change(screen.getByLabelText('Antecedentes'), { target: { value: 'Un antecedente' } });
     fireEvent.change(screen.getByLabelText('Problema central'), { target: { value: 'El problema' } });
@@ -108,7 +113,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
   it('marca en rojo los campos pendientes al guardar incompleto', async () => {
     guardarIdentificacion.mockResolvedValue({ data: IDENTIFICACION_VACIA });
     montar();
-    await screen.findByDisplayValue('MINSAL');
+    await screen.findByText('MINSAL');
 
     expect(screen.getByLabelText('Antecedentes')).not.toHaveClass('malo');
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -120,7 +125,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
 
   it('respeta el límite de caracteres de cada campo', async () => {
     montar();
-    await screen.findByDisplayValue('MINSAL');
+    await screen.findByText('MINSAL');
     expect(screen.getByLabelText('Antecedentes')).toHaveAttribute('maxlength', '3000');
     expect(screen.getByLabelText('Problema central')).toHaveAttribute('maxlength', '500');
     expect(screen.getByLabelText('Objetivo general')).toHaveAttribute('maxlength', '500');
@@ -129,7 +134,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
 
   it('agrega y elimina filas de objetivo específico', async () => {
     montar();
-    await screen.findByDisplayValue('MINSAL');
+    await screen.findByText('MINSAL');
     expect(screen.getAllByLabelText(/^Objetivo específico/)).toHaveLength(1);
 
     abrirPestana('Objetivos');
@@ -143,7 +148,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
   it('no manda al servidor las filas de objetivo que quedaron vacías', async () => {
     guardarIdentificacion.mockResolvedValue({ data: IDENTIFICACION_VACIA });
     montar();
-    await screen.findByDisplayValue('MINSAL');
+    await screen.findByText('MINSAL');
 
     abrirPestana('Objetivos');
     fireEvent.change(screen.getByLabelText('Objetivo específico 1'), { target: { value: 'Objetivo uno' } });
@@ -165,7 +170,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
         data: { nombreArchivo: 'arbol.pdf', fechaCarga: '2026-09-10T10:00:00Z' },
       });
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       abrirPestana('Problemas');
 
       const entrada = screen.getByTestId('archivo-problemas');
@@ -184,7 +189,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
         },
       });
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       abrirPestana('Problemas');
       expect(await screen.findByRole('button', { name: 'previo.pdf' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Reemplazar' })).toBeInTheDocument();
@@ -199,7 +204,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
       });
       eliminarArbolProblemas.mockResolvedValue({});
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       abrirPestana('Problemas');
       await screen.findByRole('button', { name: 'previo.pdf' });
 
@@ -218,7 +223,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
       });
       swalFire.mockResolvedValue({ isConfirmed: false });
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       abrirPestana('Problemas');
       await screen.findByRole('button', { name: 'previo.pdf' });
 
@@ -255,7 +260,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
         },
       });
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       abrirPestana('Problemas');
       expect(await screen.findByRole('button', { name: 'previo.pdf' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument();
@@ -266,7 +271,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
   describe('pestañas', () => {
     it('abre en Antecedentes y cambia de pestaña sin perder lo escrito', async () => {
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       expect(screen.getByRole('tab', { name: 'Antecedentes' })).toHaveAttribute('aria-selected', 'true');
       expect(screen.getByRole('textbox', { name: 'Antecedentes' })).toBeVisible();
       expect(screen.queryByRole('textbox', { name: 'Problema central' })).not.toBeInTheDocument();
@@ -283,7 +288,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
 
     it('el árbol de objetivos va con los objetivos', async () => {
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       abrirPestana('Objetivos');
       expect(screen.getByRole('textbox', { name: 'Objetivo general' })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: 'Objetivo específico 1' })).toBeInTheDocument();
@@ -293,7 +298,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
     it('un solo Guardar envía lo de las tres pestañas', async () => {
       guardarIdentificacion.mockResolvedValue({ data: IDENTIFICACION_VACIA });
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       fireEvent.change(screen.getByLabelText('Antecedentes'), { target: { value: 'A' } });
       abrirPestana('Problemas');
       fireEvent.change(screen.getByLabelText('Problema central'), { target: { value: 'P' } });
@@ -315,7 +320,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
       // El formulario se repone con lo que devuelve el servidor tras guardar.
       guardarIdentificacion.mockResolvedValue({ data: { ...IDENTIFICACION_VACIA, antecedentes: 'Completo' } });
       montar();
-      await screen.findByDisplayValue('MINSAL');
+      await screen.findByText('MINSAL');
       fireEvent.change(screen.getByLabelText('Antecedentes'), { target: { value: 'Completo' } });
       expect(screen.getByRole('tab', { name: 'Problemas' })).toBeInTheDocument();
 
@@ -329,7 +334,7 @@ describe('IdentificacionPage · CU-PRE-04', () => {
 
   it('el botón Siguiente lleva a Alternativas de Solución (CU-PRE-05)', async () => {
     montar();
-    await screen.findByDisplayValue('MINSAL');
+    await screen.findByText('MINSAL');
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/alternativas-solucion');
   });

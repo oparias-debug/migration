@@ -253,7 +253,7 @@
       "viabilidadPendiente": "El envío a viabilidad todavía no existe en el contrato del API (CU-PRE-03.5 sólo registra y consulta la ficha); el botón queda a la vista y se habilitará cuando el back lo publique."
     },
     "alternativasSolucion": {
-      "titulo": "Registro de Alternativas de Solución",
+      "titulo": "Alternativas de Solución",
       "columnaNombre": "Nombre de la alternativa",
       "columnaMonto": "Monto de la alternativa (US$)",
       "columnaDescripcion": "Descripción de la alternativa",
@@ -323,7 +323,7 @@
       "sinRegistros": "Ningún proyecto coincide con la búsqueda."
     },
     "identificacion": {
-      "titulo": "Identificación del proyecto",
+      "titulo": "Identificación",
       "unidadEjecutora": "Unidad Ejecutora",
       "nombreProyecto": "Nombre del proyecto",
       "cup": "CUP",
@@ -956,8 +956,8 @@
     "asignacionCup": "Asignación CUP",
     "creacionRuta": "Creación ruta de preinversión",
     "formulacionEvaluacion": "Formulación y evaluación",
-    "programacionProyecto": "Programación del proyecto",
-    "gestionProyecto": "Gestión del proyecto",
+    "programacionProyecto": "Programación",
+    "gestionProyecto": "Gestión de la iniciativa",
     "priorizacion": "Priorización",
     "pap": "PAP",
     "paip": "PAIP",
@@ -1216,12 +1216,12 @@
     "grupo": {
       "creacionRuta": "Creación ruta de preinversión",
       "formulacion": "Formulación y evaluación",
-      "programacion": "Programación del proyecto",
-      "gestion": "Gestión del proyecto"
+      "programacion": "Programación",
+      "gestion": "Gestión de la iniciativa"
     },
     "seccion": {
-      "identificacion": "Registrar identificación",
-      "formulacion": "Registrar formulación",
+      "identificacion": "Identificación",
+      "formulacion": "Formulación",
       "evaluacion": "Evaluación ex ante"
     },
     "seleccionEtapa": "Selección de la etapa de preinversión",
@@ -1262,12 +1262,12 @@
   },
   "preinversionInicio": {
     "titulo": "Preinversión",
-    "intro": "Elija el subproceso en el que va a trabajar. Siguen el orden del proceso: se empieza por la asignación del CUP y se avanza hasta la gestión del proyecto.",
+    "intro": "Elija el subproceso en el que va a trabajar. Siguen el orden del proceso: se empieza por la asignación del CUP y se avanza hasta la gestión de la iniciativa.",
     "asignacionCup": "Crear la solicitud del Código Único de Proyecto, asignarla a un Técnico PRE y seguir su aprobación.",
-    "creacionRuta": "Definir la ruta de preinversión del proyecto y las etapas que va a desarrollar.",
-    "formulacion": "Formular y evaluar el proyecto: identificación, diagnóstico, estudios y presupuesto.",
-    "programacionProyecto": "Programar el proyecto una vez formulado.",
-    "gestionProyecto": "Gestionar el proyecto a lo largo de su ejecución.",
+    "creacionRuta": "Definir las etapas que debe surtir el proyecto.",
+    "formulacion": "Identificación, formulación y evaluación previa de la alternativa.",
+    "programacionProyecto": "Definir metas de indicadores y recursos de preinversión.",
+    "gestionProyecto": "Proceso de aprobación: Viabilidad, Elegibilidad y Opinión Técnica.",
     "generico": "Abrir el subproceso.",
     "sinAcceso": "Su rol no tiene subprocesos de Preinversión habilitados."
   }

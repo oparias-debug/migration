@@ -287,18 +287,16 @@ export function IdentificacionPage() {
         <span>{t('preinversion.identificacion.titulo')}</span>
       </div>
       <div className="formbody">
-        {/* Campos que asigna el servidor: se muestran, no se piden. */}
-        <div className="fr">
-          <FormRow label={t('preinversion.identificacion.unidadEjecutora')} controlId="id-unidad-ejecutora">
-            <input id="id-unidad-ejecutora" type="text" value={cabecera.unidadEjecutora} readOnly />
-          </FormRow>
-          <FormRow label={t('preinversion.identificacion.nombreProyecto')} controlId="id-nombre-proyecto">
-            <input id="id-nombre-proyecto" type="text" value={cabecera.nombreProyecto} readOnly />
-          </FormRow>
-          <FormRow label={t('preinversion.identificacion.cup')} controlId="id-cup">
-            <input id="id-cup" type="text" value={cabecera.cup} readOnly />
-          </FormRow>
-        </div>
+        {/* Datos que asigna el servidor: se leen, no se editan. Van en una línea y
+            en el orden CUP, nombre y unidad ejecutora; como tres campos de
+            formulario ocupaban el alto que necesita el capítulo. */}
+        <p className="cabecera-proyecto">
+          <span className="mono" title={t('preinversion.identificacion.cup')}>
+            {cabecera.cup || '—'}
+          </span>
+          <strong title={t('preinversion.identificacion.nombreProyecto')}>{cabecera.nombreProyecto}</strong>
+          <span title={t('preinversion.identificacion.unidadEjecutora')}>{cabecera.unidadEjecutora}</span>
+        </p>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <Pestanas

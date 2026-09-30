@@ -151,10 +151,12 @@ export function AlternativasSolucionPage() {
             <table className="tabla-datos">
               <thead>
                 <tr>
-                  <th>{t('preinversion.alternativasSolucion.columnaNombre')}</th>
-                  <th>{t('preinversion.alternativasSolucion.columnaMonto')}</th>
-                  <th>{t('preinversion.alternativasSolucion.columnaDescripcion')}</th>
-                  <th>{t('preinversion.alternativasSolucion.columnaSeleccionada')}</th>
+                  {/* La descripción es el campo largo de la fila: se le da el ancho
+                      que sobra a las demás columnas, que llevan datos cortos. */}
+                  <th style={{ width: '22%' }}>{t('preinversion.alternativasSolucion.columnaNombre')}</th>
+                  <th style={{ width: '14%' }}>{t('preinversion.alternativasSolucion.columnaMonto')}</th>
+                  <th style={{ width: '46%' }}>{t('preinversion.alternativasSolucion.columnaDescripcion')}</th>
+                  <th style={{ width: '10%' }}>{t('preinversion.alternativasSolucion.columnaSeleccionada')}</th>
                   {puedeEditar && <th />}
                 </tr>
               </thead>
@@ -186,7 +188,7 @@ export function AlternativasSolucionPage() {
                     </td>
                     <td>
                       <textarea
-                        rows={2}
+                        rows={3}
                         aria-label={t('preinversion.alternativasSolucion.columnaDescripcion')}
                         className={campoVacio(alternativas[indice]?.descripcionAlternativa ?? '') ? 'malo' : undefined}
                         disabled={!puedeEditar}
