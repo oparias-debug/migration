@@ -26,15 +26,15 @@ public class Registro {
     private final Map<String, String> valores;
 
     /** Reconstituye un registro ya persistido. */
-    public Registro(Long id, Catalogo catalogo, String clave, RegistroPadre registroPadre, EstadoVigencia estado,
-            LocalDate fechaDesde, LocalDate fechaHasta, Map<String, String> valores) {
+    public Registro(Long id, Catalogo catalogo, String clave, RegistroPadre registroPadre, Periodo vigencia,
+            Map<String, String> valores) {
         this.id = id;
         this.catalogo = catalogo;
         this.clave = clave;
         this.registroPadre = registroPadre;
-        this.estado = estado;
-        this.fechaDesde = fechaDesde;
-        this.fechaHasta = fechaHasta;
+        this.estado = vigencia.estado();
+        this.fechaDesde = vigencia.desde();
+        this.fechaHasta = vigencia.hasta();
         this.valores = new HashMap<>(valores);
     }
 
@@ -45,7 +45,7 @@ public class Registro {
     public static Registro nuevo(Catalogo catalogo, Map<String, String> valores, RegistroPadre registroPadre,
             LocalDate fechaDesde, LocalDate fechaHasta) {
         return new Registro(null, catalogo, clave(catalogo, valores), registroPadre,
-                Vigencia.estadoInicial(null, fechaHasta), fechaDesde, fechaHasta, valores);
+                new Periodo(Vigencia.estadoInicial(null, fechaHasta), fechaDesde, fechaHasta), valores);
     }
 
     /** Valor del campo KEY dentro de {@code valores}. */
@@ -59,7 +59,7 @@ public class Registro {
                 "Un registro de catálogo no puede eliminarse, solo inactivarse.", "inactivarRegistro");
     }
 
-    /** HU-ADM-01-12: actualiza campos no KEY (Regla 16); se valida todo antes de aplicar nada. */
+    /** HU-ADM-01-12: actualiza campos no KEY (Regla 16); se validan los campos antes de aplicar cambios. */
     public void actualizarValores(List<ValorCampo> nuevos) {
         for (int i = 0; i < nuevos.size(); i++) {
             String nombreCampo = nuevos.get(i).campo();

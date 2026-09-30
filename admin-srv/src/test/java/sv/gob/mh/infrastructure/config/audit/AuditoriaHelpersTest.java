@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
  *
  * <p>La regla que se fija aquí y que no es obvia: <b>un fallo de auditoría no puede tumbar la
  * operación de negocio</b>. Si lo hiciera, el servicio de auditoría caído dejaría fuera de
- * servicio a todo lo que audita.</p>
+ * servicio a cada entidad que audita.</p>
  */
 class AuditoriaHelpersTest {
 

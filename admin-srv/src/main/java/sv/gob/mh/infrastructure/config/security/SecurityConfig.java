@@ -45,6 +45,8 @@ public class SecurityConfig {
         AuthenticationEntryPoint entryPoint = authenticationEntryPoint(objectMapper);
         return http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            // Sin CSRF a propósito: la API es stateless (sin sesión ni cookies de autenticación) y solo
+            // acepta el JWT del header Authorization, que un sitio ajeno no puede adjuntar a la petición.
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm ->
                 sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

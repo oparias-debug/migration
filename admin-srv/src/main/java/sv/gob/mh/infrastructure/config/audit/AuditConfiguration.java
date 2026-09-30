@@ -5,7 +5,7 @@ import jakarta.persistence.EntityManagerFactory;
 
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.EventType;
-import org.hibernate.internal.SessionFactoryImpl;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -29,9 +29,8 @@ public class AuditConfiguration {
     }
 
     @PostConstruct
-    @SuppressWarnings("deprecation")
     public void registerListeners() {
-        SessionFactoryImpl sessionFactory = entityManagerFactory.unwrap(SessionFactoryImpl.class);
+        SessionFactoryImplementor sessionFactory = entityManagerFactory.unwrap(SessionFactoryImplementor.class);
         EventListenerRegistry registry = sessionFactory.getServiceRegistry()
                 .getService(EventListenerRegistry.class);
 

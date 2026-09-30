@@ -67,7 +67,8 @@ public class ErrorCatalogoException extends RuntimeException {
 
     /** Con el campo afectado en {@code detalles} (el mensaje del detalle es el valor ofensor). */
     public static ErrorCatalogoException reglaNegocio(String codigo, String mensaje, String campo, String valor) {
-        return new ErrorCatalogoException(Tipo.REGLA_NEGOCIO, codigo, mensaje, List.of(new Detalle(campo, codigo, valor)));
+        return new ErrorCatalogoException(Tipo.REGLA_NEGOCIO, codigo, mensaje,
+                List.of(new Detalle(campo, codigo, valor)));
     }
 
     /** ELIMINACION_NO_PERMITIDA (Reglas 10/11, E7), ofreciendo la operación de inactivación en su lugar. */

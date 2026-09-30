@@ -27,12 +27,17 @@ public class ActualizarCamposCatalogoHandler {
 
     @Transactional
     public Catalogo handle(ActualizarCamposCatalogoCommand command) {
-        Catalogo catalogo = catalogoRepository.obtenerPorCodigo(command.codigo());
-        if (registroRepository.existeEnCatalogo(command.codigo())) {
+        Catalogo catalogo = sinRegistros(catalogoRepository.obtenerPorCodigo(command.codigo()));
+        catalogo.definirCampos(command.campos());
+        return catalogoRepository.guardar(catalogo);
+    }
+
+    /** Los campos de un catálogo con registros ya no cambian. */
+    private Catalogo sinRegistros(Catalogo catalogo) {
+        if (registroRepository.existeEnCatalogo(catalogo.getCodigo())) {
             throw ErrorCatalogoException.conflicto("CATALOGO_CON_REGISTROS",
                     "No se pueden modificar los campos, el catálogo ya contiene registros.");
         }
-        catalogo.definirCampos(command.campos());
-        return catalogoRepository.guardar(catalogo);
+        return catalogo;
     }
 }

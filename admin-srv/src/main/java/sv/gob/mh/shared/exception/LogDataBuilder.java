@@ -1,6 +1,7 @@
 package sv.gob.mh.shared.exception;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Constructor de {@link LogData}.
@@ -14,11 +15,13 @@ import java.time.LocalDateTime;
  */
 public class LogDataBuilder {
 
+    private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+
     private final LogData logData;
 
     public LogDataBuilder() {
         this.logData = new LogData();
-        this.logData.setTimestamp(LocalDateTime.now().toString());
+        this.logData.setTimestamp(LocalDateTime.now(ZONA_EL_SALVADOR).toString());
         this.logData.setThread(Thread.currentThread().getName());
     }
 

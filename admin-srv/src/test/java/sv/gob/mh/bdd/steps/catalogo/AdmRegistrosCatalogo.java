@@ -17,8 +17,6 @@ import io.cucumber.java.es.Entonces;
 import sv.gob.mh.bdd.support.CatalogoFixtures;
 import sv.gob.mh.bdd.support.ContextoCatalogoBdd;
 import sv.gob.mh.bdd.support.TablasCatalogoBdd;
-import sv.gob.mh.infrastructure.persistence.entity.catalogo.CampoDefinicionEntity;
-import sv.gob.mh.infrastructure.persistence.entity.catalogo.CatalogoEntity;
 import sv.gob.mh.infrastructure.persistence.entity.catalogo.RegistroEntity;
 import sv.gob.mh.infrastructure.persistence.repository.catalogo.RegistroJpaRepository;
 

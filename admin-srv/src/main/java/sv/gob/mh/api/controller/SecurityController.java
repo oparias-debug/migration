@@ -7,7 +7,7 @@ import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimAccessor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +27,7 @@ import sv.gob.mh.infrastructure.config.authz.PermissionsAllowed;
  *
  * <p>El padrón que hace falta está en {@code authz/ejemplo-authz.json} y se carga con una sola
  * llamada; los detalles, en {@code docs/autorizacion.md}. Sin cargarlo, los dos endpoints con
- * {@link PermissionsAllowed} responden {@code 403} a todo el mundo, que es el comportamiento
+ * {@link PermissionsAllowed} responden {@code 403} a cualquier usuario, que es el comportamiento
  * correcto: el marco falla cerrado.</p>
  *
  * <p>Aquí la autorización no la resuelve una librería externa sino la copia vendorizada que
@@ -73,7 +73,7 @@ public class SecurityController {
      * @return los claims del token y la identidad resuelta
      */
     @GetMapping(value = "/autenticado", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> autenticado(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Map<String, Object>> autenticado(@AuthenticationPrincipal JwtClaimAccessor jwt) {
         Map<String, Object> respuesta = new LinkedHashMap<>(jwt.getClaims());
         respuesta.put(CLAVE_IDENTITY, jwt.getSubject());
         return ResponseEntity.ok(respuesta);
@@ -96,7 +96,7 @@ public class SecurityController {
         code = "consultar-expedientes",
         operation = "VIEW",
         path = RECURSO_CONSULTA))
-    public ResponseEntity<Map<String, Object>> consultarExpedientes(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Map<String, Object>> consultarExpedientes(@AuthenticationPrincipal JwtClaimAccessor jwt) {
         return ResponseEntity.ok(Map.of(
             CLAVE_IDENTITY, jwt.getSubject(),
             "expedientes", List.of(
@@ -122,7 +122,7 @@ public class SecurityController {
         path = RECURSO_REGISTRO))
     public ResponseEntity<Map<String, Object>> eliminarExpediente(
             @PathVariable Long id,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal JwtClaimAccessor jwt) {
         return ResponseEntity.ok(Map.of(
             CLAVE_IDENTITY, jwt.getSubject(),
             "eliminado", id));

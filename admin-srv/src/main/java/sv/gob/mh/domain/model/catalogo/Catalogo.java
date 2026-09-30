@@ -33,15 +33,15 @@ public class Catalogo {
     private final List<CampoDefinicion> campos;
 
     /** Reconstituye un catálogo ya persistido. */
-    public Catalogo(Long id, String codigo, String nombre, String catalogoPadreCodigo, EstadoVigencia estado,
-            LocalDate fechaDesde, LocalDate fechaHasta, List<CampoDefinicion> campos) {
+    public Catalogo(Long id, String codigo, String nombre, String catalogoPadreCodigo, Periodo vigencia,
+            List<CampoDefinicion> campos) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
         this.catalogoPadreCodigo = catalogoPadreCodigo;
-        this.estado = estado;
-        this.fechaDesde = fechaDesde;
-        this.fechaHasta = fechaHasta;
+        this.estado = vigencia.estado();
+        this.fechaDesde = vigencia.desde();
+        this.fechaHasta = vigencia.hasta();
         this.campos = new ArrayList<>(campos);
     }
 
@@ -49,7 +49,7 @@ public class Catalogo {
     public static Catalogo nuevo(String codigo, String nombre, String catalogoPadreCodigo,
             EstadoVigencia estadoSolicitado, LocalDate fechaDesde, LocalDate fechaHasta, List<NuevoCampo> campos) {
         Catalogo catalogo = new Catalogo(null, codigo, nombre, catalogoPadreCodigo,
-                Vigencia.estadoInicial(estadoSolicitado, fechaHasta), fechaDesde, fechaHasta, List.of());
+                new Periodo(Vigencia.estadoInicial(estadoSolicitado, fechaHasta), fechaDesde, fechaHasta), List.of());
         catalogo.definirCampos(campos);
         return catalogo;
     }
@@ -57,7 +57,8 @@ public class Catalogo {
     /** Reglas 18 (al menos un campo), 2 (al menos un KEY) y 3 (nombres únicos). */
     public static void validarCampos(List<NuevoCampo> campos) {
         if (campos == null || campos.isEmpty()) {
-            throw ErrorCatalogoException.reglaNegocio("CATALOGO_SIN_CAMPOS", "Un catálogo debe tener al menos un campo.");
+            throw ErrorCatalogoException.reglaNegocio("CATALOGO_SIN_CAMPOS",
+                    "Un catálogo debe tener al menos un campo.");
         }
         if (campos.stream().noneMatch(NuevoCampo::esKey)) {
             throw ErrorCatalogoException.reglaNegocio("CATALOGO_SIN_CAMPO_KEY",
@@ -151,10 +152,10 @@ public class Catalogo {
     }
 
     /**
-     * HU-ADM-01-09 (Reglas 1, 8): valores de un registro nuevo por nombre de campo. Todo campo
-     * informado debe existir y todo campo definido, incluido el KEY, debe venir.
+     * HU-ADM-01-09 (Reglas 1, 8): valores de un registro nuevo por nombre de campo. Cada campo
+     * informado debe existir y cada campo definido, incluido el KEY, debe venir.
      */
-    public Map<String, String> valoresCompletos(List<ValorCampo> valores) {
+    public Map<String, String> valoresCompletos(Iterable<ValorCampo> valores) {
         Map<String, String> porCampo = new HashMap<>();
         for (ValorCampo valor : valores) {
             exigirCampo(valor.campo(), "values");

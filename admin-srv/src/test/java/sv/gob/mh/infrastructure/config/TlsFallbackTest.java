@@ -85,7 +85,7 @@ class TlsFallbackTest {
 
     @Test
     @DisplayName("Los emisores aceptados son los del almacén por defecto, sin añadidos")
-    void losEmisoresSonLosDelAlmacen() throws Exception {
+    void losEmisoresSonLosDelAlmacen() {
         X509TrustManager porDefecto = mock(X509TrustManager.class);
         X509Certificate[] emisores = { certificadoDePrueba() };
         when(porDefecto.getAcceptedIssuers()).thenReturn(emisores);

@@ -32,17 +32,25 @@ public class CrearRegistroHandler {
     public Registro handle(CrearRegistroCommand command) {
         Catalogo catalogo = catalogoRepository.obtenerPorCodigo(command.codigoCatalogo());
         Map<String, String> valores = catalogo.valoresCompletos(command.valores());
-        RegistroPadre registroPadre = catalogo.catalogoDelRegistroPadre(command.clavePadre())
-                .map(codigoPadre -> registroRepository.buscarPorClave(codigoPadre, command.clavePadre())
+        RegistroPadre registroPadre = registroPadre(catalogo, command.clavePadre());
+        exigirClaveNueva(command.codigoCatalogo(), Registro.clave(catalogo, valores));
+        return registroRepository.guardar(
+                Registro.nuevo(catalogo, valores, registroPadre, command.fechaDesde(), command.fechaHasta()));
+    }
+
+    /** Reglas 8 y 23: el registro padre, si el catálogo lo lleva, debe existir en el catálogo padre. */
+    private RegistroPadre registroPadre(Catalogo catalogo, String clavePadre) {
+        return catalogo.catalogoDelRegistroPadre(clavePadre)
+                .map(codigoPadre -> registroRepository.buscarPorClave(codigoPadre, clavePadre)
                         .map(Registro::comoPadre)
-                        .orElseThrow(() -> Catalogo.registroPadreInexistente(command.clavePadre())))
+                        .orElseThrow(() -> Catalogo.registroPadreInexistente(clavePadre)))
                 .orElse(null);
-        String clave = Registro.clave(catalogo, valores);
-        if (registroRepository.existeClave(command.codigoCatalogo(), clave)) {
+    }
+
+    private void exigirClaveNueva(String codigoCatalogo, String clave) {
+        if (registroRepository.existeClave(codigoCatalogo, clave)) {
             throw ErrorCatalogoException.reglaNegocio("CLAVE_REGISTRO_DUPLICADA",
                     "Ya existe un registro con el valor KEY indicado en el catálogo.", "values", clave);
         }
-        return registroRepository.guardar(
-                Registro.nuevo(catalogo, valores, registroPadre, command.fechaDesde(), command.fechaHasta()));
     }
 }

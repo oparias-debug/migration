@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -50,7 +51,8 @@ public class CatalogosManejadorErrores {
 
     /** Schema {@code Error} de CU-ADM-01; {@code detalles} se omite cuando no hay ninguno. */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record RespuestaError(String codigo, String mensaje, OffsetDateTime timestamp, List<ErrorDetailDto> detalles) {
+    public record RespuestaError(String codigo, String mensaje, OffsetDateTime timestamp,
+            List<ErrorDetailDto> detalles) {
     }
 
     @ExceptionHandler(ErrorCatalogoException.class)
@@ -73,7 +75,7 @@ public class CatalogosManejadorErrores {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<RespuestaError> manejarCuerpoInvalido(MethodArgumentNotValidException ex) {
+    public ResponseEntity<RespuestaError> manejarCuerpoInvalido(BindException ex) {
         List<ErrorDetailDto> detalles = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> new ErrorDetailDto(String.valueOf(error.getDefaultMessage())).campo(error.getField())
                         .codigo(SOLICITUD_INVALIDA))
@@ -87,7 +89,7 @@ public class CatalogosManejadorErrores {
      * inmutable (Regla 17, E4) y se reporta con 422.
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<RespuestaError> manejarCuerpoIlegible(HttpMessageNotReadableException ex) {
+    public ResponseEntity<RespuestaError> manejarCuerpoIlegible(Throwable ex) {
         if (ex.getCause() instanceof UnrecognizedPropertyException propiedad) {
             if ("code".equals(propiedad.getPropertyName())
                     && CatalogDescriptorsUpdateRequestDto.class.isAssignableFrom(propiedad.getReferringClass())) {
@@ -111,7 +113,8 @@ public class CatalogosManejadorErrores {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RespuestaError> manejarErrorInterno(Exception ex) {
         LOG.error("Error no controlado en CU-ADM-01", ex);
-        return respuesta(HttpStatus.INTERNAL_SERVER_ERROR, "ERROR_INTERNO", "Ocurrió un error no controlado.", List.of());
+        return respuesta(HttpStatus.INTERNAL_SERVER_ERROR, "ERROR_INTERNO", "Ocurrió un error no controlado.",
+                List.of());
     }
 
     private static HttpStatus status(ErrorCatalogoException.Tipo tipo) {

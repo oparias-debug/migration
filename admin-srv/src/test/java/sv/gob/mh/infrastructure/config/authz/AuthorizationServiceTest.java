@@ -8,11 +8,15 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -171,154 +175,70 @@ class AuthorizationServiceTest {
 
     // ------------------------------------------------------- condiciones adicionales
 
-    @Test
-    @DisplayName("Con condiciones vacías, manda el veredicto del servicio")
-    void condicionesVaciasNoCambianNada() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,\"conditions\":\"\"}");
-
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
+    /** Condiciones adicionales que el servicio adjunta a un permiso concedido. */
+    static Stream<Arguments> condicionesAdicionales() {
+        return Stream.of(
+            Arguments.of("Una lista de usuarios permitidos que incluye al actual concede", "EJEMPLO_GRUPO_ADMIN",
+                "{\\\"allowed_users\\\":\\\"otra.persona, usuario.admin\\\"}", true),
+            Arguments.of("Si el usuario no está en la lista, se deniega aunque el permiso exista",
+                "EJEMPLO_GRUPO_ADMIN", "{\\\"allowed_users\\\":\\\"otra.persona\\\"}", false),
+            Arguments.of("Los roles permitidos se comparan contra los grupos del token", "EJEMPLO_GRUPO_ADMIN",
+                "{\\\"allowed_roles\\\":\\\"EJEMPLO_GRUPO_ADMIN\\\"}", true),
+            Arguments.of("Un rol que no está entre los del token deniega", "EJEMPLO_GRUPO_CONSULTA",
+                "{\\\"allowed_roles\\\":\\\"OTRO_GRUPO\\\"}", false),
+            Arguments.of("Una franja horaria del día completo concede", "EJEMPLO_GRUPO_ADMIN",
+                "{\\\"time_restriction\\\":\\\"00:00-23:59\\\"}", true),
+            Arguments.of("Una franja con formato inválido deniega, no concede por defecto", "EJEMPLO_GRUPO_ADMIN",
+                "{\\\"time_restriction\\\":\\\"no-es-una-hora\\\"}", false),
+            // Cruza medianoche (fin anterior al inicio): 00:01-00:00 cubre el día entero por el
+            // otro camino del cálculo, sea cual sea la hora a la que corra la prueba.
+            Arguments.of("Una franja que cruza medianoche se evalúa sin invertirse", "EJEMPLO_GRUPO_ADMIN",
+                "{\\\"time_restriction\\\":\\\"00:01-00:00\\\"}", true));
     }
 
-    @Test
-    @DisplayName("Una lista de usuarios permitidos que incluye al actual concede")
-    void usuarioEnLaListaConcede() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"allowed_users\\\":\\\"otra.persona, usuario.admin\\\"}\"}");
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("condicionesAdicionales")
+    @DisplayName("Las condiciones adicionales del servicio deciden sobre un permiso concedido")
+    void condicionesAdicionalesDecidenElPermiso(String caso, String grupo, String condiciones, boolean esperado)
+            throws Exception {
+        conTokenYGrupos(grupo);
+        respondeCon(200, "{\"hasPermission\":true,\"conditions\":\"" + condiciones + "\"}");
 
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
+        assertEquals(esperado, service.hasGranularPermission("VIEW", "expedientes"), caso);
     }
 
-    @Test
-    @DisplayName("Si el usuario no está en la lista, se deniega aunque el permiso exista")
-    void usuarioFueraDeLaListaSeDeniega() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"allowed_users\\\":\\\"otra.persona\\\"}\"}");
-
-        assertFalse(service.hasGranularPermission("VIEW", "expedientes"));
+    /** Respuestas del servicio de autorización para un usuario del grupo administrador. */
+    static Stream<Arguments> respuestasDelServicio() {
+        return Stream.of(
+            Arguments.of("Con condiciones vacías, manda el veredicto del servicio",
+                "{\"hasPermission\":true,\"conditions\":\"\"}", true),
+            Arguments.of("Una condición desconocida no bloquea: manda el veredicto del servicio",
+                "{\"hasPermission\":true,\"conditions\":\"{\\\"otra_cosa\\\":\\\"valor\\\"}\"}", true),
+            Arguments.of("Unas condiciones ilegibles deniegan",
+                "{\"hasPermission\":true,\"conditions\":\"{no es json\"}", false),
+            // Las condiciones sólo afinan un permiso concedido; nunca lo conceden.
+            Arguments.of("Con hasPermission false, las condiciones ni se miran",
+                "{\"hasPermission\":false,\"conditions\":\"{\\\"allowed_users\\\":\\\"usuario.admin\\\"}\"}", false),
+            Arguments.of("Unas condiciones con el texto null se tratan como si no hubiera",
+                "{\"hasPermission\":true,\"conditions\":\"null\"}", true),
+            Arguments.of("Una franja horaria vacía no restringe nada",
+                "{\"hasPermission\":true,\"conditions\":\"{\\\"time_restriction\\\":\\\"  \\\"}\"}", true),
+            Arguments.of("Una franja con horas imposibles deniega en vez de reventar",
+                "{\"hasPermission\":true,\"conditions\":\"{\\\"time_restriction\\\":\\\"99:99-11:11\\\"}\"}", false),
+            Arguments.of("El usuario permitido puede venir el primero de la lista",
+                "{\"hasPermission\":true,\"conditions\":\"{\\\"allowed_users\\\":\\\"usuario.admin,otra.persona\\\"}\"}",
+                true));
     }
 
-    @Test
-    @DisplayName("Los roles permitidos se comparan contra los grupos del token")
-    void rolesPermitidos() throws Exception {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("respuestasDelServicio")
+    @DisplayName("El veredicto sigue a la respuesta del servicio y a sus condiciones")
+    void elVeredictoSigueALaRespuestaDelServicio(String caso, String respuesta, boolean esperado)
+            throws Exception {
         conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"allowed_roles\\\":\\\"EJEMPLO_GRUPO_ADMIN\\\"}\"}");
+        respondeCon(200, respuesta);
 
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Un rol que no está entre los del token deniega")
-    void rolNoPermitido() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_CONSULTA");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"allowed_roles\\\":\\\"OTRO_GRUPO\\\"}\"}");
-
-        assertFalse(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Una franja horaria de todo el día concede")
-    void franjaHorariaDeTodoElDia() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"time_restriction\\\":\\\"00:00-23:59\\\"}\"}");
-
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Una franja con formato inválido deniega, no concede por defecto")
-    void franjaConFormatoInvalidoDeniega() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"time_restriction\\\":\\\"no-es-una-hora\\\"}\"}");
-
-        assertFalse(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Una franja que cruza medianoche se evalúa sin invertirse")
-    void franjaQueCruzaMedianoche() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        // Cruza medianoche (fin anterior al inicio): 00:01-00:00 cubre el día entero por el
-        // otro camino del cálculo, sea cual sea la hora a la que corra la prueba.
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"time_restriction\\\":\\\"00:01-00:00\\\"}\"}");
-
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Una condición desconocida no bloquea: manda el veredicto del servicio")
-    void condicionDesconocidaNoBloquea() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"otra_cosa\\\":\\\"valor\\\"}\"}");
-
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Unas condiciones ilegibles deniegan")
-    void condicionesIlegiblesDeniegan() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,\"conditions\":\"{no es json\"}");
-
-        assertFalse(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Con hasPermission false, las condiciones ni se miran")
-    void conPermisoDenegadoLasCondicionesNoSeMiran() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":false,"
-            + "\"conditions\":\"{\\\"allowed_users\\\":\\\"usuario.admin\\\"}\"}");
-
-        // Las condiciones sólo afinan un permiso concedido; nunca lo conceden.
-        assertFalse(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Unas condiciones con el texto null se tratan como si no hubiera")
-    void condicionesConTextoNullSeIgnoran() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,\"conditions\":\"null\"}");
-
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Una franja horaria vacía no restringe nada")
-    void franjaVaciaNoRestringe() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"time_restriction\\\":\\\"  \\\"}\"}");
-
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("Una franja con horas imposibles deniega en vez de reventar")
-    void franjaConHorasImposiblesDeniega() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"time_restriction\\\":\\\"99:99-11:11\\\"}\"}");
-
-        assertFalse(service.hasGranularPermission("VIEW", "expedientes"));
-    }
-
-    @Test
-    @DisplayName("El usuario permitido puede venir el primero de la lista")
-    void usuarioPrimeroEnLaLista() throws Exception {
-        conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        respondeCon(200, "{\"hasPermission\":true,"
-            + "\"conditions\":\"{\\\"allowed_users\\\":\\\"usuario.admin,otra.persona\\\"}\"}");
-
-        assertTrue(service.hasGranularPermission("VIEW", "expedientes"));
+        assertEquals(esperado, service.hasGranularPermission("VIEW", "expedientes"), caso);
     }
 
     @Test
@@ -421,7 +341,7 @@ class AuthorizationServiceTest {
     @DisplayName("Una franja que aún no ha empezado deniega")
     void franjaQueAunNoEmpiezaDeniega() throws Exception {
         conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        LocalTime ahora = LocalTime.now();
+        LocalTime ahora = LocalTime.now(AuthorizationService.ZONA_EL_SALVADOR);
         respondeConFranja(ahora.plusHours(2), ahora.plusHours(3));
 
         assertFalse(service.hasGranularPermission("VIEW", "expedientes"));
@@ -431,7 +351,7 @@ class AuthorizationServiceTest {
     @DisplayName("Una franja que ya terminó deniega")
     void franjaQueYaTerminoDeniega() throws Exception {
         conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        LocalTime ahora = LocalTime.now();
+        LocalTime ahora = LocalTime.now(AuthorizationService.ZONA_EL_SALVADOR);
         respondeConFranja(ahora.minusHours(3), ahora.minusHours(2));
 
         assertFalse(service.hasGranularPermission("VIEW", "expedientes"));
@@ -441,7 +361,7 @@ class AuthorizationServiceTest {
     @DisplayName("Una franja que cruza medianoche y cubre la hora actual concede")
     void franjaQueCruzaMedianocheYCubreAhoraConcede() throws Exception {
         conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        LocalTime ahora = LocalTime.now();
+        LocalTime ahora = LocalTime.now(AuthorizationService.ZONA_EL_SALVADOR);
         // Fin anterior al inicio: la franja va del inicio hasta el fin del día siguiente, y
         // la hora actual cae dentro por el tramo que llega hasta el fin.
         respondeConFranja(ahora.plusHours(1), ahora.plusMinutes(5));
@@ -453,7 +373,7 @@ class AuthorizationServiceTest {
     @DisplayName("Una franja que cruza medianoche y deja fuera la hora actual deniega")
     void franjaQueCruzaMedianocheYDejaFueraAhoraDeniega() throws Exception {
         conTokenYGrupos("EJEMPLO_GRUPO_ADMIN");
-        LocalTime ahora = LocalTime.now();
+        LocalTime ahora = LocalTime.now(AuthorizationService.ZONA_EL_SALVADOR);
         respondeConFranja(ahora.plusHours(1), ahora.minusHours(1));
 
         assertFalse(service.hasGranularPermission("VIEW", "expedientes"));

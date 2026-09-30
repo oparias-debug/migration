@@ -2,6 +2,7 @@ package sv.gob.mh.infrastructure.persistence.entity.catalogo;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -109,7 +110,18 @@ public class CatalogoEntity {
         this.fechaHasta = fechaHasta;
     }
 
+    /** @return los campos, sin permitir modificarlos por fuera de la entidad */
     public List<CampoDefinicionEntity> getCampos() {
-        return campos;
+        return Collections.unmodifiableList(campos);
+    }
+
+    public void agregarCampo(CampoDefinicionEntity campo) {
+        campos.add(campo);
+    }
+
+    /** Reemplaza los campos en la misma colección, para que Hibernate elimine los que salen (orphanRemoval). */
+    public void reemplazarCampos(List<CampoDefinicionEntity> nuevos) {
+        campos.clear();
+        campos.addAll(nuevos);
     }
 }

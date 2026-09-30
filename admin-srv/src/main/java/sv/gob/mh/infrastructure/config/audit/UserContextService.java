@@ -3,14 +3,14 @@ package sv.gob.mh.infrastructure.config.audit;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /**
  * Servicio para obtener información del usuario autenticado desde el SecurityContext de Spring.
  * <p>
  * Equivalente Spring Boot de {@code UserContextService} de Quarkus que usa {@code SecurityIdentity}.
  */
-@Component
+@Service
 public class UserContextService {
 
     /**
@@ -20,20 +20,18 @@ public class UserContextService {
      */
     public String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() 
+        String usuario = "system";
+        if (authentication != null && authentication.isAuthenticated()
                 && authentication.getPrincipal() != null) {
-            
             // Si el principal es un JWT, extraer el subject/preferred_username
-            if (authentication.getPrincipal() instanceof Jwt jwt) {
-                String preferredUsername = jwt.getClaimAsString("preferred_username");
-                if (preferredUsername != null && !preferredUsername.isEmpty()) {
-                    return preferredUsername;
-                }
-                return jwt.getSubject();
-            }
-            
-            return authentication.getName();
+            usuario = authentication.getPrincipal() instanceof Jwt jwt ? usuarioDelToken(jwt)
+                    : authentication.getName();
         }
-        return "system";
+        return usuario;
+    }
+
+    private static String usuarioDelToken(Jwt jwt) {
+        String preferredUsername = jwt.getClaimAsString("preferred_username");
+        return preferredUsername != null && !preferredUsername.isEmpty() ? preferredUsername : jwt.getSubject();
     }
 }

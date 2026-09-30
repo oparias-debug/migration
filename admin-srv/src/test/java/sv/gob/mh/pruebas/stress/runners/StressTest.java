@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * mvn test -Pstress-tests -Dkarate.env=dev -Dbase.url=https://... -Dstress.threads=10
  * </pre>
  */
-class StressTestRunner {
+class StressTest {
 
     private static int getThreads() {
         return Integer.getInteger("stress.threads", 10);

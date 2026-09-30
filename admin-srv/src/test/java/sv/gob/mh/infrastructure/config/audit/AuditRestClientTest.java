@@ -15,6 +15,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -86,8 +87,11 @@ class AuditRestClientTest {
     @DisplayName("Si el servicio de auditoría no está, tampoco se propaga nada")
     void servicioCaidoNoSePropaga() {
         // Puerto cerrado a propósito.
-        new AuditRestClient("http://localhost:1/audit", new ObjectMapper().findAndRegisterModules())
-            .sendAuditEvent(evento());
+        AuditRestClient cliente = new AuditRestClient("http://localhost:1/audit",
+            new ObjectMapper().findAndRegisterModules());
+        AuditEvent evento = evento();
+
+        assertDoesNotThrow(() -> cliente.sendAuditEvent(evento));
     }
 
     @Test
@@ -95,8 +99,10 @@ class AuditRestClientTest {
     void eventoNoSerializableNoTumba() {
         // Un ObjectMapper sin módulos no sabe escribir LocalDateTime y lanza; el cliente
         // tiene que tragárselo, porque el negocio ya se hizo.
-        new AuditRestClient("http://localhost:1/audit", new ObjectMapper())
-            .sendAuditEvent(evento());
+        AuditRestClient cliente = new AuditRestClient("http://localhost:1/audit", new ObjectMapper());
+        AuditEvent evento = evento();
+
+        assertDoesNotThrow(() -> cliente.sendAuditEvent(evento));
     }
 
     private void responder(OutputStream salida, com.sun.net.httpserver.HttpExchange intercambio,

@@ -33,7 +33,10 @@ import java.util.logging.Logger;
  */
 public class ExternalConfigSource implements EnvironmentPostProcessor {
 
-    private static final Logger logger = Logger.getLogger(ExternalConfigSource.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ExternalConfigSource.class.getName());
+    private static final Duration TIEMPO_CONEXION = Duration.ofSeconds(5);
+    private static final Duration TIEMPO_RESPUESTA = Duration.ofSeconds(10);
+    private static final int HTTP_OK = 200;
     private static final String PROPERTY_SOURCE_NAME = "externalConfigSource";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -44,27 +47,28 @@ public class ExternalConfigSource implements EnvironmentPostProcessor {
         String configServiceUrl = System.getenv("CONFIG_SERVICE_URL");
 
         if (configServiceUrl == null || configServiceUrl.isEmpty()) {
-            logger.info("CONFIG_SERVICE_URL no definida como variable de entorno, usando valor por defecto de application.yml");
+            LOGGER.info("CONFIG_SERVICE_URL no definida como variable de entorno, "
+                    + "usando valor por defecto de application.yml");
             // 2. Fallback: tomar config.service.url del environment de Spring
             //    Spring resuelve automáticamente ${CONFIG_SERVICE_URL:default} → default
             configServiceUrl = environment.getProperty("config.service.url");
         }
 
         if (configServiceUrl == null || configServiceUrl.isEmpty()) {
-            logger.warning("config.service.url no tiene un valor definido, omitiendo llamada al config server");
+            LOGGER.warning("config.service.url no tiene un valor definido, omitiendo llamada al config server");
             return;
         }
 
         // 3. Obtener service.name del environment
         String serviceName = environment.getProperty("service.name");
         if (serviceName == null || serviceName.isEmpty()) {
-            logger.warning("service.name no definido, omitiendo llamada al config server");
+            LOGGER.warning("service.name no definido, omitiendo llamada al config server");
             return;
         }
 
-        // 4. Construir URL completa: {configServiceUrl}/{serviceName}
+        // 4. La URL completa es la del config server seguida del nombre del servicio
         String fullUrl = configServiceUrl + "/" + serviceName;
-        logger.log(Level.INFO, "Obteniendo configuración externa desde: {0}", fullUrl);
+        LOGGER.log(Level.INFO, "Obteniendo configuración externa desde: {0}", fullUrl);
 
         // 5. Llamar al config server
         Map<String, Object> externalProperties = fetchExternalConfiguration(fullUrl);
@@ -73,7 +77,7 @@ public class ExternalConfigSource implements EnvironmentPostProcessor {
             // 6. Inyectar con alta prioridad (addFirst = sobreescribe application.yml)
             MapPropertySource propertySource = new MapPropertySource(PROPERTY_SOURCE_NAME, externalProperties);
             environment.getPropertySources().addFirst(propertySource);
-            logger.log(Level.INFO, "Configuración externa cargada desde {0} ({1} propiedades)",
+            LOGGER.log(Level.INFO, "Configuración externa cargada desde {0} ({1} propiedades)",
                     new Object[] { fullUrl, externalProperties.size() });
         }
     }
@@ -87,12 +91,12 @@ public class ExternalConfigSource implements EnvironmentPostProcessor {
     private Map<String, Object> fetchExternalConfiguration(String url) {
         try {
             HttpClient httpClient = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(5))
+                    .connectTimeout(TIEMPO_CONEXION)
                     .build();
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .timeout(Duration.ofSeconds(10))
+                    .timeout(TIEMPO_RESPUESTA)
                     .header("Accept", "application/json")
                     .GET()
                     .build();
@@ -100,18 +104,18 @@ public class ExternalConfigSource implements EnvironmentPostProcessor {
             HttpResponse<String> response = httpClient.send(request,
                     HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() == 200) {
+            if (response.statusCode() == HTTP_OK) {
                 return parseConfigResponse(response.body());
             } else {
-                logger.log(Level.WARNING,
+                LOGGER.log(Level.WARNING,
                         "Config server respondió con código HTTP {0}, usando solo configuración local",
                         response.statusCode());
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.severe("Operación interrumpida al conectar al config server: " + e.getMessage());
+            LOGGER.severe("Operación interrumpida al conectar al config server: " + e.getMessage());
         } catch (Exception e) {
-            logger.severe("No se pudo conectar al config server, usando solo configuración por defecto: "
+            LOGGER.severe("No se pudo conectar al config server, usando solo configuración por defecto: "
                     + e.getMessage());
         }
         return Map.of();
@@ -133,13 +137,13 @@ public class ExternalConfigSource implements EnvironmentPostProcessor {
                 (String key) -> properties.put(key, comoTexto(rootNode.get(key))));
 
         } catch (Exception e) {
-            logger.severe("Error parseando respuesta del config server: " + e.getMessage());
+            LOGGER.severe("Error parseando respuesta del config server: " + e.getMessage());
         }
         return properties;
     }
 
     /**
-     * Todo llega a Spring como texto: es Spring quien convierte después al tipo que
+     * Cada valor llega a Spring como texto: es Spring quien convierte después al tipo que
      * pida cada propiedad. Un objeto o un array se dejan tal cual, en su forma JSON.
      */
     private static String comoTexto(JsonNode valueNode) {

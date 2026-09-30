@@ -63,7 +63,7 @@ class RemoteLoggerTest {
     @Test
     @DisplayName("La fábrica acepta nombre o clase, y el nombre llega al registro")
     void fabricaPorNombreYPorClase() {
-        assertEquals("mi.logger", RemoteLogger.getLogger("mi.logger").getName());
+        assertEquals("mi.logger", RemoteLogger.porNombre("mi.logger").getName());
         assertEquals(RemoteLoggerTest.class.getName(),
             RemoteLogger.getLogger(RemoteLoggerTest.class).getName());
     }
@@ -71,7 +71,7 @@ class RemoteLoggerTest {
     @Test
     @DisplayName("Sin configurar, el envío remoto está apagado")
     void sinConfigurarElEnvioEstaApagado() {
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
 
         assertFalse(logger.isRemoteEnabled());
         assertEquals(Level.WARNING, logger.getMinimumRemoteLevel());
@@ -81,7 +81,7 @@ class RemoteLoggerTest {
     @DisplayName("configure aplica url, encendido y nivel mínimo")
     void configureAplicaLosTresValores() {
         RemoteLogger.configure("https://logs/api", true, "INFO");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
 
         assertTrue(logger.isRemoteEnabled());
         assertEquals(Level.INFO, logger.getMinimumRemoteLevel());
@@ -93,7 +93,7 @@ class RemoteLoggerTest {
         RemoteLogger.configure("https://logs/api", true, "INFO");
 
         RemoteLogger.configure("", true, "");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
 
         assertEquals(Level.INFO, logger.getMinimumRemoteLevel());
     }
@@ -102,7 +102,7 @@ class RemoteLoggerTest {
     @DisplayName("Apagado, no se manda nada por muy grave que sea el mensaje")
     void apagadoNoMandaNada() {
         RemoteLogger.configure("https://logs/api", false, "WARNING");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         HttpClient cliente = conClienteSustituido(logger);
 
         logger.severe("algo grave");
@@ -114,7 +114,7 @@ class RemoteLoggerTest {
     @DisplayName("Encendido, un mensaje por debajo del nivel mínimo tampoco se manda")
     void pordebajoDelNivelNoSeManda() {
         RemoteLogger.configure("https://logs/api", true, "SEVERE");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         HttpClient cliente = conClienteSustituido(logger);
 
         logger.info("informativo");
@@ -130,7 +130,7 @@ class RemoteLoggerTest {
     @DisplayName("Encendido y por encima del nivel, manda el registro con su nivel y su logger")
     void mandaElRegistroConNivelYLogger() {
         RemoteLogger.configure("https://logs/api", true, "WARNING");
-        logger = RemoteLogger.getLogger("mi.componente");
+        logger = RemoteLogger.porNombre("mi.componente");
         HttpClient cliente = conClienteSustituido(logger);
 
         logger.severe("se cayo la base");
@@ -147,7 +147,7 @@ class RemoteLoggerTest {
     @DisplayName("El aviso también se manda cuando el mínimo es WARNING")
     void elAvisoSeManda() {
         RemoteLogger.configure("https://logs/api", true, "WARNING");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         HttpClient cliente = conClienteSustituido(logger);
 
         logger.warning("cuidado");
@@ -159,7 +159,7 @@ class RemoteLoggerTest {
     @DisplayName("Si el servicio de logs falla, la aplicación no se entera")
     void siElServicioFallaLaAplicacionSigue() {
         RemoteLogger.configure("https://logs/api", true, "WARNING");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         HttpClient cliente = mock(HttpClient.class);
         doReturn(CompletableFuture.failedFuture(new IllegalStateException("logs caido")))
             .when(cliente).sendAsync(any(HttpRequest.class), any());
@@ -174,7 +174,7 @@ class RemoteLoggerTest {
     @Test
     @DisplayName("El estado del pool se puede consultar, para diagnosticar atascos")
     void estadoDelPool() {
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
 
         assertTrue(logger.getThreadPoolStatus().startsWith("ThreadPool - Active:"));
     }
@@ -182,10 +182,10 @@ class RemoteLoggerTest {
     @Test
     @DisplayName("Apagar el logger dos veces no revienta")
     void apagarDosVecesNoRevienta() {
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
 
         logger.shutdown();
-        logger.shutdown();
+        assertDoesNotThrow(logger::shutdown);
     }
 
     @Test
@@ -194,7 +194,7 @@ class RemoteLoggerTest {
         RemoteLogger.configure("https://logs/api", true, "INFO");
 
         RemoteLogger.configure(null, true, null);
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
 
         assertTrue(logger.isRemoteEnabled());
         assertEquals(Level.INFO, logger.getMinimumRemoteLevel());
@@ -204,7 +204,7 @@ class RemoteLoggerTest {
     @DisplayName("El registro con nivel explícito también respeta el filtro")
     void logConNivelExplicitoRespetaElFiltro() {
         RemoteLogger.configure("https://logs/api", true, "SEVERE");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         HttpClient cliente = conClienteSustituido(logger);
 
         logger.log(Level.INFO, "no llega");
@@ -218,7 +218,7 @@ class RemoteLoggerTest {
     @DisplayName("Un registro que no se puede serializar no rompe el hilo del pool")
     void registroNoSerializableNoRompeElHilo() {
         RemoteLogger.configure("https://logs/api", true, "WARNING");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         HttpClient cliente = conClienteSustituido(logger);
         ReflectionTestUtils.setField(logger, "objectMapper", new com.fasterxml.jackson.databind.ObjectMapper() {
             @Override
@@ -236,7 +236,7 @@ class RemoteLoggerTest {
     @DisplayName("Apagado explícitamente, el nivel mínimo sigue consultándose sin error")
     void nivelMinimoConsultableConElEnvioApagado() {
         RemoteLogger.configure("https://logs/api", false, "FINE");
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
 
         assertFalse(logger.isRemoteEnabled());
         assertEquals(Level.FINE, logger.getMinimumRemoteLevel());
@@ -245,7 +245,7 @@ class RemoteLoggerTest {
     @Test
     @DisplayName("Con un pool que no es ThreadPoolExecutor, el estado se admite, no se inventa")
     void estadoDelPoolNoDisponible() {
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         ReflectionTestUtils.setField(logger, "executorService", mock(ExecutorService.class));
 
         assertEquals("ThreadPool status not available", logger.getThreadPoolStatus());
@@ -254,7 +254,7 @@ class RemoteLoggerTest {
     @Test
     @DisplayName("Si el pool no termina en el plazo, se le corta en seco")
     void poolQueNoTerminaSeCortaEnSeco() throws Exception {
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         ExecutorService pool = mock(ExecutorService.class);
         when(pool.awaitTermination(anyLong(), any())).thenReturn(false);
         ReflectionTestUtils.setField(logger, "executorService", pool);
@@ -269,7 +269,7 @@ class RemoteLoggerTest {
     @Test
     @DisplayName("Si la espera se interrumpe, se corta y se conserva la marca de interrupción")
     void esperaInterrumpidaConservaLaMarca() throws Exception {
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         ExecutorService pool = mock(ExecutorService.class);
         when(pool.awaitTermination(anyLong(), any())).thenThrow(new InterruptedException("cortado"));
         ReflectionTestUtils.setField(logger, "executorService", pool);
@@ -284,7 +284,7 @@ class RemoteLoggerTest {
     @Test
     @DisplayName("Sin pool, apagar no revienta")
     void sinPoolApagarNoRevienta() {
-        logger = RemoteLogger.getLogger("demo");
+        logger = RemoteLogger.porNombre("demo");
         ReflectionTestUtils.setField(logger, "executorService", null);
 
         assertDoesNotThrow(() -> logger.shutdown());

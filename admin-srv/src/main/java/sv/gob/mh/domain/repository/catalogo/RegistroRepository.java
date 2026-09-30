@@ -25,6 +25,7 @@ public interface RegistroRepository {
 
     /** El registro con ese valor KEY en el catálogo, o REGISTRO_INEXISTENTE (Regla 4, E2). */
     default Registro obtenerPorClave(String codigoCatalogo, String clave) {
-        return buscarPorClave(codigoCatalogo, clave).orElseThrow(() -> ErrorCatalogoException.registroInexistente(clave));
+        return buscarPorClave(codigoCatalogo, clave)
+                .orElseThrow(() -> ErrorCatalogoException.registroInexistente(clave));
     }
 }

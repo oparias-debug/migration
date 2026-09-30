@@ -28,11 +28,15 @@ public class ConsultarRegistrosHijosQuery {
     @Transactional(readOnly = true)
     public List<Registro> ejecutar(String codigoCatalogo, String clave) {
         catalogoRepository.obtenerPorCodigo(codigoCatalogo);
-        Registro registro = registroRepository.obtenerPorClave(codigoCatalogo, clave);
+        Long idRegistro = registroRepository.obtenerPorClave(codigoCatalogo, clave).getId();
+        exigirCatalogoHijo(codigoCatalogo);
+        return registroRepository.listarHijos(idRegistro);
+    }
+
+    private void exigirCatalogoHijo(String codigoCatalogo) {
         if (catalogoRepository.listarHijos(codigoCatalogo).isEmpty()) {
             throw ErrorCatalogoException.reglaNegocio("CATALOGO_SIN_CATALOGO_HIJO",
                     "El catálogo de este registro no tiene catálogo hijo definido.");
         }
-        return registroRepository.listarHijos(registro.getId());
     }
 }

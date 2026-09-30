@@ -28,11 +28,10 @@ public class PermissionsAllowedInterceptor {
     public Object checkMultiplePermissions(ProceedingJoinPoint joinPoint, 
                                            PermissionsAllowed permissionsAllowed) throws Throwable {
         Permission[] permissions = permissionsAllowed.value();
-        boolean requireAll = permissionsAllowed.requireAll();
-
         if (permissions.length == 0) {
             return joinPoint.proceed();
         }
+        boolean requireAll = permissionsAllowed.requireAll();
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = (authentication != null) ? authentication.getName() : "anonymous";

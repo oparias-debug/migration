@@ -1,6 +1,7 @@
 package sv.gob.mh.infrastructure.persistence.entity.catalogo;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -117,7 +118,13 @@ public class RegistroEntity {
         this.fechaHasta = fechaHasta;
     }
 
+    /** @return los valores, sin permitir modificarlos por fuera de la entidad */
     public Map<String, String> getValores() {
-        return valores;
+        return Collections.unmodifiableMap(valores);
+    }
+
+    public void reemplazarValores(Map<String, String> nuevos) {
+        valores.clear();
+        valores.putAll(nuevos);
     }
 }

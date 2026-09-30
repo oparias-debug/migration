@@ -20,7 +20,11 @@ import java.time.Duration;
 @Component
 public class AuditRestClient {
 
-    private static final RemoteLogger LOG = RemoteLogger.getLogger(AuditRestClient.class.getName());
+    private static final RemoteLogger LOG = RemoteLogger.getLogger(AuditRestClient.class);
+    private static final Duration TIEMPO_CONEXION = Duration.ofSeconds(5);
+    private static final Duration TIEMPO_RESPUESTA = Duration.ofSeconds(10);
+    /** Desde este código HTTP la respuesta del servicio de auditoría es un error. */
+    private static final int PRIMER_CODIGO_ERROR = 400;
 
     private final String auditServiceUrl;
     private final HttpClient httpClient;
@@ -32,7 +36,7 @@ public class AuditRestClient {
         this.auditServiceUrl = auditServiceUrl;
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
+                .connectTimeout(TIEMPO_CONEXION)
                 .build();
     }
 
@@ -43,13 +47,13 @@ public class AuditRestClient {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(auditServiceUrl))
                     .header("Content-Type", "application/json")
-                    .timeout(Duration.ofSeconds(10))
+                    .timeout(TIEMPO_RESPUESTA)
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
 
             httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                     .thenAccept((HttpResponse<String> response) -> {
-                        if (response.statusCode() >= 400) {
+                        if (response.statusCode() >= PRIMER_CODIGO_ERROR) {
                             LOG.severe("Audit service returned error: " + response.statusCode());
                         }
                     })

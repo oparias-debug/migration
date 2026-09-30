@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
  * hacen falta <b>todos</b>. Confundirlos abre o cierra el endpoint de par en par sin que nada
  * falle a la vista.</p>
  *
- * <p>Y, como en todo el marco, la denegación ocurre <b>antes</b> de ejecutar el método: si se
+ * <p>Y, como en el resto del marco, la denegación ocurre <b>antes</b> de ejecutar el método: si se
  * comprobara después, el efecto ya estaría hecho.</p>
  */
 class PermissionsAllowedInterceptorTest {
@@ -119,9 +119,10 @@ class PermissionsAllowedInterceptorTest {
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken("usuario.consulta", null, java.util.List.of()));
 
+        PermissionsAllowed eliminar = anotacion(false, permiso("DELETE", "expedientes-registro"));
+
         AccessDeniedException error = assertThrows(AccessDeniedException.class,
-            () -> interceptor.checkMultiplePermissions(punto,
-                anotacion(false, permiso("DELETE", "expedientes-registro"))));
+            () -> interceptor.checkMultiplePermissions(punto, eliminar));
 
         verify(punto, never()).proceed();
         assertTrue(error.getMessage().contains("usuario.consulta"));
@@ -134,10 +135,10 @@ class PermissionsAllowedInterceptorTest {
         when(authorizationService.hasGranularPermission("VIEW", "expedientes-consulta")).thenReturn(true);
         when(authorizationService.hasGranularPermission("DELETE", "expedientes-registro")).thenReturn(false);
 
-        assertThrows(AccessDeniedException.class,
-            () -> interceptor.checkMultiplePermissions(punto,
-                anotacion(true, permiso("VIEW", "expedientes-consulta"),
-                    permiso("DELETE", "expedientes-registro"))));
+        PermissionsAllowed ambos = anotacion(true, permiso("VIEW", "expedientes-consulta"),
+            permiso("DELETE", "expedientes-registro"));
+
+        assertThrows(AccessDeniedException.class, () -> interceptor.checkMultiplePermissions(punto, ambos));
 
         verify(punto, never()).proceed();
     }
@@ -161,9 +162,10 @@ class PermissionsAllowedInterceptorTest {
     void sinSesionDiceAnonymous() {
         ProceedingJoinPoint punto = mock(ProceedingJoinPoint.class);
 
+        PermissionsAllowed ver = anotacion(false, permiso("VIEW", "expedientes"));
+
         AccessDeniedException error = assertThrows(AccessDeniedException.class,
-            () -> interceptor.checkMultiplePermissions(punto,
-                anotacion(false, permiso("VIEW", "expedientes"))));
+            () -> interceptor.checkMultiplePermissions(punto, ver));
 
         assertTrue(error.getMessage().contains("anonymous"));
     }

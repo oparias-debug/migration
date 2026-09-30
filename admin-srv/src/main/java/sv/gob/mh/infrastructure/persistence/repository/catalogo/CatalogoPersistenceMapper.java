@@ -1,5 +1,6 @@
 package sv.gob.mh.infrastructure.persistence.repository.catalogo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.function.Function;
 
 import sv.gob.mh.domain.model.catalogo.CampoDefinicion;
 import sv.gob.mh.domain.model.catalogo.Catalogo;
+import sv.gob.mh.domain.model.catalogo.Periodo;
 import sv.gob.mh.domain.model.catalogo.Registro;
 import sv.gob.mh.domain.model.catalogo.RegistroPadre;
 import sv.gob.mh.infrastructure.persistence.entity.catalogo.CampoDefinicionEntity;
@@ -28,7 +30,7 @@ final class CatalogoPersistenceMapper {
                         campo.getPosicion()))
                 .toList();
         return new Catalogo(entidad.getId(), entidad.getCodigo(), entidad.getNombre(), entidad.getCatalogoPadreCodigo(),
-                entidad.getEstado(), entidad.getFechaDesde(), entidad.getFechaHasta(), campos);
+                new Periodo(entidad.getEstado(), entidad.getFechaDesde(), entidad.getFechaHasta()), campos);
     }
 
     /**
@@ -46,7 +48,7 @@ final class CatalogoPersistenceMapper {
 
         Map<Long, CampoDefinicionEntity> existentes = new HashMap<>();
         entidad.getCampos().forEach(campo -> existentes.put(campo.getId(), campo));
-        entidad.getCampos().clear();
+        List<CampoDefinicionEntity> nuevos = new ArrayList<>();
         for (CampoDefinicion campo : modelo.getCampos()) {
             CampoDefinicionEntity destino = campo.getId() != null && existentes.containsKey(campo.getId())
                     ? existentes.get(campo.getId())
@@ -56,8 +58,9 @@ final class CatalogoPersistenceMapper {
             destino.setTipo(campo.getTipo());
             destino.setEsKey(campo.isEsKey());
             destino.setPosicion(campo.getPosicion());
-            entidad.getCampos().add(destino);
+            nuevos.add(destino);
         }
+        entidad.reemplazarCampos(nuevos);
     }
 
     /** Registros con su catálogo traducido una sola vez por catálogo distinto. */
@@ -78,6 +81,7 @@ final class CatalogoPersistenceMapper {
         RegistroPadre registroPadre = padre == null ? null
                 : new RegistroPadre(padre.getId(), padre.getClave(), padre.getCatalogo().getCodigo());
         return new Registro(entidad.getId(), catalogo.apply(entidad.getCatalogo()), entidad.getClave(), registroPadre,
-                entidad.getEstado(), entidad.getFechaDesde(), entidad.getFechaHasta(), entidad.getValores());
+                new Periodo(entidad.getEstado(), entidad.getFechaDesde(), entidad.getFechaHasta()),
+                entidad.getValores());
     }
 }

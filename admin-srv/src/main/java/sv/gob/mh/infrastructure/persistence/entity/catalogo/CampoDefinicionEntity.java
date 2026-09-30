@@ -1,6 +1,7 @@
 package sv.gob.mh.infrastructure.persistence.entity.catalogo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.CollectionTable;
@@ -106,7 +107,8 @@ public class CampoDefinicionEntity {
         this.posicion = posicion;
     }
 
+    /** @return los valores del campo ENUM, sin permitir modificarlos por fuera de la entidad */
     public List<String> getValoresEnum() {
-        return valoresEnum;
+        return Collections.unmodifiableList(valoresEnum);
     }
 }

@@ -4,11 +4,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Stream;
 
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.mock.env.MockEnvironment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,6 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * en los que no hay a quién preguntar.</p>
  */
 class ExternalConfigSourceTest {
+
+    private static final String FUENTE_EXTERNA = "externalConfigSource";
+    private static final String SERVICIO = "demo-authz";
+    /** Puerto cerrado a propósito: es el caso de un config-server caído. */
+    private static final String SERVIDOR_CAIDO = "http://localhost:1";
 
     private HttpServer servidor;
 
@@ -50,7 +59,7 @@ class ExternalConfigSourceTest {
         return "http://localhost:" + servidor.getAddress().getPort();
     }
 
-    private MockEnvironment entornoCon(String url, String servicio) {
+    private static MockEnvironment entornoCon(String url, String servicio) {
         MockEnvironment entorno = new MockEnvironment();
         if (url != null) {
             entorno.setProperty("config.service.url", url);
@@ -61,55 +70,47 @@ class ExternalConfigSourceTest {
         return entorno;
     }
 
-    @Test
-    @DisplayName("Sin URL del config-server, arranca igual y no añade nada")
-    void sinUrlArrancaIgual() {
-        MockEnvironment entorno = entornoCon(null, "demo-authz");
-
-        new ExternalConfigSource().postProcessEnvironment(entorno, null);
-
-        assertFalse(entorno.getPropertySources().contains("externalConfigSource"));
+    /** Casos en los que no hay a quién preguntar o quien debía responder no está. */
+    static Stream<Arguments> sinConfigServer() {
+        return Stream.of(
+            Arguments.of("Sin URL del config-server, arranca igual y no añade nada", null, SERVICIO),
+            Arguments.of("Sin service.name tampoco pregunta: no sabría por qué configuración pedir",
+                SERVIDOR_CAIDO, null),
+            Arguments.of("Si el config-server no está, la aplicación arranca con lo local", SERVIDOR_CAIDO,
+                SERVICIO),
+            Arguments.of("Una URL vacía se trata como no tenerla: no se pregunta a nadie", "", SERVICIO),
+            Arguments.of("Un service.name vacío tampoco vale: la URL quedaría acabada en barra",
+                SERVIDOR_CAIDO, ""));
     }
 
-    @Test
-    @DisplayName("Sin service.name tampoco pregunta: no sabría por qué configuración pedir")
-    void sinNombreDeServicioNoPregunta() {
-        MockEnvironment entorno = entornoCon("http://localhost:1", null);
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("sinConfigServer")
+    @DisplayName("Sin config-server disponible, arranca con la configuración local")
+    void sinConfigServerArrancaConLoLocal(String caso, String url, String servicio) {
+        MockEnvironment entorno = entornoCon(url, servicio);
 
         new ExternalConfigSource().postProcessEnvironment(entorno, null);
 
-        assertFalse(entorno.getPropertySources().contains("externalConfigSource"));
+        assertFalse(entorno.getPropertySources().contains(FUENTE_EXTERNA), caso);
     }
 
-    @Test
-    @DisplayName("Si el config-server no está, la aplicación arranca con lo local")
-    void siNoEstaArrancaConLoLocal() {
-        // Puerto cerrado a propósito: es el caso de un config-server caído.
-        MockEnvironment entorno = entornoCon("http://localhost:1", "demo-authz");
-
-        new ExternalConfigSource().postProcessEnvironment(entorno, null);
-
-        assertFalse(entorno.getPropertySources().contains("externalConfigSource"));
+    /** Respuestas del config-server que no deben pisar la configuración local. */
+    static Stream<Arguments> respuestasIgnoradas() {
+        return Stream.of(
+            Arguments.of("Un código que no es 200 se ignora y no pisa la configuración local", 500, "{}"),
+            Arguments.of("Una respuesta ilegible no tumba el arranque", 200, "esto no es json"),
+            Arguments.of("Una respuesta vacía no añade una fuente de propiedades vacía", 200, "{}"));
     }
 
-    @Test
-    @DisplayName("Un código que no es 200 se ignora y no pisa la configuración local")
-    void codigoDistintoDe200SeIgnora() throws IOException {
-        MockEnvironment entorno = entornoCon(servidorQueResponde(500, "{}"), "demo-authz");
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("respuestasIgnoradas")
+    @DisplayName("Una respuesta inútil del config-server no añade propiedades")
+    void respuestaInutilNoAnadePropiedades(String caso, int codigo, String cuerpo) throws IOException {
+        MockEnvironment entorno = entornoCon(servidorQueResponde(codigo, cuerpo), SERVICIO);
 
         new ExternalConfigSource().postProcessEnvironment(entorno, null);
 
-        assertFalse(entorno.getPropertySources().contains("externalConfigSource"));
-    }
-
-    @Test
-    @DisplayName("Una respuesta ilegible no tumba el arranque")
-    void respuestaIlegibleNoTumbaElArranque() throws IOException {
-        MockEnvironment entorno = entornoCon(servidorQueResponde(200, "esto no es json"), "demo-authz");
-
-        new ExternalConfigSource().postProcessEnvironment(entorno, null);
-
-        assertFalse(entorno.getPropertySources().contains("externalConfigSource"));
+        assertFalse(entorno.getPropertySources().contains(FUENTE_EXTERNA), caso);
     }
 
     @Test
@@ -118,47 +119,17 @@ class ExternalConfigSourceTest {
         String json = """
             {"texto":"valor","numero":8080,"booleano":true,"objeto":{"a":1}}
             """;
-        MockEnvironment entorno = entornoCon(servidorQueResponde(200, json), "demo-authz");
+        MockEnvironment entorno = entornoCon(servidorQueResponde(200, json), SERVICIO);
         entorno.setProperty("texto", "valor-local");
 
         new ExternalConfigSource().postProcessEnvironment(entorno, null);
 
-        assertTrue(entorno.getPropertySources().contains("externalConfigSource"));
-        // addFirst: la externa se resuelve antes que la local, que es el objetivo de todo esto.
+        assertTrue(entorno.getPropertySources().contains(FUENTE_EXTERNA));
+        // addFirst: la externa se resuelve antes que la local, que es el objetivo de esta fuente.
         assertEquals("valor", entorno.getProperty("texto"));
-        // Todo llega como texto, porque Spring resuelve los tipos después.
+        // Cada valor llega como texto, porque Spring resuelve los tipos después.
         assertEquals("8080", entorno.getProperty("numero"));
         assertEquals("true", entorno.getProperty("booleano"));
         assertEquals("{\"a\":1}", entorno.getProperty("objeto"));
-    }
-
-    @Test
-    @DisplayName("Una respuesta vacía no añade una fuente de propiedades vacía")
-    void respuestaVaciaNoAnadeFuente() throws IOException {
-        MockEnvironment entorno = entornoCon(servidorQueResponde(200, "{}"), "demo-authz");
-
-        new ExternalConfigSource().postProcessEnvironment(entorno, null);
-
-        assertFalse(entorno.getPropertySources().contains("externalConfigSource"));
-    }
-
-    @Test
-    @DisplayName("Una URL vacía se trata como no tenerla: no se pregunta a nadie")
-    void urlVaciaSeTrataComoNoTenerla() {
-        MockEnvironment entorno = entornoCon("", "demo-authz");
-
-        new ExternalConfigSource().postProcessEnvironment(entorno, null);
-
-        assertFalse(entorno.getPropertySources().contains("externalConfigSource"));
-    }
-
-    @Test
-    @DisplayName("Un service.name vacío tampoco vale: la URL quedaría acabada en barra")
-    void nombreDeServicioVacioTampocoVale() {
-        MockEnvironment entorno = entornoCon("http://localhost:1", "");
-
-        new ExternalConfigSource().postProcessEnvironment(entorno, null);
-
-        assertFalse(entorno.getPropertySources().contains("externalConfigSource"));
     }
 }

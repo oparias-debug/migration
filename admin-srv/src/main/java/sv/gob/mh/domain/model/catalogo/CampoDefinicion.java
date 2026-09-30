@@ -12,7 +12,7 @@ import sv.gob.mh.shared.enums.TipoCampo;
 public class CampoDefinicion {
 
     /** Orden de los campos (Reglas 4 y 5): por {@code posicion}, nulls al final. */
-    static final Comparator<CampoDefinicion> POR_POSICION = Comparator
+    public static final Comparator<CampoDefinicion> POR_POSICION = Comparator
             .comparing(CampoDefinicion::getPosicion, Comparator.nullsLast(Comparator.naturalOrder()))
             .thenComparing(CampoDefinicion::getId, Comparator.nullsLast(Comparator.naturalOrder()));
 
@@ -30,7 +30,7 @@ public class CampoDefinicion {
         this.posicion = posicion;
     }
 
-    /** Campo nuevo, aún sin persistir. El contrato no expone el tipo: todo campo es STRING. */
+    /** Campo nuevo, aún sin persistir. El contrato no expone el tipo: cada campo es STRING. */
     static CampoDefinicion nuevo(NuevoCampo campo, int posicion) {
         return new CampoDefinicion(null, campo.nombre(), TipoCampo.STRING, campo.esKey(), posicion);
     }

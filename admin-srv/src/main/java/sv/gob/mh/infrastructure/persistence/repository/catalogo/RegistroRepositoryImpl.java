@@ -33,7 +33,8 @@ public class RegistroRepositoryImpl implements RegistroRepository {
 
     @Override
     public List<Registro> listarHijos(Long idRegistroPadre) {
-        return CatalogoPersistenceMapper.aModelos(jpa.findByRegistroPadre_IdOrderByCatalogo_CodigoAscIdAsc(idRegistroPadre));
+        return CatalogoPersistenceMapper.aModelos(
+                jpa.findByRegistroPadre_IdOrderByCatalogo_CodigoAscIdAsc(idRegistroPadre));
     }
 
     @Override
@@ -57,8 +58,7 @@ public class RegistroRepositoryImpl implements RegistroRepository {
         entidad.setEstado(registro.getEstado());
         entidad.setFechaDesde(registro.getFechaDesde());
         entidad.setFechaHasta(registro.getFechaHasta());
-        entidad.getValores().clear();
-        entidad.getValores().putAll(registro.getValores());
+        entidad.reemplazarValores(registro.getValores());
         return CatalogoPersistenceMapper.aModelo(jpa.saveAndFlush(entidad));
     }
 }

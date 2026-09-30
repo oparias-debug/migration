@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,15 +29,41 @@ import java.util.logging.Logger;
  */
 public class RemoteLogger extends Logger {
     
+    private static final Duration TIEMPO_CONEXION = Duration.ofSeconds(5);
+    private static final Duration TIEMPO_ENVIO = Duration.ofSeconds(2);
+    private static final int HILOS_ENVIO = 2;
+    private static final long SEGUNDOS_CIERRE = 5;
+
     // Configuración global estática — inicializada por RemoteLoggerConfiguration
     private static volatile String globalServiceUrl = "http://localhost:8400/api/v1/logs";
-    private static volatile boolean globalEnabled = false;
-    private static volatile Level globalMinimumRemoteLevel = Level.WARNING;
+    private static volatile boolean globalEnabled;
+    private static final AtomicReference<Level> GLOBAL_MINIMUM_REMOTE_LEVEL = new AtomicReference<>(Level.WARNING);
     
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final ExecutorService executorService;
     
+    /**
+     * Constructor
+     * @param name Nombre del logger
+     */
+    public RemoteLogger(String name) {
+        super(name, null);
+        
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(TIEMPO_CONEXION)
+                .build();
+        this.objectMapper = new ObjectMapper();
+        
+        // Thread pool para envío asíncrono de logs
+        this.executorService = Executors.newFixedThreadPool(HILOS_ENVIO, (Runnable r) -> {
+            Thread t = new Thread(r);
+            t.setName("remote-logger-" + name);
+            t.setDaemon(true);
+            return t;
+        });
+    }
+
     /**
      * Configura globalmente el RemoteLogger.
      * Invocado por {@code RemoteLoggerConfiguration} al iniciar Spring Boot.
@@ -51,29 +78,8 @@ public class RemoteLogger extends Logger {
         }
         globalEnabled = enabled;
         if (level != null && !level.isEmpty()) {
-            globalMinimumRemoteLevel = Level.parse(level);
+            GLOBAL_MINIMUM_REMOTE_LEVEL.set(Level.parse(level));
         }
-    }
-    
-    /**
-     * Constructor
-     * @param name Nombre del logger
-     */
-    public RemoteLogger(String name) {
-        super(name, null);
-        
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
-                .build();
-        this.objectMapper = new ObjectMapper();
-        
-        // Thread pool para envío asíncrono de logs
-        this.executorService = Executors.newFixedThreadPool(2, (Runnable r) -> {
-            Thread t = new Thread(r);
-            t.setName("remote-logger-" + name);
-            t.setDaemon(true);
-            return t;
-        });
     }
     
     @Override
@@ -82,7 +88,7 @@ public class RemoteLogger extends Logger {
         super.log(level, msg);
         
         // Si está habilitado y el nivel es suficiente, enviar al servicio remoto
-        if (globalEnabled && level.intValue() >= globalMinimumRemoteLevel.intValue()) {
+        if (globalEnabled && level.intValue() >= GLOBAL_MINIMUM_REMOTE_LEVEL.get().intValue()) {
             sendToRemoteService(level, msg, null);
         }
     }
@@ -139,7 +145,7 @@ public class RemoteLogger extends Logger {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(globalServiceUrl))
                     .header("Content-Type", "application/json")
-                    .timeout(Duration.ofSeconds(2))
+                    .timeout(TIEMPO_ENVIO)
                     .POST(HttpRequest.BodyPublishers.ofString(cuerpoDelRegistro(level, message, throwable)))
                     .build();
 
@@ -169,9 +175,9 @@ public class RemoteLogger extends Logger {
     }
     
     /**
-     * Factory method para crear instancias del RemoteLogger
+     * Factory method para crear instancias del RemoteLogger con un nombre libre
      */
-    public static RemoteLogger getLogger(String name) {
+    public static RemoteLogger porNombre(String name) {
         return new RemoteLogger(name);
     }
     
@@ -193,7 +199,7 @@ public class RemoteLogger extends Logger {
      * Obtiene el nivel mínimo para envío remoto
      */
     public Level getMinimumRemoteLevel() {
-        return globalMinimumRemoteLevel;
+        return GLOBAL_MINIMUM_REMOTE_LEVEL.get();
     }
     
     /**
@@ -203,7 +209,7 @@ public class RemoteLogger extends Logger {
         if (executorService != null && !executorService.isShutdown()) {
             executorService.shutdown();
             try {
-                if (!executorService.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                if (!executorService.awaitTermination(SEGUNDOS_CIERRE, java.util.concurrent.TimeUnit.SECONDS)) {
                     executorService.shutdownNow();
                 }
             } catch (InterruptedException e) {

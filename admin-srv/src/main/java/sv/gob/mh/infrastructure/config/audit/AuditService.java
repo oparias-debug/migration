@@ -11,7 +11,7 @@ import sv.gob.mh.shared.exception.RemoteLogger;
 @Service
 public class AuditService {
 
-    private final RemoteLogger logger = RemoteLogger.getLogger(AuditService.class.getName());
+    private final RemoteLogger logger = RemoteLogger.getLogger(AuditService.class);
 
     private final AuditRestClient auditRestClient;
 

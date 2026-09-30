@@ -352,7 +352,7 @@
                             <excludes combine.self="override" />
                             <systemPropertyVariables>
                                 <karate.env>${karate.env}</karate.env>
-                                <!-- karate-config.js exige base.url y oauth2.token.url en todo
+                                <!-- karate-config.js exige base.url y oauth2.token.url en cada
                                      ambiente que no sea local. Surefire FORKEA el JVM, asi que
                                      un -D de la linea de comandos no llega a las pruebas: hay
                                      que reenviarlo aqui o Karate aborta con "-Dbase.url es
@@ -384,7 +384,7 @@
                             <excludes combine.self="override" />
                             <systemPropertyVariables>
                                 <karate.env>${karate.env}</karate.env>
-                                <!-- karate-config.js exige base.url y oauth2.token.url en todo
+                                <!-- karate-config.js exige base.url y oauth2.token.url en cada
                                      ambiente que no sea local. Surefire FORKEA el JVM, asi que
                                      un -D de la linea de comandos no llega a las pruebas: hay
                                      que reenviarlo aqui o Karate aborta con "-Dbase.url es
@@ -411,12 +411,12 @@
                         <version>3.5.6</version>
                         <configuration>
                             <includes>
-                                <include>**/StressTestRunner.java</include>
+                                <include>**/StressTest.java</include>
                             </includes>
                             <excludes combine.self="override" />
                             <systemPropertyVariables>
                                 <karate.env>${karate.env}</karate.env>
-                                <!-- karate-config.js exige base.url y oauth2.token.url en todo
+                                <!-- karate-config.js exige base.url y oauth2.token.url en cada
                                      ambiente que no sea local. Surefire FORKEA el JVM, asi que
                                      un -D de la linea de comandos no llega a las pruebas: hay
                                      que reenviarlo aqui o Karate aborta con "-Dbase.url es

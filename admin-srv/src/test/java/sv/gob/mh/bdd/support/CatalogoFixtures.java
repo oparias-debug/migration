@@ -71,7 +71,7 @@ public class CatalogoFixtures {
             campo.setTipo(TipoCampo.STRING);
             campo.setEsKey(campos.get(i).esKey());
             campo.setPosicion(i + 1);
-            catalogo.getCampos().add(campo);
+            catalogo.agregarCampo(campo);
         }
         catalogoRepository.save(catalogo);
     }
@@ -131,7 +131,7 @@ public class CatalogoFixtures {
         registro.setClave(clave);
         registro.setEstado(EstadoVigencia.ACTIVE);
         registro.setRegistroPadre(clavePadre == null ? null : registro(catalogo.getCatalogoPadreCodigo(), clavePadre));
-        registro.getValores().putAll(completos);
+        registro.reemplazarValores(completos);
         registroRepository.save(registro);
     }
 

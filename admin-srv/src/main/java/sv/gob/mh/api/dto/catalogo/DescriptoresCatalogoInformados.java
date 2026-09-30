@@ -19,11 +19,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonDeserialize
 public class DescriptoresCatalogoInformados extends CatalogDescriptorsUpdateRequestDto {
 
-    public static final String NAME = "name";
-    public static final String PARENT = "parent";
-    public static final String ACTIVE = "active";
-    public static final String FROM_DATE = "fromDate";
-    public static final String TO_DATE = "toDate";
+    public static final String PROPIEDAD_NAME = "name";
+    public static final String PROPIEDAD_PARENT = "parent";
+    public static final String PROPIEDAD_ACTIVE = "active";
+    public static final String PROPIEDAD_FROM_DATE = "fromDate";
+    public static final String PROPIEDAD_TO_DATE = "toDate";
 
     @JsonIgnore
     private final Set<String> informadas = new HashSet<>();
@@ -37,11 +37,11 @@ public class DescriptoresCatalogoInformados extends CatalogDescriptorsUpdateRequ
             return Set.copyOf(informados.informadas);
         }
         Set<String> noNulas = new HashSet<>();
-        agregarSiNoNula(noNulas, NAME, request.getName());
-        agregarSiNoNula(noNulas, PARENT, request.getParent());
-        agregarSiNoNula(noNulas, ACTIVE, request.getActive());
-        agregarSiNoNula(noNulas, FROM_DATE, request.getFromDate());
-        agregarSiNoNula(noNulas, TO_DATE, request.getToDate());
+        agregarSiNoNula(noNulas, PROPIEDAD_NAME, request.getName());
+        agregarSiNoNula(noNulas, PROPIEDAD_PARENT, request.getParent());
+        agregarSiNoNula(noNulas, PROPIEDAD_ACTIVE, request.getActive());
+        agregarSiNoNula(noNulas, PROPIEDAD_FROM_DATE, request.getFromDate());
+        agregarSiNoNula(noNulas, PROPIEDAD_TO_DATE, request.getToDate());
         return noNulas;
     }
 
@@ -53,31 +53,31 @@ public class DescriptoresCatalogoInformados extends CatalogDescriptorsUpdateRequ
 
     @Override
     public void setName(@Nullable String name) {
-        informadas.add(NAME);
+        informadas.add(PROPIEDAD_NAME);
         super.setName(name);
     }
 
     @Override
     public void setParent(@Nullable String parent) {
-        informadas.add(PARENT);
+        informadas.add(PROPIEDAD_PARENT);
         super.setParent(parent);
     }
 
     @Override
     public void setActive(@Nullable ActiveStatusDto active) {
-        informadas.add(ACTIVE);
+        informadas.add(PROPIEDAD_ACTIVE);
         super.setActive(active);
     }
 
     @Override
     public void setFromDate(@Nullable LocalDate fromDate) {
-        informadas.add(FROM_DATE);
+        informadas.add(PROPIEDAD_FROM_DATE);
         super.setFromDate(fromDate);
     }
 
     @Override
     public void setToDate(@Nullable LocalDate toDate) {
-        informadas.add(TO_DATE);
+        informadas.add(PROPIEDAD_TO_DATE);
         super.setToDate(toDate);
     }
 

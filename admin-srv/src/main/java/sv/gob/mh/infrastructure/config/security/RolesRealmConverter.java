@@ -19,9 +19,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
  */
 public class RolesRealmConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
 
-    static final String CLAIM_REALM_ACCESS = "realm_access";
-    static final String ROLES = "roles";
-    static final String PREFIJO = "ROLE_";
+    public static final String CLAIM_REALM_ACCESS = "realm_access";
+    public static final String ROLES = "roles";
+    public static final String PREFIJO = "ROLE_";
 
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {

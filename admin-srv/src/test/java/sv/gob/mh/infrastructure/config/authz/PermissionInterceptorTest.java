@@ -81,9 +81,10 @@ class PermissionInterceptorTest {
         SecurityContextHolder.getContext().setAuthentication(
             new UsernamePasswordAuthenticationToken("usuario.consulta", null, java.util.List.of()));
 
+        Permission eliminar = permiso("eliminar", "DELETE", "expedientes-registro");
+
         AccessDeniedException error = assertThrows(AccessDeniedException.class,
-            () -> interceptor.checkGranularPermission(
-                punto, permiso("eliminar", "DELETE", "expedientes-registro")));
+            () -> interceptor.checkGranularPermission(punto, eliminar));
 
         verify(punto, never()).proceed();
         assertTrue(error.getMessage().contains("usuario.consulta"));
@@ -97,8 +98,10 @@ class PermissionInterceptorTest {
         ProceedingJoinPoint punto = mock(ProceedingJoinPoint.class);
         when(authorizationService.hasGranularPermission("VIEW", "expedientes")).thenReturn(false);
 
+        Permission ver = permiso("ver", "VIEW", "expedientes");
+
         AccessDeniedException error = assertThrows(AccessDeniedException.class,
-            () -> interceptor.checkGranularPermission(punto, permiso("ver", "VIEW", "expedientes")));
+            () -> interceptor.checkGranularPermission(punto, ver));
 
         assertTrue(error.getMessage().contains("anonymous"));
     }

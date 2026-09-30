@@ -1,5 +1,6 @@
 package sv.gob.mh.infrastructure.config.authz;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.stream.Collectors;
@@ -31,7 +33,17 @@ import java.util.stream.Collectors;
 @Service
 public class AuthorizationService {
 
-    private final RemoteLogger logger = RemoteLogger.getLogger(AuthorizationService.class.getName());
+    /** Las franjas horarias de las condiciones se evalúan a la hora de El Salvador. */
+    public static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+
+    private static final Duration TIEMPO_CONEXION = Duration.ofSeconds(5);
+    private static final Duration TIEMPO_RESPUESTA = Duration.ofSeconds(10);
+    private static final int HTTP_OK = 200;
+    /** Una franja horaria tiene inicio y fin: "HH:mm-HH:mm". */
+    private static final int PARTES_FRANJA = 2;
+    private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm");
+
+    private final RemoteLogger logger = RemoteLogger.getLogger(AuthorizationService.class);
 
     @Value("${service.name:unknown-service}")
     private String componentId;
@@ -45,29 +57,8 @@ public class AuthorizationService {
     public AuthorizationService() {
         this.objectMapper = new ObjectMapper();
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
+                .connectTimeout(TIEMPO_CONEXION)
                 .build();
-    }
-
-    /**
-     * Token en crudo de la petición en curso, para reenviarlo al servicio de autorización.
-     * {@code /verify-groups} está autenticado: sin la cabecera responde 401 y aquí se traducía
-     * a "no tiene permiso", denegando a todo el mundo sin dejar rastro.
-     *
-     * @return el token, o {@code null} si la autenticación no es por token y la comprobación
-     *         debe fallar cerrado
-     */
-    private String rawToken(Authentication authentication) {
-        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
-            String token = jwtAuth.getToken().getTokenValue();
-            return (token == null || token.isBlank()) ? null : token;
-        }
-        return null;
-    }
-
-    /** Codifica un valor para la cadena de consulta; un grupo con espacios rompía la URL. */
-    private String encode(String valor) {
-        return URLEncoder.encode(valor == null ? "" : valor, StandardCharsets.UTF_8);
     }
 
     /**
@@ -78,104 +69,115 @@ public class AuthorizationService {
      * @return true si tiene permiso, false en caso contrario
      */
     public boolean hasGranularPermission(String operation, String path) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean permitido = false;
+        if (authentication != null && authentication.isAuthenticated()) {
+            permitido = consultarServicio(authentication, operation, path);
+        }
+        return permitido;
+    }
+
+    /**
+     * Token en crudo de la petición en curso, para reenviarlo al servicio de autorización.
+     * {@code /verify-groups} está autenticado: sin la cabecera responde 401 y aquí se traducía
+     * a "no tiene permiso", denegando a cualquier usuario sin dejar rastro.
+     *
+     * @return el token, o {@code null} si la autenticación no es por token y la comprobación
+     *         debe fallar cerrado
+     */
+    private static String rawToken(Authentication authentication) {
+        String token = null;
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            token = jwtAuth.getToken().getTokenValue();
+        }
+        return (token == null || token.isBlank()) ? null : token;
+    }
+
+    /** Codifica un valor para la cadena de consulta; un grupo con espacios rompía la URL. */
+    private static String encode(String valor) {
+        return URLEncoder.encode(valor == null ? "" : valor, StandardCharsets.UTF_8);
+    }
+
+    /** Pregunta al servicio de autorización; cualquier fallo deniega (falla cerrado). */
+    private boolean consultarServicio(Authentication authentication, String operation, String path) {
+        String token = rawToken(authentication);
+        if (token == null) {
+            logger.severe("Sin token en la peticion: no se puede consultar el servicio "
+                    + "de autorizacion, se deniega");
+            return false;
+        }
+        // Sólo los grupos del token. El servicio valida que cada valor de groupIds esté
+        // entre los grupos del token, así que anteponer el nombre de usuario —como se hacía
+        // antes— provoca 403 "El grupo '<usuario>' no pertenece al usuario autenticado".
+        String groupIds = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .map((String rol) -> rol.replace("/", ""))
+                .filter((String rol) -> !rol.isBlank())
+                .collect(Collectors.joining(","));
+        boolean permitido = false;
         try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return false;
-            }
-
-            String token = rawToken(authentication);
-            if (token == null) {
-                logger.severe("Sin token en la peticion: no se puede consultar el servicio "
-                        + "de autorizacion, se deniega");
-                return false;
-            }
-
-            String username = authentication.getName();
-
-            // Sólo los grupos del token. El servicio valida que cada valor de groupIds esté
-            // entre los grupos del token, así que anteponer el nombre de usuario —como se hacía
-            // antes— provoca 403 "El grupo '<usuario>' no pertenece al usuario autenticado".
-            String groupIds = authentication.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .map(rol -> rol.replace("/", ""))
-                    .filter(rol -> !rol.isBlank())
-                    .collect(Collectors.joining(","));
-
-            String url = urlAuthz + "/verify-groups"
-                    + "?groupIds=" + encode(groupIds)
-                    + "&componentId=" + encode(componentId)
-                    + "&resourcePath=" + encode(path)
-                    + "&operationName=" + encode(operation);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .timeout(Duration.ofSeconds(10))
-                    .header("Accept", "application/json")
-                    .header("Authorization", "Bearer " + token)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                JsonNode responseJson = objectMapper.readTree(response.body());
-                boolean hasPermission = responseJson.get("hasPermission").asBoolean();
-
-                if (responseJson.has("conditions")) {
-                    String conditions = responseJson.get("conditions").asText();
-
-                    // Evaluar condiciones adicionales si es necesario
-                    if (hasPermission && !conditions.isEmpty() && !conditions.equals("null")) {
-                        return evaluateAdditionalConditions(conditions, username, groupIds);
-                    }
-                }
-
-                return hasPermission;
-            } else {
-                return false;
-            }
-
+            HttpResponse<String> response = httpClient.send(peticion(token, groupIds, operation, path),
+                    HttpResponse.BodyHandlers.ofString());
+            permitido = response.statusCode() == HTTP_OK
+                    && evaluarRespuesta(response.body(), authentication.getName(), groupIds);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.severe("Operación interrumpida al conectar al authz server: " + e.getMessage());
-            return false;
         } catch (Exception e) {
             logger.severe("Error consultando el servicio de autorización: " + e.getMessage());
-            return false;
         }
+        return permitido;
+    }
+
+    private HttpRequest peticion(String token, String groupIds, String operation, String path) {
+        String url = urlAuthz + "/verify-groups"
+                + "?groupIds=" + encode(groupIds)
+                + "&componentId=" + encode(componentId)
+                + "&resourcePath=" + encode(path)
+                + "&operationName=" + encode(operation);
+        return HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(TIEMPO_RESPUESTA)
+                .header("Accept", "application/json")
+                .header("Authorization", "Bearer " + token)
+                .GET()
+                .build();
+    }
+
+    /** {@code hasPermission} del servicio, sujeto a sus condiciones adicionales si las trae. */
+    private boolean evaluarRespuesta(String cuerpo, String username, String groupIds)
+            throws JsonProcessingException {
+        JsonNode responseJson = objectMapper.readTree(cuerpo);
+        boolean hasPermission = responseJson.get("hasPermission").asBoolean();
+        String conditions = responseJson.has("conditions") ? responseJson.get("conditions").asText() : "";
+        boolean conCondiciones = hasPermission && !conditions.isEmpty() && !"null".equals(conditions);
+        return conCondiciones ? evaluateAdditionalConditions(conditions, username, groupIds) : hasPermission;
     }
 
     /**
      * Evalúa condiciones adicionales devueltas por el servicio de autorización
      */
     private boolean evaluateAdditionalConditions(String conditionsJson, String username, String roles) {
+        boolean permitido;
         try {
             JsonNode conditions = objectMapper.readTree(conditionsJson);
-
-            // Evaluar restricciones de tiempo si existen
             if (conditions.has("time_restriction")) {
-                String timeRestriction = conditions.get("time_restriction").asText();
-                return isWithinTimeRestriction(timeRestriction);
+                permitido = isWithinTimeRestriction(conditions.get("time_restriction").asText());
+            } else if (conditions.has("allowed_roles")) {
+                permitido = isRolesAllowed(roles, conditions);
+            } else if (conditions.has("allowed_users")) {
+                permitido = isUserAllowed(username, conditions);
+            } else {
+                permitido = true;
             }
-
-            if (conditions.has("allowed_roles")) {
-                return isRolesAllowed(roles, conditions);
-            }
-
-            if (conditions.has("allowed_users")) {
-                return isUserAllowed(username, conditions);
-            }
-
-            return true;
-
         } catch (Exception e) {
             logger.severe("Error evaluando condiciones adicionales: " + e.getMessage());
-            return false;
+            permitido = false;
         }
+        return permitido;
     }
 
-    private boolean isUserAllowed(String username, JsonNode conditions) {
+    private static boolean isUserAllowed(String username, JsonNode conditions) {
         String allowedUsers = conditions.get("allowed_users").asText();
         String[] usersArray = allowedUsers.split(",");
         for (String user : usersArray) {
@@ -186,7 +188,7 @@ public class AuthorizationService {
         return false;
     }
 
-    private boolean isRolesAllowed(String roles, JsonNode conditions) {
+    private static boolean isRolesAllowed(String roles, JsonNode conditions) {
         String allowedRoles = conditions.get("allowed_roles").asText();
         String[] rolesArray = allowedRoles.split(",");
         for (String role : rolesArray) {
@@ -203,34 +205,32 @@ public class AuthorizationService {
      * @return true si está dentro del horario permitido, false en caso contrario
      */
     private boolean isWithinTimeRestriction(String timeRestriction) {
-        try {
-            if (timeRestriction == null || timeRestriction.trim().isEmpty()) {
-                return true;
-            }
-
-            String[] timeParts = timeRestriction.split("-");
-            if (timeParts.length != 2) {
-                logger.warning("Formato de restricción de tiempo inválido: " + timeRestriction);
-                return false;
-            }
-
-            LocalTime startTime = LocalTime.parse(timeParts[0].trim(), DateTimeFormatter.ofPattern("HH:mm"));
-            LocalTime endTime = LocalTime.parse(timeParts[1].trim(), DateTimeFormatter.ofPattern("HH:mm"));
-            LocalTime currentTime = LocalTime.now();
-
-            if (startTime.isBefore(endTime)) {
-                return !currentTime.isBefore(startTime) && !currentTime.isAfter(endTime);
-            } else {
-                // Caso que cruza medianoche: 22:00-06:00
-                return !currentTime.isBefore(startTime) || !currentTime.isAfter(endTime);
-            }
-
-        } catch (DateTimeParseException e) {
-            logger.severe("Error parseando restricción de tiempo '" + timeRestriction + "': " + e.getMessage());
-            return false;
-        } catch (Exception e) {
-            logger.severe("Error validando restricción de tiempo: " + e.getMessage());
+        if (timeRestriction == null || timeRestriction.trim().isEmpty()) {
+            return true;
+        }
+        String[] timeParts = timeRestriction.split("-");
+        if (timeParts.length != PARTES_FRANJA) {
+            logger.warning("Formato de restricción de tiempo inválido: " + timeRestriction);
             return false;
         }
+        return dentroDeLaFranja(timeParts, timeRestriction);
+    }
+
+    private boolean dentroDeLaFranja(String[] timeParts, String timeRestriction) {
+        boolean dentro = false;
+        try {
+            LocalTime startTime = LocalTime.parse(timeParts[0].trim(), FORMATO_HORA);
+            LocalTime endTime = LocalTime.parse(timeParts[1].trim(), FORMATO_HORA);
+            LocalTime currentTime = LocalTime.now(ZONA_EL_SALVADOR);
+            if (startTime.isBefore(endTime)) {
+                dentro = !currentTime.isBefore(startTime) && !currentTime.isAfter(endTime);
+            } else {
+                // Caso que cruza medianoche: 22:00-06:00
+                dentro = !currentTime.isBefore(startTime) || !currentTime.isAfter(endTime);
+            }
+        } catch (DateTimeParseException e) {
+            logger.severe("Error parseando restricción de tiempo '" + timeRestriction + "': " + e.getMessage());
+        }
+        return dentro;
     }
 }

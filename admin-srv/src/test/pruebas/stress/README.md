@@ -25,8 +25,8 @@ mvn test -Pstress-tests \
   -Doauth2.client.secret=my-secret \
   -Dstress.threads=50
 
-mvn test -Pstress-tests -Dtest=StressTestRunner#testCriticalLoad
-mvn test -Pstress-tests -Dtest=StressTestRunner#testSpike
+mvn test -Pstress-tests -Dtest=StressTest#testCriticalLoad
+mvn test -Pstress-tests -Dtest=StressTest#testSpike
 ```
 
 ## Estructura
@@ -38,7 +38,7 @@ stress/
 │   ├── stress-spike.feature           # Ráfagas de peticiones (spike)
 │   └── stress-single-request.feature  # Helper para peticiones individuales
 ├── runners/
-│   └── StressTestRunner.java          # Runner JUnit5 con paralelismo
+│   └── StressTest.java                # Runner JUnit5 con paralelismo
 └── README.md
 ```
 

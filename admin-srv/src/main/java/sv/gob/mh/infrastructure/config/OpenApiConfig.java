@@ -38,6 +38,7 @@ public class OpenApiConfig {
                     .type(SecurityScheme.Type.HTTP)
                     .scheme("bearer")
                     .bearerFormat("JWT")
-                    .description("Token JWT obtenido del sistema de autenticación OAuth2/OIDC. Formato: 'Bearer {token}'")));
+                    .description("Token JWT obtenido del sistema de autenticación OAuth2/OIDC. "
+                            + "Formato: 'Bearer {token}'")));
     }
 }

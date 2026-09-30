@@ -46,7 +46,8 @@ public final class Vigencia {
         }
         if (toDate.isAfter(hoy())) {
             throw ErrorCatalogoException.reglaNegocio("FECHA_INACTIVACION_FUTURA",
-                    "La fecha de inactivación debe ser la fecha actual o una fecha pasada.", "toDate", toDate.toString());
+                    "La fecha de inactivación debe ser la fecha actual o una fecha pasada.", "toDate",
+                    toDate.toString());
         }
         return toDate;
     }

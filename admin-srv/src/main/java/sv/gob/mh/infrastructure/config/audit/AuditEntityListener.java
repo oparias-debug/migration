@@ -14,6 +14,7 @@ import org.hibernate.event.spi.PreUpdateEvent;
 import org.hibernate.event.spi.PreUpdateEventListener;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -27,7 +28,9 @@ import java.util.concurrent.CompletableFuture;
 public class AuditEntityListener implements PreInsertEventListener, PreUpdateEventListener, 
         PreDeleteEventListener, PostLoadEventListener {
 
-    private final RemoteLogger logger = RemoteLogger.getLogger(AuditEntityListener.class.getName());
+    private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+
+    private final RemoteLogger logger = RemoteLogger.getLogger(AuditEntityListener.class);
 
     private final AuditService auditService;
     private final UserContextService userContextService;
@@ -94,7 +97,7 @@ public class AuditEntityListener implements PreInsertEventListener, PreUpdateEve
         return false;
     }
 
-    private boolean isAuditable(Object entity) {
+    private static boolean isAuditable(Object entity) {
         return entity.getClass().isAnnotationPresent(Auditable.class);
     }
 
@@ -112,14 +115,14 @@ public class AuditEntityListener implements PreInsertEventListener, PreUpdateEve
         try {
             AuditEvent auditEvent = new AuditEvent(userId, action, getEntityResourceName(entity),
                     serviceName, entitySerializer.serialize(oldEntity),
-                    entitySerializer.serialize(newEntity), LocalDateTime.now());
+                    entitySerializer.serialize(newEntity), LocalDateTime.now(ZONA_EL_SALVADOR));
             auditService.sendAuditEvent(auditEvent);
         } catch (Exception e) {
             logger.severe("Error sending audit event: " + e.getMessage());
         }
     }
 
-    private String getEntityResourceName(Object entity) {
+    private static String getEntityResourceName(Object entity) {
         Class<?> clazz = entity.getClass();
         jakarta.persistence.Table table = clazz.getAnnotation(jakarta.persistence.Table.class);
         if (table != null) {

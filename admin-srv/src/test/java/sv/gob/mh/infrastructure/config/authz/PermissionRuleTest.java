@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  *
  * <p>Es un contrato de integración: los nombres de estos campos son los del JSON del servicio.
  * Renombrar uno no rompe la compilación, rompe la deserialización en tiempo de ejecución, y el
- * síntoma es que todo se deniega sin explicación.</p>
+ * síntoma es que cualquier acceso se deniega sin explicación.</p>
  */
 class PermissionRuleTest {
 
