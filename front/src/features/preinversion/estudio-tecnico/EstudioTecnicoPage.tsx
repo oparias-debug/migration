@@ -6,6 +6,8 @@ import { useAuth } from '../../../auth/useAuth';
 import { Pestanas } from '../../../components/Pestanas';
 import { DescripcionTecnicaTab } from './DescripcionTecnicaTab';
 import { LocalizacionTab } from './LocalizacionTab';
+import { rutaAnterior } from '../pasos/pasosProyecto';
+import { BotonSiguiente } from '../pasos/BotonSiguiente';
 
 /**
  * Capítulo 1.3.2.2 del árbol del sistema, "Estudio técnico": dos pestañas.
@@ -69,10 +71,11 @@ export function EstudioTecnicoPage() {
           <button
             type="button"
             className="btn neutro"
-            onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/diagnostico`)}
+            onClick={() => navigate(rutaAnterior(idProyecto, 'estudio-tecnico'))}
           >
             {t('common.regresar')}
           </button>
+          <BotonSiguiente idProyecto={idProyecto} paso="estudio-tecnico" />
         </div>
       </div>
     </div>

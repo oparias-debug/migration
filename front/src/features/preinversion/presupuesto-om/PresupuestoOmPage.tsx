@@ -16,6 +16,8 @@ import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { formatearMonto } from '../presupuesto/presupuestoFormSchema';
 import { NuevaActividadModal } from './NuevaActividadModal';
+import { rutaAnterior } from '../pasos/pasosProyecto';
+import { BotonSiguiente } from '../pasos/BotonSiguiente';
 
 const CLAVE = 'preinversion.presupuestoOm';
 /** Mismo actor que el presupuesto de inversión (CU-PRE-17). */
@@ -301,9 +303,10 @@ export function PresupuestoOmPage() {
         )}
 
         <div className="acciones-form">
-          <button type="button" className="btn neutro" onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/presupuesto`)}>
+          <button type="button" className="btn neutro" onClick={() => navigate(rutaAnterior(idProyecto, 'presupuesto-operacion'))}>
             {t('preinversion.registro.botonRegresar')}
           </button>
+          <BotonSiguiente idProyecto={idProyecto} paso="presupuesto-operacion" />
           {puedeEditar && tablas.length > 0 && (
             <button type="button" className="btn primario" onClick={guardarTodo} disabled={guardando}>
               {t('preinversion.registro.botonGuardar')}

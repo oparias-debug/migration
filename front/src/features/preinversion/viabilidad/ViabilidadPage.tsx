@@ -11,6 +11,7 @@ import {
 } from '../../../api/preinversionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { FichaViabilidad } from './FichaViabilidad';
+import { rutaAnterior } from '../pasos/pasosProyecto';
 
 const CLAVE = 'preinversion.viabilidad';
 
@@ -221,7 +222,7 @@ export function ViabilidadPage() {
           <button
             type="button"
             className="btn neutro"
-            onClick={() => navigate(`/preinversion/proyectos/${proyectoId}/beneficios`)}
+            onClick={() => navigate(rutaAnterior(proyectoId, 'viabilidad'))}
           >
             {t('preinversion.registro.botonRegresar')}
           </button>

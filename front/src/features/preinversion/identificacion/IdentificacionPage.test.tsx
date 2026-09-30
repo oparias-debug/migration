@@ -334,3 +334,13 @@ describe('IdentificacionPage · CU-PRE-04', () => {
     expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/alternativas-solucion');
   });
 });
+
+// La navegación entre capítulos sigue el orden del árbol (pruebas del 29/09/2026).
+describe('vuelta al capítulo anterior', () => {
+  it('"Regresar" lleva al capítulo anterior, no al formulario de solicitud de CUP', async () => {
+    montar();
+    const boton = await screen.findByRole('button', { name: 'Regresar' });
+    fireEvent.click(boton);
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/ruta-preinversion');
+  });
+});

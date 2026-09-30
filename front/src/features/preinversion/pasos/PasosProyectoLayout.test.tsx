@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../i18n/i18n';
 import { PasosProyectoLayout } from './PasosProyectoLayout';
-import { GRUPOS_PASOS, entradaDeGrupo, pasosDe, ubicarPaso } from './pasosProyecto';
+import { GRUPOS_PASOS, entradaDeGrupo, pasosDe, rutaAnterior, rutaSiguiente, ubicarPaso } from './pasosProyecto';
 
 const obtenerProyecto = vi.fn();
 
@@ -221,11 +221,47 @@ describe('pasosProyecto', () => {
 
   it('un proceso sin pantallas abre la barra en ese proceso', () => {
     expect(entradaDeGrupo(7, 'programacion')).toBe('/preinversion/proyectos/7/ruta-preinversion?grupo=programacion');
-    expect(entradaDeGrupo(7, 'gestion')).toBe('/preinversion/proyectos/7/ruta-preinversion?grupo=gestion');
+  });
+
+  it('un proceso con pantalla entra directo a su primer capítulo', () => {
+    expect(entradaDeGrupo(7, 'gestion')).toBe('/preinversion/proyectos/7/viabilidad');
   });
 
   it('Priorización ya no es un paso del proyecto', () => {
     expect(GRUPOS_PASOS.flatMap(pasosDe).some((p) => p.cu === 'CU-PRE-26.5')).toBe(false);
   });
 
+});
+
+/**
+ * "Regresar" y "Siguiente" se resuelven con el orden del árbol. Antes cada
+ * pantalla llevaba su destino escrito, y varias apuntaban al formulario de
+ * solicitud de CUP, que no es un capítulo (pruebas del 29/09/2026).
+ */
+describe('capítulo anterior y siguiente', () => {
+  it('encadena los capítulos en el orden del árbol', () => {
+    expect(rutaAnterior(7, 'riesgos')).toBe('/preinversion/proyectos/7/analisis-ambiental');
+    expect(rutaSiguiente(7, 'riesgos')).toBe('/preinversion/proyectos/7/analisis-legal');
+    expect(rutaAnterior(7, 'legal')).toBe('/preinversion/proyectos/7/analisis-riesgo');
+    expect(rutaSiguiente(7, 'presupuesto-operacion')).toBe('/preinversion/proyectos/7/beneficios');
+  });
+
+  it('desde el primer capítulo se vuelve a la Ruta de Preinversión, no al formulario de CUP', () => {
+    expect(rutaAnterior(7, 'identificacion')).toBe('/preinversion/proyectos/7/ruta-preinversion');
+  });
+
+  it('ningún capítulo vuelve al formulario de solicitud de CUP', () => {
+    for (const paso of GRUPOS_PASOS.flatMap(pasosDe).filter((x) => x.rutas?.length)) {
+      expect(rutaAnterior(7, paso.clave)).not.toBe('/preinversion/proyectos/7');
+    }
+  });
+
+  it('el último capítulo con pantalla no ofrece siguiente', () => {
+    expect(rutaSiguiente(7, 'viabilidad')).toBeNull();
+  });
+
+  it('un paso sin pantalla no entra en la cadena', () => {
+    expect(rutaSiguiente(7, 'flujo-socioeconomico')).toBeNull();
+    expect(rutaAnterior(7, 'elegibilidad')).toBe('/preinversion/proyectos/7/ruta-preinversion');
+  });
 });

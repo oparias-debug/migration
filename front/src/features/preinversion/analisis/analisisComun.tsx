@@ -6,6 +6,8 @@ import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { TablaAnalisis, type ColumnaAnalisis } from './TablaAnalisis';
+import { rutaAnterior } from '../pasos/pasosProyecto';
+import { BotonSiguiente } from '../pasos/BotonSiguiente';
 
 /** Quien registra los análisis del capítulo 1.3.2 (x-roles de los tres CU). */
 export const ROL_ANALISIS = 'TECNICO_URP';
@@ -27,6 +29,8 @@ export const formatearMonto = (valor: number | null | undefined): string =>
 interface PantallaProps<D, F extends Record<string, unknown>> {
   /** Clave de i18n de la pantalla (título, rótulos propios). */
   readonly clave: string;
+  /** Paso del árbol al que corresponde: decide adónde van "Regresar" y "Siguiente". */
+  readonly paso: string;
   readonly columnas: readonly ColumnaAnalisis<F>[];
   readonly filaVacia: () => F;
   readonly cargar: (idProyecto: number) => Promise<D>;
@@ -51,6 +55,7 @@ interface PantallaProps<D, F extends Record<string, unknown>> {
  */
 export function PantallaAnalisis<D, F extends Record<string, unknown>>({
   clave,
+  paso,
   columnas,
   filaVacia,
   cargar,
@@ -190,7 +195,7 @@ export function PantallaAnalisis<D, F extends Record<string, unknown>>({
           <button
             type="button"
             className="btn neutro"
-            onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/estudio-tecnico`)}
+            onClick={() => navigate(rutaAnterior(idProyecto, paso))}
           >
             {t('preinversion.registro.botonRegresar')}
           </button>
@@ -199,11 +204,14 @@ export function PantallaAnalisis<D, F extends Record<string, unknown>>({
               {t('preinversion.registro.botonGuardar')}
             </button>
           )}
+          {/* Un capítulo que además avanza en el servidor trae su propia acción;
+              el resto sólo pasa al siguiente capítulo del árbol. */}
           {puedeEditar && siguiente && (
             <button type="button" className="btn secundario" onClick={alSiguiente} disabled={guardando}>
               {t(siguiente.etiqueta)}
             </button>
           )}
+          {!siguiente && <BotonSiguiente idProyecto={idProyecto} paso={paso} deshabilitado={guardando} />}
         </div>
       </div>
     </div>

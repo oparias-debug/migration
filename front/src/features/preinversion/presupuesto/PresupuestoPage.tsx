@@ -18,6 +18,8 @@ import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { DetalleMacroactividadModal } from './DetalleMacroactividadModal';
 import { formatearMonto } from './presupuestoFormSchema';
+import { rutaAnterior } from '../pasos/pasosProyecto';
+import { BotonSiguiente } from '../pasos/BotonSiguiente';
 
 const ROL_EDITA = 'TECNICO_URP';
 
@@ -429,10 +431,11 @@ export function PresupuestoPage() {
           <button
             type="button"
             className="btn neutro"
-            onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/ruta-preinversion`)}
+            onClick={() => navigate(rutaAnterior(idProyecto, 'presupuesto-inversion'))}
           >
             {t('common.regresar')}
           </button>
+          <BotonSiguiente idProyecto={idProyecto} paso="presupuesto-inversion" />
           {puedeEditar && (
             <button type="button" className="btn primario" disabled={guardando} onClick={guardarTodo}>
               {guardando ? t('common.guardando') : t('common.guardar')}

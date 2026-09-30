@@ -217,3 +217,13 @@ describe('AlternativasSolucionPage', () => {
     expect(screen.queryByRole('button', { name: '+ Agregar alternativa' })).not.toBeInTheDocument();
   });
 });
+
+// La navegación entre capítulos sigue el orden del árbol (pruebas del 29/09/2026).
+describe('vuelta al capítulo anterior', () => {
+  it('"Regresar" lleva al capítulo anterior, no al formulario de solicitud de CUP', async () => {
+    obtenerAlternativasSolucion.mockResolvedValue({ data: registro() });
+    renderizar();
+    fireEvent.click(await screen.findByRole('button', { name: 'Regresar' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/identificacion');
+  });
+});

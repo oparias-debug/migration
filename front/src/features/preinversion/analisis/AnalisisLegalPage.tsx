@@ -16,6 +16,7 @@ export function AnalisisLegalPage() {
   return (
     <PantallaAnalisis<AnalisisLegal, Fila>
       clave={CLAVE}
+      paso="legal"
       columnas={COLUMNAS}
       filaVacia={() => ({})}
       pregunta={`${CLAVE}.pregunta`}

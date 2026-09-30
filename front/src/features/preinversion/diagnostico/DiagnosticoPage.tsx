@@ -8,6 +8,8 @@ import { InteresadosTab } from './InteresadosTab';
 import { PoblacionTab } from './PoblacionTab';
 import { AreaInfluenciaTab } from './AreaInfluenciaTab';
 import { MercadoTab } from './MercadoTab';
+import { rutaAnterior } from '../pasos/pasosProyecto';
+import { BotonSiguiente } from '../pasos/BotonSiguiente';
 
 /**
  * Capítulo 1.3.2.1 del árbol del sistema, "Diagnóstico de la situación actual":
@@ -79,10 +81,11 @@ export function DiagnosticoPage() {
           <button
             type="button"
             className="btn neutro"
-            onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/alternativas-solucion`)}
+            onClick={() => navigate(rutaAnterior(idProyecto, 'diagnostico'))}
           >
             {t('common.regresar')}
           </button>
+          <BotonSiguiente idProyecto={idProyecto} paso="diagnostico" />
         </div>
       </div>
     </div>

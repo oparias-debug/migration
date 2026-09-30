@@ -34,6 +34,7 @@ export function AnalisisAmbientalPage() {
   return (
     <PantallaAnalisis<AnalisisAmbiental, Fila>
       clave={CLAVE}
+      paso="ambiental"
       columnas={columnas}
       filaVacia={() => ({})}
       pregunta={`${CLAVE}.pregunta`}

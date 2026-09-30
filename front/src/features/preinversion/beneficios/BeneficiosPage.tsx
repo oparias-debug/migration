@@ -17,6 +17,8 @@ import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { aNumero, formatearMonto } from '../presupuesto/presupuestoFormSchema';
 import { NuevoBeneficioModal } from './NuevoBeneficioModal';
+import { rutaAnterior } from '../pasos/pasosProyecto';
+import { BotonSiguiente } from '../pasos/BotonSiguiente';
 
 const CLAVE = 'preinversion.beneficios';
 /** Mismo actor que el resto de la formulación (x-roles del CU). */
@@ -294,10 +296,11 @@ export function BeneficiosPage() {
           <button
             type="button"
             className="btn neutro"
-            onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/presupuesto-om`)}
+            onClick={() => navigate(rutaAnterior(idProyecto, 'beneficios'))}
           >
             {t('preinversion.registro.botonRegresar')}
           </button>
+          <BotonSiguiente idProyecto={idProyecto} paso="beneficios" />
           {puedeEditar && (
             <button type="button" className="btn primario" disabled={cargando || guardando} onClick={() => void guardarPantalla()}>
               {t('preinversion.registro.botonGuardar')}

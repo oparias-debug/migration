@@ -20,6 +20,7 @@ import {
   identificacionSchema,
   type IdentificacionFormValues,
 } from './identificacionFormSchema';
+import { rutaAnterior } from '../pasos/pasosProyecto';
 
 /** Los dos árboles se manejan igual; sólo cambian los métodos del cliente. */
 type Arbol = 'problemas' | 'objetivos';
@@ -395,7 +396,7 @@ export function IdentificacionPage() {
             <button
               type="button"
               className="btn neutro"
-              onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/ruta-preinversion`)}
+              onClick={() => navigate(rutaAnterior(idProyecto, 'identificacion'))}
             >
               {t('common.regresar')}
             </button>

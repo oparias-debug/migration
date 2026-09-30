@@ -631,7 +631,7 @@
       "accionMitigacion": "Acción de mitigación",
       "costoAccion": "Costo de la acción (US$)",
       "total": "Costo total de las acciones de mitigación",
-      "siguiente": "Siguiente: Análisis Legal",
+      "siguiente": "Siguiente",
       "probabilidades": {
         "IMPROBABLE": "Improbable",
         "PROBABLE": "Probable",

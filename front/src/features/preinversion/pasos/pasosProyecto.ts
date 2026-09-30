@@ -129,7 +129,7 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
         codigo: '1.3.3',
         texto: 'pasos.seccion.evaluacion',
         pasos: [
-          { clave: 'beneficios', codigo: arbol(1, 3, 3, 1), texto: 'pasos.beneficios', cu: 'CU-PRE-20' },
+          { clave: 'beneficios', codigo: arbol(1, 3, 3, 1), texto: 'pasos.beneficios', cu: 'CU-PRE-20', rutas: ['beneficios'] },
           { clave: 'flujo-socioeconomico', codigo: arbol(1, 3, 3, 2), texto: 'pasos.flujoSocioeconomico', cu: 'CU-PRE-21' },
           { clave: 'flujo-financiero', codigo: arbol(1, 3, 3, 3), texto: 'pasos.flujoFinanciero', cu: 'CU-PRE-21.5' },
         ],
@@ -164,7 +164,7 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
     secciones: [
       {
         pasos: [
-          { clave: 'viabilidad', codigo: '1.5.1', texto: 'pasos.viabilidad', cu: 'CU-PRE-24' },
+          { clave: 'viabilidad', codigo: '1.5.1', texto: 'pasos.viabilidad', cu: 'CU-PRE-24', rutas: ['viabilidad'] },
           { clave: 'elegibilidad', codigo: '1.5.2', texto: 'pasos.elegibilidad', cu: 'CU-PRE-25' },
           { clave: 'opinion-tecnica', codigo: '1.5.3', texto: 'pasos.opinionTecnica', cu: 'CU-PRE-26' },
         ],
@@ -204,6 +204,44 @@ export function ubicarPaso(pathname: string): UbicacionPaso | null {
 export function rutaDePaso(idProyecto: number, paso: PasoProyecto): string | null {
   const primera = paso.rutas?.[0];
   return primera ? `${raizProyecto(idProyecto)}/${primera}` : null;
+}
+
+/**
+ * Los pasos que ya tienen pantalla, en el orden del árbol y a través de los
+ * grupos: es el orden en que se recorre el proyecto.
+ */
+function pasosNavegables(): PasoProyecto[] {
+  return GRUPOS_PASOS.flatMap((g) => pasosDe(g)).filter((p) => p.rutas?.length);
+}
+
+/**
+ * Capítulo anterior y siguiente de un paso.
+ *
+ * "Regresar" y "Siguiente" recorren el proyecto en el orden del árbol, no un
+ * destino escrito en cada pantalla: así un capítulo nuevo se intercala solo y
+ * dos pantallas no pueden discrepar sobre quién va antes de quién. Los pasos
+ * que todavía no tienen pantalla se saltan.
+ */
+export function pasoVecino(clave: string, direccion: -1 | 1): PasoProyecto | null {
+  const pasos = pasosNavegables();
+  const indice = pasos.findIndex((p) => p.clave === clave);
+  if (indice < 0) return null;
+  return pasos[indice + direccion] ?? null;
+}
+
+/**
+ * Ruta del capítulo anterior. Desde el primero se vuelve a la Ruta de
+ * Preinversión, que es de donde se entra a formular.
+ */
+export function rutaAnterior(idProyecto: number, clave: string): string {
+  const anterior = pasoVecino(clave, -1);
+  return anterior ? (rutaDePaso(idProyecto, anterior) as string) : `${raizProyecto(idProyecto)}/ruta-preinversion`;
+}
+
+/** Ruta del capítulo siguiente, o null si es el último con pantalla. */
+export function rutaSiguiente(idProyecto: number, clave: string): string | null {
+  const siguiente = pasoVecino(clave, 1);
+  return siguiente ? rutaDePaso(idProyecto, siguiente) : null;
 }
 
 /**

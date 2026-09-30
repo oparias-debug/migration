@@ -59,7 +59,7 @@ export interface FilaAnalisisMercado {
     'tasaDemanda'?: number | null;
     'tasaOferta'?: number | null;
     /**
-     * Calculado según la fórmula de proyección del Anexo B.1 a partir de demanda (año base), tasaDemanda y aniosAProyectar. 
+     * Promedio del año base y de los años proyectados (Anexo B.1): (D₀ + D₀(1+r)¹ + … + D₀(1+r)ᵗ) / (t + 1), con D₀ = demanda, r = tasaDemanda en porcentaje y t = aniosAProyectar. No es el valor del último año proyectado. 
      */
     'promedioDemanda': number | null;
     /**

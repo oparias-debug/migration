@@ -39,6 +39,7 @@ export function AnalisisRiesgoPage() {
   return (
     <PantallaAnalisis<AnalisisRiesgo, Fila>
       clave={CLAVE}
+      paso="riesgos"
       columnas={columnas}
       filaVacia={() => ({})}
       pregunta={`${CLAVE}.pregunta`}

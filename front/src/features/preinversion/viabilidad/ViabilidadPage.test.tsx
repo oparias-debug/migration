@@ -237,3 +237,13 @@ describe('Viabilidad (CU-PRE-24)', () => {
     expect(screen.getByText('Hospital Nacional de Santa Ana')).toBeInTheDocument();
   });
 });
+
+// La navegación entre capítulos sigue el orden del árbol (pruebas del 29/09/2026).
+describe('vuelta al capítulo anterior', () => {
+  it('"Regresar" lleva al capítulo anterior, no al formulario de solicitud de CUP', async () => {
+    montar();
+    const boton = await screen.findByRole('button', { name: 'Regresar' });
+    fireEvent.click(boton);
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/14/beneficios');
+  });
+});

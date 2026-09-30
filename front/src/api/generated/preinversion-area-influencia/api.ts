@@ -27,15 +27,18 @@ export interface AreaInfluencia {
     'idProyecto': number;
     'filas': Array<AreaInfluenciaFila>;
 }
+/**
+ * Region, departamento y distrito solo vienen en null en las filas propuestas por el autocompletado cuya ubicacion no identifica un distrito; las filas guardadas los traen siempre. 
+ */
 export interface AreaInfluenciaFila {
     'region': string | null;
-    'departamento': string;
-    'distrito': string;
+    'departamento': string | null;
+    'distrito': string | null;
     'ubicacionEspecifica'?: string | null;
 }
 export interface AreaInfluenciaFilaRequest {
     /**
-     * Codigo o nombre del distrito del catalogo geografico.
+     * Codigo (recomendado) o nombre del distrito del catalogo geografico. Un nombre que corresponde a varios distritos se rechaza con `DISTRITO_INVALIDO`. 
      */
     'distrito': string;
     'ubicacionEspecifica'?: string;

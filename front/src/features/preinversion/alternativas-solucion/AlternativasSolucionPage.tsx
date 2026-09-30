@@ -18,6 +18,7 @@ import {
   sinSeparadorDeMiles,
   type RegistroAlternativasFormValues,
 } from './alternativasSolucionFormSchema';
+import { rutaAnterior } from '../pasos/pasosProyecto';
 
 function registroToFormValues(registro: RegistroAlternativas): RegistroAlternativasFormValues {
   const alternativas = registro.alternativas ?? [];
@@ -235,7 +236,7 @@ export function AlternativasSolucionPage() {
           </div>
 
           <div className="acciones-form">
-            <button type="button" className="btn neutro" onClick={() => navigate(`/preinversion/proyectos/${idProyecto}`)}>
+            <button type="button" className="btn neutro" onClick={() => navigate(rutaAnterior(idProyecto, 'alternativas'))}>
               {t('preinversion.registro.botonRegresar')}
             </button>
             {puedeEditar && (

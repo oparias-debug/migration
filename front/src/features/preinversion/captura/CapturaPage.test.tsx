@@ -160,10 +160,10 @@ describe('CapturaPage · entrada a cada proceso', () => {
     listarProyectosCaptura.mockResolvedValue(RESPUESTA);
     render(
       <MemoryRouter>
-        <CapturaPage proceso="gestion" />
+        <CapturaPage proceso="programacion" />
       </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole('button', { name: '10001' }));
-    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/ruta-preinversion?grupo=gestion');
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/201/ruta-preinversion?grupo=programacion');
   });
 });
