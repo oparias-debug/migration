@@ -263,7 +263,7 @@ export function CatalogoDetallePage() {
           )}
         </section>
 
-        <RegistrosCatalogo codigo={codigo} campos={aCamposEditables(catalogo)} />
+        <RegistrosCatalogo codigo={codigo} campos={aCamposEditables(catalogo)} catalogoPadre={catalogo.parent} />
 
         <div className="acciones-form">
           <button type="button" className="btn neutro" onClick={() => navigate('/catalogos-generales')}>

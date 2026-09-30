@@ -32,7 +32,16 @@ const aLista = (valores: Record<string, string>) =>
  * al editar, los campos de la clave quedan fijos porque identifican el registro.
  * Como los catálogos, un registro no se elimina: sólo se inactiva.
  */
-export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string; readonly campos: readonly CampoEditable[] }) {
+export function RegistrosCatalogo({
+  codigo,
+  campos,
+  catalogoPadre,
+}: {
+  readonly codigo: string;
+  readonly campos: readonly CampoEditable[];
+  /** Código del catálogo del que cuelga éste, si cuelga de alguno. */
+  readonly catalogoPadre?: string | null;
+}) {
   const { t } = useTranslation();
   const [registros, setRegistros] = useState<CatalogRecordFieldValuesResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +49,15 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
   const [editando, setEditando] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+  /**
+   * Registros del catálogo padre, para elegir de cuál cuelga el que se crea.
+   * En una jerarquía región → departamento → distrito, al dar de alta un
+   * distrito hay que decir a qué departamento pertenece; el contrato lo exige
+   * (`parentRecord`, Reglas 8 y 23) y la pantalla no lo ofrecía.
+   */
+  const [registrosPadre, setRegistrosPadre] = useState<CatalogRecordFieldValuesResponse[]>([]);
+  const [padreElegido, setPadreElegido] = useState('');
+  const [busquedaPadre, setBusquedaPadre] = useState('');
   const [pagina, setPagina] = useState(0);
 
   const nombres = campos.map((c) => c.nombre);
@@ -60,14 +78,39 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
     cargar();
   }, [cargar]);
 
+  useEffect(() => {
+    if (!catalogoPadre) {
+      setRegistrosPadre([]);
+      return;
+    }
+    // Sin sus campos, el servidor devuelve el primero que no es clave, que es
+    // justo lo que hace falta para reconocer el registro además de su clave.
+    registrosCatalogoApi
+      .buscarListaRegistros({ code: catalogoPadre })
+      .then(({ data }) => setRegistrosPadre((data ?? []).filter((r) => Boolean(r.keyValue))))
+      .catch(() => setRegistrosPadre([]));
+  }, [catalogoPadre]);
+
   const limpiar = () => {
     setValores({});
     setEditando(null);
+    setPadreElegido('');
+    setBusquedaPadre('');
+  };
+
+  /** Cómo se lee un registro del padre en la lista: su clave y lo que lo acompaña. */
+  const rotuloPadre = (r: CatalogRecordFieldValuesResponse) => {
+    const otros = (r.values ?? []).filter((v) => v.qualifier !== 'KEY').map((v) => v.valor);
+    return otros.length > 0 ? `${r.keyValue} — ${otros.join(' · ')}` : r.keyValue;
   };
 
   const guardar = async () => {
     if (campos.filter((c) => c.clave).some((c) => !(valores[c.nombre] ?? '').trim())) {
       await Swal.fire({ icon: 'error', text: t(`${CLAVE}.claveObligatoria`) });
+      return;
+    }
+    if (!editando && catalogoPadre && !padreElegido) {
+      await Swal.fire({ icon: 'error', text: t(`${CLAVE}.padreObligatorio`) });
       return;
     }
     setGuardando(true);
@@ -85,7 +128,11 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
       } else {
         await registrosCatalogoApi.crearRegistro({
           code: codigo,
-          catalogRecordCreateRequest: { values: aLista(valores) },
+          catalogRecordCreateRequest: {
+            values: aLista(valores),
+            // Sólo al crear: el contrato no admite cambiar de padre al actualizar.
+            ...(catalogoPadre ? { parentRecord: padreElegido } : {}),
+          },
         });
       }
       await Swal.fire({ icon: 'success', text: t(`${CLAVE}.registroGuardado`) });
@@ -115,6 +162,9 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginaVigente = Math.min(pagina, totalPaginas - 1);
   const enPagina = filtrados.slice(paginaVigente * POR_PAGINA, (paginaVigente + 1) * POR_PAGINA);
+  const padresFiltrados = registrosPadre.filter((r) =>
+    coincide(busquedaPadre, r.keyValue, ...(r.values ?? []).map((v) => v.valor)),
+  );
 
   return (
     <section>
@@ -218,6 +268,42 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
 
       <fieldset className="registro-form">
         <legend>{editando ? t(`${CLAVE}.editandoRegistro`, { clave: editando }) : t(`${CLAVE}.nuevoRegistro`)}</legend>
+        {/* De qué registro del catálogo padre cuelga éste. Se puede elegir de la
+            lista o acotarla escribiendo parte de lo que se busca. Al editar no
+            se ofrece: el contrato no admite mudar un registro de padre. */}
+        {catalogoPadre && !editando && (
+          <div className="fr">
+            <div className="f">
+              <label htmlFor="buscar-padre">{t(`${CLAVE}.buscarPadre`)}</label>
+              <input
+                id="buscar-padre"
+                type="search"
+                value={busquedaPadre}
+                placeholder={t(`${CLAVE}.buscarRegistroPista`)}
+                onChange={(e) => setBusquedaPadre(e.target.value)}
+              />
+            </div>
+            <div className="f">
+              <label htmlFor="reg-padre">
+                {t(`${CLAVE}.registroPadre`, { catalogo: catalogoPadre })}
+                <span className="req">*</span>
+              </label>
+              <select id="reg-padre" value={padreElegido} onChange={(e) => setPadreElegido(e.target.value)}>
+                <option value="">{t('common.seleccione')}</option>
+                {padresFiltrados.map((r) => (
+                  <option key={r.keyValue} value={r.keyValue}>
+                    {rotuloPadre(r)}
+                  </option>
+                ))}
+              </select>
+              {registrosPadre.length > 0 && padresFiltrados.length === 0 && (
+                <span className="ayuda">{t(`${CLAVE}.sinCoincidencias`, { busqueda: busquedaPadre })}</span>
+              )}
+              {registrosPadre.length === 0 && <span className="ayuda">{t(`${CLAVE}.padreSinRegistros`)}</span>}
+            </div>
+          </div>
+        )}
+
         <div className="fr">
           {campos.map((c) => (
             <div className="f" key={c.nombre}>

@@ -474,3 +474,113 @@ describe('búsqueda en catálogos y registros', () => {
     expect(screen.getByText('Departamentos')).toBeInTheDocument();
   });
 });
+
+
+/**
+ * Punto 6 del 30/09/2026: al crear un registro en un catálogo jerárquico hay que
+ * poder decir de qué registro del padre cuelga, eligiéndolo de la lista o
+ * buscándolo. El ejemplo del cliente: región → departamento → distrito; al dar
+ * de alta Girardot se elige Cundinamarca como padre.
+ */
+describe('registro padre al crear en un catálogo jerárquico', () => {
+  const DISTRITO = {
+    ...CATALOGO,
+    code: 'DISTRITO',
+    name: 'Distritos',
+    parent: 'DEPARTAMENTO',
+    fields: [
+      { name: 'codigo', qualifier: 'KEY', posicion: 1 },
+      { name: 'descripcion', qualifier: 'FIELD', posicion: 2 },
+    ],
+  };
+  const DEPTOS = ['Cundinamarca', 'Boyacá', 'Antioquia'];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
+    swalFire.mockResolvedValue({ isConfirmed: true });
+    consultarCatalogosHijos.mockResolvedValue({ data: [] });
+    consultarCatalogoPorCodigo.mockResolvedValue({ data: DISTRITO });
+    crearRegistro.mockResolvedValue({ data: {} });
+    buscarListaRegistros.mockImplementation(({ code }: { code: string }) =>
+      Promise.resolve({
+        data:
+          code === 'DEPARTAMENTO'
+            ? DEPTOS.map((d) => ({
+                keyValue: d.slice(0, 3).toUpperCase(),
+                active: 'ACTIVE',
+                values: [
+                  { field: 'codigo', qualifier: 'KEY', valor: d.slice(0, 3).toUpperCase() },
+                  { field: 'descripcion', qualifier: 'FIELD', valor: d },
+                ],
+              }))
+            : [],
+      }),
+    );
+  });
+
+  it('ofrece los registros del catálogo padre', async () => {
+    montarFicha();
+    const padre = (await screen.findByLabelText(/Registro padre en DEPARTAMENTO/)) as HTMLSelectElement;
+    await waitFor(() => expect(within(padre).getByRole('option', { name: /Cundinamarca/ })).toBeInTheDocument());
+    expect(within(padre).getByRole('option', { name: /Boyacá/ })).toBeInTheDocument();
+  });
+
+  it('se puede acotar la lista buscando', async () => {
+    montarFicha();
+    const inicial = (await screen.findByLabelText(/Registro padre en DEPARTAMENTO/)) as HTMLSelectElement;
+    await waitFor(() => expect(within(inicial).getByRole('option', { name: /Boyacá/ })).toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText('Buscar el registro padre'), { target: { value: 'cund' } });
+
+    const padre = screen.getByLabelText(/Registro padre en DEPARTAMENTO/) as HTMLSelectElement;
+    expect(within(padre).getByRole('option', { name: /Cundinamarca/ })).toBeInTheDocument();
+    expect(within(padre).queryByRole('option', { name: /Boyacá/ })).not.toBeInTheDocument();
+  });
+
+  it('crear el distrito manda el departamento elegido como registro padre', async () => {
+    montarFicha();
+    // El desplegable se pinta antes de que lleguen los registros del padre.
+    const padre = (await screen.findByLabelText(/Registro padre en DEPARTAMENTO/)) as HTMLSelectElement;
+    await waitFor(() => expect(within(padre).getByRole('option', { name: /Cundinamarca/ })).toBeInTheDocument());
+
+    fireEvent.change(padre, { target: { value: 'CUN' } });
+    fireEvent.change(screen.getByLabelText('codigo*'), { target: { value: 'GIR' } });
+    fireEvent.change(screen.getByLabelText('descripcion'), { target: { value: 'Girardot' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar registro' }));
+
+
+    await waitFor(() =>
+      expect(crearRegistro).toHaveBeenCalledWith({
+        // El catálogo sale de la URL de la ficha, no del objeto.
+        code: 'TIPO-DOC',
+        catalogRecordCreateRequest: {
+          parentRecord: 'CUN',
+          values: [
+            { field: 'codigo', valor: 'GIR' },
+            { field: 'descripcion', valor: 'Girardot' },
+          ],
+        },
+      }),
+    );
+  });
+
+  // El contrato lo exige cuando el catálogo cuelga de otro (Reglas 8 y 23).
+  it('sin elegir padre no se manda nada', async () => {
+    montarFicha();
+    await screen.findByLabelText(/Registro padre en DEPARTAMENTO/);
+
+    fireEvent.change(screen.getByLabelText('codigo*'), { target: { value: 'GIR' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar registro' }));
+
+    await waitFor(() => expect(swalFire).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' })));
+    expect(crearRegistro).not.toHaveBeenCalled();
+  });
+
+  it('un catálogo sin padre no pide registro padre', async () => {
+    consultarCatalogoPorCodigo.mockResolvedValue({ data: { ...CATALOGO, parent: null } });
+    montarFicha();
+    await screen.findByRole('button', { name: 'Guardar registro' });
+    expect(screen.queryByLabelText(/Registro padre/)).not.toBeInTheDocument();
+  });
+});
