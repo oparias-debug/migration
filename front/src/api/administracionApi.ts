@@ -11,8 +11,16 @@ import { createHttpClient } from './httpClient';
  */
 const administracionAxios = createHttpClient('/back');
 
-// CU-ADM-01 vive en admin-srv, detrás de /admin/** de api-gateway, que monta su contrato bajo /api/v1.
-const catalogosAxios = createHttpClient('/admin/api/v1');
+// CU-ADM-01 vive en admin-srv, detrás de /admin/** de api-gateway, que monta su
+// contrato bajo /api/v1. Ése es el destino por defecto y el de la entidad.
+//
+// Se deja configurar por entorno porque no todos tienen admin-srv detrás: el de
+// vista previa sigue sirviendo los catálogos desde backend-srv en /back, y sin
+// esto su despliegue pediría /admin/api/v1, que allí no existe y devuelve el
+// index.html de la SPA en vez de datos. Mismo motivo que VITE_API_PROXY_TARGET
+// en vite.config.ts: dónde vive el backend es cosa del entorno, no del código.
+const CATALOGOS_BASE = import.meta.env.VITE_CATALOGOS_BASE ?? '/admin/api/v1';
+const catalogosAxios = createHttpClient(CATALOGOS_BASE);
 
 // CU-ADM-01 (Administración de Catálogos). El generador lo partió en dos clases,
 // una por tag del contrato: los catálogos (su definición) y sus registros (los datos).
