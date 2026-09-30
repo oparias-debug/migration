@@ -4,12 +4,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../i18n/i18n';
 import { PasosProyectoLayout } from './PasosProyectoLayout';
 import { GRUPOS_PASOS, entradaDeGrupo, pasosDe, rutaAnterior, rutaSiguiente, ubicarPaso } from './pasosProyecto';
+import { olvidarCatalogoContenidos } from './contenidoIniciativa';
+import { ANEXO_F } from './anexoF.fixture';
 
 const obtenerProyecto = vi.fn();
+const listarContenidoIniciativasProyecto = vi.fn();
 
 vi.mock('../../../api/preinversionApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../api/preinversionApi')>();
-  return { ...actual, preinversionApi: { obtenerProyecto: (...a: unknown[]) => obtenerProyecto(...a) } };
+  return {
+    ...actual,
+    preinversionApi: { obtenerProyecto: (...a: unknown[]) => obtenerProyecto(...a) },
+    catalogoEtapasApi: {
+      ...actual.catalogoEtapasApi,
+      listarContenidoIniciativasProyecto: () => listarContenidoIniciativasProyecto(),
+    },
+  };
 });
 
 const montar = (ruta: string) =>
@@ -31,7 +41,11 @@ const IDENTIFICACION = '/preinversion/proyectos/7/identificacion';
 describe('PasosProyectoLayout · árbol del sistema', () => {
   beforeEach(() => {
     obtenerProyecto.mockReset();
-    obtenerProyecto.mockResolvedValue({ data: { nombre: 'Hospital de Santa Ana', cup: '10001' } });
+    obtenerProyecto.mockResolvedValue({
+      data: { nombre: 'Hospital de Santa Ana', cup: '10001', iniciativaInversion: 'PROYECTO' },
+    });
+    listarContenidoIniciativasProyecto.mockReset().mockResolvedValue({ data: ANEXO_F });
+    olvidarCatalogoContenidos();
   });
 
   it('pinta la pantalla del paso y marca el paso actual', async () => {
@@ -263,5 +277,83 @@ describe('capítulo anterior y siguiente', () => {
   it('un paso sin pantalla no entra en la cadena', () => {
     expect(rutaSiguiente(7, 'flujo-socioeconomico')).toBeNull();
     expect(rutaAnterior(7, 'elegibilidad')).toBe('/preinversion/proyectos/7/ruta-preinversion');
+  });
+});
+
+
+/**
+ * Sólo se muestran los capítulos que se formulan en la iniciativa, según el
+ * "Anexo F" que sirve el servidor (observación del 21/09/2026: "allí solo se
+ * deben mostrar los siguientes formularios").
+ */
+describe('la barra se ajusta a la iniciativa', () => {
+  beforeEach(() => {
+    obtenerProyecto.mockReset();
+    listarContenidoIniciativasProyecto.mockReset().mockResolvedValue({ data: ANEXO_F });
+    olvidarCatalogoContenidos();
+  });
+
+  const conIniciativa = (iniciativa: string) =>
+    obtenerProyecto.mockResolvedValue({
+      data: { nombre: 'Prueba', cup: '10002', iniciativaInversion: iniciativa },
+    });
+
+  it('un programa no ve Alternativas de Solución, Ambiental, Legal ni Beneficios', async () => {
+    conIniciativa('PROGRAMA');
+    montar(IDENTIFICACION);
+    await screen.findByText('Prueba');
+    fireEvent.click(screen.getByRole('button', { name: /Formulación y evaluación/ }));
+
+    await waitFor(() => expect(screen.queryByText('Alternativas de solución')).not.toBeInTheDocument());
+    for (const capitulo of ['Análisis ambiental', 'Análisis legal', 'Beneficios']) {
+      expect(screen.queryByText(capitulo)).not.toBeInTheDocument();
+    }
+    // Y sí ve los que el anexo le marca.
+    expect(screen.getByText('Análisis de riesgos')).toBeInTheDocument();
+    expect(screen.getByText('Presupuesto de operación y funcionamiento')).toBeInTheDocument();
+  });
+
+  it('un estudio general tampoco ve Análisis de Riesgos ni Presupuesto de O&M', async () => {
+    conIniciativa('ESTUDIO_GENERAL');
+    montar(IDENTIFICACION);
+    await screen.findByText('Prueba');
+    fireEvent.click(screen.getByRole('button', { name: /Formulación y evaluación/ }));
+
+    await waitFor(() => expect(screen.queryByText('Análisis de riesgos')).not.toBeInTheDocument());
+    expect(screen.queryByText('Presupuesto de operación y funcionamiento')).not.toBeInTheDocument();
+    expect(screen.getByText('Presupuesto de inversión')).toBeInTheDocument();
+  });
+
+  it('un proyecto ve todos los capítulos', async () => {
+    conIniciativa('PROYECTO');
+    montar(IDENTIFICACION);
+    await screen.findByText('Prueba');
+    fireEvent.click(screen.getByRole('button', { name: /Formulación y evaluación/ }));
+
+    for (const capitulo of ['Alternativas de solución', 'Análisis ambiental', 'Análisis legal']) {
+      expect(screen.getByText(capitulo)).toBeInTheDocument();
+    }
+  });
+
+  // Si se llegó por la URL a un capítulo que no aplica, se ve en la barra: sin
+  // eso la barra no tendría ninguna marca del sitio donde está la pantalla.
+  it('el capítulo abierto se ve aunque no se formule en esta iniciativa', async () => {
+    conIniciativa('PROGRAMA');
+    montar('/preinversion/proyectos/7/alternativas-solucion');
+    await screen.findByText('Prueba');
+    expect(await screen.findByRole('link', { name: 'Alternativas de solución' })).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+  });
+
+  // El anexo no puede dejar a nadie sin formulario.
+  it('si el catálogo falla se muestran todos los capítulos', async () => {
+    conIniciativa('PROGRAMA');
+    listarContenidoIniciativasProyecto.mockRejectedValue(new Error('sin catálogo'));
+    montar(IDENTIFICACION);
+    await screen.findByText('Prueba');
+    fireEvent.click(screen.getByRole('button', { name: /Formulación y evaluación/ }));
+    expect(screen.getByText('Alternativas de solución')).toBeInTheDocument();
   });
 });

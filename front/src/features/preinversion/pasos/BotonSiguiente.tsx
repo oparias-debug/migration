@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { rutaSiguiente } from './pasosProyecto';
+import { pasoAplica, useAplicaContenido } from './contenidoIniciativa';
 
 interface Props {
   readonly idProyecto: number;
@@ -19,11 +20,16 @@ interface Props {
  * que el mismo botón se llamaba distinto en cada pantalla y el nombre quedaba
  * desactualizado en cuanto se intercalaba un capítulo. En el último capítulo con
  * pantalla no se dibuja, en vez de ofrecer un camino que no existe.
+ *
+ * Salta los capítulos que no se formulan en esta iniciativa: en un programa, de
+ * Identificación se pasa al Diagnóstico, porque Alternativas de Solución no
+ * aplica (Anexo F).
  */
 export function BotonSiguiente({ idProyecto, paso, antesDeAvanzar, deshabilitado }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const destino = rutaSiguiente(idProyecto, paso);
+  const aplica = useAplicaContenido();
+  const destino = rutaSiguiente(idProyecto, paso, (p) => pasoAplica(p, aplica));
 
   if (!destino) return null;
 

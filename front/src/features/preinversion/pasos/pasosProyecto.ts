@@ -26,6 +26,12 @@ export interface PasoProyecto {
   /** Clave de i18n. */
   readonly texto: string;
   readonly cu: string;
+  /**
+   * Casos de uso del "Anexo F — Contenido de Iniciativas de Proyecto" que cubre
+   * el capítulo, cuando son varios y `cu` los resume en una frase. El anexo dice
+   * cuáles se formulan en cada iniciativa (ver contenidoIniciativa.ts).
+   */
+  readonly cus?: readonly string[];
   /** Claves de i18n de las pestañas del capítulo (columna F del árbol). */
   readonly pestanas?: readonly string[];
   /**
@@ -107,6 +113,7 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
             codigo: arbol(1, 3, 2, 1),
             texto: 'pasos.diagnostico',
             cu: 'CU-PRE-06 a 09',
+            cus: ['CU-PRE-06', 'CU-PRE-07', 'CU-PRE-08', 'CU-PRE-09'],
             pestanas: ['pasos.pestana.interesados', 'pasos.pestana.poblacion', 'pasos.pestana.areaInfluencia', 'pasos.pestana.mercado'],
             rutas: ['diagnostico'],
           },
@@ -115,6 +122,7 @@ export const GRUPOS_PASOS: readonly GrupoPasos[] = [
             codigo: arbol(1, 3, 2, 2),
             texto: 'pasos.estudioTecnico',
             cu: 'CU-PRE-11 y 12',
+            cus: ['CU-PRE-11', 'CU-PRE-12'],
             pestanas: ['pasos.pestana.descripcionTecnica', 'pasos.pestana.localizacion'],
             rutas: ['estudio-tecnico'],
           },
@@ -215,6 +223,23 @@ function pasosNavegables(): PasoProyecto[] {
 }
 
 /**
+ * Los capítulos por los que se pasa al recorrer el proyecto: los que tienen
+ * pantalla y se formulan en esta iniciativa. El capítulo de partida se incluye
+ * siempre, aunque no se formule, para poder salir de él si se llegó por la URL.
+ */
+function pasosDelRecorrido(desde: string, seFormula: SeFormula): PasoProyecto[] {
+  return pasosNavegables().filter((p) => p.clave === desde || seFormula(p));
+}
+
+/**
+ * ¿Se formula este capítulo en la iniciativa que se está trabajando? Lo responde
+ * el "Anexo F" del servidor (ver contenidoIniciativa.ts); sin respuesta se
+ * recorren todos.
+ */
+export type SeFormula = (paso: PasoProyecto) => boolean;
+const TODOS: SeFormula = () => true;
+
+/**
  * Capítulo anterior y siguiente de un paso.
  *
  * "Regresar" y "Siguiente" recorren el proyecto en el orden del árbol, no un
@@ -222,8 +247,8 @@ function pasosNavegables(): PasoProyecto[] {
  * dos pantallas no pueden discrepar sobre quién va antes de quién. Los pasos
  * que todavía no tienen pantalla se saltan.
  */
-export function pasoVecino(clave: string, direccion: -1 | 1): PasoProyecto | null {
-  const pasos = pasosNavegables();
+export function pasoVecino(clave: string, direccion: -1 | 1, seFormula: SeFormula = TODOS): PasoProyecto | null {
+  const pasos = pasosDelRecorrido(clave, seFormula);
   const indice = pasos.findIndex((p) => p.clave === clave);
   if (indice < 0) return null;
   return pasos[indice + direccion] ?? null;
@@ -233,14 +258,14 @@ export function pasoVecino(clave: string, direccion: -1 | 1): PasoProyecto | nul
  * Ruta del capítulo anterior. Desde el primero se vuelve a la Ruta de
  * Preinversión, que es de donde se entra a formular.
  */
-export function rutaAnterior(idProyecto: number, clave: string): string {
-  const anterior = pasoVecino(clave, -1);
+export function rutaAnterior(idProyecto: number, clave: string, seFormula: SeFormula = TODOS): string {
+  const anterior = pasoVecino(clave, -1, seFormula);
   return anterior ? (rutaDePaso(idProyecto, anterior) as string) : `${raizProyecto(idProyecto)}/ruta-preinversion`;
 }
 
 /** Ruta del capítulo siguiente, o null si es el último con pantalla. */
-export function rutaSiguiente(idProyecto: number, clave: string): string | null {
-  const siguiente = pasoVecino(clave, 1);
+export function rutaSiguiente(idProyecto: number, clave: string, seFormula: SeFormula = TODOS): string | null {
+  const siguiente = pasoVecino(clave, 1, seFormula);
   return siguiente ? rutaDePaso(idProyecto, siguiente) : null;
 }
 

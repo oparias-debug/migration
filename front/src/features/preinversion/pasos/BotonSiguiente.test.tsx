@@ -10,6 +10,8 @@ vi.mock('react-router-dom', async (importOriginal) => {
 });
 
 const { BotonSiguiente } = await import('./BotonSiguiente');
+const { ContextoContenido, contenidoAplica } = await import('./contenidoIniciativa');
+const { ANEXO_F } = await import('./anexoF.fixture');
 
 const montar = (props: Partial<Parameters<typeof BotonSiguiente>[0]> = {}) =>
   render(
@@ -65,5 +67,40 @@ describe('BotonSiguiente', () => {
     expect(boton).toBeDisabled();
     fireEvent.click(boton);
     expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+
+/**
+ * En un programa, Alternativas de Solución, Análisis Ambiental, Análisis Legal y
+ * Beneficios no se formulan: la barra no los muestra y "Siguiente" tampoco puede
+ * llevar a ellos (Anexo F).
+ */
+describe('salta los capítulos que no se formulan', () => {
+  const montarPrograma = (paso: string) =>
+    render(
+      <MemoryRouter>
+        <ContextoContenido.Provider value={(cu) => contenidoAplica(ANEXO_F, 'PROGRAMA', cu)}>
+          <BotonSiguiente idProyecto={7} paso={paso} />
+        </ContextoContenido.Provider>
+      </MemoryRouter>,
+    );
+
+  it.each([
+    ['identificacion', '/preinversion/proyectos/7/diagnostico', 'Alternativas de Solución'],
+    ['estudio-tecnico', '/preinversion/proyectos/7/analisis-riesgo', 'Análisis Ambiental'],
+    ['riesgos', '/preinversion/proyectos/7/presupuesto', 'Análisis Legal'],
+    ['presupuesto-operacion', '/preinversion/proyectos/7/viabilidad', 'Beneficios'],
+  ])('desde %s salta a %s (%s no aplica)', (paso, destino) => {
+    montarPrograma(paso);
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    expect(navigate).toHaveBeenCalledWith(destino);
+  });
+
+  // Se llegó por la URL a un capítulo que no aplica: se puede salir de él.
+  it('desde un capítulo que no aplica se sigue avanzando', () => {
+    montarPrograma('alternativas');
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/diagnostico');
   });
 });

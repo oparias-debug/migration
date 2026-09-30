@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,7 +20,8 @@ import {
   identificacionSchema,
   type IdentificacionFormValues,
 } from './identificacionFormSchema';
-import { rutaAnterior } from '../pasos/pasosProyecto';
+import { BotonRegresar } from '../pasos/BotonRegresar';
+import { BotonSiguiente } from '../pasos/BotonSiguiente';
 
 /** Los dos árboles se manejan igual; sólo cambian los métodos del cliente. */
 type Arbol = 'problemas' | 'objetivos';
@@ -75,7 +76,6 @@ function identificacionToFormValues(datos: Identificacion): IdentificacionFormVa
 export function IdentificacionPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const idProyecto = Number(id);
 
@@ -391,25 +391,13 @@ export function IdentificacionPage() {
           </div>
 
           <div className="acciones-form">
-            <button
-              type="button"
-              className="btn neutro"
-              onClick={() => navigate(rutaAnterior(idProyecto, 'identificacion'))}
-            >
-              {t('common.regresar')}
-            </button>
+            <BotonRegresar idProyecto={idProyecto} paso="identificacion" />
             {puedeEditar && (
               <button type="submit" className="btn primario" disabled={guardando}>
                 {guardando ? t('common.guardando') : t('common.guardar')}
               </button>
             )}
-            <button
-              type="button"
-              className="btn secundario"
-              onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/alternativas-solucion`)}
-            >
-              {t('common.siguiente')}
-            </button>
+            <BotonSiguiente idProyecto={idProyecto} paso="identificacion" />
           </div>
         </form>
       </div>

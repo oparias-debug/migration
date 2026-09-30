@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,7 +18,8 @@ import {
   sinSeparadorDeMiles,
   type RegistroAlternativasFormValues,
 } from './alternativasSolucionFormSchema';
-import { rutaAnterior } from '../pasos/pasosProyecto';
+
+import { BotonRegresar } from '../pasos/BotonRegresar';
 
 function registroToFormValues(registro: RegistroAlternativas): RegistroAlternativasFormValues {
   const alternativas = registro.alternativas ?? [];
@@ -40,7 +41,6 @@ function registroToFormValues(registro: RegistroAlternativas): RegistroAlternati
 export function AlternativasSolucionPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const idProyecto = Number(id);
 
@@ -238,9 +238,7 @@ export function AlternativasSolucionPage() {
           </div>
 
           <div className="acciones-form">
-            <button type="button" className="btn neutro" onClick={() => navigate(rutaAnterior(idProyecto, 'alternativas'))}>
-              {t('preinversion.registro.botonRegresar')}
-            </button>
+            <BotonRegresar idProyecto={idProyecto} paso="alternativas" />
             {puedeEditar && (
               <>
                 <button type="submit" className="btn primario" disabled={guardando}>

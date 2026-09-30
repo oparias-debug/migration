@@ -6,8 +6,9 @@ import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { TablaAnalisis, type ColumnaAnalisis } from './TablaAnalisis';
-import { rutaAnterior } from '../pasos/pasosProyecto';
+
 import { BotonSiguiente } from '../pasos/BotonSiguiente';
+import { BotonRegresar } from '../pasos/BotonRegresar';
 
 /** Quien registra los análisis del capítulo 1.3.2 (x-roles de los tres CU). */
 export const ROL_ANALISIS = 'TECNICO_URP';
@@ -192,13 +193,7 @@ export function PantallaAnalisis<D, F extends Record<string, unknown>>({
         )}
 
         <div className="acciones-form">
-          <button
-            type="button"
-            className="btn neutro"
-            onClick={() => navigate(rutaAnterior(idProyecto, paso))}
-          >
-            {t('preinversion.registro.botonRegresar')}
-          </button>
+          <BotonRegresar idProyecto={idProyecto} paso={paso} />
           {puedeEditar && (
             <button type="button" className="btn primario" onClick={alGuardar} disabled={guardando}>
               {t('preinversion.registro.botonGuardar')}

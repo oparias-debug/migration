@@ -3,6 +3,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../i18n/i18n';
 import { DiagnosticoPage } from './DiagnosticoPage';
+import { ContextoContenido, contenidoAplica } from '../pasos/contenidoIniciativa';
+import { ANEXO_F } from '../pasos/anexoF.fixture';
 
 const obtenerMatrizInteresados = vi.fn();
 const guardarMatrizInteresados = vi.fn();
@@ -180,5 +182,53 @@ describe('DiagnosticoPage · CU-PRE-06 Gestión de interesados', () => {
     await screen.findByLabelText('Nombre del interesado 1');
     fireEvent.click(screen.getByRole('button', { name: 'Regresar' }));
     expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/alternativas-solucion');
+  });
+});
+
+
+/**
+ * Las cuatro pestañas son cuatro contenidos del Anexo F y no aplican a la vez:
+ * de un programa o un estudio general sólo se formula el Análisis de la
+ * Población (CU-PRE-07).
+ */
+describe('las pestañas se ajustan a la iniciativa', () => {
+  const montarCon = (iniciativa: 'PROGRAMA' | 'ESTUDIO_GENERAL' | 'PROYECTO') =>
+    render(
+      <MemoryRouter initialEntries={['/preinversion/proyectos/14/diagnostico']}>
+        <Routes>
+          <Route
+            path="/preinversion/proyectos/:id/diagnostico"
+            element={
+              <ContextoContenido.Provider value={(cu) => contenidoAplica(ANEXO_F, iniciativa, cu)}>
+                <DiagnosticoPage />
+              </ContextoContenido.Provider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+  beforeEach(() => {
+    obtenerProyecto.mockReset().mockResolvedValue({ data: { nombre: 'Prueba', cup: '10002' } });
+  });
+
+  it.each(['PROGRAMA', 'ESTUDIO_GENERAL'] as const)('en un %s sólo queda Análisis de población', async (iniciativa) => {
+    montarCon(iniciativa);
+    expect(await screen.findByRole('tab', { name: 'Análisis de población' })).toBeInTheDocument();
+    for (const pestana of ['Gestión de interesados', 'Área de influencia', 'Análisis de mercado']) {
+      expect(screen.queryByRole('tab', { name: pestana })).not.toBeInTheDocument();
+    }
+  });
+
+  // Con Interesados escondida, la pestaña abierta pasa a ser la primera que sí aplica.
+  it('la pestaña abierta es la primera que aplica', async () => {
+    montarCon('PROGRAMA');
+    expect(await screen.findByRole('tab', { name: 'Análisis de población', selected: true })).toBeInTheDocument();
+  });
+
+  it('en un proyecto siguen las cuatro', async () => {
+    montarCon('PROYECTO');
+    await screen.findByRole('tab', { name: 'Gestión de interesados' });
+    expect(screen.getAllByRole('tab')).toHaveLength(4);
   });
 });

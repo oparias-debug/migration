@@ -3,6 +3,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../i18n/i18n';
 import { IdentificacionPage } from './IdentificacionPage';
+import { ContextoContenido, contenidoAplica } from '../pasos/contenidoIniciativa';
+import { ANEXO_F } from '../pasos/anexoF.fixture';
 
 const obtenerIdentificacion = vi.fn();
 const guardarIdentificacion = vi.fn();
@@ -337,6 +339,30 @@ describe('IdentificacionPage · CU-PRE-04', () => {
     await screen.findByText('MINSAL');
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/alternativas-solucion');
+  });
+
+  /**
+   * El destino no está escrito en esta pantalla: sale del árbol. Antes sí lo
+   * estaba, y en un programa llevaba a un capítulo que no se formula.
+   */
+  it('en un programa el Siguiente salta Alternativas de Solución', async () => {
+    render(
+      <MemoryRouter initialEntries={['/preinversion/proyectos/7/identificacion']}>
+        <Routes>
+          <Route
+            path="/preinversion/proyectos/:id/identificacion"
+            element={
+              <ContextoContenido.Provider value={(cu) => contenidoAplica(ANEXO_F, 'PROGRAMA', cu)}>
+                <IdentificacionPage />
+              </ContextoContenido.Provider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText('MINSAL');
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/diagnostico');
   });
 });
 

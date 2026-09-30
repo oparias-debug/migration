@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
 import {
@@ -18,8 +18,9 @@ import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { DetalleMacroactividadModal } from './DetalleMacroactividadModal';
 import { formatearMonto } from './presupuestoFormSchema';
-import { rutaAnterior } from '../pasos/pasosProyecto';
+
 import { BotonSiguiente } from '../pasos/BotonSiguiente';
+import { BotonRegresar } from '../pasos/BotonRegresar';
 
 const ROL_EDITA = 'TECNICO_URP';
 
@@ -95,7 +96,6 @@ function AvisoSeccion({ texto, motivo }: { readonly texto: string; readonly moti
 export function PresupuestoPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const idProyecto = Number(id);
 
@@ -428,13 +428,7 @@ export function PresupuestoPage() {
         )}
 
         <div className="acciones-form">
-          <button
-            type="button"
-            className="btn neutro"
-            onClick={() => navigate(rutaAnterior(idProyecto, 'presupuesto-inversion'))}
-          >
-            {t('common.regresar')}
-          </button>
+          <BotonRegresar idProyecto={idProyecto} paso="presupuesto-inversion" />
           <BotonSiguiente idProyecto={idProyecto} paso="presupuesto-inversion" />
           {puedeEditar && (
             <button type="button" className="btn primario" disabled={guardando} onClick={guardarTodo}>

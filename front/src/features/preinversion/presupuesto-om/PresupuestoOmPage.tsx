@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
 import {
@@ -16,8 +16,9 @@ import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { formatearMonto } from '../presupuesto/presupuestoFormSchema';
 import { NuevaActividadModal } from './NuevaActividadModal';
-import { rutaAnterior } from '../pasos/pasosProyecto';
+
 import { BotonSiguiente } from '../pasos/BotonSiguiente';
+import { BotonRegresar } from '../pasos/BotonRegresar';
 
 const CLAVE = 'preinversion.presupuestoOm';
 /** Mismo actor que el presupuesto de inversión (CU-PRE-17). */
@@ -49,7 +50,6 @@ function tablasDe(presupuesto: PresupuestoOM): { clave: 'OPERACION' | 'MANTENIMI
 export function PresupuestoOmPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const idProyecto = Number(id);
 
@@ -303,9 +303,7 @@ export function PresupuestoOmPage() {
         )}
 
         <div className="acciones-form">
-          <button type="button" className="btn neutro" onClick={() => navigate(rutaAnterior(idProyecto, 'presupuesto-operacion'))}>
-            {t('preinversion.registro.botonRegresar')}
-          </button>
+          <BotonRegresar idProyecto={idProyecto} paso="presupuesto-operacion" />
           <BotonSiguiente idProyecto={idProyecto} paso="presupuesto-operacion" />
           {puedeEditar && tablas.length > 0 && (
             <button type="button" className="btn primario" onClick={guardarTodo} disabled={guardando}>

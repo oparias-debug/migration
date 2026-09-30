@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { preinversionApi } from '../../../api/preinversionApi';
 import { useAuth } from '../../../auth/useAuth';
 import { Pestanas } from '../../../components/Pestanas';
 import { DescripcionTecnicaTab } from './DescripcionTecnicaTab';
 import { LocalizacionTab } from './LocalizacionTab';
-import { rutaAnterior } from '../pasos/pasosProyecto';
+
 import { BotonSiguiente } from '../pasos/BotonSiguiente';
+import { BotonRegresar } from '../pasos/BotonRegresar';
 
 /**
  * Capítulo 1.3.2.2 del árbol del sistema, "Estudio técnico": dos pestañas.
@@ -24,7 +25,6 @@ type Clave = (typeof PESTANAS)[number]['clave'];
 export function EstudioTecnicoPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const idProyecto = Number(id);
   const [pestana, setPestana] = useState<Clave>('descripcion');
@@ -68,13 +68,7 @@ export function EstudioTecnicoPage() {
         </div>
 
         <div className="acciones-form">
-          <button
-            type="button"
-            className="btn neutro"
-            onClick={() => navigate(rutaAnterior(idProyecto, 'estudio-tecnico'))}
-          >
-            {t('common.regresar')}
-          </button>
+          <BotonRegresar idProyecto={idProyecto} paso="estudio-tecnico" />
           <BotonSiguiente idProyecto={idProyecto} paso="estudio-tecnico" />
         </div>
       </div>

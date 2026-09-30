@@ -1,8 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { preinversionApi } from '../../../api/preinversionApi';
 import { GRUPOS_PASOS, esClaveGrupo, rutaDePaso, ubicarPaso, type PasoProyecto } from './pasosProyecto';
+import type { IniciativaInversion } from '../../../api/generated/preinversion';
+import {
+  ContextoContenido,
+  contenidoAplica,
+  pasoAplica,
+  useCatalogoContenidos,
+} from './contenidoIniciativa';
+
+interface Cabecera {
+  readonly nombre: string;
+  readonly cup: string | null;
+  readonly iniciativa: IniciativaInversion;
+}
 
 /**
  * Un capítulo en la barra: enlace si tiene pantalla, marca sin enlace si no.
@@ -102,7 +115,7 @@ export function PasosProyectoLayout() {
     });
   };
 
-  const [cabecera, setCabecera] = useState<{ nombre: string; cup: string | null } | null>(null);
+  const [cabecera, setCabecera] = useState<Cabecera | null>(null);
   useEffect(() => {
     if (!idProyecto) return undefined;
     let vigente = true;
@@ -110,15 +123,28 @@ export function PasosProyectoLayout() {
     preinversionApi
       .obtenerProyecto({ idProyecto })
       .then(({ data }) => {
-        if (vigente) setCabecera({ nombre: data.nombre, cup: data.cup ?? null });
+        if (vigente) setCabecera({ nombre: data.nombre, cup: data.cup ?? null, iniciativa: data.iniciativaInversion });
       })
       .catch(() => {
-        // La cabecera es contexto: si no carga, la barra funciona igual.
+        // La cabecera es contexto: si no carga, la barra funciona igual, y sin
+        // iniciativa se muestran todos los capítulos.
       });
     return () => {
       vigente = false;
     };
   }, [idProyecto]);
+
+  /**
+   * Qué capítulos se formulan en esta iniciativa. Se resuelve aquí, una vez, y
+   * baja por contexto a las pantallas: así "Siguiente" salta lo que la barra no
+   * muestra sin que cada capítulo vuelva a pedir el proyecto y el anexo.
+   */
+  const contenidos = useCatalogoContenidos();
+  const iniciativa = cabecera?.iniciativa ?? null;
+  const aplica = useCallback(
+    (cu: string) => contenidoAplica(contenidos, iniciativa, cu),
+    [contenidos, iniciativa],
+  );
 
   if (!ubicacion) return <Outlet />;
 
@@ -168,7 +194,7 @@ export function PasosProyectoLayout() {
                 </p>
               )}
               <ol>
-                {seccion.pasos.map((paso) => (
+                {seccion.pasos.filter((paso) => paso.clave === ubicacion.paso.clave || pasoAplica(paso, aplica)).map((paso) => (
                   <li key={paso.clave}>
                     <PasoEnBarra
                       paso={paso}
@@ -183,7 +209,9 @@ export function PasosProyectoLayout() {
         </nav>}
       </div>
 
-      <Outlet />
+      <ContextoContenido.Provider value={aplica}>
+        <Outlet />
+      </ContextoContenido.Provider>
     </>
   );
 }

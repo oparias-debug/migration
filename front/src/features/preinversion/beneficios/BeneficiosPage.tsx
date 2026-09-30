@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
 import {
@@ -17,8 +17,9 @@ import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { aNumero, formatearMonto } from '../presupuesto/presupuestoFormSchema';
 import { NuevoBeneficioModal } from './NuevoBeneficioModal';
-import { rutaAnterior } from '../pasos/pasosProyecto';
+
 import { BotonSiguiente } from '../pasos/BotonSiguiente';
+import { BotonRegresar } from '../pasos/BotonRegresar';
 
 const CLAVE = 'preinversion.beneficios';
 /** Mismo actor que el resto de la formulación (x-roles del CU). */
@@ -51,7 +52,6 @@ const TIPOS_BIEN = [TipoBien.Equipos, TipoBien.Edificios, TipoBien.Terrenos, Tip
 export function BeneficiosPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const idProyecto = Number(id);
 
@@ -293,13 +293,7 @@ export function BeneficiosPage() {
         )}
 
         <div className="acciones-form">
-          <button
-            type="button"
-            className="btn neutro"
-            onClick={() => navigate(rutaAnterior(idProyecto, 'beneficios'))}
-          >
-            {t('preinversion.registro.botonRegresar')}
-          </button>
+          <BotonRegresar idProyecto={idProyecto} paso="beneficios" />
           <BotonSiguiente idProyecto={idProyecto} paso="beneficios" />
           {puedeEditar && (
             <button type="button" className="btn primario" disabled={cargando || guardando} onClick={() => void guardarPantalla()}>

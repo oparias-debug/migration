@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { preinversionApi } from '../../../api/preinversionApi';
 import { useAuth } from '../../../auth/useAuth';
@@ -8,8 +8,10 @@ import { InteresadosTab } from './InteresadosTab';
 import { PoblacionTab } from './PoblacionTab';
 import { AreaInfluenciaTab } from './AreaInfluenciaTab';
 import { MercadoTab } from './MercadoTab';
-import { rutaAnterior } from '../pasos/pasosProyecto';
+
 import { BotonSiguiente } from '../pasos/BotonSiguiente';
+import { BotonRegresar } from '../pasos/BotonRegresar';
+import { useAplicaContenido } from '../pasos/contenidoIniciativa';
 
 /**
  * Capítulo 1.3.2.1 del árbol del sistema, "Diagnóstico de la situación actual":
@@ -19,23 +21,33 @@ import { BotonSiguiente } from '../pasos/BotonSiguiente';
  * Cada pestaña carga y guarda lo suyo contra su propio endpoint, así que se
  * montan sólo al abrirlas; no hay un Guardar común. Aquí sólo se listan las que
  * ya tienen pantalla.
+ *
+ * Las cuatro son cuatro contenidos distintos del Anexo F y no aplican a la vez:
+ * de un programa o un estudio general sólo se formula el Análisis de la
+ * Población, así que las otras tres no se muestran. Por eso cada pestaña lleva
+ * su caso de uso.
  */
 const PESTANAS = [
-  { clave: 'interesados', texto: 'preinversion.diagnostico.pestana.interesados' },
-  { clave: 'poblacion', texto: 'preinversion.diagnostico.pestana.poblacion' },
-  { clave: 'areaInfluencia', texto: 'preinversion.diagnostico.pestana.areaInfluencia' },
-  { clave: 'mercado', texto: 'preinversion.diagnostico.pestana.mercado' },
+  { clave: 'interesados', texto: 'preinversion.diagnostico.pestana.interesados', cu: 'CU-PRE-06' },
+  { clave: 'poblacion', texto: 'preinversion.diagnostico.pestana.poblacion', cu: 'CU-PRE-07' },
+  { clave: 'areaInfluencia', texto: 'preinversion.diagnostico.pestana.areaInfluencia', cu: 'CU-PRE-08' },
+  { clave: 'mercado', texto: 'preinversion.diagnostico.pestana.mercado', cu: 'CU-PRE-09' },
 ] as const;
 type Clave = (typeof PESTANAS)[number]['clave'];
 
 export function DiagnosticoPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const idProyecto = Number(id);
-  const [pestana, setPestana] = useState<Clave>('interesados');
+  const [pestana, setPestana] = useState<Clave | null>(null);
   const [cabecera, setCabecera] = useState<{ nombre: string; cup: string | null } | null>(null);
+  const aplica = useAplicaContenido();
+  const pestanas = PESTANAS.filter((p) => aplica(p.cu));
+  // La pestaña abierta es la primera que aplique. Se elige al pintar y no en el
+  // estado inicial porque el anexo llega después del primer pintado: hasta
+  // entonces la primera es Interesados, que en un programa no se formula.
+  const visible = pestanas.some((p) => p.clave === pestana) ? pestana : (pestanas[0]?.clave ?? null);
 
   // Sólo el Técnico URP edita; el Técnico PRE consulta (x-roles de los contratos).
   const puedeEditar = hasRole('TECNICO_URP');
@@ -63,28 +75,24 @@ export function DiagnosticoPage() {
           </p>
         )}
 
-        <Pestanas
-          pestanas={PESTANAS}
-          activa={pestana}
-          onCambiar={setPestana}
-          etiqueta="preinversion.diagnostico.pestanas"
-        />
+        {visible && (
+          <Pestanas
+            pestanas={pestanas}
+            activa={visible}
+            onCambiar={setPestana}
+            etiqueta="preinversion.diagnostico.pestanas"
+          />
+        )}
 
-        <div role="tabpanel" id={`panel-${pestana}`}>
-          {pestana === 'interesados' && <InteresadosTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
-          {pestana === 'poblacion' && <PoblacionTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
-          {pestana === 'areaInfluencia' && <AreaInfluenciaTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
-          {pestana === 'mercado' && <MercadoTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+        <div role="tabpanel" id={`panel-${visible ?? 'ninguna'}`}>
+          {visible === 'interesados' && <InteresadosTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+          {visible === 'poblacion' && <PoblacionTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+          {visible === 'areaInfluencia' && <AreaInfluenciaTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
+          {visible === 'mercado' && <MercadoTab idProyecto={idProyecto} puedeEditar={puedeEditar} />}
         </div>
 
         <div className="acciones-form">
-          <button
-            type="button"
-            className="btn neutro"
-            onClick={() => navigate(rutaAnterior(idProyecto, 'diagnostico'))}
-          >
-            {t('common.regresar')}
-          </button>
+          <BotonRegresar idProyecto={idProyecto} paso="diagnostico" />
           <BotonSiguiente idProyecto={idProyecto} paso="diagnostico" />
         </div>
       </div>
