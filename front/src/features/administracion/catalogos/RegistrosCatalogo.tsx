@@ -4,9 +4,18 @@ import Swal from 'sweetalert2';
 import { registrosCatalogoApi, type CatalogRecord } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import type { CampoEditable } from './CamposEditor';
+import { coincide } from './busqueda';
 
 const CLAVE = 'administracion.catalogos';
-const TAMANO_PAGINA = 20;
+/**
+ * Se traen de una vez todos los registros del catálogo. El contrato no tiene
+ * parámetro de búsqueda, así que buscar por fracciones de palabra sólo puede
+ * hacerse sobre lo que esté cargado; además la tabla mostraba sólo los primeros
+ * 20 y no había manera de llegar al resto. Con esto se cubre un catálogo de
+ * cientos de registros; si alguno pasa de este tope se avisa en pantalla.
+ */
+const TOPE_REGISTROS = 1000;
+const POR_PAGINA = 20;
 
 /**
  * Registros de un catálogo: los datos que después se eligen en las pantallas del
@@ -21,14 +30,19 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
   const [valores, setValores] = useState<Record<string, string>>({});
   const [editando, setEditando] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  const [pagina, setPagina] = useState(0);
+  /** Cuántos hay en total, para avisar si no caben todos. */
+  const [total, setTotal] = useState(0);
 
   const nombres = campos.map((c) => c.nombre);
 
   const cargar = useCallback(() => {
     registrosCatalogoApi
-      .buscarListaRegistros({ code: codigo, fields: campos.map((c) => c.nombre), page: 0, size: TAMANO_PAGINA })
+      .buscarListaRegistros({ code: codigo, fields: campos.map((c) => c.nombre), page: 0, size: TOPE_REGISTROS })
       .then(({ data }) => {
         setRegistros((data.content ?? []).filter((r): r is CatalogRecord & { key: string } => Boolean(r.key)));
+        setTotal(data.totalElements ?? 0);
         setError(null);
       })
       .catch((error_) => setError(mensajeDeError(toErrorApi(error_), t)));
@@ -86,6 +100,13 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
   };
 
 
+  // La búsqueda mira la clave y todos los valores del registro, por fracciones
+  // de palabra y sin distinguir tildes ni mayúsculas.
+  const filtrados = registros.filter((r) => coincide(busqueda, r.key, ...Object.values(r.values ?? {})));
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginaVigente = Math.min(pagina, totalPaginas - 1);
+  const enPagina = filtrados.slice(paginaVigente * POR_PAGINA, (paginaVigente + 1) * POR_PAGINA);
+
   return (
     <section>
       <h2 className="seccion">{t(`${CLAVE}.registros`)}</h2>
@@ -93,6 +114,32 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
       {!error && registros.length === 0 && <p className="nota">{t(`${CLAVE}.sinRegistros`)}</p>}
 
       {registros.length > 0 && (
+        <div className="f buscador-tabla">
+          <label htmlFor="buscar-registro">{t(`${CLAVE}.buscarRegistro`)}</label>
+          <input
+            id="buscar-registro"
+            type="search"
+            value={busqueda}
+            placeholder={t(`${CLAVE}.buscarRegistroPista`)}
+            onChange={(e) => {
+              setBusqueda(e.target.value);
+              setPagina(0);
+            }}
+          />
+        </div>
+      )}
+
+      {/* El catálogo tiene más registros de los que caben de una vez: la
+          búsqueda sólo mira los traídos, así que conviene decirlo. */}
+      {total > registros.length && (
+        <p className="nota">{t(`${CLAVE}.registrosParciales`, { traidos: registros.length, total })}</p>
+      )}
+
+      {registros.length > 0 && filtrados.length === 0 && (
+        <p className="nota">{t(`${CLAVE}.sinCoincidencias`, { busqueda })}</p>
+      )}
+
+      {filtrados.length > 0 && (
         <div className="tabla-cont tabla-editable">
           <table>
             <thead>
@@ -105,7 +152,7 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
               </tr>
             </thead>
             <tbody>
-              {registros.map((r) => (
+              {enPagina.map((r) => (
                 <tr key={r.key}>
                   {nombres.map((n) => (
                     <td key={n}>{r.values?.[n] ?? '—'}</td>
@@ -146,6 +193,23 @@ export function RegistrosCatalogo({ codigo, campos }: { readonly codigo: string;
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPaginas > 1 && (
+        <div className="acciones-form">
+          <button type="button" className="btn neutro" disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)}>
+            {t('common.previous')}
+          </button>
+          <span className="nota">{t(`${CLAVE}.pagina`, { actual: paginaVigente + 1, total: totalPaginas })}</span>
+          <button
+            type="button"
+            className="btn neutro"
+            disabled={paginaVigente >= totalPaginas - 1}
+            onClick={() => setPagina((p) => p + 1)}
+          >
+            {t('common.next')}
+          </button>
         </div>
       )}
 

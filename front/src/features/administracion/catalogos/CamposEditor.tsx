@@ -11,14 +11,21 @@ export const CAMPO_VACIO: CampoEditable = { nombre: '', clave: false };
 /**
  * Qué impide guardar los campos, o null si están bien. El contrato define el
  * campo como nombre + calificador (KEY o FIELD) + posición; la clave identifica
- * cada registro, así que hace falta al menos una.
+ * cada registro, así que hace falta exactamente una.
+ *
+ * El contrato admite más de una ("al menos un CatalogField con qualifier=KEY"),
+ * pero un catálogo lleva una sola clave (indicación del 30/09/2026), y con una
+ * sola el contrato queda satisfecho igual. La pantalla ya no deja marcar dos,
+ * así que esto sólo salta con datos que vengan de antes.
  */
 export function problemaDeCampos(campos: readonly CampoEditable[]): string | null {
   const nombres = campos.map((c) => c.nombre.trim());
   if (nombres.length === 0) return 'sinCampos';
   if (nombres.includes('')) return 'campoSinNombre';
   if (new Set(nombres.map((n) => n.toLowerCase())).size !== nombres.length) return 'camposRepetidos';
-  if (!campos.some((c) => c.clave)) return 'sinClave';
+  const claves = campos.filter((c) => c.clave).length;
+  if (claves === 0) return 'sinClave';
+  if (claves > 1) return 'variasClaves';
   return null;
 }
 
@@ -39,6 +46,9 @@ export function CamposEditor({
   const clave = 'administracion.catalogos';
   const cambiar = (i: number, cambio: Partial<CampoEditable>) =>
     alCambiar(campos.map((c, j) => (j === i ? { ...c, ...cambio } : c)));
+
+  /** La clave es una sola: marcar una desmarca la que estuviera. */
+  const marcarClave = (i: number) => alCambiar(campos.map((c, j) => ({ ...c, clave: j === i })));
 
   return (
     <fieldset className="campos-catalogo">
@@ -70,11 +80,12 @@ export function CamposEditor({
                 </td>
                 <td>
                   <input
-                    type="checkbox"
+                    type="radio"
+                    name="campo-clave"
                     aria-label={t(`${clave}.campoClaveNumero`, { numero: i + 1 })}
                     checked={c.clave}
                     disabled={soloLectura}
-                    onChange={(e) => cambiar(i, { clave: e.target.checked })}
+                    onChange={() => marcarClave(i)}
                   />
                 </td>
                 {!soloLectura && (

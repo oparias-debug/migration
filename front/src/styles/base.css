@@ -669,6 +669,16 @@ tbody tr { cursor: pointer; -webkit-user-select: none; user-select: none; }
 .campo-con-accion input { flex: 1; min-width: 0; }
 .campo-con-accion .btn { white-space: nowrap; }
 
+/* Caja de búsqueda sobre una tabla. Nombre propio: .buscador es la de la barra
+   superior y lleva margin-left:auto, que aquí la mandaría al margen derecho. */
+.buscador-tabla { max-width: 420px; }
+
+/* La jerarquía del catálogo, dentro de la ficha: la banda de ruta de arriba sale
+   de la URL y no sabe de quién cuelga un catálogo. Aquí no se queda pegada,
+   porque la de arriba es la que se fija. */
+.miga-catalogo { padding: 10px 20px 0; }
+.miga-catalogo .ruta { padding: 0; background: none; border: 0; position: static; z-index: auto; }
+
 /* Opciones en línea y a la misma distancia entre sí; cada casilla pegada a su
    texto, para que no se lean como si estuvieran en renglones distintos
    (Rocío, pruebas del 21/09/2026). */

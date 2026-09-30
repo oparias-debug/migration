@@ -9,6 +9,8 @@ import { FormRow } from '../../../components/form/FormRow';
 import { CamposEditor, aCampoContrato, problemaDeCampos, type CampoEditable } from './CamposEditor';
 import { ROL_ADMIN_CATALOGOS } from './CatalogosPage';
 import { RegistrosCatalogo } from './RegistrosCatalogo';
+import { BandaRuta } from '../../../layout/BandaRuta';
+import { cadenaDeAncestros, type Eslabon } from './cadenaDeCatalogos';
 
 const CLAVE = 'administracion.catalogos';
 
@@ -44,6 +46,12 @@ export function CatalogoDetallePage() {
    * (observación del 30/09/2026: "no se están visualizando los catálogos hijos").
    */
   const [hijos, setHijos] = useState<CatalogSummary[]>([]);
+  /**
+   * Los catálogos por encima de éste, para la miga de pan. La banda de ruta de
+   * arriba sale de la URL y no puede saber de quién cuelga un catálogo, que es
+   * un dato del servidor; por eso la jerarquía se pinta aquí.
+   */
+  const [ancestros, setAncestros] = useState<Eslabon[]>([]);
 
   const cargar = useCallback(() => {
     catalogosApi
@@ -70,6 +78,17 @@ export function CatalogoDetallePage() {
   useEffect(() => {
     if (puedeAdministrar) cargar();
   }, [cargar, puedeAdministrar]);
+
+  const codigoPadre = catalogo?.parent ?? null;
+  useEffect(() => {
+    let vigente = true;
+    cadenaDeAncestros(codigoPadre).then((cadena) => {
+      if (vigente) setAncestros(cadena);
+    });
+    return () => {
+      vigente = false;
+    };
+  }, [codigoPadre]);
 
   const avisar = async (promesa: Promise<unknown>, exito: string) => {
     try {
@@ -128,6 +147,19 @@ export function CatalogoDetallePage() {
     <div className="formcard">
       <div className="formhead">
         <span>{catalogo.name} <span className="mono">· {catalogo.code}</span></span>
+      </div>
+      <div className="miga-catalogo">
+        <BandaRuta
+          tramos={[
+            { texto: t(`${CLAVE}.titulo`), ruta: '/catalogos-generales', literal: true },
+            ...ancestros.map((a) => ({
+              texto: a.name,
+              ruta: `/catalogos-generales/${encodeURIComponent(a.code)}`,
+              literal: true,
+            })),
+            { texto: catalogo.name ?? codigo, literal: true },
+          ]}
+        />
       </div>
       <div className="formbody">
 

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../i18n/i18n';
@@ -303,5 +303,167 @@ describe('el código del catálogo se ve en sus datos', () => {
     await waitFor(() => expect(actualizarDescriptoresCatalogo).toHaveBeenCalled());
     const enviado = actualizarDescriptoresCatalogo.mock.calls[0][0].catalogDescriptorsUpdateRequest;
     expect(enviado).not.toHaveProperty('code');
+  });
+});
+
+
+/**
+ * Miga de pan dentro de la ficha: la banda de ruta de arriba sale de la URL y no
+ * puede saber de quién cuelga un catálogo (indicación del 30/09/2026).
+ */
+describe('la miga de pan dice en qué catálogo se está', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
+    swalFire.mockResolvedValue({ isConfirmed: true });
+    buscarListaRegistros.mockResolvedValue({ data: { content: [] } });
+    consultarCatalogosHijos.mockResolvedValue({ data: [] });
+  });
+
+  it('nombra los catálogos por encima y deja volver a ellos', async () => {
+    const arbol: Record<string, unknown> = {
+      'TIPO-DOC': { ...CATALOGO, name: 'Distrito', parent: 'DEPARTAMENTO' },
+      DEPARTAMENTO: { ...CATALOGO, code: 'DEPARTAMENTO', name: 'Departamento', parent: 'REGION' },
+      REGION: { ...CATALOGO, code: 'REGION', name: 'Región', parent: null },
+    };
+    consultarCatalogo.mockImplementation(({ code }: { code: string }) => Promise.resolve({ data: arbol[code] }));
+    montarFicha();
+
+    const miga = await screen.findByRole('navigation', { name: /migas|ruta/i });
+    expect(miga).toHaveTextContent('Región');
+    expect(miga).toHaveTextContent('Departamento');
+    expect(miga).toHaveTextContent('Distrito');
+    expect(within(miga).getByRole('link', { name: 'Departamento' })).toHaveAttribute(
+      'href',
+      '/catalogos-generales/DEPARTAMENTO',
+    );
+  });
+
+  it('un catálogo sin padre sólo se nombra a sí mismo', async () => {
+    consultarCatalogo.mockResolvedValue({ data: CATALOGO });
+    montarFicha();
+    const miga = await screen.findByRole('navigation', { name: /migas|ruta/i });
+    expect(within(miga).queryAllByRole('link')).toHaveLength(1);
+    expect(miga).toHaveTextContent('Tipos de documento');
+  });
+});
+
+/**
+ * Un catálogo lleva una sola clave (indicación del 30/09/2026). El contrato
+ * admite más de una, pero con una queda satisfecho igual.
+ */
+describe('la clave del catálogo es una sola', () => {
+  it('marcar una desmarca la anterior', async () => {
+    vi.clearAllMocks();
+    rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
+    buscarListaRegistros.mockResolvedValue({ data: { content: [] } });
+    consultarCatalogosHijos.mockResolvedValue({ data: [] });
+    consultarCatalogo.mockResolvedValue({ data: CATALOGO });
+    montarFicha();
+
+    const primera = await screen.findByLabelText('El campo 1 es clave');
+    const segunda = screen.getByLabelText('El campo 2 es clave');
+    expect(primera).toBeChecked();
+
+    fireEvent.click(segunda);
+    expect(segunda).toBeChecked();
+    expect(primera).not.toBeChecked();
+  });
+
+  it('dos claves no se pueden guardar', () => {
+    expect(problemaDeCampos([{ nombre: 'a', clave: true }, { nombre: 'b', clave: true }])).toBe('variasClaves');
+    expect(problemaDeCampos([{ nombre: 'a', clave: true }, { nombre: 'b', clave: false }])).toBeNull();
+    expect(problemaDeCampos([{ nombre: 'a', clave: false }])).toBe('sinClave');
+  });
+});
+
+
+/**
+ * Búsqueda por fracciones de palabra: "Cund" tiene que encontrar "Cundinamarca"
+ * (indicación del 30/09/2026). El contrato no tiene parámetro de búsqueda, así
+ * que se filtra sobre lo cargado y se avisa cuando no está todo.
+ */
+describe('búsqueda en catálogos y registros', () => {
+  const DEPTOS = ['Cundinamarca', 'Boyacá', 'Antioquia', 'Santander'];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
+    swalFire.mockResolvedValue({ isConfirmed: true });
+    consultarCatalogosHijos.mockResolvedValue({ data: [] });
+    consultarCatalogo.mockResolvedValue({ data: CATALOGO });
+    buscarListaRegistros.mockResolvedValue({
+      data: {
+        content: DEPTOS.map((d) => ({ key: d, values: { codigo: d, descripcion: `Departamento de ${d}` }, active: 'ACTIVE' })),
+        totalElements: DEPTOS.length,
+      },
+    });
+    listarCatalogos.mockResolvedValue({
+      data: {
+        content: [
+          CATALOGO,
+          { ...CATALOGO, code: 'DEPARTAMENTO', name: 'Departamentos', parent: 'REGION' },
+          { ...CATALOGO, code: 'UNIDAD_MEDIDA', name: 'Unidades de medida', parent: null },
+        ],
+        totalPages: 1,
+      },
+    });
+  });
+
+  it('en un catálogo, "Cund" encuentra "Cundinamarca"', async () => {
+    montarFicha();
+    expect(await screen.findByText('Cundinamarca')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Buscar registro'), { target: { value: 'Cund' } });
+
+    expect(screen.getByText('Cundinamarca')).toBeInTheDocument();
+    expect(screen.queryByText('Boyacá')).not.toBeInTheDocument();
+    expect(screen.queryByText('Antioquia')).not.toBeInTheDocument();
+  });
+
+  it('no distingue tildes ni mayúsculas, y busca en cualquier columna', async () => {
+    montarFicha();
+    await screen.findByText('Boyacá');
+
+    fireEvent.change(screen.getByLabelText('Buscar registro'), { target: { value: 'BOYACA' } });
+    expect(screen.getByText('Boyacá')).toBeInTheDocument();
+
+    // "Departamento de ..." sólo está en la segunda columna.
+    fireEvent.change(screen.getByLabelText('Buscar registro'), { target: { value: 'departamento de anti' } });
+    expect(screen.getByText('Antioquia')).toBeInTheDocument();
+    expect(screen.queryByText('Boyacá')).not.toBeInTheDocument();
+  });
+
+  it('si no hay coincidencias lo dice, y al borrar vuelven todos', async () => {
+    montarFicha();
+    await screen.findByText('Cundinamarca');
+
+    fireEvent.change(screen.getByLabelText('Buscar registro'), { target: { value: 'zzz' } });
+    expect(screen.getByText(/Ningún registro contiene "zzz"/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Buscar registro'), { target: { value: '' } });
+    expect(screen.getByText('Cundinamarca')).toBeInTheDocument();
+  });
+
+  // El contrato no deja buscar en el servidor: hay que decir que no se mira todo.
+  it('avisa cuando el catálogo tiene más registros de los traídos', async () => {
+    buscarListaRegistros.mockResolvedValue({
+      data: { content: [{ key: 'A', values: { codigo: 'A' }, active: 'ACTIVE' }], totalElements: 5000 },
+    });
+    montarFicha();
+    expect(await screen.findByText(/Se muestran 1 de 5000 registros/)).toBeInTheDocument();
+  });
+
+  it('la lista de catálogos también se busca', async () => {
+    montarLista();
+    expect(await screen.findByText('Departamentos')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Buscar catálogo'), { target: { value: 'medida' } });
+    expect(screen.getByText('Unidades de medida')).toBeInTheDocument();
+    expect(screen.queryByText('Departamentos')).not.toBeInTheDocument();
+
+    // También por código.
+    fireEvent.change(screen.getByLabelText('Buscar catálogo'), { target: { value: 'DEPARTA' } });
+    expect(screen.getByText('Departamentos')).toBeInTheDocument();
   });
 });

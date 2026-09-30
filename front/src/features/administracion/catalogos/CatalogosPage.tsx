@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
 import { catalogosApi, type Catalog } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
+import { coincide } from './busqueda';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
 import { CamposEditor, aCampoContrato, problemaDeCampos, type CampoEditable } from './CamposEditor';
@@ -11,7 +12,14 @@ import { CamposEditor, aCampoContrato, problemaDeCampos, type CampoEditable } fr
 /** Actor del CU-ADM-01: el back exige este rol en todas sus operaciones. */
 export const ROL_ADMIN_CATALOGOS = 'ADMINISTRADOR_DE_CATALOGOS';
 const CLAVE = 'administracion.catalogos';
-const TAMANO_PAGINA = 10;
+/**
+ * Se traen todos los catálogos de una vez y se pagina aquí. El contrato no tiene
+ * parámetro de búsqueda en `listarCatalogos`, así que buscar por fracciones de
+ * palabra sólo puede hacerse sobre lo cargado; un catálogo maestro son decenas
+ * de entradas, no miles, así que caben.
+ */
+const TOPE_CATALOGOS = 500;
+const POR_PAGINA = 10;
 
 /**
  * Administración de Catálogos (CU-ADM-01): la lista de catálogos y el alta de uno
@@ -24,7 +32,7 @@ export function CatalogosPage() {
   const navigate = useNavigate();
   const [catalogos, setCatalogos] = useState<Catalog[]>([]);
   const [pagina, setPagina] = useState(0);
-  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [creando, setCreando] = useState(false);
@@ -32,20 +40,25 @@ export function CatalogosPage() {
   const cargar = useCallback(() => {
     setCargando(true);
     catalogosApi
-      .listarCatalogos({ page: pagina, size: TAMANO_PAGINA })
+      .listarCatalogos({ page: 0, size: TOPE_CATALOGOS })
       .then(({ data }) => {
         setCatalogos(data.content ?? []);
-        setTotalPaginas(data.totalPages ?? 0);
         setErrorCarga(null);
       })
       .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));
-  }, [pagina, t]);
+  }, [t]);
 
   const puedeAdministrar = hasRole(ROL_ADMIN_CATALOGOS);
   useEffect(() => {
     if (puedeAdministrar) cargar();
   }, [cargar, puedeAdministrar]);
+
+  // La búsqueda mira el nombre y el código, por fracciones de palabra.
+  const filtrados = catalogos.filter((c) => coincide(busqueda, c.name, c.code, c.parent));
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginaVigente = Math.min(pagina, totalPaginas - 1);
+  const enPagina = filtrados.slice(paginaVigente * POR_PAGINA, (paginaVigente + 1) * POR_PAGINA);
 
   if (!puedeAdministrar) {
     return (
@@ -80,6 +93,26 @@ export function CatalogosPage() {
         {!cargando && !errorCarga && catalogos.length === 0 && <p className="nota">{t(`${CLAVE}.sinCatalogos`)}</p>}
 
         {catalogos.length > 0 && (
+          <div className="f buscador-tabla">
+            <label htmlFor="buscar-catalogo">{t(`${CLAVE}.buscarCatalogo`)}</label>
+            <input
+              id="buscar-catalogo"
+              type="search"
+              value={busqueda}
+              placeholder={t(`${CLAVE}.buscarCatalogoPista`)}
+              onChange={(e) => {
+                setBusqueda(e.target.value);
+                setPagina(0);
+              }}
+            />
+          </div>
+        )}
+
+        {catalogos.length > 0 && filtrados.length === 0 && (
+          <p className="nota">{t(`${CLAVE}.sinCoincidenciasCatalogo`, { busqueda })}</p>
+        )}
+
+        {filtrados.length > 0 && (
           <div className="tabla-cont">
             <table>
               <thead>
@@ -95,7 +128,7 @@ export function CatalogosPage() {
                 </tr>
               </thead>
               <tbody>
-                {catalogos.map((c) => (
+                {enPagina.map((c) => (
                   <tr key={c.code}>
                     <td className="mono">{c.code}</td>
                     <td>{c.name}</td>
@@ -121,14 +154,14 @@ export function CatalogosPage() {
 
         {totalPaginas > 1 && (
           <div className="acciones-form">
-            <button type="button" className="btn neutro" disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)}>
+            <button type="button" className="btn neutro" disabled={paginaVigente === 0} onClick={() => setPagina((p) => p - 1)}>
               {t('common.previous')}
             </button>
-            <span className="nota">{t(`${CLAVE}.pagina`, { actual: pagina + 1, total: totalPaginas })}</span>
+            <span className="nota">{t(`${CLAVE}.pagina`, { actual: paginaVigente + 1, total: totalPaginas })}</span>
             <button
               type="button"
               className="btn neutro"
-              disabled={pagina + 1 >= totalPaginas}
+              disabled={paginaVigente + 1 >= totalPaginas}
               onClick={() => setPagina((p) => p + 1)}
             >
               {t('common.next')}
