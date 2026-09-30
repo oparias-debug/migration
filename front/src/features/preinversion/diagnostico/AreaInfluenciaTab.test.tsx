@@ -132,3 +132,51 @@ describe('AreaInfluenciaTab · CU-PRE-08', () => {
     expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
   });
 });
+
+/**
+ * Antes la pantalla descartaba en silencio las filas sin distrito y aun así
+ * avisaba de que había guardado, con lo que se perdía lo escrito. Ahora va todo
+ * lo que tenga contenido y es el servidor quien dice qué fila no acepta.
+ */
+describe('filas incompletas al guardar', () => {
+  const montar = () => render(<AreaInfluenciaTab idProyecto={7} puedeEditar />);
+
+  it('envía también las filas sin distrito, en vez de descartarlas', async () => {
+    guardarAreaInfluencia.mockResolvedValue({ data: { idProyecto: 7, filas: [] } });
+    montar();
+    const ubicacion = await screen.findByLabelText(/Ubicación específica de la fila 1/i);
+    fireEvent.change(ubicacion, { target: { value: 'Comunidad Río Mar' } });
+    // Sin distrito: antes esta fila no llegaba a salir de la pantalla.
+    fireEvent.change(screen.getByLabelText(/Distrito de la fila 1/i), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() =>
+      expect(guardarAreaInfluencia).toHaveBeenCalledWith(
+        expect.objectContaining({
+          areaInfluenciaRequest: { filas: [{ distrito: '', ubicacionEspecifica: 'Comunidad Río Mar' }] },
+        }),
+      ),
+    );
+  });
+
+  it('sombrea la fila que el servidor no acepta', async () => {
+    guardarAreaInfluencia.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          codigo: 'DISTRITO_INVALIDO',
+          mensaje: 'Seleccione un distrito.',
+          detalles: [{ campo: 'filas[0].distrito', mensaje: 'Seleccione un distrito.' }],
+        },
+      },
+    });
+    montar();
+    const ubicacion = await screen.findByLabelText(/Ubicación específica de la fila 1/i);
+    fireEvent.change(ubicacion, { target: { value: 'Comunidad Río Mar' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(swalFire).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' })));
+    expect(await screen.findByLabelText(/Distrito de la fila 1/i)).toHaveClass('malo');
+  });
+});

@@ -4,6 +4,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
 import { areaInfluenciaApi, catalogoEtapasApi } from '../../../api/preinversionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
+import type { ErrorApi } from '../../../api/apiError';
 import type { AreaInfluencia } from '../../../api/generated/preinversion-area-influencia';
 
 export const UBICACION_ESPECIFICA_MAXLENGTH = 1000;
@@ -32,6 +33,21 @@ const aFilas = (datos: AreaInfluencia): FilaArea[] =>
     ubicacionEspecifica: f.ubicacionEspecifica ?? '',
   }));
 
+/**
+ * El servidor numera las filas por su posición entre las enviadas y la tabla
+ * muestra también las vacías, así que se traduce una numeración a la otra; sin
+ * eso se sombrearía la fila equivocada.
+ */
+const filasDeLosDetalles = (error: ErrorApi, enviadas: FilaArea[], todas: FilaArea[]): Set<number> => {
+  const posiciones = new Set<number>();
+  for (const { campo } of error.detalles) {
+    const indice = Number(/filas\[(\d+)\]/.exec(campo)?.[1]);
+    const fila = enviadas[indice];
+    if (fila) posiciones.add(todas.indexOf(fila));
+  }
+  return posiciones;
+};
+
 const conFilaInicial = (filas: FilaArea[], puedeEditar: boolean) =>
   filas.length === 0 && puedeEditar ? [{ ...FILA_VACIA }] : filas;
 
@@ -58,6 +74,8 @@ export function AreaInfluenciaTab({
   const [guardando, setGuardando] = useState(false);
   const [autocompletando, setAutocompletando] = useState(false);
   const [intentoGuardar, setIntentoGuardar] = useState(false);
+  // Filas que el servidor devolvió como no aceptadas.
+  const [filasSeñaladas, setFilasSeñaladas] = useState<Set<number>>(new Set());
 
   const { control, register, handleSubmit, watch, reset } = useForm<{ filas: FilaArea[] }>({
     defaultValues: { filas: [] },
@@ -99,14 +117,18 @@ export function AreaInfluenciaTab({
 
   const onSubmit = async ({ filas: valores }: { filas: FilaArea[] }) => {
     setIntentoGuardar(true);
-    // El distrito es lo único obligatorio del contrato: sin él la fila no va.
-    const conDistrito = valores.filter((f) => f.distrito.trim() !== '');
+    setFilasSeñaladas(new Set());
+    // Va todo lo que tenga algo escrito, incluidas las filas sin distrito: quien
+    // decide si una fila sirve es el servidor, y así dice cuál falla en vez de
+    // que la pantalla la descarte en silencio y avise de que guardó. Sólo se
+    // deja fuera la fila en blanco que la tabla añade al final.
+    const conContenido = valores.filter((f) => f.distrito.trim() !== '' || f.ubicacionEspecifica.trim() !== '');
     setGuardando(true);
     try {
       const { data } = await areaInfluenciaApi.guardarAreaInfluencia({
         idProyecto,
         areaInfluenciaRequest: {
-          filas: conDistrito.map((f) => ({
+          filas: conContenido.map((f) => ({
             distrito: f.distrito,
             ubicacionEspecifica: f.ubicacionEspecifica || undefined,
           })),
@@ -116,6 +138,9 @@ export function AreaInfluenciaTab({
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
     } catch (error_) {
       const api = toErrorApi(error_);
+      // El servidor señala la fila que no acepta —sin distrito, un distrito que
+      // no existe o una repetida— con su posición entre las que se enviaron.
+      setFilasSeñaladas(filasDeLosDetalles(api, conContenido, valores));
       // El 404 de este guardado es ambiguo: puede ser el proyecto o un distrito
       // que el catálogo ya no tiene. No se afirma cuál de los dos.
       const texto = api.estadoHttp === 404 ? t('preinversion.diagnostico.area.distritoODesconocido') : mensajeDeError(api, t);
@@ -129,7 +154,8 @@ export function AreaInfluenciaTab({
   if (errorCarga) return <p className="aviso-error">{errorCarga}</p>;
 
   const clave = 'preinversion.diagnostico.area';
-  const faltaDistrito = (fila: FilaArea) => intentoGuardar && puedeEditar && fila.distrito.trim() === '';
+  const faltaDistrito = (fila: FilaArea, indice: number) =>
+    (intentoGuardar && puedeEditar && fila.distrito.trim() === '') || filasSeñaladas.has(indice);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -155,7 +181,7 @@ export function AreaInfluenciaTab({
                   <td>
                     <select
                       aria-label={t(`${clave}.distritoFila`, { numero })}
-                      className={faltaDistrito(fila) ? 'malo' : undefined}
+                      className={faltaDistrito(fila, indice) ? 'malo' : undefined}
                       disabled={!puedeEditar || errorCatalogo}
                       {...register(`filas.${indice}.distrito`)}
                     >

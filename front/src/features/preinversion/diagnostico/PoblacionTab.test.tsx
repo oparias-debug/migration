@@ -144,3 +144,46 @@ describe('PoblacionTab · CU-PRE-07', () => {
     expect(screen.queryByRole('button', { name: 'Agregar ubicación' })).not.toBeInTheDocument();
   });
 });
+
+/**
+ * El servidor devuelve `CAMPOS_OBLIGATORIOS_PENDIENTES` con una entrada por
+ * celda incompleta, para sombrearla. Antes el guardado fallaba sin decir dónde.
+ */
+describe('celdas pendientes al guardar', () => {
+  const montar = () => render(<PoblacionTab idProyecto={7} puedeEditar />);
+
+  it('sombrea las celdas que el servidor señala', async () => {
+    guardarAnalisisPoblacion.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          codigo: 'CAMPOS_OBLIGATORIOS_PENDIENTES',
+          mensaje: 'Existen campos obligatorios sin completar.',
+          detalles: [
+            { campo: 'poblacionAfectada.ubicaciones[0].ubicacion', mensaje: 'Campo obligatorio.' },
+            { campo: 'poblacionObjetivo.ubicaciones[0].numeroPersonas', mensaje: 'Campo obligatorio.' },
+          ],
+        },
+      },
+    });
+    montar();
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(swalFire).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' })));
+    expect(screen.getByLabelText('Ubicación 1 de Población afectada')).toHaveClass('malo');
+    expect(screen.getByLabelText('Personas en la ubicación 1 de Población objetivo')).toHaveClass('malo');
+    // Las que el servidor no señala se quedan como estaban.
+    expect(screen.getByLabelText('Ubicación 1 de Población objetivo')).not.toHaveClass('malo');
+  });
+
+  it('un guardado correcto deja de sombrear', async () => {
+    guardarAnalisisPoblacion.mockResolvedValue({ data: ANALISIS });
+    montar();
+    const boton = await screen.findByRole('button', { name: 'Guardar' });
+    fireEvent.click(boton);
+    await waitFor(() => expect(guardarAnalisisPoblacion).toHaveBeenCalled());
+    await waitFor(() => expect(swalFire).toHaveBeenCalledWith(expect.objectContaining({ icon: 'success' })));
+    expect(document.querySelector('select.malo, input.malo')).toBeNull();
+  });
+});

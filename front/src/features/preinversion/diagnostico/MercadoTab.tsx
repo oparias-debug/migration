@@ -95,6 +95,8 @@ export function MercadoTab({ idProyecto, puedeEditar }: { readonly idProyecto: n
   const [errorCatalogo, setErrorCatalogo] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [intentoGuardar, setIntentoGuardar] = useState(false);
+  // Filas que el servidor devolvió como no aceptadas.
+  const [filasSeñaladas, setFilasSeñaladas] = useState<Set<number>>(new Set());
 
   const { control, register, handleSubmit, watch, reset } = useForm<{ filas: FilaMercado[] }>({
     defaultValues: { filas: [] },
@@ -119,11 +121,13 @@ export function MercadoTab({ idProyecto, puedeEditar }: { readonly idProyecto: n
   }, [idProyecto, puedeEditar, reset, t]);
 
   // RN05: al intentar guardar se sombrean en rojo los campos que falten de una fila empezada.
-  const pendiente = (fila: FilaMercado, campo: (typeof CAMPOS_EDITABLES)[number]) =>
-    intentoGuardar && puedeEditar && !vacia(fila) && fila[campo].trim() === '';
+  const pendiente = (fila: FilaMercado, campo: (typeof CAMPOS_EDITABLES)[number], indice?: number) =>
+    (intentoGuardar && puedeEditar && !vacia(fila) && fila[campo].trim() === '') ||
+    (indice !== undefined && filasSeñaladas.has(indice));
 
   const onSubmit = async ({ filas: valores }: { filas: FilaMercado[] }) => {
     setIntentoGuardar(true);
+    setFilasSeñaladas(new Set());
     // RN04: el back rechaza el guardado entero si ninguna fila está completa; se avisa antes.
     if (!valores.some(completa)) {
       await Swal.fire({ icon: 'error', text: t('preinversion.diagnostico.mercado.filaIncompleta') });
@@ -149,7 +153,19 @@ export function MercadoTab({ idProyecto, puedeEditar }: { readonly idProyecto: n
       reset({ filas: conFilaInicial(aFilas(data), puedeEditar) });
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
     } catch (error_) {
-      await Swal.fire({ icon: 'error', text: mensajeDeError(toErrorApi(error_), t) });
+      const api = toErrorApi(error_);
+      // El servidor señala la fila que rechaza —producto fuera del catálogo,
+      // repetido o un valor fuera de rango— por su posición entre las enviadas.
+      const enviadas = valores.filter((f) => !vacia(f));
+      setFilasSeñaladas(
+        new Set(
+          api.detalles
+            .map(({ campo }) => enviadas[Number(/filas\[(\d+)\]/.exec(campo)?.[1])])
+            .filter(Boolean)
+            .map((fila) => valores.indexOf(fila)),
+        ),
+      );
+      await Swal.fire({ icon: 'error', text: mensajeDeError(api, t) });
     } finally {
       setGuardando(false);
     }
@@ -192,7 +208,7 @@ export function MercadoTab({ idProyecto, puedeEditar }: { readonly idProyecto: n
                   <td>
                     <select
                       aria-label={t(`${clave}.productoFila`, { numero: numeroFila })}
-                      className={pendiente(fila, 'codigoProducto') ? 'malo' : undefined}
+                      className={pendiente(fila, 'codigoProducto', indice) ? 'malo' : undefined}
                       disabled={!puedeEditar || errorCatalogo}
                       {...register(`filas.${indice}.codigoProducto`)}
                     >

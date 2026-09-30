@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
 import { catalogoEtapasApi, poblacionApi } from '../../../api/preinversionApi';
-import { mensajeDeError, toErrorApi } from '../../../api/apiError';
+import { mensajeDeError, toErrorApi, celdasSeñaladas } from '../../../api/apiError';
 import type { AnalisisPoblacion, FilaPoblacion } from '../../../api/generated/preinversion-poblacion';
 
 /** Las tres filas que el usuario llena. "Población en espera" la calcula el servidor. */
@@ -90,6 +90,8 @@ export function PoblacionTab({ idProyecto, puedeEditar }: { readonly idProyecto:
   const [calculado, setCalculado] = useState<AnalisisPoblacion | null>(null);
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [errorCatalogo, setErrorCatalogo] = useState(false);
+  // Celdas que el servidor devuelve como pendientes, para sombrearlas.
+  const [pendientes, setPendientes] = useState<Set<string>>(new Set());
   const [columnas, setColumnas] = useState(1);
   const [guardando, setGuardando] = useState(false);
 
@@ -114,6 +116,7 @@ export function PoblacionTab({ idProyecto, puedeEditar }: { readonly idProyecto:
 
   const onSubmit = async (valores: ValoresFormulario) => {
     setGuardando(true);
+    setPendientes(new Set());
     try {
       const { data } = await poblacionApi.guardarAnalisisPoblacion({
         idProyecto,
@@ -129,6 +132,7 @@ export function PoblacionTab({ idProyecto, puedeEditar }: { readonly idProyecto:
       await Swal.fire({ icon: 'success', text: t('preinversion.registro.mensajeGuardado') });
     } catch (error_) {
       const api = toErrorApi(error_);
+      setPendientes(celdasSeñaladas(api));
       const clave = api.codigo ? TEXTO_POR_CODIGO[api.codigo] : undefined;
       await Swal.fire({ icon: 'error', text: clave ? t(clave) : mensajeDeError(api, t) });
     } finally {
@@ -182,6 +186,7 @@ export function PoblacionTab({ idProyecto, puedeEditar }: { readonly idProyecto:
                     <td key={i} colSpan={2} className="celda-ubicacion">
                       <select
                         aria-label={t(`${base}.ubicacionDe`, { fila: t(`${base}.${clave}`), numero: i + 1 })}
+                        className={pendientes.has(`${clave}.ubicaciones.${i}.ubicacion`) ? 'malo' : undefined}
                         disabled={!puedeEditar || errorCatalogo}
                         {...register(`${clave}.ubicaciones.${i}.ubicacion`)}
                       >
@@ -196,6 +201,7 @@ export function PoblacionTab({ idProyecto, puedeEditar }: { readonly idProyecto:
                         type="number"
                         min={0}
                         aria-label={t(`${base}.personasDe`, { fila: t(`${base}.${clave}`), numero: i + 1 })}
+                        className={pendientes.has(`${clave}.ubicaciones.${i}.numeroPersonas`) ? 'malo' : undefined}
                         readOnly={!puedeEditar}
                         {...register(`${clave}.ubicaciones.${i}.numeroPersonas`)}
                       />

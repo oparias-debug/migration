@@ -102,6 +102,18 @@ export function erroresPorCampo(error: ErrorApi): Record<string, string> {
 }
 
 /**
+ * Celdas que el servidor señala en un rechazo, listas para comparar con el
+ * nombre del campo en el formulario.
+ *
+ * El contrato las nombra con corchetes —`poblacionAfectada.ubicaciones[0].ubicacion`—
+ * y el formulario con puntos, así que se normalizan; si no, ninguna coincidiría y
+ * la pantalla no sombrearía nada.
+ */
+export function celdasSeñaladas(error: ErrorApi): Set<string> {
+  return new Set(error.detalles.map((d) => d.campo.replaceAll(/\[(\d+)\]/g, '.$1')));
+}
+
+/**
  * Texto a mostrar: se prefiere el `mensaje` que manda el back (viene del Anexo
  * B.2 y es más específico) y se cae a la clave genérica de i18next sólo si no
  * lo trae.
