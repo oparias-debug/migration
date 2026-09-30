@@ -164,3 +164,39 @@ describe('EstudioTecnicoPage · CU-PRE-11', () => {
     expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/diagnostico');
   });
 });
+
+
+/**
+ * Un catálogo que responde con la lista vacía deja el desplegable igual de
+ * muerto que uno que no responde. Antes sólo se avisaba del segundo caso y el
+ * campo quedaba deshabilitado sin explicación (observación del 21/09/2026).
+ * Hoy el servidor devuelve vacíos Producto y Componente.
+ */
+describe('un catálogo vacío se explica igual que uno caído', () => {
+  it('avisa de los catálogos sin datos y deshabilita sus columnas', async () => {
+    listarProductosIndicadores.mockResolvedValue({ data: [] });
+    listarTiposCosto.mockResolvedValue({ data: [] });
+    listarUnidadesMedida.mockResolvedValue({ data: [{ unidadMedida: 'Global' }] });
+    obtenerDescripcionTecnica.mockResolvedValue({ data: { idProyecto: 7, descripcionProyecto: '', filas: [] } });
+
+    montar();
+
+    expect(await screen.findByText(/todavía no tienen datos cargados: Producto, Componente/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Producto de la fila 1')).toBeDisabled();
+    expect(screen.getByLabelText('Componente de la fila 1')).toBeDisabled();
+    // El que sí trae datos sigue disponible.
+    expect(screen.getByLabelText('Unidad de medida de la fila 1')).not.toBeDisabled();
+  });
+
+  it('un catálogo caído y otro vacío se distinguen', async () => {
+    listarProductosIndicadores.mockRejectedValue(new Error('falla'));
+    listarTiposCosto.mockResolvedValue({ data: [] });
+    listarUnidadesMedida.mockResolvedValue({ data: [{ unidadMedida: 'Global' }] });
+    obtenerDescripcionTecnica.mockResolvedValue({ data: { idProyecto: 7, descripcionProyecto: '', filas: [] } });
+
+    montar();
+
+    expect(await screen.findByText(/no están disponibles: Producto/)).toBeInTheDocument();
+    expect(screen.getByText(/todavía no tienen datos cargados: Componente/)).toBeInTheDocument();
+  });
+});

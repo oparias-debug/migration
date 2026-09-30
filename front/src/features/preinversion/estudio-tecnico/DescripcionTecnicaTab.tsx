@@ -86,6 +86,13 @@ export function DescripcionTecnicaTab({
   const [componentes, setComponentes] = useState<Opcion[]>([]);
   const [unidades, setUnidades] = useState<Opcion[]>([]);
   const [catalogosCaidos, setCatalogosCaidos] = useState<string[]>([]);
+  /**
+   * Un catálogo que responde con la lista vacía deja el desplegable igual de
+   * muerto que uno que no responde, pero no decía nada: el campo quedaba
+   * deshabilitado sin explicación (observación del 21/09/2026). Hoy es el caso de
+   * Producto y Componente, que el servidor devuelve vacíos.
+   */
+  const [catalogosVacios, setCatalogosVacios] = useState<string[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [intentoGuardar, setIntentoGuardar] = useState(false);
 
@@ -111,15 +118,38 @@ export function DescripcionTecnicaTab({
         } else setErrorCarga(mensajeDeError(toErrorApi(tecnica.reason), t));
 
         const caidos: string[] = [];
-        if (prod.status === 'fulfilled') setOpcionesProducto(productos(prod.value.data as { codigoProducto: string; producto: string }[]));
-        else caidos.push(t('preinversion.estudioTecnico.producto'));
-        if (costos.status === 'fulfilled')
-          setComponentes((costos.value.data as { codigo: string; nombre: string }[]).map((c) => ({ valor: c.codigo, texto: c.nombre })));
-        else caidos.push(t('preinversion.estudioTecnico.componente'));
-        if (medidas.status === 'fulfilled')
-          setUnidades((medidas.value.data as { unidadMedida: string }[]).map((u) => ({ valor: u.unidadMedida, texto: u.unidadMedida })));
-        else caidos.push(t('preinversion.estudioTecnico.unidadMedida'));
+        const vacios: string[] = [];
+        /** Deja el catálogo en la pantalla y anota si no respondió o si vino vacío. */
+        const recibir = (opciones: Opcion[] | null, nombre: string, poner: (o: Opcion[]) => void) => {
+          if (opciones === null) {
+            caidos.push(t(`preinversion.estudioTecnico.${nombre}`));
+            return;
+          }
+          poner(opciones);
+          if (opciones.length === 0) vacios.push(t(`preinversion.estudioTecnico.${nombre}`));
+        };
+
+        recibir(
+          prod.status === 'fulfilled' ? productos(prod.value.data as { codigoProducto: string; producto: string }[]) : null,
+          'producto',
+          setOpcionesProducto,
+        );
+        recibir(
+          costos.status === 'fulfilled'
+            ? (costos.value.data as { codigo: string; nombre: string }[]).map((c) => ({ valor: c.codigo, texto: c.nombre }))
+            : null,
+          'componente',
+          setComponentes,
+        );
+        recibir(
+          medidas.status === 'fulfilled'
+            ? (medidas.value.data as { unidadMedida: string }[]).map((u) => ({ valor: u.unidadMedida, texto: u.unidadMedida }))
+            : null,
+          'unidadMedida',
+          setUnidades,
+        );
         setCatalogosCaidos(caidos);
+        setCatalogosVacios(vacios);
       })
       .finally(() => setCargando(false));
   }, [idProyecto, puedeEditar, reset, t]);
@@ -174,6 +204,9 @@ export function DescripcionTecnicaTab({
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       {catalogosCaidos.length > 0 && (
         <p className="nota">{t(`${clave}.sinCatalogos`, { catalogos: catalogosCaidos.join(', ') })}</p>
+      )}
+      {catalogosVacios.length > 0 && (
+        <p className="nota">{t(`${clave}.catalogosVacios`, { catalogos: catalogosVacios.join(', ') })}</p>
       )}
 
       <div className="f w">

@@ -509,6 +509,7 @@
       "eliminarFila": "Eliminar la fila {{numero}}",
       "agregar": "Agregar producto",
       "sinCatalogos": "Estos catálogos no están disponibles: {{catalogos}}. No se puede elegir en esas columnas hasta que respondan.",
+      "catalogosVacios": "Estos catálogos todavía no tienen datos cargados: {{catalogos}}. No se puede elegir en esas columnas hasta que se carguen.",
       "componenteObligatorio": "Cada fila necesita un componente. Elíjalo antes de guardar."
     },
     "localizacion": {
