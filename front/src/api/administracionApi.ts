@@ -17,7 +17,7 @@ export const catalogosApi = new CatalogApi(undefined, undefined, administracionA
 export const registrosCatalogoApi = new CatalogRecordApi(undefined, undefined, administracionAxios);
 
 export { ActiveStatus, FieldQualifier } from './generated/administracion-catalogos-admin';
-export type { Catalog, CatalogField, CatalogRecord } from './generated/administracion-catalogos-admin';
+export type { Catalog, CatalogField, CatalogRecord, CatalogSummary } from './generated/administracion-catalogos-admin';
 
 // CU-ADM-04 (Gestión de Calendario). El generador lo partió en dos clases, una
 // por tag: el mantenimiento del calendario y las consultas de cálculo, que el

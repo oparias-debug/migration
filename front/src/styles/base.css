@@ -663,6 +663,12 @@ tbody tr { cursor: pointer; -webkit-user-select: none; user-select: none; }
 .f .ayuda { font-size: 11.5px; font-weight: 400; color: var(--n500); }
 .req { color: var(--error); }
 
+/* Un campo con un botón al lado, para no gastarle un renglón entero: el botón
+   conserva su alto y el campo se queda con el resto. */
+.campo-con-accion { display: flex; gap: 8px; align-items: stretch; }
+.campo-con-accion input { flex: 1; min-width: 0; }
+.campo-con-accion .btn { white-space: nowrap; }
+
 /* Opciones en línea y a la misma distancia entre sí; cada casilla pegada a su
    texto, para que no se lean como si estuvieran en renglones distintos
    (Rocío, pruebas del 21/09/2026). */

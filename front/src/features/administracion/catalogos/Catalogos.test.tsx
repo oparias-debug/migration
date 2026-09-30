@@ -11,6 +11,7 @@ const crearCatalogo = vi.fn();
 const verificarExistenciaCatalogo = vi.fn();
 const consultarCatalogo = vi.fn();
 const actualizarDescriptoresCatalogo = vi.fn();
+const consultarCatalogosHijos = vi.fn();
 const buscarListaRegistros = vi.fn();
 const crearRegistroCatalogo = vi.fn();
 const actualizarRegistro = vi.fn();
@@ -27,6 +28,7 @@ vi.mock('../../../api/administracionApi', async (importOriginal) => {
       verificarExistenciaCatalogo: (...a: unknown[]) => verificarExistenciaCatalogo(...a),
       consultarCatalogo: (...a: unknown[]) => consultarCatalogo(...a),
       actualizarDescriptoresCatalogo: (...a: unknown[]) => actualizarDescriptoresCatalogo(...a),
+      consultarCatalogosHijos: (...a: unknown[]) => consultarCatalogosHijos(...a),
     },
     registrosCatalogoApi: {
       buscarListaRegistros: (...a: unknown[]) => buscarListaRegistros(...a),
@@ -85,6 +87,7 @@ describe('CU-ADM-01 · catálogos', () => {
       data: { content: [{ key: 'DUI', values: { codigo: 'DUI', descripcion: 'Documento Único' }, active: 'ACTIVE' }] },
     });
     verificarExistenciaCatalogo.mockResolvedValue({ data: { exists: false } });
+    consultarCatalogosHijos.mockResolvedValue({ data: [] });
   });
 
   it('sin el rol del CU no muestra nada del catálogo', () => {
@@ -196,5 +199,73 @@ describe('problemaDeCampos', () => {
     expect(problemaDeCampos([{ nombre: 'a', clave: true }, { nombre: 'A', clave: false }])).toBe('camposRepetidos');
     expect(problemaDeCampos([{ nombre: 'a', clave: false }])).toBe('sinClave');
     expect(problemaDeCampos([{ nombre: 'a', clave: true }])).toBeNull();
+  });
+});
+
+
+/**
+ * Un catálogo jerárquico se veía igual que uno suelto: la ficha guardaba el
+ * código del padre pero no decía quiénes eran sus hijos, así que la jerarquía no
+ * se veía por ninguna parte (observación del 30/09/2026).
+ */
+describe('la jerarquía de catálogos se ve', () => {
+  const PADRE = { ...CATALOGO, code: 'PRUEBA', name: 'Catálogo de prueba' };
+  const HIJO = { code: 'JERARQUICO', name: 'Catálogo jerárquico' };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
+    swalFire.mockResolvedValue({ isConfirmed: true });
+    buscarListaRegistros.mockResolvedValue({ data: { content: [] } });
+    consultarCatalogosHijos.mockResolvedValue({ data: [] });
+    consultarCatalogo.mockResolvedValue({ data: PADRE });
+    listarCatalogos.mockResolvedValue({ data: { content: [PADRE], totalPages: 1 } });
+  });
+
+  it('la ficha del padre lista sus hijos y los abre', async () => {
+    consultarCatalogosHijos.mockResolvedValue({ data: [HIJO] });
+    montarFicha();
+
+    expect(await screen.findByText('Catálogo jerárquico')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir el catálogo Catálogo jerárquico' }));
+    expect(navigate).toHaveBeenCalledWith('/catalogos-generales/JERARQUICO');
+  });
+
+  it('un catálogo sin hijos lo dice', async () => {
+    montarFicha();
+    expect(await screen.findByText('Este catálogo no tiene catálogos hijos.')).toBeInTheDocument();
+  });
+
+  // La jerarquía se recorre en los dos sentidos.
+  it('desde el hijo se sube al padre', async () => {
+    consultarCatalogo.mockResolvedValue({ data: { ...CATALOGO, code: 'JERARQUICO', parent: 'PRUEBA' } });
+    montarFicha();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Abrir el catálogo padre PRUEBA' }));
+    expect(navigate).toHaveBeenCalledWith('/catalogos-generales/PRUEBA');
+  });
+
+  it('sin padre no se ofrece subir', async () => {
+    montarFicha();
+    await screen.findByText('Este catálogo no tiene catálogos hijos.');
+    expect(screen.queryByRole('button', { name: /Abrir el catálogo padre/ })).not.toBeInTheDocument();
+  });
+
+  it('la lista muestra de quién cuelga cada catálogo', async () => {
+    listarCatalogos.mockResolvedValue({
+      data: { content: [PADRE, { ...CATALOGO, code: 'JERARQUICO', name: 'Catálogo jerárquico', parent: 'PRUEBA' }], totalPages: 1 },
+    });
+    montarLista();
+
+    const fila = (await screen.findByText('Catálogo jerárquico')).closest('tr') as HTMLElement;
+    expect(fila).toHaveTextContent('PRUEBA');
+  });
+
+  // Los hijos son contexto: si no cargan, la ficha sigue sirviendo.
+  it('si los hijos no cargan, la ficha funciona igual', async () => {
+    consultarCatalogosHijos.mockRejectedValue(new Error('falla'));
+    montarFicha();
+    expect(await screen.findByText('Este catálogo no tiene catálogos hijos.')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

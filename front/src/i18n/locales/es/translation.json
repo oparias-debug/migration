@@ -1025,6 +1025,10 @@
       "nombre": "Nombre",
       "estado": "Estado",
       "catalogoPadre": "Catálogo padre (código)",
+      "hijos": "Catálogos hijos",
+      "sinHijos": "Este catálogo no tiene catálogos hijos.",
+      "abrirPadre": "Abrir el catálogo padre {{codigo}}",
+      "verPadre": "Abrir el padre",
       "vigenciaDesde": "Vigente desde",
       "vigenciaHasta": "Vigente hasta",
       "estados": {

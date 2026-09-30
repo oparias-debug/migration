@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
-import { catalogosApi, type Catalog } from '../../../api/administracionApi';
+import { catalogosApi, type Catalog, type CatalogSummary } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
@@ -37,6 +37,13 @@ export function CatalogoDetallePage() {
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
   const [campos, setCampos] = useState<CampoEditable[]>([]);
+  /**
+   * Los catálogos que cuelgan de éste. Un catálogo jerárquico se veía igual que
+   * uno suelto: la ficha guardaba el código del padre pero no decía quiénes eran
+   * sus hijos, así que la jerarquía no se veía por ninguna parte
+   * (observación del 30/09/2026: "no se están visualizando los catálogos hijos").
+   */
+  const [hijos, setHijos] = useState<CatalogSummary[]>([]);
 
   const cargar = useCallback(() => {
     catalogosApi
@@ -52,6 +59,11 @@ export function CatalogoDetallePage() {
         setErrorCarga(null);
       })
       .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)));
+    // Los hijos son contexto: si no cargan, la ficha funciona igual.
+    catalogosApi
+      .consultarCatalogosHijos({ code: codigo })
+      .then(({ data }) => setHijos(data))
+      .catch(() => setHijos([]));
   }, [codigo, t]);
 
   const puedeAdministrar = hasRole(ROL_ADMIN_CATALOGOS);
@@ -126,7 +138,21 @@ export function CatalogoDetallePage() {
               <input id="det-nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
             </FormRow>
             <FormRow label={t(`${CLAVE}.catalogoPadre`)} controlId="det-padre">
-              <input id="det-padre" type="text" value={padre} onChange={(e) => setPadre(e.target.value)} />
+              <div className="campo-con-accion">
+                <input id="det-padre" type="text" value={padre} onChange={(e) => setPadre(e.target.value)} />
+                {/* La jerarquía se recorre en los dos sentidos: desde el hijo se
+                    sube al padre igual que desde el padre se baja a los hijos. */}
+                {catalogo.parent && (
+                  <button
+                    type="button"
+                    className="btn secundario"
+                    aria-label={t(`${CLAVE}.abrirPadre`, { codigo: catalogo.parent })}
+                    onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(catalogo.parent as string)}`)}
+                  >
+                    {t(`${CLAVE}.verPadre`)}
+                  </button>
+                )}
+              </div>
             </FormRow>
             <FormRow label={t(`${CLAVE}.estado`)} controlId="det-estado">
               <select id="det-estado" value={activo} onChange={(e) => setActivo(e.target.value as 'ACTIVE' | 'INACTIVE')}>
@@ -158,6 +184,43 @@ export function CatalogoDetallePage() {
               {t(`${CLAVE}.guardarCampos`)}
             </button>
           </div>
+        </section>
+
+        <section>
+          <h2 className="seccion">{t(`${CLAVE}.hijos`)}</h2>
+          {hijos.length === 0 ? (
+            <p className="nota">{t(`${CLAVE}.sinHijos`)}</p>
+          ) : (
+            <div className="tabla-cont">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t(`${CLAVE}.codigo`)}</th>
+                    <th>{t(`${CLAVE}.nombre`)}</th>
+                    <th>{t('common.acciones')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hijos.map((h) => (
+                    <tr key={h.code}>
+                      <td className="mono">{h.code}</td>
+                      <td>{h.name}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn secundario"
+                          aria-label={t(`${CLAVE}.abrirCatalogo`, { nombre: h.name })}
+                          onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(h.code ?? '')}`)}
+                        >
+                          {t(`${CLAVE}.abrir`)}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         <RegistrosCatalogo codigo={codigo} campos={aCamposEditables(catalogo)} />

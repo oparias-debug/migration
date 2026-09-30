@@ -86,6 +86,9 @@ export function CatalogosPage() {
                 <tr>
                   <th>{t(`${CLAVE}.codigo`)}</th>
                   <th>{t(`${CLAVE}.nombre`)}</th>
+                  {/* De quién cuelga: sin esta columna la lista no dejaba ver
+                      que un catálogo fuera hijo de otro. */}
+                  <th>{t(`${CLAVE}.catalogoPadre`)}</th>
                   <th>{t(`${CLAVE}.estado`)}</th>
                   <th>{t(`${CLAVE}.campos`)}</th>
                   <th>{t('common.acciones')}</th>
@@ -96,6 +99,7 @@ export function CatalogosPage() {
                   <tr key={c.code}>
                     <td className="mono">{c.code}</td>
                     <td>{c.name}</td>
+                    <td className="mono">{c.parent ?? '—'}</td>
                     <td>{t(`${CLAVE}.estados.${c.active}`)}</td>
                     <td>{(c.fields ?? []).length}</td>
                     <td>
