@@ -2,6 +2,7 @@ package sv.gob.mh.siip.model.preinversion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -168,4 +170,79 @@ class LoggingNotificacionServiceTest {
 
     assertThat(ultimoMensaje()).contains("CU-PRE-25 FB2", "sin destinatarios activos con ese rol");
   }
+
+    @Test
+    void notificacionesDeOpinionTecnica_incluyenElCupYLosDestinatarios() {
+        LocalDate fin = LocalDate.of(2026, 10, 5);
+        List<Usuario> destinatarios = List.of(usuario("actor@test.com"));
+
+        service.notificarSolicitudOpinionTecnica(proyecto(), destinatarios);
+        assertThat(ultimoMensaje()).contains("A2 a", "00123", "actor@test.com");
+        service.notificarAsignacionOpinionTecnica(proyecto(), usuario("pre@test.com"));
+        assertThat(ultimoMensaje()).contains("A2 b", "pre@test.com");
+        service.notificarComentariosOpinionTecnica(proyecto(), destinatarios, fin);
+        assertThat(ultimoMensaje()).contains("A2 c", "2026-10-05", "actor@test.com");
+        service.notificarAjustesOpinionTecnica(proyecto(), destinatarios);
+        assertThat(ultimoMensaje()).contains("A2 d", "actor@test.com");
+        service.notificarVistoBuenoOpinionTecnica(proyecto(), null);
+        assertThat(ultimoMensaje()).contains("visto bueno", "sin usuario resuelto");
+        service.notificarEmisionOpinionTecnica(proyecto(), destinatarios);
+        assertThat(ultimoMensaje()).contains("A2 e", "actor@test.com");
+        service.notificarAlertaPlazoObservaciones(proyecto(), destinatarios, fin);
+        assertThat(ultimoMensaje()).contains("A2 f", "2026-10-05");
+        service.notificarVencimientoPlazoObservaciones(proyecto(), List.of());
+        assertThat(ultimoMensaje()).contains("A2 g", "sin destinatarios activos con ese rol");
+    }
+
+    @Test
+    void notificacionesDePriorizacion_incluyenElCupElTramoYLosDestinatarios() {
+        List<Usuario> destinatarios = List.of(usuario("coord@test.com"));
+
+        service.notificarPriorizacionPorRevisar(proyecto(), destinatarios, "criterio 5");
+        assertThat(ultimoMensaje()).contains("CU-PRE-26.5", "criterio 5", "00123", "coord@test.com");
+        service.notificarCriterioCincoPorCalificar(proyecto(), destinatarios);
+        assertThat(ultimoMensaje()).contains("debe calificarse el criterio 5", "Proyecto Test");
+        service.notificarPriorizacionCompletada(proyecto(), List.of());
+        assertThat(ultimoMensaje()).contains("Se ha completado", "sin destinatarios activos con ese rol");
+    }
+
+    @Test
+    void conElNivelInfoDesactivado_noRegistraNingunaNotificacion() {
+        Logger logger = (Logger) LoggerFactory.getLogger(LoggingNotificacionService.class);
+        Level anterior = logger.getLevel();
+        logger.setLevel(Level.WARN);
+        try {
+            Proyecto p = proyecto();
+            Usuario u = usuario("u@test.com");
+            List<Usuario> d = List.of(u);
+            LocalDate fin = LocalDate.of(2026, 10, 5);
+            service.notificarEmisionCup(p, u);
+            service.notificarProgramacionEnviadaARevision(1L, 2026, d);
+            service.notificarObservacionesDgicp(1L, 2026, d);
+            service.notificarRespuestaInstitucion(1L, 2026, d);
+            service.notificarObservacionesAvance(1L, 2026, "C1", d);
+            service.notificarRespuestaInstitucionAvance(1L, 2026, "C1", d);
+            service.notificarSolicitudViabilidad(p, d);
+            service.notificarComentariosViabilidad(p, u);
+            service.notificarEmisionViabilidad(p, u);
+            service.notificarEmisionElegibilidad(p, d);
+            service.notificarComentariosOtElegibilidad(p, d);
+            service.notificarObservacionesElegibilidadAtendidas(p, d);
+            service.notificarSolicitudOpinionTecnica(p, d);
+            service.notificarAsignacionOpinionTecnica(p, u);
+            service.notificarComentariosOpinionTecnica(p, d, fin);
+            service.notificarAjustesOpinionTecnica(p, d);
+            service.notificarVistoBuenoOpinionTecnica(p, u);
+            service.notificarEmisionOpinionTecnica(p, d);
+            service.notificarAlertaPlazoObservaciones(p, d, fin);
+            service.notificarVencimientoPlazoObservaciones(p, d);
+            service.notificarPriorizacionPorRevisar(p, d, "criterio 5");
+            service.notificarCriterioCincoPorCalificar(p, d);
+            service.notificarPriorizacionCompletada(p, d);
+        } finally {
+            logger.setLevel(anterior);
+        }
+
+        assertThat(logAppender.list).isEmpty();
+    }
 }

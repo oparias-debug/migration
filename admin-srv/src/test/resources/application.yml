@@ -2,7 +2,8 @@ spring:
   application:
     name: dgicp-siip-admin-srv
 
-  # Datasource - disabled for unit tests
+  # H2 en memoria: las pruebas (BDD de CU-ADM-01 incluidas) crean el esquema desde las
+  # entidades. Fuera de las pruebas el esquema lo crean los scripts de sql/ (ddl-auto: none).
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
@@ -11,7 +12,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
     show-sql: false
 
   # Security - mock OIDC for tests

@@ -42,6 +42,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${DB_DRIVER_CLASS_NAME}
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      # En la entidad las tablas de CU-ADM-01 (catálogos) las crean los scripts de admin-srv/sql
+      # (ddl-auto: none). En local no se corren: Hibernate las crea vacías en cada arranque, como
+      # hace backend-srv con las suyas.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
       # Misma plantilla que siipsafi-srv: ver los comentarios de ese servicio.
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs

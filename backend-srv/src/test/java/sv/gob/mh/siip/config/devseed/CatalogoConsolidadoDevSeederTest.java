@@ -86,9 +86,9 @@ class CatalogoConsolidadoDevSeederTest {
     verify(indicadorResultadoRepository, times(4)).save(any(IndicadorResultado.class));
     verify(rangoInterpretacionPriorizacionRepository, times(4))
         .save(any(RangoInterpretacionPriorizacion.class));
-    verify(criterioPriorizacionRepository, times(4)).save(any(CriterioPriorizacion.class));
-    verify(subcriterioPriorizacionRepository, times(7)).save(any(SubcriterioPriorizacion.class));
-    verify(escalaCalificacionSubcriterioRepository, times(49)).save(any(EscalaCalificacionSubcriterio.class));
+    verify(criterioPriorizacionRepository, times(5)).save(any(CriterioPriorizacion.class));
+    verify(subcriterioPriorizacionRepository, times(17)).save(any(SubcriterioPriorizacion.class));
+    verify(escalaCalificacionSubcriterioRepository, times(119)).save(any(EscalaCalificacionSubcriterio.class));
     verify(criterioElegibilidadRepository, times(4)).save(any(CriterioElegibilidad.class));
     verify(entradaCatalogoEspecificarRepository, times(8)).save(any(EntradaCatalogoEspecificar.class));
   }
@@ -112,8 +112,8 @@ class CatalogoConsolidadoDevSeederTest {
 
         seeder.seed();
 
-        verify(subcriterioPriorizacionRepository, times(7)).save(any(SubcriterioPriorizacion.class));
-        verify(escalaCalificacionSubcriterioRepository, times(49)).findByCodigoSubcriterioAndValor(anyString(), any());
+        verify(subcriterioPriorizacionRepository, times(17)).save(any(SubcriterioPriorizacion.class));
+        verify(escalaCalificacionSubcriterioRepository, times(119)).findByCodigoSubcriterioAndValor(anyString(), any());
         verify(escalaCalificacionSubcriterioRepository, never()).save(any());
     }
 

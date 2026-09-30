@@ -38,17 +38,20 @@ public class ViabilidadSolicitud {
     private final UsuarioRepository usuarioRepository;
     private final NotificacionService notificacionService;
     private final FiltrosPosterioresViabilidad filtros;
+    private final OpinionTecnicaAjustes ajustesOt;
 
     public ViabilidadSolicitud(ProyectoRepository proyectoRepository,
             RevisionViabilidadRepository revisionRepository,
             UsuarioRepository usuarioRepository,
             NotificacionService notificacionService,
-            FiltrosPosterioresViabilidad filtros) {
+            FiltrosPosterioresViabilidad filtros,
+            OpinionTecnicaAjustes ajustesOt) {
         this.proyectoRepository = proyectoRepository;
         this.revisionRepository = revisionRepository;
         this.usuarioRepository = usuarioRepository;
         this.notificacionService = notificacionService;
         this.filtros = filtros;
+        this.ajustesOt = ajustesOt;
     }
 
     /**
@@ -63,7 +66,7 @@ public class ViabilidadSolicitud {
                     "Debe cargar el Documento de Preinversión antes de solicitar Viabilidad.");
         }
         Proyecto proyecto = contexto.proyecto();
-        if (filtros.tieneComentariosOtSinResponder(proyecto.getId())) {
+        if (filtros.tieneComentariosProyectoSinResponder(proyecto.getId())) {
             throw new ReglaNegocioException(COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER,
                     MENSAJE_COMENTARIOS_OT_SIN_RESPONDER);
         }
@@ -82,5 +85,7 @@ public class ViabilidadSolicitud {
 
         notificacionService.notificarSolicitudViabilidad(proyecto,
                 usuarioRepository.findByRolAndActivoTrue(RolUsuario.VIABILIZADOR));
+        // FA03.1 de CU-PRE-26: si la solicitud responde a comentarios de la OT, es el envío de los ajustes.
+        ajustesOt.registrarEnvio(proyecto);
     }
 }

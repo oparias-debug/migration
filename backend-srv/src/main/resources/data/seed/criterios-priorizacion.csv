@@ -1,7 +1,9 @@
-# Criterios de priorización (CU-PRE-25/26.5). Sus subcriterios están en subcriterios-priorizacion.csv.
-# Datos de prueba razonables, no el catálogo oficial (ver CatalogoConsolidadoDevSeeder).
+# Criterios de priorización (CU-PRE-26.5). Sus subcriterios están en subcriterios-priorizacion.csv.
+# Datos del CU-PRE-26.5 (Anexo A.1 y Anexo C, versión "Criterios de Priorización_Agosto-2"). Pendiente
+# de confirmar por la DGI la versión vigente del catálogo (TRAZABILIDAD-PREINVERSION.md, supuesto 7).
 codigo;numero;nombre;ponderacion
-CRIT-1;1;Alineación estratégica;30.0
-CRIT-2;2;Impacto social;30.0
-CRIT-3;3;Viabilidad técnica y financiera;25.0
-CRIT-4;4;Sostenibilidad ambiental;15.0
+CRIT-1;1;Rentabilidad social;20.0
+CRIT-2;2;Impacto territorial y cierre de brechas;15.0
+CRIT-3;3;Sostenibilidad ambiental y resiliencia;15.0
+CRIT-4;4;Madurez técnica;25.0
+CRIT-5;5;Sostenibilidad financiera del proyecto;25.0

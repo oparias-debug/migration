@@ -12,5 +12,13 @@ public enum ValorCalificacion {
     DOS,
     TRES,
     CUATRO,
-    CINCO
+    CINCO;
+
+    /**
+     * @return el puntaje de la calificación (0 a 5), o {@code null} para "N/A", que no se considera en el
+     *         cálculo de la priorización (RN13, RN14)
+     */
+    public Integer puntos() {
+        return this == NO_APLICA ? null : (ordinal() - 1);
+    }
 }

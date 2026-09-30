@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Year;
 import java.time.ZoneId;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -32,9 +34,9 @@ final class AvancePapSoporte {
     private static final int MES_FIN_PRIMER_CUATRIMESTRE = 4;
     private static final int MES_FIN_SEGUNDO_CUATRIMESTRE = 8;
 
-    private static final Set<RolUsuario> ROLES_CONSULTA = Set.of(
+    private static final Set<RolUsuario> ROLES_CONSULTA = Collections.unmodifiableSet(EnumSet.of(
             RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE, RolUsuario.COORDINADOR_PRE,
-            RolUsuario.COORDINADOR_PROGRAMACION, RolUsuario.TECNICO_PROG, RolUsuario.JEFE_DGI, RolUsuario.SUBJEFE_DGI);
+            RolUsuario.COORDINADOR_PROGRAMACION, RolUsuario.TECNICO_PROG, RolUsuario.JEFE_DGI, RolUsuario.SUBJEFE_DGI));
 
     /**
      * Actores internos de la DGICP, únicos que ven los "Comentarios al reporte DGICP": CU-PRE-32

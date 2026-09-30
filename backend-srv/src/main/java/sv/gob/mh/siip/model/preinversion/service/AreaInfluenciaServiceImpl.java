@@ -42,8 +42,8 @@ import sv.gob.mh.siip.security.ActorContexto;
 @Transactional
 public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
 
-    static final String CODIGO_DISTRITO_INVALIDO = "DISTRITO_INVALIDO";
-    static final String CODIGO_FILA_DUPLICADA = "FILA_DUPLICADA";
+    public static final String CODIGO_DISTRITO_INVALIDO = "DISTRITO_INVALIDO";
+    public static final String CODIGO_FILA_DUPLICADA = "FILA_DUPLICADA";
 
     private final ProyectoRepository proyectoRepository;
     private final AreaInfluenciaRepository areaInfluenciaRepository;
@@ -172,7 +172,8 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
             AreaInfluencia fila = filas.get(i);
             String descripcion = fila.getDescripcion() == null ? "" : fila.getDescripcion().toLowerCase(Locale.ROOT);
             if (!vistas.add(fila.getMunicipio().getCodigo() + "|" + descripcion)) {
-                duplicadas.add(detalle("filas[" + i + "]", "Fila repetida: mismo distrito y misma ubicación específica."));
+                duplicadas.add(detalle("filas[" + i + "]",
+                        "Fila repetida: mismo distrito y misma ubicación específica."));
             }
         }
         if (!duplicadas.isEmpty()) {

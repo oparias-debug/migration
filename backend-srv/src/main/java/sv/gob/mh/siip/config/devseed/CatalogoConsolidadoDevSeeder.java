@@ -28,17 +28,25 @@ import sv.gob.mh.siip.model.preinversion.repository.RangoInterpretacionPriorizac
 import sv.gob.mh.siip.model.preinversion.repository.SubcriterioPriorizacionRepository;
 
 /**
- * Catálogos de CU-ADM-02-catalogos.openapi.yaml sin implementación previa: "Parámetros" (CU-PRE-20),
- * "Indicadores de Resultado" (CU-PRE-23), y los de elegibilidad/priorización (CU-PRE-25/26.5).
+ * Catálogos de CU-ADM-02-catalogos.openapi.yaml sin implementación previa:
+ * "Parámetros" (CU-PRE-20),
+ * "Indicadores de Resultado" (CU-PRE-23), y los de elegibilidad/priorización
+ * (CU-PRE-25/26.5).
  * <p>
- * Ninguno de estos 4 CU de origen tiene su documento de análisis en este repositorio
- * (docs/casos-de-uso/1 - Preinversion/), y para Elegibilidad/Priorización el propio contrato
- * OpenAPI marca ⚠️ contenido bloqueado por ambigüedad de versión o pertenencia no confirmada al
- * CU — así que lo sembrado aquí es dato de prueba razonable, no el catálogo oficial ni
- * contenido "confirmado" (ni siquiera los Rangos de Interpretación, que el contrato describe como
+ * Ninguno de estos 4 CU de origen tiene su documento de análisis en este
+ * repositorio
+ * (docs/casos-de-uso/1 - Preinversion/), y para Elegibilidad/Priorización el
+ * propio contrato
+ * OpenAPI marca ⚠️ contenido bloqueado por ambigüedad de versión o pertenencia
+ * no confirmada al
+ * CU — así que lo sembrado aquí es dato de prueba razonable, no el catálogo
+ * oficial ni
+ * contenido "confirmado" (ni siquiera los Rangos de Interpretación, que el
+ * contrato describe como
  * confirmados: no se tuvo acceso al documento fuente real para transcribirlos).
  * <p>
- * Los valores viven en los CSV de {@code data/seed/} (ver las constantes {@code CSV_*} y
+ * Los valores viven en los CSV de {@code data/seed/} (ver las constantes
+ * {@code CSV_*} y
  * {@link CsvSeed}); esta clase solo los carga.
  */
 @Component
@@ -150,14 +158,19 @@ public class CatalogoConsolidadoDevSeeder implements DevSeeder {
                                 .codigo(filaSubcriterio.get(COLUMNA_CODIGO)).numero(filaSubcriterio.get("numero"))
                                 .nombre(filaSubcriterio.get(COLUMNA_NOMBRE))
                                 .ponderacionSubcriterio(Double.valueOf(filaSubcriterio.get("ponderacion")))
+                                .descripcionRequerimiento(filaSubcriterio.get("descripcion_requerimiento"))
                                 .build());
                 sembrarEscalaCalificacion(subcriterio.getCodigo(), escala);
             }
         }
     }
 
+    /** Cada subcriterio tiene su propia escala (Anexo C de CU-PRE-26.5). */
     private void sembrarEscalaCalificacion(String codigoSubcriterio, List<Map<String, String>> escala) {
         for (Map<String, String> fila : escala) {
+            if (!codigoSubcriterio.equals(fila.get("codigo_subcriterio"))) {
+                continue;
+            }
             ValorCalificacion valor = ValorCalificacion.valueOf(fila.get("valor"));
             if (escalaCalificacionSubcriterioRepository.findByCodigoSubcriterioAndValor(codigoSubcriterio, valor)
                     .isEmpty()) {
@@ -168,22 +181,22 @@ public class CatalogoConsolidadoDevSeeder implements DevSeeder {
         }
     }
 
-  private void sembrarCriteriosElegibilidad() {
-    for (Map<String, String> fila : CsvSeed.leer(CSV_CRITERIOS_ELEGIBILIDAD)) {
-      String codigo = fila.get(COLUMNA_CODIGO);
-      if (criterioElegibilidadRepository.findByCodigo(codigo).isEmpty()) {
-        String catalogo = fila.get("catalogo_especificar");
-        criterioElegibilidadRepository.save(CriterioElegibilidad.builder().codigo(codigo)
-            .numeroDimension(Integer.valueOf(fila.get("numero_dimension")))
-            .dimension(fila.get("dimension")).orden(Integer.valueOf(fila.get("orden")))
-            .criterio(fila.get("criterio")).pregunta(fila.get("pregunta"))
-            .tipoEspecificar(TipoEspecificar.valueOf(fila.get("tipo_especificar")))
-            .catalogoEspecificar(catalogo == null ? null : TipoCatalogoEspecificar.valueOf(catalogo))
-            .permiteSeleccionMultiple(Boolean.parseBoolean(fila.get("permite_seleccion_multiple")))
-            .build());
-      }
+    private void sembrarCriteriosElegibilidad() {
+        for (Map<String, String> fila : CsvSeed.leer(CSV_CRITERIOS_ELEGIBILIDAD)) {
+            String codigo = fila.get(COLUMNA_CODIGO);
+            if (criterioElegibilidadRepository.findByCodigo(codigo).isEmpty()) {
+                String catalogo = fila.get("catalogo_especificar");
+                criterioElegibilidadRepository.save(CriterioElegibilidad.builder().codigo(codigo)
+                        .numeroDimension(Integer.valueOf(fila.get("numero_dimension")))
+                        .dimension(fila.get("dimension")).orden(Integer.valueOf(fila.get("orden")))
+                        .criterio(fila.get("criterio")).pregunta(fila.get("pregunta"))
+                        .tipoEspecificar(TipoEspecificar.valueOf(fila.get("tipo_especificar")))
+                        .catalogoEspecificar(catalogo == null ? null : TipoCatalogoEspecificar.valueOf(catalogo))
+                        .permiteSeleccionMultiple(Boolean.parseBoolean(fila.get("permite_seleccion_multiple")))
+                        .build());
+            }
+        }
     }
-  }
 
     private void sembrarEntradasEspecificar() {
         for (Map<String, String> fila : CsvSeed.leer(CSV_ENTRADAS_ESPECIFICAR)) {

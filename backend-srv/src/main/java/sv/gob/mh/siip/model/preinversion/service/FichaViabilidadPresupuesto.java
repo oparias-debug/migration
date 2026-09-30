@@ -54,6 +54,16 @@ public class FichaViabilidadPresupuesto {
                 .map(FichaViabilidadPresupuesto::fuenteFinanciamiento).orElseGet(LinkedHashMap::new));
     }
 
+    /**
+     * @param idProyecto identificador del proyecto
+     * @return la "Inversión estimada" a precios de mercado (CU-PRE-17); {@code null} sin presupuesto
+     */
+    public BigDecimal inversionEstimada(Long idProyecto) {
+        return presupuestoInversion.consultarSoloLectura(idProyecto)
+                .map(FichaViabilidadPresupuesto::inversionEstimada)
+                .orElse(null);
+    }
+
     /** "Inversión estimada": celda "Total de inversión" a precios de mercado (CU-PRE-17). */
     private static BigDecimal inversionEstimada(PresupuestoDto presupuesto) {
         return decimal(presupuesto.getInversionEstimadaPreciosMercado().getTotal());

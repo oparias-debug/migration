@@ -87,6 +87,9 @@ public class Pre06RegistrarMatrizInteresados {
     private Pre07RegistrarAnalisisPoblacion analisisPoblacion;
     @Autowired
     private Pre08RegistrarAreaInfluencia areaInfluencia;
+    /** Pasos compartidos con CU-PRE-26.5: delegan cuando {@link Pre265Priorizacion#activo()}. */
+    @Autowired
+    private Pre265Priorizacion priorizacion;
 
     public Pre06RegistrarMatrizInteresados(InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository,
@@ -186,6 +189,10 @@ public class Pre06RegistrarMatrizInteresados {
 
     @Entonces("se mantiene en la pantalla {string}")
     public void se_mantiene_en_la_pantalla(String pantalla) {
+        if (priorizacion.activo()) {
+            priorizacion.seMantieneEnPantalla(pantalla);
+            return;
+        }
         if (areaInfluencia.esEscenarioAreaInfluencia()) {
             areaInfluencia.verificarGuardado(pantalla);
             return;

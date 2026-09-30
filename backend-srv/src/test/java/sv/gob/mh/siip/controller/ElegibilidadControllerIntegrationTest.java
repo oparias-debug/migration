@@ -193,7 +193,7 @@ class ElegibilidadControllerIntegrationTest {
         .resultado(ResultadoOpinionTecnica.OBSERVADO).fechaEmision(LocalDateTime.now(ZONA).plusMinutes(1))
         .tecnicoResponsable(usuarioViabilizador).build());
     ComentarioOpinionTecnica comentario = comentarioOtRepository.save(ComentarioOpinionTecnica.builder()
-        .opinionTecnica(ot).comentario("Precisar los ODS").build());
+        .opinionTecnica(ot).apartado(ComentarioOpinionTecnica.ELEGIBILIDAD).comentario("Precisar los ODS").build());
 
     mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, viabilizador))
         .andExpect(status().isOk())

@@ -23,6 +23,32 @@ services:
       postgres:
         condition: service_healthy
 
+  # Administración de Catálogos (CU-ADM-01). Plantilla del MH pensada para Oracle y los servicios
+  # del marco: aquí apunta al mismo Postgres y al Keycloak local, igual que en el
+  # docker-compose.yml de desarrollo. api-gateway la expone en /admin/**.
+  admin-srv:
+    image: ${IMAGE_REGISTRY}/siip-admin-srv:${IMAGE_TAG}
+    platform: linux/amd64
+    container_name: siip-admin-srv
+    expose:
+      - "8080"
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${DB_DRIVER_CLASS_NAME}
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
+      CONFIG_SERVICE_URL: ""
+      REMOTE_LOGGER_ENABLED: "false"
+    networks:
+      - microred
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api-gateway:
     image: ${IMAGE_REGISTRY}/siip-api-gateway:${IMAGE_TAG}
     platform: linux/amd64
@@ -36,6 +62,7 @@ services:
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
     depends_on:
       - backend-srv
+      - admin-srv
       - keycloak
     networks:
       - microred

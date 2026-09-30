@@ -89,9 +89,9 @@ class CsvSeedTest {
     assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_PARAMETROS)).hasSize(4);
     assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_INDICADORES_RESULTADO)).hasSize(4);
     assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_RANGOS_INTERPRETACION)).hasSize(4);
-    assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_CRITERIOS_PRIORIZACION)).hasSize(4);
-    assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_SUBCRITERIOS_PRIORIZACION)).hasSize(7);
-    assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_ESCALA_CALIFICACION)).hasSize(7)
+    assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_CRITERIOS_PRIORIZACION)).hasSize(5);
+    assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_SUBCRITERIOS_PRIORIZACION)).hasSize(17);
+    assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_ESCALA_CALIFICACION)).hasSize(119)
         .allSatisfy(f -> assertThat(ValorCalificacion.valueOf(f.get("valor"))).isNotNull());
     assertThat(CsvSeed.leer(CatalogoConsolidadoDevSeeder.CSV_CRITERIOS_ELEGIBILIDAD)).hasSize(4)
         .allSatisfy(f -> assertThat(TipoEspecificar.valueOf(f.get("tipo_especificar"))).isNotNull());

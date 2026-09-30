@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,15 +35,15 @@ final class ProgramacionPapSoporte {
     private static final int TAMANIO_PAGINA_POR_DEFECTO = 20;
 
     /** Actores que consultan la Programación Financiera del PAP (CU-PRE-30). */
-    private static final Set<RolUsuario> ROLES_CONSULTA_FINANCIERA = Set.of(
+    private static final Set<RolUsuario> ROLES_CONSULTA_FINANCIERA = Collections.unmodifiableSet(EnumSet.of(
             RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE, RolUsuario.COORDINADOR_PRE,
-            RolUsuario.COORDINADOR_PROGRAMACION, RolUsuario.TECNICO_PROG, RolUsuario.JEFE_DGI, RolUsuario.SUBJEFE_DGI);
+            RolUsuario.COORDINADOR_PROGRAMACION, RolUsuario.TECNICO_PROG, RolUsuario.JEFE_DGI, RolUsuario.SUBJEFE_DGI));
 
     /** Actores que consultan la Programación de Metas Físicas del PAP (CU-PRE-31). */
-    private static final Set<RolUsuario> ROLES_CONSULTA_METAS = Set.of(
+    private static final Set<RolUsuario> ROLES_CONSULTA_METAS = Collections.unmodifiableSet(EnumSet.of(
             RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE, RolUsuario.COORDINADOR_PRE,
             RolUsuario.COORDINADOR_PROGRAMACION, RolUsuario.TECNICO_PROG, RolUsuario.JEFE_DGI,
-            RolUsuario.SUBJEFE_DGI, RolUsuario.TECNICO_SYMP, RolUsuario.COORDINADOR_SYMP);
+            RolUsuario.SUBJEFE_DGI, RolUsuario.TECNICO_SYMP, RolUsuario.COORDINADOR_SYMP));
 
     /** RN-C (CU-PRE-31): actores internos de la DGICP, únicos que pueden ver "Comentarios al reporte DGICP". */
     private static final RolUsuario[] ROLES_DGICP_INTERNOS = {

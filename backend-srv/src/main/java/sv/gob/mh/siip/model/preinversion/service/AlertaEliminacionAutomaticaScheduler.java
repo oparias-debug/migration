@@ -119,8 +119,8 @@ public class AlertaEliminacionAutomaticaScheduler {
         LocalDateTime limite = hasta.toLocalDate().atStartOfDay();
         while (cursor.isBefore(limite)) {
             cursor = cursor.plusDays(1);
-            if (DayOfWeek.SATURDAY != cursor.getDayOfWeek() 
-                && DayOfWeek.SUNDAY != cursor.getDayOfWeek()) {
+            if (!DayOfWeek.SATURDAY.equals(cursor.getDayOfWeek())
+                && !DayOfWeek.SUNDAY.equals(cursor.getDayOfWeek())) {
                 diasHabiles++;
             }
         }

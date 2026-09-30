@@ -82,10 +82,8 @@ public class UsuarioDevSeeder implements DevSeeder {
                 RolUsuario.COORDINADOR_PRE, null, null);
         crearUsuarioSiNoExiste("admin", "Administrador del Sistema (prueba)", "admin@example.com",
                 RolUsuario.ADMINISTRADOR, null, null);
-        // Rol distinto del "admin" genérico de arriba: CatalogoService/RegistroService (CU-ADM-01)
-        // exigen específicamente ADMINISTRADOR_DE_CATALOGOS (x-roles del contrato OpenAPI) vía
-        // ActorContexto.exigirRol, resuelto desde USUARIO.ROL (no desde los roles de Keycloak —
-        // ver nota en api-gateway/SecurityConfig).
+        // Usuario de menú del front para la Administración de Catálogos (CU-ADM-01). Ese caso de uso
+        // vive en admin-srv, que autoriza con los roles de realm del JWT y no con USUARIO.ROL.
         crearUsuarioSiNoExiste("admin.catalogos", "Administrador de Catálogos (prueba)",
                 "admin.catalogos@example.com", RolUsuario.ADMINISTRADOR_DE_CATALOGOS, null, null);
     }

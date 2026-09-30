@@ -520,19 +520,6 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>generate-administracion-cu01-api</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-						<configuration>
-							<inputSpec>
-								${project.basedir}/src/main/resources/openapi/administracion/catalogo/CU-ADM-01-administracion-de-catalogos.openapi.yaml</inputSpec>
-							<apiPackage>sv.gob.mh.siip.model.administracion.api</apiPackage>
-							<modelPackage>sv.gob.mh.siip.model.administracion.dto</modelPackage>
-						</configuration>
-					</execution>
-					<execution>
 						<id>generate-administracion-cu04-api</id>
 						<phase>generate-sources</phase>
 						<goals>
@@ -675,12 +662,51 @@
 							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
 						</configuration>
 					</execution>
+					<execution>
+						<id>generate-preinversion-cu26-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-26.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu26.5-api</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-26.5.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.dto</modelPackage>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
 	</build>
 
 	<profiles>
+		<!-- VS Code / Eclipse (m2e) compilan en target-ide/ en vez de target/: asi mvn clean no choca con
+		     archivos que el IDE tiene abiertos. Solo se activa dentro del IDE (m2e define m2e.version). -->
+		<profile>
+			<id>ide</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+			<build>
+				<directory>target-ide</directory>
+			</build>
+		</profile>
 		<profile>
 			<id>sonar-host-desde-env</id>
 			<activation>

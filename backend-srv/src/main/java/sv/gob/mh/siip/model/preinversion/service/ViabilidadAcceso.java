@@ -14,8 +14,10 @@ import sv.gob.mh.siip.model.preinversion.repository.RevisionViabilidadRepository
 import sv.gob.mh.siip.security.ActorContexto;
 
 /**
- * Abre cada operación de CU-PRE-24 "Viabilidad": exige el rol del actor, busca el proyecto, valida
- * que pertenezca a la Unidad Ejecutora del actor (RN01) y deriva el estado de la gestión.
+ * Abre cada operación de CU-PRE-24 "Viabilidad": exige el rol del actor, busca
+ * el proyecto, valida
+ * que pertenezca a la Unidad Ejecutora del actor (RN01) y deriva el estado de
+ * la gestión.
  */
 @Component
 public class ViabilidadAcceso {
@@ -51,7 +53,8 @@ public class ViabilidadAcceso {
     }
 
     /**
-     * Contexto para una operación del Técnico URP (cargar documentos, solicitar Viabilidad).
+     * Contexto para una operación del Técnico URP (cargar documentos, solicitar
+     * Viabilidad).
      *
      * @param idProyecto identificador del proyecto
      * @return el contexto de la operación
@@ -71,10 +74,12 @@ public class ViabilidadAcceso {
     }
 
     /**
-     * Vuelve a derivar el estado de la gestión, por ejemplo tras cargar un documento.
+     * Vuelve a derivar el estado de la gestión, por ejemplo tras cargar un
+     * documento.
      *
      * @param contexto contexto anterior de la operación
-     * @return un contexto con el mismo actor y proyecto y el estado actual de la gestión
+     * @return un contexto con el mismo actor y proyecto y el estado actual de la
+     *         gestión
      */
     public ViabilidadContexto actualizar(ViabilidadContexto contexto) {
         return contexto(contexto.actor(), contexto.proyecto());
@@ -92,20 +97,21 @@ public class ViabilidadAcceso {
         RevisionViabilidad ultima = revisionRepository.findFirstByProyectoIdOrderByNumeroDesc(proyecto.getId())
                 .orElse(null);
         boolean deshabilitada = ultima != null && ultima.getEstado() == EstadoRevisionViabilidad.EMITIDA
-                && !filtros.otDevolvioDespuesDe(proyecto.getId(), ultima.getFechaCierre());
+                && !filtros.otReabrioViabilidadDespuesDe(proyecto.getId(), ultima.getFechaCierre());
         return new ViabilidadContexto(actor, proyecto, ultima, deshabilitada,
                 documentos.tieneDocumentoPreinversion(proyecto.getId()));
     }
 
-  /**
-   * El actor solo accede a proyectos de su Unidad Ejecutora cuando tiene una asignada (RN01, igual
-   * que el resto de CU de Preinversión).
-   */
-  static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
-    if (actor.getUnidadEjecutora() != null && (proyecto.getUnidadEjecutora() == null
-        || !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId()))) {
-      throw new AccesoDenegadoException(
-          "El proyecto no pertenece a una Unidad Ejecutora dentro de las credenciales del actor.");
+    /**
+     * El actor solo accede a proyectos de su Unidad Ejecutora cuando tiene una
+     * asignada (RN01, igual
+     * que el resto de CU de Preinversión).
+     */
+    static void exigirAlcanceUnidadEjecutora(Usuario actor, Proyecto proyecto) {
+        if (actor.getUnidadEjecutora() != null && (proyecto.getUnidadEjecutora() == null
+                || !actor.getUnidadEjecutora().getId().equals(proyecto.getUnidadEjecutora().getId()))) {
+            throw new AccesoDenegadoException(
+                    "El proyecto no pertenece a una Unidad Ejecutora dentro de las credenciales del actor.");
+        }
     }
-  }
 }

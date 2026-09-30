@@ -5,8 +5,8 @@ Esto es para vos (quien mantiene el ambiente), no para el tester — su instruct
 
 ## Qué hace
 
-`publish-images.ps1` buildea y sube a GitHub Container Registry (privado) las 4 imágenes que
-arma el proyecto: `backend-srv`, `api-gateway`, `front` y `keycloak`. `postgres` y `sonarqube` no se
+`publish-images.ps1` buildea y sube a GitHub Container Registry (privado) las 5 imágenes que
+arma el proyecto: `backend-srv`, `admin-srv`, `api-gateway`, `front` y `keycloak`. `postgres` y `sonarqube` no se
 tocan acá — son imágenes públicas que el tester baja directo de Docker Hub.
 
 ## 1. Login a ghcr.io (una sola vez por máquina)
@@ -27,7 +27,7 @@ Desde la raíz del repo:
 .\scripts\publish-images.ps1
 ```
 
-Esto corre `mvn clean package -DskipTests` dentro de `backend-srv/` y de `api-gateway/`, compila el front con `docker compose run --rm front-build` (`-SkipFrontBuild` lo salta), buildea las 4 imágenes y las sube todas con tag
+Esto corre `mvn clean package -DskipTests` dentro de `backend-srv/`, `admin-srv/` y `api-gateway/`, compila el front con `docker compose run --rm front-build` (`-SkipFrontBuild` lo salta), buildea las 5 imágenes y las sube todas con tag
 `latest` — el mismo tag que usa `dist-tester/.env.example` (`IMAGE_TAG=latest`), así que el
 tester solo necesita `docker compose pull` para bajar lo nuevo, sin tocar nada de su lado.
 
@@ -39,7 +39,7 @@ Antes de correrlo, corré [run-tests.ps1](run-tests.ps1) (o al menos `mvn clean 
 | Parámetro | Para qué sirve |
 |---|---|
 | `-SkipPush` | Buildea local sin subir nada — para probar que el build funciona antes de publicar de verdad. |
-| `-SkipMavenBuild` | Reusa los `.jar` ya compilados (`backend-srv/target`, `api-gateway/target`) y solo rearma las imágenes Docker. Útil si ya corriste `mvn package` vos mismo. |
+| `-SkipMavenBuild` | Reusa los `.jar` ya compilados (`backend-srv/target`, `admin-srv/target`, `api-gateway/target`) y solo rearma las imágenes Docker. Útil si ya corriste `mvn package` vos mismo. |
 | `-Tag <valor>` | Publica con un tag específico en vez de `latest` (ver "Versionar" abajo). |
 | `-Owner <valor>` | Cambia el owner de ghcr.io (default `david-magnaperita`). Casi nunca hace falta tocarlo. |
 
@@ -69,8 +69,8 @@ Para que el tester use ese tag en particular, tiene que cambiar `IMAGE_TAG=2026-
 ## Primera vez / visibilidad de los paquetes
 
 La primera vez que hagas push de cada imagen, entrá a GitHub → tu perfil → **Packages** → cada
-paquete `siip-back` / `siip-api-gateway` / `siip-front` / `siip-keycloak` → **Package settings**
-y confirmá:
+paquete `siip-back` / `siip-admin-srv` / `siip-api-gateway` / `siip-front` / `siip-keycloak` →
+**Package settings** y confirmá (`siip-admin-srv` es nuevo: el tester todavía no tiene acceso):
 
 - Visibilidad: **Private**.
 - **Manage Actions access** / invitá al tester (o a su cuenta de GitHub) con permiso de lectura,

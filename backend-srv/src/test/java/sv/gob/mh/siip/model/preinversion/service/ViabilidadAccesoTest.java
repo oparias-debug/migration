@@ -90,7 +90,7 @@ class ViabilidadAccesoTest {
         RevisionViabilidad revision = emitida();
 
         ViabilidadContexto vigente = acceso.paraViabilizador(ID_PROYECTO);
-        when(filtros.otDevolvioDespuesDe(ID_PROYECTO, revision.getFechaCierre())).thenReturn(true);
+        when(filtros.otReabrioViabilidadDespuesDe(ID_PROYECTO, revision.getFechaCierre())).thenReturn(true);
         ViabilidadContexto devuelta = acceso.actualizar(vigente);
 
         assertThat(vigente.deshabilitada()).isTrue();

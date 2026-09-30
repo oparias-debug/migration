@@ -61,4 +61,8 @@ public class SubcriterioPriorizacion {
     @NotNull
     @Column(name = "PONDERACION_SUBCRITERIO", nullable = false)
     private Double ponderacionSubcriterio;
+
+    /** "Descripción y requerimiento de información" del Anexo C (ventana "Ver Escala de Calificación", RN08). */
+    @Column(name = "DESCRIPCION_REQUERIMIENTO", length = 2000)
+    private String descripcionRequerimiento;
 }

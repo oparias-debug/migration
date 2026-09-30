@@ -24,7 +24,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <springdoc.version>2.9.0</springdoc.version>
         <oracle.version>23.7.0.25.01</oracle.version>
-        
+        <openapi-generator.version>7.25.0</openapi-generator.version>
+        <cucumber.version>7.22.1</cucumber.version>
+
         <!-- SonarQube properties -->
         <sonar.projectKey>dgicp-siip-admin-srv</sonar.projectKey>
         <sonar.projectName>dgicp-siip-admin-srv</sonar.projectName>
@@ -160,6 +162,32 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- BDD (Gherkin) con Cucumber: los .feature de CU-ADM-01 (src/test/resources/features)
+             se ejecutan con el motor de JUnit Platform, junto con las unitarias. -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-java</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-spring</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-junit-platform-engine</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
     <build>
@@ -200,11 +228,59 @@
                     <parameters>true</parameters>
                 </configuration>
             </plugin>
-            
+
+            <!-- Contrato primero: genera la interfaz del controller y sus DTOs a partir del
+                 OpenAPI de cada caso de uso (src/main/resources/openapi). Con interfaceOnly el
+                 plugin no genera el @RestController: lo implementa a mano una clase de api/controller.
+                 Para un caso de uso nuevo: su .yaml y una ejecución más con el mismo patrón. -->
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator.version}</version>
+                <configuration>
+                    <generatorName>spring</generatorName>
+                    <output>${project.build.directory}/generated-sources/openapi</output>
+                    <cleanupOutput>false</cleanupOutput>
+                    <generateApis>true</generateApis>
+                    <generateModels>true</generateModels>
+                    <generateSupportingFiles>false</generateSupportingFiles>
+                    <generateApiTests>false</generateApiTests>
+                    <generateModelTests>false</generateModelTests>
+                    <generateApiDocumentation>false</generateApiDocumentation>
+                    <generateModelDocumentation>false</generateModelDocumentation>
+                    <modelNameSuffix>Dto</modelNameSuffix>
+                    <configOptions>
+                        <interfaceOnly>true</interfaceOnly>
+                        <skipDefaultInterface>true</skipDefaultInterface>
+                        <useSpringBoot3>true</useSpringBoot3>
+                        <useTags>true</useTags>
+                        <openApiNullable>false</openApiNullable>
+                        <dateLibrary>java8</dateLibrary>
+                    </configOptions>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-cu-adm-01-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/CU-ADM-01-administracion-de-catalogos.openapi.yaml</inputSpec>
+                            <apiPackage>sv.gob.mh.api.controller.catalogo</apiPackage>
+                            <modelPackage>sv.gob.mh.api.dto.catalogo</modelPackage>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <!-- 3.5.6 y no 3.5.3: con 3.5.3 los escenarios Cucumber de RunCucumberTest (una
+                     @Suite de JUnit Platform) se ejecutan pero se reportan como "Tests run: 0",
+                     así que un escenario fallido no rompía el build. -->
+                <version>3.5.6</version>
                 <configuration>
                     <!-- Excluir runners de Karate del test default (unit tests) -->
                     <excludes>
@@ -266,7 +342,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.5.3</version>
+                        <version>3.5.6</version>
                         <configuration>
                             <includes>
                                 <include>**/IntegrationTestRunner.java</include>
@@ -300,7 +376,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.5.3</version>
+                        <version>3.5.6</version>
                         <configuration>
                             <includes>
                                 <include>**/SmokeTestRunner.java</include>
@@ -332,7 +408,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.5.3</version>
+                        <version>3.5.6</version>
                         <configuration>
                             <includes>
                                 <include>**/StressTestRunner.java</include>

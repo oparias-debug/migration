@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -65,7 +66,6 @@ import sv.gob.mh.siip.model.preinversion.repository.ElegibilidadRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EntradaCatalogoEspecificarRepository;
 import sv.gob.mh.siip.model.preinversion.repository.OpinionTecnicaRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
-import sv.gob.mh.siip.model.preinversion.service.ComentariosOtElegibilidad;
 import sv.gob.mh.siip.model.preinversion.service.CriteriosFichaElegibilidad;
 import sv.gob.mh.siip.model.preinversion.service.ElegibilidadAcceso;
 import sv.gob.mh.siip.model.preinversion.service.ElegibilidadCalificacion;
@@ -92,8 +92,9 @@ import sv.gob.mh.siip.security.ActorContexto;
  *
  * <p>Cuatro textos de estos escenarios coinciden con pasos de CU-PRE-24 y Cucumber admite una sola
  * definición por texto: los define {@link Pre24Viabilidad}, que delega aquí cuando {@link #activo()}.
- * Las acciones de CU-PRE-26 "Opinión Técnica", aún sin implementar, se simulan registrando la OT
- * "Observado" y sus comentarios directamente en los repositorios.
+ * Las acciones de CU-PRE-26 "Opinión Técnica" se simulan registrando la OT "Observado" y sus
+ * comentarios directamente en los repositorios; los escenarios de CU-PRE-26 las ejercitan de verdad
+ * en {@link Pre26OpinionTecnica}.
  */
 public class Pre25Elegibilidad {
 
@@ -145,9 +146,11 @@ public class Pre25Elegibilidad {
   private final TransactionTemplate transacciones;
 
   private boolean activo;
+  /** Pasos compartidos con CU-PRE-26.5: delegan cuando {@link Pre265Priorizacion#activo()}. */
+  @Autowired
+  private Pre265Priorizacion priorizacion;
   private NotificacionService notificaciones;
   private ElegibilidadService service;
-  private ComentariosOtElegibilidad avisoComentariosOt;
   private Proyecto proyecto;
   private Usuario viabilizador;
   private Usuario tecnicoUrp;
@@ -223,7 +226,6 @@ public class Pre25Elegibilidad {
         calificaciones,
         new ElegibilidadCalificacion(calificaciones, criteriosFicha),
         new ElegibilidadEmision(proyectos, elegibilidades, calificaciones, usuarios, notificaciones, filtros));
-    avisoComentariosOt = new ComentariosOtElegibilidad(usuarios, notificaciones);
   }
 
   @After("@CU-PRE-25")
@@ -361,6 +363,10 @@ public class Pre25Elegibilidad {
 
   @Entonces("el Sistema guarda la información registrada")
   public void sistemaGuardaInformacion() {
+    if (priorizacion.activo()) {
+      priorizacion.sistemaGuardaInformacion();
+      return;
+    }
     List<CalificacionCriterioElegibilidad> guardadas = calificacionesDelProyecto();
     assertThat(guardadas).extracting(c -> c.getCriterio().getId())
         .containsExactlyInAnyOrderElementsOf(borrador.keySet());
@@ -496,7 +502,12 @@ public class Pre25Elegibilidad {
   public void daClicDesdeOpinionTecnica(String boton, String cu) {
     assertThat(boton).isEqualTo("Enviar comentarios");
     assertThat(cu).isEqualTo(OPINION_TECNICA);
-    avisoComentariosOt.notificarComentarios(proyecto);
+    avisarComentariosOt();
+  }
+
+  /** Aviso del Anexo A2 h que CU-PRE-26 envía al Viabilizador del proyecto al enviar los comentarios. */
+  private void avisarComentariosOt() {
+    notificaciones.notificarComentariosOtElegibilidad(proyecto, List.of(viabilizador));
   }
 
   @Entonces("el Sistema notifica al Viabilizador que se emitieron comentarios")
@@ -528,7 +539,7 @@ public class Pre25Elegibilidad {
     assertThat(campo).isEqualTo(RESPUESTA_INSTITUCION);
     assertThat(boton).isEqualTo("Guardar Ajustes");
     // Hay comentarios de la OT pendientes de responder en ese formulario (RN15).
-    assertThat(filtros.tieneComentariosOtSinResponder(proyecto.getId())).isTrue();
+    assertThat(filtros.tieneComentariosElegibilidadSinResponder(proyecto.getId())).isTrue();
   }
 
   @Dado("el Viabilizador ajustó la información en el formulario del Anexo A.1")
@@ -545,7 +556,7 @@ public class Pre25Elegibilidad {
     assertThat(cu).isEqualTo(OPINION_TECNICA);
     assertThat(boton).isEqualTo("Guardar Ajustes");
     responderComentarios(otActual);
-    assertThat(filtros.tieneComentariosOtSinResponder(proyecto.getId())).isFalse();
+    assertThat(filtros.tieneComentariosElegibilidadSinResponder(proyecto.getId())).isFalse();
   }
 
   @Entonces("el Sistema permite emitir la Elegibilidad nuevamente")
@@ -566,7 +577,7 @@ public class Pre25Elegibilidad {
   public void viabilizadorNoRespondioComentarios(String campo, String cu) {
     assertThat(campo).isEqualTo(RESPUESTA_INSTITUCION);
     assertThat(cu).isEqualTo(OPINION_TECNICA);
-    assertThat(filtros.tieneComentariosOtSinResponder(proyecto.getId())).isTrue();
+    assertThat(filtros.tieneComentariosElegibilidadSinResponder(proyecto.getId())).isTrue();
   }
 
   @Entonces("el Sistema no permite generar la Elegibilidad nuevamente")
@@ -590,7 +601,7 @@ public class Pre25Elegibilidad {
   public void tecnicoPreEnviaNuevamenteComentarios(String cu) {
     assertThat(cu).isEqualTo(OPINION_TECNICA);
     otActual = registrarOtObservada("Justificar la coherencia con el Plan de Gobierno");
-    avisoComentariosOt.notificarComentarios(proyecto);
+    avisarComentariosOt();
   }
 
   @Entonces("el Sistema guarda los comentarios emitidos en OT de esta devolución")
@@ -702,6 +713,7 @@ public class Pre25Elegibilidad {
         .build());
     comentariosOt.save(ComentarioOpinionTecnica.builder()
         .opinionTecnica(ot)
+        .apartado(ComentarioOpinionTecnica.ELEGIBILIDAD)
         .comentario(comentario)
         .build());
     return ot;

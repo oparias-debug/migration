@@ -70,16 +70,16 @@ console.log('calendario:', (await llamar(admin, calendario)).filter((l) => !l.st
 const catalogos = await (await navegador.newContext()).newPage();
 await entrar(catalogos, 'admin.catalogos', 'adminCatalogos123');
 const peticionesCatalogo = [
-  { metodo: 'POST', url: '/back/catalogos', cuerpo: {
+  { metodo: 'POST', url: '/admin/api/v1/catalogos', cuerpo: {
     code: 'TIPO_DOCUMENTO', name: 'Tipos de documento de soporte', active: 'ACTIVE',
     fields: [{ name: 'codigo', qualifier: 'KEY', position: 1 }, { name: 'descripcion', qualifier: 'FIELD', position: 2 }] } },
-  { metodo: 'POST', url: '/back/catalogos', cuerpo: {
+  { metodo: 'POST', url: '/admin/api/v1/catalogos', cuerpo: {
     code: 'UNIDAD_MEDIDA', name: 'Unidades de medida', active: 'ACTIVE',
     fields: [{ name: 'codigo', qualifier: 'KEY', position: 1 }, { name: 'nombre', qualifier: 'FIELD', position: 2 }, { name: 'simbolo', qualifier: 'FIELD', position: 3 }] } },
   ...[['DL', 'Decreto Legislativo'], ['EST', 'Estudio de prefactibilidad'], ['PLA', 'Planos constructivos']]
-    .map(([codigo, descripcion]) => ({ metodo: 'POST', url: '/back/catalogos/TIPO_DOCUMENTO/registros', cuerpo: { values: { codigo, descripcion } } })),
+    .map(([codigo, descripcion]) => ({ metodo: 'POST', url: '/admin/api/v1/catalogos/TIPO_DOCUMENTO/registros', cuerpo: { values: { codigo, descripcion } } })),
   ...[['KM', 'Kilómetro', 'km'], ['M2', 'Metro cuadrado', 'm²'], ['UN', 'Unidad', 'u']]
-    .map(([codigo, nombre, simbolo]) => ({ metodo: 'POST', url: '/back/catalogos/UNIDAD_MEDIDA/registros', cuerpo: { values: { codigo, nombre, simbolo } } })),
+    .map(([codigo, nombre, simbolo]) => ({ metodo: 'POST', url: '/admin/api/v1/catalogos/UNIDAD_MEDIDA/registros', cuerpo: { values: { codigo, nombre, simbolo } } })),
 ];
 console.log('catálogos:', (await llamar(catalogos, peticionesCatalogo)).filter((l) => !l.startsWith('2')).join(' | ') || 'todo creado');
 

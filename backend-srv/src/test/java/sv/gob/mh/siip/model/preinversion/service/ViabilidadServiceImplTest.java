@@ -88,7 +88,8 @@ class ViabilidadServiceImplTest {
         actor = mock(ActorContexto.class);
         service = new ViabilidadServiceImpl(new ViabilidadAcceso(actor, proyectos, revisiones, documentos, filtros),
                 documentos,
-                new ViabilidadSolicitud(proyectos, revisiones, usuarios, notificaciones, filtros),
+                new ViabilidadSolicitud(proyectos, revisiones, usuarios, notificaciones, filtros,
+                        mock(OpinionTecnicaAjustes.class)),
                 new ViabilidadComentarios(revisiones),
                 new ViabilidadCierre(proyectos, revisiones, viabilidades, notificaciones, filtros),
                 ensamblador);
@@ -201,7 +202,7 @@ class ViabilidadServiceImplTest {
         void siLaOtDevolvioElProyectoLaFichaVuelveAAdmitirSolicitud() {
             comoTecnico();
             RevisionViabilidad revision = emitida(false);
-            when(filtros.otDevolvioDespuesDe(ID_PROYECTO, revision.getFechaCierre())).thenReturn(true);
+            when(filtros.otReabrioViabilidadDespuesDe(ID_PROYECTO, revision.getFechaCierre())).thenReturn(true);
             when(documentos.tieneDocumentoPreinversion(ID_PROYECTO)).thenReturn(true);
 
             FichaViabilidadResponseDto ficha = service.consultarFicha(ID_PROYECTO);
@@ -324,7 +325,7 @@ class ViabilidadServiceImplTest {
         void conComentariosDeOtSinResponderSeRechazaConElMensajeDeRn11() {
             comoTecnico();
             when(documentos.tieneDocumentoPreinversion(ID_PROYECTO)).thenReturn(true);
-            when(filtros.tieneComentariosOtSinResponder(ID_PROYECTO)).thenReturn(true);
+            when(filtros.tieneComentariosProyectoSinResponder(ID_PROYECTO)).thenReturn(true);
 
             assertThatThrownBy(() -> service.solicitarViabilidad(ID_PROYECTO))
                     .isInstanceOf(ReglaNegocioException.class)
@@ -523,7 +524,7 @@ class ViabilidadServiceImplTest {
         void conLaViabilidadYaEmitidaSeRechaza() {
             comoViabilizador();
             emitida(true);
-            when(filtros.otDevolvioDespuesDe(eq(ID_PROYECTO), any())).thenReturn(false);
+            when(filtros.otReabrioViabilidadDespuesDe(eq(ID_PROYECTO), any())).thenReturn(false);
 
             assertThatThrownBy(() -> service.emitirViabilidad(ID_PROYECTO))
                     .isInstanceOf(ConflictoEstadoException.class)

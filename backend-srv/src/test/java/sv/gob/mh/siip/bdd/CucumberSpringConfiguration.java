@@ -1,6 +1,7 @@
 package sv.gob.mh.siip.bdd;
 
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +26,15 @@ import io.cucumber.spring.CucumberContextConfiguration;
  * en memoria con el schema "flowable" precreado (Flowable falla si el
  * schema no existe al conectar). replace = NONE evita que
  * AutoConfigureTestDatabase sustituya ese datasource por uno genérico que
- * ignoraría el INIT del schema.
+ * ignoraría el INIT del schema. {@link AutoConfigureMockMvc} permite a los steps
+ * que validan el contrato HTTP (p.ej. CU-PRE-15) invocar los controladores sin
+ * levantar un servidor, en el mismo hilo y transacción del escenario.
  */
 @CucumberContextConfiguration
 @SpringBootTest(classes = SiipApplication.class)
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@AutoConfigureMockMvc
 @Transactional
 public class CucumberSpringConfiguration {
 }

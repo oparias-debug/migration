@@ -53,6 +53,7 @@ class FichaViabilidadPresupuestoTest {
         presupuesto.completar(ficha, ID);
 
         assertThat(ficha.getInversionEstimada()).isNull();
+        assertThat(presupuesto.inversionEstimada(ID)).isNull();
         assertThat(ficha.getResumenPresupuesto()).isEmpty();
         assertThat(ficha.getCostoOperacion()).isNull();
         assertThat(ficha.getCostoMantenimiento()).isNull();
@@ -97,6 +98,7 @@ class FichaViabilidadPresupuestoTest {
         presupuesto.completar(ficha, ID);
 
         assertThat(ficha.getInversionEstimada()).isZero();
+        assertThat(presupuesto.inversionEstimada(ID)).isZero();
         assertThat(ficha.getResumenPresupuesto()).containsEntry("productos", List.of());
     }
 }

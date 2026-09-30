@@ -41,16 +41,15 @@ public class ElegibilidadAcceso {
     }
 
     /**
-     * Contexto para consultar la ficha: el Viabilizador y, en solo consulta, el
-     * Técnico URP, el Técnico
+     * Contexto para consultar la ficha: el Viabilizador y, en solo consulta, el Técnico URP, el Técnico
      * PRE y el Técnico SYMP (HU-PRE-25-01; x-roles del contrato).
      *
      * @param idProyecto identificador del proyecto
      * @return el contexto de la operación
      */
     public ElegibilidadContexto paraConsulta(Long idProyecto) {
-        return abrir(idProyecto, actorContexto.exigirRol(EnumSet.of(RolUsuario.VIABILIZADOR, RolUsuario.TECNICO_URP,
-                RolUsuario.TECNICO_PRE, RolUsuario.TECNICO_SYMP)));
+        return abrir(idProyecto, actorContexto.exigirRol(EnumSet.of(RolUsuario.VIABILIZADOR,
+                RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE, RolUsuario.TECNICO_SYMP)));
     }
 
     /**
@@ -77,13 +76,13 @@ public class ElegibilidadAcceso {
     /**
      * Antes de la primera emisión la ficha se habilita con el proyecto viable (FB1
      * paso 1); después,
-     * solo si la OT devolvió el proyecto con comentarios tras la última emisión
-     * (RN07, RN09).
+     * solo si la OT devolvió el proyecto con comentarios a la Elegibilidad tras la última
+     * emisión (RN07, RN09; RN14 de CU-PRE-26).
      */
     private boolean habilitada(Proyecto proyecto, Elegibilidad ultima) {
         if (ultima == null) {
             return proyecto.getEstado() == EstadoProyecto.VIABLE;
         }
-        return filtros.otDevolvioDespuesDe(proyecto.getId(), ultima.getFechaEvaluacion());
+        return filtros.otReabrioElegibilidadDespuesDe(proyecto.getId(), ultima.getFechaEvaluacion());
     }
 }

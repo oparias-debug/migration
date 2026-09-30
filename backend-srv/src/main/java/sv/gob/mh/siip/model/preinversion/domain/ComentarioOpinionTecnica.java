@@ -19,12 +19,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Comentario emitido por la OT sobre un proyecto y la respuesta de la institución en la columna
- * "Justificación Institución" (CU-PRE-26 "Opinión técnica").
+ * Comentario DGICP de una gestión de Opinión Técnica y la respuesta de la institución en la columna
+ * "Justificación Institución" (CU-PRE-26, Anexo A.1).
  *
- * <p>Modelo mínimo creado desde CU-PRE-24 para validar RN11 (no se puede volver a solicitar
- * Viabilidad sin responder cada comentario de la OT). CU-PRE-26 es el dueño funcional de esta
- * entidad y puede extenderla con los campos que defina su pantalla.
+ * <p>Hay a lo sumo un comentario por {@link #apartado}: el código de un apartado de la tabla
+ * ({@code ApartadoOpinionTecnica}), {@link #DOCUMENTOS_ANEXOS} o {@link #ELEGIBILIDAD}. Los comentarios
+ * sin apartado son anteriores a CU-PRE-26 y cuentan como comentarios al proyecto. CU-PRE-24 (RN11) y
+ * CU-PRE-25 (RN15) exigen que estén todos respondidos antes de volver a solicitar Viabilidad o de
+ * reemitir la Elegibilidad.
  */
 @Entity
 @Table(name = "COMENTARIO_OPINION_TECNICA")
@@ -35,6 +37,12 @@ import lombok.Setter;
 @Builder
 @EqualsAndHashCode(of = "id")
 public class ComentarioOpinionTecnica {
+
+    /** "Comentarios DGICP a documentación anexa". */
+    public static final String DOCUMENTOS_ANEXOS = "DOCUMENTOS_ANEXOS";
+
+    /** "Comentarios DGICP a Elegibilidad": solo en la primera gestión de OT (RN 12). */
+    public static final String ELEGIBILIDAD = "ELEGIBILIDAD";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "comentario_opinion_tecnica_seq")
@@ -47,6 +55,10 @@ public class ComentarioOpinionTecnica {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "ID_OPINION_TECNICA", nullable = false)
     private OpinionTecnica opinionTecnica;
+
+    /** A qué se refiere el comentario; ver la documentación de la clase. */
+    @Column(name = "APARTADO", length = 30)
+    private String apartado;
 
     /** Comentario de la OT. */
     @NotNull

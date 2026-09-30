@@ -12,31 +12,32 @@ import sv.gob.mh.siip.model.preinversion.service.ElegibilidadService;
 
 /**
  * CU-PRE-25 (Elegibilidad): implementa las operaciones del Viabilizador
- * ({@link ViabilizadorElegibilidadApi}) delegando 1:1 en {@link ElegibilidadService}.
+ * ({@link ViabilizadorElegibilidadApi}) delegando 1:1 en
+ * {@link ElegibilidadService}.
  */
 @RestController
 public class ElegibilidadController implements ViabilizadorElegibilidadApi {
 
-  private final ElegibilidadService elegibilidadService;
+    private final ElegibilidadService elegibilidadService;
 
-  public ElegibilidadController(ElegibilidadService elegibilidadService) {
-    this.elegibilidadService = elegibilidadService;
-  }
+    public ElegibilidadController(ElegibilidadService elegibilidadService) {
+        this.elegibilidadService = elegibilidadService;
+    }
 
-  @Override
-  public ResponseEntity<FichaElegibilidadResponseDto> consultarFichaElegibilidad(Long proyectoId) {
-    return ResponseEntity.ok(elegibilidadService.consultarFicha(proyectoId));
-  }
+    @Override
+    public ResponseEntity<FichaElegibilidadResponseDto> consultarFichaElegibilidad(Long proyectoId) {
+        return ResponseEntity.ok(elegibilidadService.consultarFicha(proyectoId));
+    }
 
-  @Override
-  public ResponseEntity<GuardarCalificacionElegibilidadResponseDto> guardarCalificacionElegibilidad(Long proyectoId,
-      GuardarCalificacionElegibilidadRequestDto guardarCalificacionElegibilidadRequestDto) {
-    return ResponseEntity.ok(
-        elegibilidadService.guardarCalificacion(proyectoId, guardarCalificacionElegibilidadRequestDto));
-  }
+    @Override
+    public ResponseEntity<GuardarCalificacionElegibilidadResponseDto> guardarCalificacionElegibilidad(Long proyectoId,
+            GuardarCalificacionElegibilidadRequestDto guardarCalificacionElegibilidadRequestDto) {
+        return ResponseEntity.ok(
+                elegibilidadService.guardarCalificacion(proyectoId, guardarCalificacionElegibilidadRequestDto));
+    }
 
-  @Override
-  public ResponseEntity<EmitirElegibilidadResponseDto> emitirElegibilidad(Long proyectoId) {
-    return ResponseEntity.ok(elegibilidadService.emitirElegibilidad(proyectoId));
-  }
+    @Override
+    public ResponseEntity<EmitirElegibilidadResponseDto> emitirElegibilidad(Long proyectoId) {
+        return ResponseEntity.ok(elegibilidadService.emitirElegibilidad(proyectoId));
+    }
 }

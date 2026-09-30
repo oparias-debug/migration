@@ -1,5 +1,7 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,8 +24,9 @@ import sv.gob.mh.siip.security.ActorContexto;
 @Transactional(readOnly = true)
 public class CatalogoPriorizacionServiceImpl implements CatalogoPriorizacionService {
 
-    private static final Set<RolUsuario> ROLES_PRIORIZACION = Set.of(RolUsuario.TECNICO_PRE, RolUsuario.TECNICO_SYMP,
-            RolUsuario.COORDINADOR_PRE, RolUsuario.COORDINADOR_SYMP, RolUsuario.SUBJEFE_DGI, RolUsuario.JEFE_DGI);
+    private static final Set<RolUsuario> ROLES_PRIORIZACION = Collections.unmodifiableSet(EnumSet.of(
+            RolUsuario.TECNICO_PRE, RolUsuario.TECNICO_SYMP,
+            RolUsuario.COORDINADOR_PRE, RolUsuario.COORDINADOR_SYMP, RolUsuario.SUBJEFE_DGI, RolUsuario.JEFE_DGI));
 
     private final CriterioPriorizacionRepository criterioPriorizacionRepository;
     private final SubcriterioPriorizacionRepository subcriterioPriorizacionRepository;

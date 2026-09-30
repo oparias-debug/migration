@@ -148,7 +148,8 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
         for (int i = 0; i < celdas.size(); i++) {
             CeldaUbicacionRequestDto celda = celdas.get(i);
             String prefijo = fila + ".ubicaciones[" + i + "].";
-            if (exigeUbicacion && (celda.getUbicacion() == null || celda.getUbicacion().isBlank())) {
+            String ubicacion = celda.getUbicacion();
+            if (exigeUbicacion && (ubicacion == null || ubicacion.isBlank())) {
                 pendientes.add(detalle(prefijo + "ubicacion", "Campo obligatorio."));
             }
             if (celda.getNumeroPersonas() == null) {

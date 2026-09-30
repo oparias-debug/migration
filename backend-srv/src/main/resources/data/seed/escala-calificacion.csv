@@ -1,11 +1,124 @@
-# Escala de calificación que se siembra para cada subcriterio (CU-PRE-25/26.5).
-# valor = valor de ValorCalificacion.
-# Datos de prueba razonables, no el catálogo oficial (ver CatalogoConsolidadoDevSeeder).
-valor;descripcion
-NO_APLICA;El subcriterio no aplica a este proyecto.
-CERO;No cumple con el subcriterio.
-UNO;Cumple mínimamente con el subcriterio.
-DOS;Cumple parcialmente con el subcriterio.
-TRES;Cumple aceptablemente con el subcriterio.
-CUATRO;Cumple satisfactoriamente con el subcriterio.
-CINCO;Cumple plenamente con el subcriterio.
+# Escala de calificación de cada subcriterio de priorización (CU-PRE-26.5, Anexo C).
+# valor = valor de ValorCalificacion; codigo_subcriterio = codigo en subcriterios-priorizacion.csv.
+# Datos del CU-PRE-26.5 (Anexo A.1 y Anexo C, versión "Criterios de Priorización_Agosto-2"). Pendiente
+# de confirmar por la DGI la versión vigente del catálogo (TRAZABILIDAD-PREINVERSION.md, supuesto 7).
+codigo_subcriterio;valor;descripcion
+SUB-1.1;NO_APLICA;No aplica, el proyecto es de fortalecimiento institucional puro sin posibilidad de evaluación económica formal.
+SUB-1.1;CERO;No presenta ningún indicador de evaluación económica, ni justificación de por qué no aplica.
+SUB-1.1;UNO;Presenta valoración cualitativa de beneficios sin respaldo cuantitativo ni indicador formal.
+SUB-1.1;DOS;Presenta indicador de costo-beneficio o costo-eficiencia, pero con metodología no documentada o supuestos no justificados.
+SUB-1.1;TRES;Presenta indicador adecuado al tipo de proyecto con metodología documentada y supuestos explícitos.
+SUB-1.1;CUATRO;Presenta indicador adecuado con metodología documentada, supuestos justificados y fuentes identificadas.
+SUB-1.1;CINCO;Presenta indicador principal con metodología documentada, supuestos justificados, fuentes identificadas y análisis de sensibilidad.
+SUB-1.2;NO_APLICA;No aplica por la naturaleza del proyecto.
+SUB-1.2;CERO;El indicador muestra que el proyecto no es rentable ni eficiente, o el resultado no es concluyente.
+SUB-1.2;UNO;El resultado es positivo pero marginal: VAN cercano a cero, TIR cercana a la tasa de descuento, o costo-eficiencia por encima de referencias sectoriales.
+SUB-1.2;DOS;El resultado supera el umbral mínimo: VAN positivo moderado, TIR sobre la tasa de descuento, o costo-eficiencia dentro del rango sectorial.
+SUB-1.2;TRES;El resultado muestra rentabilidad adecuada o eficiencia, claramente favorable respecto al umbral o referencia sectorial.
+SUB-1.2;CUATRO;El resultado muestra rentabilidad o eficiencia sólida con margen significativo sobre el umbral o referencia.
+SUB-1.2;CINCO;El resultado muestra rentabilidad o eficiencia alta y robusta, confirmada mediante análisis de sensibilidad
+SUB-1.3;NO_APLICA;No aplica por la naturaleza del proyecto.
+SUB-1.3;CERO;No estima ni describe los beneficios esperados.
+SUB-1.3;UNO;Describe beneficios de forma cualitativa sin estimación del valor generado.
+SUB-1.3;DOS;Presenta estimación del valor de beneficios, pero sin metodología documentada ni justificación.
+SUB-1.3;TRES;Presenta estimación del valor de beneficios con metodología documentada y justificación básica.
+SUB-1.3;CUATRO;Presenta estimación del valor de beneficios con metodología documentada, justificación sólida y comparación con la situación sin proyecto.
+SUB-1.3;CINCO;Presenta estimación del valor de beneficios con metodología documentada, comparación con situación sin proyecto y cuantificación de beneficios directos e indirectos.
+SUB-1.4;NO_APLICA;No aplica por la naturaleza del proyecto.
+SUB-1.4;CERO;No existe vínculo explícito entre el problema, la solución y los beneficios.
+SUB-1.4;UNO;El vínculo existe, pero es implícito o muy general.
+SUB-1.4;DOS;El vínculo es explícito, pero con inconsistencias entre el problema identificado y la solución propuesta.
+SUB-1.4;TRES;El vínculo es explícito y coherente entre problema, solución y beneficios esperados.
+SUB-1.4;CUATRO;El vínculo es explícito, coherente y respaldado por datos del diagnóstico.
+SUB-1.4;CINCO;El vínculo es explícito, coherente, respaldado por datos y verificable mediante indicadores con línea base.
+SUB-2.1;NO_APLICA;No aplica — el proyecto tiene cobertura nacional sin focalización territorial específica.
+SUB-2.1;CERO;El proyecto no se ubica en territorio con rezago identificado o no presenta información territorial.
+SUB-2.1;UNO;El proyecto menciona el territorio, pero sin evidencia de rezago relativo.
+SUB-2.1;DOS;El proyecto se ubica en territorio con algún indicador de rezago, pero sin documentación de respaldo.
+SUB-2.1;TRES;El proyecto se ubica en territorio con rezago documentado en al menos un indicador de referencia nacional.
+SUB-2.1;CUATRO;El proyecto se ubica en territorio con rezago documentado en múltiples indicadores de referencia.
+SUB-2.1;CINCO;El proyecto se ubica en territorio con rezago crítico documentado en múltiples indicadores, identificado en diagnósticos sectoriales o nacionales como área prioritaria de intervención.
+SUB-2.2;NO_APLICA;No aplica por la naturaleza del proyecto.
+SUB-2.2;CERO;No identifica ni documenta ninguna brecha de infraestructura o servicios.
+SUB-2.2;UNO;Menciona una brecha de forma general sin cuantificación ni fuente de respaldo.
+SUB-2.2;DOS;Identifica una brecha con cuantificación básica, pero sin fuente de respaldo documentada.
+SUB-2.2;TRES;Identifica y cuantifica la brecha con fuente de respaldo documentada.
+SUB-2.2;CUATRO;Identifica y cuantifica la brecha con fuente documentada y la contrasta con promedios nacionales o sectoriales.
+SUB-2.2;CINCO;Identifica y cuantifica la brecha con fuente documentada, la contrasta con promedios nacionales o sectoriales y estima el porcentaje de cierre que el proyecto representaría.
+SUB-2.3;NO_APLICA;No aplica — el proyecto no tiene una población objetivo específica identificable.
+SUB-2.3;CERO;No identifica grupos en condición de vulnerabilidad entre los beneficiarios.
+SUB-2.3;UNO;Menciona grupos vulnerables de forma general sin identificación ni cuantificación.
+SUB-2.3;DOS;Identifica grupos vulnerables específicos, pero sin estimar su proporción dentro de los beneficiarios.
+SUB-2.3;TRES;Identifica y cuantifica grupos vulnerables como parte de la población beneficiaria.
+SUB-2.3;CUATRO;Identifica, cuantifica y describe cómo el proyecto atiende las necesidades específicas de los grupos vulnerables identificados.
+SUB-2.3;CINCO;Identifica, cuantifica y describe la atención a grupos vulnerables, con evidencia del diagnóstico que sustenta su priorización y estimación del impacto esperado en sus condiciones de vida.
+SUB-2.4;NO_APLICA;No aplica — el proyecto es puntual por naturaleza y no tiene cobertura territorial ampliable.
+SUB-2.4;CERO;No especifica la cobertura territorial del proyecto.
+SUB-2.4;UNO;El proyecto beneficia a una comunidad, cantón o caserío dentro de un distrito.
+SUB-2.4;DOS;El proyecto tiene cobertura de un distrito completo.
+SUB-2.4;TRES;El proyecto tiene cobertura de dos a cinco distritos.
+SUB-2.4;CUATRO;El proyecto tiene cobertura departamental o de más de cinco distritos.
+SUB-2.4;CINCO;El proyecto tiene cobertura nacional o beneficia a una región estratégica del país.
+SUB-3.1;NO_APLICA;No aplica por la naturaleza del proyecto.
+SUB-3.1;CERO;Proyecto que incrementa la exposición al riesgo o se ubica en zona de amenaza alta sin medidas de mitigación
+SUB-3.1;UNO;Proyecto en zona de amenaza baja
+SUB-3.1;DOS;Proyecto en zona de amenaza sin medidas de resiliencia específicas, pero con riesgo identificado
+SUB-3.1;TRES;Proyecto en zona de amenaza identificada (inundación, deslizamiento, sismo) con medidas generales (según normativas) de mitigación incorporadas en el diseño
+SUB-3.1;CUATRO;Proyecto en zona de amenaza identificada (inundación, deslizamiento, sismo) con medidas específicas o adicionales de mitigación incorporadas en el diseño
+SUB-3.1;CINCO;Proyecto incorpora estándares de diseño de resiliencia climática verificables y documentados (normas sísmicas actualizadas, drenaje para periodo de retorno ≥100 años, materiales adaptados al calor, etc.)
+SUB-3.2;NO_APLICA;No aplica por la naturaleza del proyecto (sin impacto ambiental).
+SUB-3.2;CERO;Proyecto con impactos ambientales negativos altos (por ejemplo: alta impermeabilización de suelos, tala, desplazamiento de fauna local, entre otros).
+SUB-3.2;UNO;Proyecto con impactos ambientales negativos medio (por ejemplo: talas menores, entre otros)
+SUB-3.2;DOS;Proyecto con impactos ambientales negativos bajo (por ejemplo: talas de arbustos, entre otros)
+SUB-3.2;TRES;Proyecto con impacto ambiental positivo secundario (por ejemplo mejora de la calidad del agua como externalidad de un proyecto de alcantarillado)
+SUB-3.2;CUATRO;Proyecto restaura, protege o mejora ecosistemas: reforestación, manejo de cuencas, saneamiento de cuerpos de agua, creación de áreas protegidas, sin detallarlo en el presupuesto del documento presentado.
+SUB-3.2;CINCO;Proyecto restaura, protege o mejora ecosistemas: reforestación, manejo de cuencas, saneamiento de cuerpos de agua, creación de áreas protegidas, y lo detalla, cuantifica e incorpora en el presupuesto del documento presentado
+SUB-3.3;NO_APLICA;No aplica por la naturaleza del proyecto.
+SUB-3.3;CERO;Proyecto intensivo en consumo de combustibles fósiles sin medidas de compensación
+SUB-3.3;UNO;Proyecto intensivo en consumo de combustibles fósiles con medidas de compensación
+SUB-3.3;DOS;Proyecto con aumento marginal de emisiones
+SUB-3.3;TRES;Proyecto neutro en emisiones: no agrava ni mejora el balance de GEI
+SUB-3.3;CUATRO;Proyecto con reducción indirecta de emisiones identificada y demostrable (por ejemplo: mejora vial que reduce tiempos de motor, eficiencia energética en edificio público)
+SUB-3.3;CINCO;Proyecto directamente reduce o evita emisiones GEI cuantificadas (por ejemplo: energía renovable, transporte público eléctrico, reforestación con captura de carbono estimada)
+SUB-4.1;NO_APLICA;No aplica por la naturaleza del proyecto (por ejemplo, proyectos de fortalecimiento institucional que no requieren estudios de preinversión).
+SUB-4.1;CERO;Cuenta con OT vencida para cualquier etapa de Preinversión.
+SUB-4.1;UNO;Cuenta con OT vencida para cualquier etapa de Preinversión, pero se encuentra en gestión de actualización.
+SUB-4.1;DOS;Cuenta con OT para Perfil (Ruta: Perfil-Prefactibilidad-Factibilidad-Diseño).
+SUB-4.1;TRES;Cuenta con OT para Prefactibilidad (Ruta: Perfil-Prefactibilidad-Factibilidad-Diseño).
+SUB-4.1;CUATRO;Cuenta con OT para Factibilidad (Ruta: Perfil-Prefactibilidad-Factibilidad-Diseño).
+SUB-4.1;CINCO;Cuenta con Opinión Técnica para el último estudio de Preinversión establecido en la Ruta (Diseño o Perfil).
+SUB-4.2;NO_APLICA;No aplica — el proyecto responde a una intervención de emergencia o a una solución única sin alternativas técnicas viables.
+SUB-4.2;CERO;Presenta una solución única y no justifica la solución seleccionada.
+SUB-4.2;UNO;Menciona alternativas, pero sin comparación técnica ni justificación de la selección.
+SUB-4.2;DOS;Presenta comparación básica de alternativas con criterios cualitativos.
+SUB-4.2;TRES;Presenta análisis de alternativas con criterios cuantitativos sin justificación de la selección.
+SUB-4.2;CUATRO;Presenta análisis de alternativas con criterios cuantitativos y justificación de la selección.
+SUB-4.2;CINCO;Presenta análisis de alternativas con criterios cualitativos y cuantitativos y justificación de la selección.
+SUB-4.3;NO_APLICA;No aplica por la naturaleza del proyecto (por ejemplo, proyectos de fortalecimiento institucional).
+SUB-4.3;CERO;No define metas físicas ni indicadores de ningún tipo.
+SUB-4.3;UNO;Define metas de forma general sin cuantificación.
+SUB-4.3;DOS;Define metas cuantificadas, pero sin indicadores de seguimiento asociados.
+SUB-4.3;TRES;Define metas cuantificadas con indicadores de producto.
+SUB-4.3;CUATRO;Define metas con indicadores de producto y resultado con descripción de los indicadores y con programación financiera
+SUB-4.3;CINCO;Define metas con indicadores de producto y resultado, con descripción de los indicadores y distribución de los mismos por período, y programación financiera.
+SUB-5.1;NO_APLICA;No aplica
+SUB-5.1;CERO;No presenta información sobre costo total ni programación financiera de la ejecución.
+SUB-5.1;UNO;Presenta costo total estimado, pero no presenta programación financiera de la ejecución.
+SUB-5.1;DOS;Presenta el costo total y programación financiera, pero esta es incompleta o no permite identificar claramente los requerimientos de recursos por año.
+SUB-5.1;TRES;Presenta el costo total y una programación financiera completa, identificando los requerimientos de recursos por año de ejecución.
+SUB-5.1;CUATRO;Presenta el costo total, una programación financiera consistente con el período y un cronograma previsto de ejecución.
+SUB-5.1;CINCO;Se encuentra incorporado en el PRIPME, manteniendo consistencia entre su costo y programación financiera registrada.
+SUB-5.2;NO_APLICA;No aplica
+SUB-5.2;CERO;No identifica ninguna fuente de financiamiento para la inversión.
+SUB-5.2;UNO;Identifica posibles fuentes de financiamiento, pero sin gestiones iniciadas.
+SUB-5.2;DOS;Cuenta con fuentes identificadas y gestiones iniciadas para obtener el financiamiento.
+SUB-5.2;TRES;Cuenta con fuentes definidas y evidencia de avances en su gestión o incorporación en la programación financiera/presupuestaria.
+SUB-5.2;CUATRO;Cuenta con financiamiento formalmente contratado, convenido o asignado.
+SUB-5.2;CINCO;Cuenta con fuentes de financiamiento aseguradas.
+SUB-5.3;NO_APLICA;No aplica — el proyecto no genera costos de O&M por su naturaleza.
+SUB-5.3;CERO;No identifica ni estima costos de O&M.
+SUB-5.3;UNO;Identifica de manera general que existirán costos de O&M, sin cuantificarlos.
+SUB-5.3;DOS;Identifica y cuantifica los costos de O&M.
+SUB-5.3;TRES;Identifica y cuantifica los costos de O&M y señala la entidad que será responsable de asumirlos.
+SUB-5.3;CUATRO;Identifica y cuantifica los costos de O&M, señala la entidad que será responsable de asumirlos e identifica la fuente prevista para financiar los costos de O&M.
+SUB-5.3;CINCO;Cuenta con información actualizada sobre los costos de O&M, de acuerdo con el estado de avance del proyecto.

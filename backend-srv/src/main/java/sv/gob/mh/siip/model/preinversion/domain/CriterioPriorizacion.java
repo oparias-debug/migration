@@ -49,7 +49,7 @@ public class CriterioPriorizacion {
     @Column(name = "CODIGO", nullable = false, length = 50, unique = true)
     private String codigo;
 
-    /** 1 a 4. */
+    /** 1 a 5; el 5 lo califica el Técnico SYMP (CU-PRE-26.5, RN01). */
     @NotNull
     @Column(name = "NUMERO_CRITERIO", nullable = false)
     private Integer numeroCriterio;

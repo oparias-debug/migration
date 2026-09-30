@@ -124,8 +124,8 @@ public class ViabilidadServiceImpl implements ViabilidadService {
     @Override
     public EmitirViabilidadResponseDto emitirViabilidad(Long idProyecto) {
         ViabilidadContexto contexto = acceso.paraViabilizador(idProyecto);
-        boolean primeraVez = cierre.emitir(contexto);
+        boolean pasaPorElegibilidad = cierre.emitir(contexto);
         return new EmitirViabilidadResponseDto(contexto.proyecto().getId(),
-                contexto.proyecto().getEstado().getEtiquetaUi(), primeraVez);
+                contexto.proyecto().getEstado().getEtiquetaUi(), pasaPorElegibilidad);
     }
 }

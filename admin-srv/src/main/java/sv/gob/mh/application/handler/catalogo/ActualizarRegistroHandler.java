@@ -1,0 +1,30 @@
+package sv.gob.mh.application.handler.catalogo;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import sv.gob.mh.application.command.catalogo.ActualizarRegistroCommand;
+import sv.gob.mh.domain.model.catalogo.Registro;
+import sv.gob.mh.domain.repository.catalogo.CatalogoRepository;
+import sv.gob.mh.domain.repository.catalogo.RegistroRepository;
+
+/** HU-ADM-01-12. Errores: CATALOGO_INEXISTENTE, REGISTRO_INEXISTENTE, CAMPO_INEXISTENTE y CAMPO_KEY_INMUTABLE (E4). */
+@Service
+public class ActualizarRegistroHandler {
+
+    private final CatalogoRepository catalogoRepository;
+    private final RegistroRepository registroRepository;
+
+    public ActualizarRegistroHandler(CatalogoRepository catalogoRepository, RegistroRepository registroRepository) {
+        this.catalogoRepository = catalogoRepository;
+        this.registroRepository = registroRepository;
+    }
+
+    @Transactional
+    public Registro handle(ActualizarRegistroCommand command) {
+        catalogoRepository.obtenerPorCodigo(command.codigoCatalogo());
+        Registro registro = registroRepository.obtenerPorClave(command.codigoCatalogo(), command.clave());
+        registro.actualizarValores(command.valores());
+        return registroRepository.guardar(registro);
+    }
+}

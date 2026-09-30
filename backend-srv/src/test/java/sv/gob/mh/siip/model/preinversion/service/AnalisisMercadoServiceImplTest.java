@@ -147,9 +147,9 @@ class AnalisisMercadoServiceImplTest {
     @Test
     void promedioProyectado_esElPromedioDelAnioBaseYLosProyectados_noElValorDelUltimoAnio() {
         // Demanda 500, tasa 15 %, 5 años: el promedio es 729,48; el valor del año 5 sería 1005,68.
-        assertThat(AnalisisMercadoServiceImpl.promedioProyectado(500d, 15d, 5)).isCloseTo(729.48, within(0.01));
-        assertThat(AnalisisMercadoServiceImpl.promedioProyectado(500d, 0d, 5)).isEqualTo(500d);
-        assertThat(AnalisisMercadoServiceImpl.promedioProyectado(500d, 15d, null)).isNull();
+        assertThat(CalculoAnalisisMercado.promedioProyectado(500d, 15d, 5)).isCloseTo(729.48, within(0.01));
+        assertThat(CalculoAnalisisMercado.promedioProyectado(500d, 0d, 5)).isEqualTo(500d);
+        assertThat(CalculoAnalisisMercado.promedioProyectado(500d, 15d, null)).isNull();
     }
 
     @Test
@@ -159,7 +159,7 @@ class AnalisisMercadoServiceImplTest {
         assertThatThrownBy(() -> service.guardar(1L, request(
                 new FilaAnalisisMercadoRequestDto().producto(new ProductoSeleccionadoDto("P-01")))))
                 .isInstanceOfSatisfying(ValidacionNegocioException.class, ex -> {
-                    assertThat(ex.getCodigo()).isEqualTo(AnalisisMercadoServiceImpl.CODIGO_SIN_FILA_COMPLETA);
+                    assertThat(ex.getCodigo()).isEqualTo(ValidacionAnalisisMercado.CODIGO_SIN_FILA_COMPLETA);
                     assertThat(campos(ex)).containsExactly("filas");
                 });
         verify(analisisMercadoRepository, never()).save(any());
@@ -169,11 +169,12 @@ class AnalisisMercadoServiceImplTest {
     void guardar_conRequestNuloOSinFilas_lanzaValidacionNegocio() {
         prepararGuardado();
 
+        AnalisisMercadoRequestDto sinFilas = new AnalisisMercadoRequestDto();
+        AnalisisMercadoRequestDto filasNulas = new AnalisisMercadoRequestDto().filas(null);
+
         assertThatThrownBy(() -> service.guardar(1L, null)).isInstanceOf(ValidacionNegocioException.class);
-        assertThatThrownBy(() -> service.guardar(1L, new AnalisisMercadoRequestDto()))
-                .isInstanceOf(ValidacionNegocioException.class);
-        assertThatThrownBy(() -> service.guardar(1L, new AnalisisMercadoRequestDto().filas(null)))
-                .isInstanceOf(ValidacionNegocioException.class);
+        assertThatThrownBy(() -> service.guardar(1L, sinFilas)).isInstanceOf(ValidacionNegocioException.class);
+        assertThatThrownBy(() -> service.guardar(1L, filasNulas)).isInstanceOf(ValidacionNegocioException.class);
     }
 
     @Test
@@ -192,7 +193,7 @@ class AnalisisMercadoServiceImplTest {
 
         assertThatThrownBy(() -> service.guardar(1L, new AnalisisMercadoRequestDto().filas(filas)))
                 .isInstanceOfSatisfying(ValidacionNegocioException.class,
-                        ex -> assertThat(ex.getCodigo()).isEqualTo(AnalisisMercadoServiceImpl.CODIGO_SIN_FILA_COMPLETA));
+                        ex -> assertThat(ex.getCodigo()).isEqualTo(ValidacionAnalisisMercado.CODIGO_SIN_FILA_COMPLETA));
     }
 
     @Test
@@ -213,7 +214,7 @@ class AnalisisMercadoServiceImplTest {
 
         assertThatThrownBy(() -> service.guardar(1L, request(filaCompleta("P-01"), filaCompleta("SIN-CATALOGO"))))
                 .isInstanceOfSatisfying(ValidacionNegocioException.class, ex -> {
-                    assertThat(ex.getCodigo()).isEqualTo(AnalisisMercadoServiceImpl.CODIGO_PRODUCTO_NO_EN_CATALOGO);
+                    assertThat(ex.getCodigo()).isEqualTo(ValidacionAnalisisMercado.CODIGO_PRODUCTO_NO_EN_CATALOGO);
                     assertThat(campos(ex)).containsExactly("filas[1].producto");
                 });
         verify(analisisMercadoRepository, never()).save(any());
@@ -226,7 +227,7 @@ class AnalisisMercadoServiceImplTest {
         assertThatThrownBy(() -> service.guardar(1L, request(
                 filaCompleta("P-01").demanda(-1d).aniosAProyectar(0).tasaOferta(-100d))))
                 .isInstanceOfSatisfying(ValidacionNegocioException.class, ex -> {
-                    assertThat(ex.getCodigo()).isEqualTo(AnalisisMercadoServiceImpl.CODIGO_VALOR_FUERA_DE_RANGO);
+                    assertThat(ex.getCodigo()).isEqualTo(ValidacionAnalisisMercado.CODIGO_VALOR_FUERA_DE_RANGO);
                     assertThat(campos(ex)).containsExactly("filas[0].demanda", "filas[0].aniosAProyectar",
                             "filas[0].tasaOferta");
                 });
@@ -247,7 +248,7 @@ class AnalisisMercadoServiceImplTest {
 
         assertThatThrownBy(() -> service.guardar(1L, request(filaCompleta("P-01"), filaCompleta(" P-01 "))))
                 .isInstanceOfSatisfying(ValidacionNegocioException.class, ex -> {
-                    assertThat(ex.getCodigo()).isEqualTo(AnalisisMercadoServiceImpl.CODIGO_PRODUCTO_REPETIDO);
+                    assertThat(ex.getCodigo()).isEqualTo(ValidacionAnalisisMercado.CODIGO_PRODUCTO_REPETIDO);
                     assertThat(campos(ex)).containsExactly("filas[1].producto");
                 });
     }

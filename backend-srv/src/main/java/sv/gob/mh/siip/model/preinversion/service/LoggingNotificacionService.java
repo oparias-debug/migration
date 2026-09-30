@@ -1,5 +1,6 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -172,6 +173,108 @@ public class LoggingNotificacionService implements NotificacionService {
             LOGGER.info("[CU-PRE-25 FB2] Fueron atendidas las observaciones a la Elegibilidad del proyecto '{}' "
                     + "(id={}) -> Técnico PRE / Técnico SYMP: {}",
                     proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarSolicitudOpinionTecnica(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26 A2 a] Se solicitó la Opinión Técnica del proyecto {} '{}' (id={}); "
+                    + "asignar el caso desde la Bandeja de Preinversión -> Coordinador PRE: {}",
+                    proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarAsignacionOpinionTecnica(Proyecto proyecto, Usuario destinatario) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26 A2 b] Se asignó la revisión de la Opinión Técnica del proyecto {} '{}' (id={}) "
+                    + "-> Técnico PRE: {}",
+                    proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), obtenerCorreoDestinatario(destinatario));
+        }
+    }
+
+    @Override
+    public void notificarComentariosOpinionTecnica(Proyecto proyecto, List<Usuario> destinatarios,
+            LocalDate fechaFinPlazo) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26 A2 c] La DGICP envió comentarios al proyecto {} '{}' (id={}); el plazo de "
+                    + "5 días hábiles para los ajustes finaliza el {} -> Técnico URP / Viabilizador: {}",
+                    proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), fechaFinPlazo, correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarAjustesOpinionTecnica(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26 A2 d] La institución reportó ajustes del proyecto {} '{}' (id={}) "
+                    + "-> Técnico PRE / Coordinador PRE: {}",
+                    proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarVistoBuenoOpinionTecnica(Proyecto proyecto, Usuario destinatario) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26 FA01] El Coordinador PRE dio el visto bueno a la Opinión Técnica del proyecto "
+                    + "{} '{}' (id={}) -> Técnico PRE: {}",
+                    proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), obtenerCorreoDestinatario(destinatario));
+        }
+    }
+
+    @Override
+    public void notificarEmisionOpinionTecnica(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26 A2 e] Se emitió Opinión Técnica Favorable al proyecto {} '{}' (id={}) "
+                    + "-> todos los actores: {}",
+                    proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarAlertaPlazoObservaciones(Proyecto proyecto, List<Usuario> destinatarios,
+            LocalDate fechaFinPlazo) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26 A2 f] Quedan 2 días hábiles (hasta el {}) para atender los comentarios del "
+                    + "proyecto {} '{}' (id={}) -> Técnico URP / Viabilizador: {}",
+                    fechaFinPlazo, proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarVencimientoPlazoObservaciones(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26 A2 g] Caducó el plazo para atender los comentarios del proyecto {} '{}' (id={}); "
+                    + "debe gestionarse nuevamente la Opinión Técnica -> Técnico URP / Viabilizador: {}",
+                    proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarPriorizacionPorRevisar(Proyecto proyecto, List<Usuario> destinatarios, String tramo) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26.5 FB1] Es necesario revisar la calificación de la prioridad ({}) del proyecto "
+                    + "{} '{}' (id={}) -> Coordinador: {}",
+                    tramo, proyecto.getCup(), proyecto.getNombre(), proyecto.getId(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarCriterioCincoPorCalificar(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26.5 FB1] Se ha realizado la calificación de los criterios 1, 2, 3 y 4 del proyecto "
+                    + "{}, denominado {}; para completar el puntaje de Priorización debe calificarse el criterio 5 "
+                    + "-> Técnico SYMP / Coordinador SYMP: {}",
+                    proyecto.getCup(), proyecto.getNombre(), correos(destinatarios));
+        }
+    }
+
+    @Override
+    public void notificarPriorizacionCompletada(Proyecto proyecto, List<Usuario> destinatarios) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("[CU-PRE-26.5 FB1] Se ha completado la calificación de la prioridad del proyecto {} "
+                    + "denominado {} -> Técnico PRE / Coordinador PRE: {}",
+                    proyecto.getCup(), proyecto.getNombre(), correos(destinatarios));
         }
     }
 }

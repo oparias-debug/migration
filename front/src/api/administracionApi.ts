@@ -11,10 +11,13 @@ import { createHttpClient } from './httpClient';
  */
 const administracionAxios = createHttpClient('/back');
 
+// CU-ADM-01 vive en admin-srv, detrás de /admin/** de api-gateway, que monta su contrato bajo /api/v1.
+const catalogosAxios = createHttpClient('/admin/api/v1');
+
 // CU-ADM-01 (Administración de Catálogos). El generador lo partió en dos clases,
 // una por tag del contrato: los catálogos (su definición) y sus registros (los datos).
-export const catalogosApi = new CatalogApi(undefined, undefined, administracionAxios);
-export const registrosCatalogoApi = new CatalogRecordApi(undefined, undefined, administracionAxios);
+export const catalogosApi = new CatalogApi(undefined, undefined, catalogosAxios);
+export const registrosCatalogoApi = new CatalogRecordApi(undefined, undefined, catalogosAxios);
 
 export { ActiveStatus, FieldQualifier } from './generated/administracion-catalogos-admin';
 export type { Catalog, CatalogField, CatalogRecord, CatalogSummary } from './generated/administracion-catalogos-admin';

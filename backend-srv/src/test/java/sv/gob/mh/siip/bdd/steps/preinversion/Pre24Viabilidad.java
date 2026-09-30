@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -101,6 +102,9 @@ import sv.gob.mh.siip.model.preinversion.service.ViabilidadComentarios;
 import sv.gob.mh.siip.model.preinversion.service.ViabilidadService;
 import sv.gob.mh.siip.model.preinversion.service.ViabilidadServiceImpl;
 import sv.gob.mh.siip.model.preinversion.service.ViabilidadSolicitud;
+import sv.gob.mh.siip.model.preinversion.service.ComentariosDgicpOpinionTecnica;
+import sv.gob.mh.siip.model.preinversion.service.DestinatariosOpinionTecnica;
+import sv.gob.mh.siip.model.preinversion.service.OpinionTecnicaAjustes;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
@@ -118,7 +122,8 @@ import sv.gob.mh.siip.security.ActorContexto;
  * mostrarlos: la presentación en sí corresponde al front.
  *
  * <p>Cuatro de estos textos también aparecen en los escenarios de CU-PRE-25 y Cucumber admite una sola
- * definición por texto: en esos escenarios los pasos delegan en {@link Pre25Elegibilidad}.
+ * definición por texto: en esos escenarios los pasos delegan en {@link Pre25Elegibilidad}. Del mismo modo,
+ * tres textos se comparten con CU-PRE-26 y delegan en {@link Pre26OpinionTecnica}.
  */
 public class Pre24Viabilidad {
 
@@ -177,6 +182,10 @@ public class Pre24Viabilidad {
   private final IdentificacionService identificacionService;
   private final TransactionTemplate transacciones;
   private final Pre25Elegibilidad elegibilidad;
+  private final Pre26OpinionTecnica opinionTecnica;
+  /** Pasos compartidos con CU-PRE-26.5: delegan cuando {@link Pre265Priorizacion#activo()}. */
+  @Autowired
+  private Pre265Priorizacion priorizacion;
 
     private NotificacionService notificaciones;
     private ViabilidadService service;
@@ -203,7 +212,7 @@ public class Pre24Viabilidad {
       DocumentosViabilidad documentos, FiltrosPosterioresViabilidad filtros,
       FichaViabilidadEnsamblador ensamblador, ActorContexto actorContexto,
       IdentificacionService identificacionService, PlatformTransactionManager transactionManager,
-      Pre25Elegibilidad elegibilidad) {
+      Pre25Elegibilidad elegibilidad, Pre26OpinionTecnica opinionTecnica) {
     this.instituciones = instituciones;
     this.unidades = unidades;
     this.usuarios = usuarios;
@@ -232,6 +241,7 @@ public class Pre24Viabilidad {
     this.identificacionService = identificacionService;
     this.transacciones = new TransactionTemplate(transactionManager);
     this.elegibilidad = elegibilidad;
+    this.opinionTecnica = opinionTecnica;
   }
 
     @Before("@CU-PRE-24")
@@ -257,7 +267,9 @@ public class Pre24Viabilidad {
         service = new ViabilidadServiceImpl(
                 new ViabilidadAcceso(actorContexto, proyectos, revisiones, documentos, filtros),
                 documentos,
-                new ViabilidadSolicitud(proyectos, revisiones, usuarios, notificaciones, filtros),
+                new ViabilidadSolicitud(proyectos, revisiones, usuarios, notificaciones, filtros,
+                        new OpinionTecnicaAjustes(opinionesTecnicas, new ComentariosDgicpOpinionTecnica(comentariosOt),
+                                new DestinatariosOpinionTecnica(usuarios, revisiones), notificaciones)),
                 new ViabilidadComentarios(revisiones),
                 new ViabilidadCierre(proyectos, revisiones, viabilidades, notificaciones, filtros),
                 ensamblador);
@@ -280,6 +292,10 @@ public class Pre24Viabilidad {
 
     @Dado("el botón {string} no está habilitado")
     public void botonNoHabilitado(String boton) {
+        if (opinionTecnica.activo()) {
+            opinionTecnica.botonNoHabilitado(boton);
+            return;
+        }
         assertThat(accion(boton, fichaComo(actorDelBoton(boton)))).as(boton).isFalse();
     }
 
@@ -387,7 +403,7 @@ public class Pre24Viabilidad {
         assertThat(cu).isEqualTo("Opinión técnica");
         assertThat(columna).isEqualTo("Justificación Institución");
         // Tras la devolución de la OT la ficha vuelve a admitir solicitud, pero quedan comentarios por responder.
-        assertThat(filtros.tieneComentariosOtSinResponder(proyecto.getId())).isTrue();
+        assertThat(filtros.tieneComentariosProyectoSinResponder(proyecto.getId())).isTrue();
     }
 
     @Dado("que la solicitud de Viabilidad responde a una observación de la OT")
@@ -404,6 +420,10 @@ public class Pre24Viabilidad {
 
   @Entonces("el Sistema muestra el mensaje {string}")
   public void sistemaMuestraMensaje(String mensaje) {
+    if (priorizacion.activo()) {
+      priorizacion.sistemaMuestraMensaje(mensaje);
+      return;
+    }
     if (elegibilidad.activo()) {
       elegibilidad.sistemaMuestraMensaje(mensaje);
       return;
@@ -491,6 +511,10 @@ public class Pre24Viabilidad {
 
     @Entonces("el campo {string} no es editable")
     public void campoNoEditable(String campo) {
+        if (opinionTecnica.activo()) {
+            opinionTecnica.campoNoEditable(campo);
+            return;
+        }
         // La única escritura del Viabilizador es "Guardar": solo lleva comentarios y observaciones.
         String propiedad = propiedadDe(campo);
         assertThat(Arrays.stream(GuardarComentariosViabilidadRequestDto.class.getDeclaredFields())
@@ -555,6 +579,14 @@ public class Pre24Viabilidad {
 
     @Cuando("da clic en el botón {string}")
     public void daClicEnBoton(String boton) {
+        if (priorizacion.activo()) {
+            priorizacion.daClicEnBoton(boton);
+            return;
+        }
+        if (opinionTecnica.activo()) {
+            opinionTecnica.daClicEnBoton(boton);
+            return;
+        }
         if (BOTON_GUARDAR.equals(boton)) {
             capturar(() -> guardar(borrador));
         } else {

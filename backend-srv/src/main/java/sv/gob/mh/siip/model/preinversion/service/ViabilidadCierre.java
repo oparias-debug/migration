@@ -72,7 +72,8 @@ public class ViabilidadCierre {
      * Emite la Viabilidad del proyecto sobre la revisión en curso (RN03).
      *
      * @param contexto contexto de la operación del Viabilizador
-     * @return {@code true} si es la primera vez y corresponde gestionar Elegibilidad
+     * @return {@code true} si corresponde gestionar Elegibilidad: la primera vez, o cuando la OT también
+     *         comentó los criterios de elegibilidad (RN14 de CU-PRE-26)
      */
     public boolean emitir(ViabilidadContexto contexto) {
         RevisionViabilidad revision = contexto.exigirRevisionEnCurso();
@@ -83,16 +84,18 @@ public class ViabilidadCierre {
         }
         Proyecto proyecto = contexto.proyecto();
 
-        // RN03: Elegibilidad solo se gestiona la primera vez; después se salta a la OT.
-        boolean primeraVez = !filtros.yaPasoPorElegibilidad(proyecto.getId());
-        revision.setHabilitaElegibilidad(primeraVez);
+        // RN03: Elegibilidad solo se gestiona la primera vez; después se salta a la OT, salvo que la OT
+        // haya comentado también los criterios de elegibilidad (RN14 de CU-PRE-26).
+        boolean pasaPorElegibilidad = !filtros.yaPasoPorElegibilidad(proyecto.getId())
+                || filtros.otPideElegibilidad(proyecto.getId());
+        revision.setHabilitaElegibilidad(pasaPorElegibilidad);
         cerrarRevision(revision, EstadoRevisionViabilidad.EMITIDA, contexto.actor());
         registrarResultado(proyecto, ResultadoViabilidad.VIABLE, revision, contexto.actor());
         proyecto.setEstado(EstadoProyecto.VIABLE);
         proyectoRepository.save(proyecto);
 
         notificacionService.notificarEmisionViabilidad(proyecto, revision.getSolicitante());
-        return primeraVez;
+        return pasaPorElegibilidad;
     }
 
     private void cerrarRevision(RevisionViabilidad revision, EstadoRevisionViabilidad estado, Usuario viabilizador) {

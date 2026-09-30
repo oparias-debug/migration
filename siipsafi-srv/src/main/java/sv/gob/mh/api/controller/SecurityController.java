@@ -27,7 +27,7 @@ import sv.gob.mh.infrastructure.config.authz.PermissionsAllowed;
  *
  * <p>El padrón que hace falta está en {@code authz/ejemplo-authz.json} y se carga con una sola
  * llamada; los detalles, en {@code docs/autorizacion.md}. Sin cargarlo, los dos endpoints con
- * {@link PermissionsAllowed} responden {@code 403} a todo el mundo, que es el comportamiento
+ * {@link PermissionsAllowed} responden {@code 403} a el mundo, que es el comportamiento
  * correcto: el marco falla cerrado.</p>
  *
  * <p>Aquí la autorización no la resuelve una librería externa sino la copia vendorizada que

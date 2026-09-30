@@ -37,6 +37,7 @@ class ViabilidadSolicitudTest {
     private UsuarioRepository usuarios;
     private NotificacionService notificaciones;
     private FiltrosPosterioresViabilidad filtros;
+    private OpinionTecnicaAjustes ajustesOt;
     private ViabilidadSolicitud solicitud;
 
     private Usuario tecnico;
@@ -49,7 +50,8 @@ class ViabilidadSolicitudTest {
         usuarios = mock(UsuarioRepository.class);
         notificaciones = mock(NotificacionService.class);
         filtros = mock(FiltrosPosterioresViabilidad.class);
-        solicitud = new ViabilidadSolicitud(proyectos, revisiones, usuarios, notificaciones, filtros);
+        ajustesOt = mock(OpinionTecnicaAjustes.class);
+        solicitud = new ViabilidadSolicitud(proyectos, revisiones, usuarios, notificaciones, filtros, ajustesOt);
 
         tecnico = Usuario.builder().id(10L).rol(RolUsuario.TECNICO_URP).build();
         proyecto = Proyecto.builder().id(ID_PROYECTO).estado(EstadoProyecto.OBSERVADO).build();
@@ -77,6 +79,8 @@ class ViabilidadSolicitudTest {
         assertThat(proyecto.getEstado()).isEqualTo(EstadoProyecto.EN_VIABILIDAD);
         verify(proyectos).save(proyecto);
         verify(notificaciones).notificarSolicitudViabilidad(proyecto, List.of(viabilizador));
+        // Si responde a comentarios de la OT, CU-PRE-26 registra el envío de los ajustes (FA03.1).
+        verify(ajustesOt).registrarEnvio(proyecto);
     }
 
     @Test
@@ -88,7 +92,7 @@ class ViabilidadSolicitudTest {
                 .isInstanceOf(ConflictoEstadoException.class)
                 .extracting(e -> ((ConflictoEstadoException) e).getCodigo())
                 .isEqualTo(ViabilidadContexto.SOLICITUD_VIABILIDAD_EN_CURSO);
-        verifyNoInteractions(filtros, revisiones, notificaciones);
+        verifyNoInteractions(filtros, revisiones, notificaciones, ajustesOt);
     }
 
     @Test
@@ -104,7 +108,7 @@ class ViabilidadSolicitudTest {
 
     @Test
     void conComentariosDeOtSinResponderSeRechazaConElMensajeDeRn11() {
-        when(filtros.tieneComentariosOtSinResponder(ID_PROYECTO)).thenReturn(true);
+        when(filtros.tieneComentariosProyectoSinResponder(ID_PROYECTO)).thenReturn(true);
         ViabilidadContexto conDocumento = contexto(null, true);
 
         assertThatThrownBy(() -> solicitud.solicitar(conDocumento))
@@ -113,5 +117,6 @@ class ViabilidadSolicitudTest {
                 .extracting(e -> ((ReglaNegocioException) e).getCodigo())
                 .isEqualTo(ViabilidadSolicitud.COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER);
         verify(revisiones, never()).save(any());
+        verifyNoInteractions(ajustesOt);
     }
 }

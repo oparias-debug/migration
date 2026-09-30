@@ -1,0 +1,804 @@
+openapi: 3.0.3
+info:
+  title: SIIP v2 — Fragmento CU-PRE-26.5 Priorización
+  version: 0.2.0-cu-pre-26.5
+  description: |
+    Fragmento de contrato generado a partir del CU-PRE-26.5 "Priorización" y de sus
+    historias BDD (HU-PRE-26.5-01 a HU-PRE-26.5-08). Válido de forma standalone; se mezcla
+    después con el contrato consolidado del proyecto.
+
+    Convenciones (idénticas a CU-PRE-26.openapi.yaml):
+    - `operationId` en camelCase (verbo + sustantivo) → nombre del método Java y del hook TS.
+    - Schemas en PascalCase; propiedades JSON en camelCase; valores de enum en UPPER_SNAKE_CASE,
+      salvo `ValorCalificacionSubcriterio`, que conserva los valores literales de RN08
+      ("N/A", "0"…"5") y usa `x-enum-varnames` para el codegen.
+    - Porcentajes como número 0–100 (25% → 25). Puntajes con 2 decimales.
+    - `x-roles` usa los códigos de rol de los tags `@rol:` de las historias BDD.
+
+    Componentes compartidos con CU-PRE-26 (`Error`, `ErrorDetalle`, `EstadoAccion`,
+    respuestas comunes, `bearerAuth`, parámetro `ProyectoId`) se copian idénticos para que
+    el fragmento sea standalone; al consolidar se deduplican.
+
+    Ver `contrato-CU-PRE-26.5.md` para decisiones y conflictos pendientes.
+
+    Cambios 0.2.0 (implementación del backend, 2026-09-28):
+    - Se retiran `obtenerEscalaCalificacionSubcriterio` y `obtenerRangosInterpretacionPriorizacion`: el
+      catálogo ya los expone en CU-ADM-02 (`GET /catalogos/escala-calificacion-subcriterio` y
+      `GET /catalogos/rangos-interpretacion-priorizacion`, esta última con la misma ruta, que duplicada
+      impedía arrancar la aplicación). El nombre, la ponderación y la "Descripción y requerimiento de
+      información" de cada subcriterio llegan en la matriz.
+    - `resultado` (A.2) se informa cuando el Coordinador SYMP revisa el criterio 5 (RN07); tras revisar
+      solo los criterios 1–4 queda en `null` hasta resolver el ítem 41.
+  x-caso-uso: CU-PRE-26.5
+  x-modulo: Preinversión
+  x-submodulo: Gestión
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: Priorizacion
+    description: |
+      Módulo Preinversión › Gestión › Priorización. Matriz multicriterio, calificación por
+      Técnico PRE (criterios 1–4) y Técnico SYMP (criterio 5), revisión y habilitación de
+      ajustes por los Coordinadores, cálculo de la Prioridad del proyecto (CU-PRE-26.5).
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  # ================= Consulta =================
+
+  /proyectos/{proyectoId}/priorizacion:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    get:
+      tags: [Priorizacion]
+      operationId: obtenerPriorizacion
+      summary: Obtener la priorización del proyecto (pantallas A.1 y A.2)
+      description: |
+        Devuelve la matriz multicriterio (A.1) con criterios, subcriterios, ponderaciones,
+        calificaciones y puntajes, el estado de cada tramo de calificación (PRE: criterios 1–4;
+        SYMP: criterio 5) y, cuando existe, el resultado "Prioridad del proyecto" (A.2).
+        Incluye `accionesDisponibles` y `criteriosCalificables`, calculados por el backend
+        según rol y estado (RN01, RN02, RN05, RN10, RN11).
+        Jefe DGI y Subjefe DGI solo visualizan (RN02).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_PRE, COORDINADOR_PRE, TECNICO_SYMP, COORDINADOR_SYMP, JEFE_DGI, SUBJEFE_DGI]
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-01, HU-PRE-26.5-03, HU-PRE-26.5-05, HU-PRE-26.5-08]
+        features:
+          - CU-PRE-26.5-calificar-criterios-1-a-4.feature
+          - CU-PRE-26.5-calificar-criterio-5.feature
+          - CU-PRE-26.5-calcular-prioridad.feature
+          - CU-PRE-26.5-visualizar-dgi.feature
+        reglas: [RN01, RN02, RN05, RN07, RN12, RN13, RN14, Precondiciones (filtro habilitante)]
+      responses:
+        '200':
+          description: Priorización del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/FiltroHabilitanteIncompleto'
+
+  # ================= Tramo PRE (criterios 1–4) =================
+
+  /proyectos/{proyectoId}/priorizacion/calificacion-pre:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    put:
+      tags: [Priorizacion]
+      operationId: guardarCalificacionPriorizacionPre
+      summary: Guardar la calificación en progreso de los criterios 1–4 (botón "Guardar")
+      description: |
+        FA01 (Técnico PRE). Guardado parcial: se admiten subcriterios sin calificar.
+        Solo subcriterios de los criterios 1, 2, 3 y 4 (RN01). El mensaje A.5 es de UI.
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-01]
+        features: [CU-PRE-26.5-calificar-criterios-1-a-4.feature]
+        reglas: [FA01, RN01, RN05, RN08]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalificacionPriorizacionRequest'
+      responses:
+        '200':
+          description: Calificación guardada. Devuelve la priorización actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CalificacionBloqueada'
+        '422':
+          $ref: '#/components/responses/SubcriterioFueraDeAlcance'
+
+  /proyectos/{proyectoId}/priorizacion/calificacion-pre/envio:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [Priorizacion]
+      operationId: calificarPriorizacionPre
+      summary: Calificar la priorización de los criterios 1–4 y enviarla a revisión
+      description: |
+        Botón "Calificar Priorización" / "Calificar Prioridad" (nombre en disputa, ítem 15).
+        Guarda la calificación, valida que todos los subcriterios de los criterios 1–4 tengan
+        puntaje (RN04) y notifica al Coordinador PRE (FB1 Técnico PRE paso 6).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-01]
+        features: [CU-PRE-26.5-calificar-criterios-1-a-4.feature]
+        reglas: [FB1 Técnico PRE pasos 5–6, RN01, RN04, RN05]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalificacionPriorizacionRequest'
+      responses:
+        '200':
+          description: Calificación enviada a revisión del Coordinador PRE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CalificacionBloqueada'
+        '422':
+          $ref: '#/components/responses/CalificacionIncompletaOFueraDeAlcance'
+
+  /proyectos/{proyectoId}/priorizacion/calificacion-pre/revision:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [Priorizacion]
+      operationId: revisarCalificacionPriorizacionPre
+      summary: Registrar "Priorización revisada Coordinador PRE"
+      description: |
+        FB1 Técnico PRE pasos 7–8. El Sistema deshabilita la pantalla A.1 para el Técnico PRE
+        y notifica al Técnico SYMP y al Coordinador SYMP que debe calificarse el criterio 5.
+        El mensaje A.3 es de UI.
+        ⚠️ PENDIENTE (ítem 41): contenido de `resultado` (A.2) con el criterio 5 sin calificar.
+      security:
+        - bearerAuth: []
+      x-roles: [COORDINADOR_PRE]
+      x-pendiente-resolucion: 'Tratamiento del criterio 5 en A.2 tras revisar solo los criterios 1–4 (Observaciones ítem 41)'
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-02]
+        features: [CU-PRE-26.5-revisar-calificacion-coordinador-pre.feature]
+        reglas: [FB1 Técnico PRE pasos 7–8, RN05]
+      responses:
+        '200':
+          description: Revisión registrada. Devuelve la priorización actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CalificacionNoEnviada'
+
+  /proyectos/{proyectoId}/priorizacion/calificacion-pre/habilitacion-ajustes:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [Priorizacion]
+      operationId: habilitarAjustesCalificacionPriorizacionPre
+      summary: Habilitar ajustes de la calificación de los criterios 1–4 al Técnico PRE
+      description: |
+        Campo "Habilitar Calificación de Prioridad" del Coordinador PRE (RN10). Vuelve a
+        habilitar al Técnico PRE encargado del caso los campos de calificación de los
+        criterios 1–4. Idempotente. El flujo posterior al ajuste (nueva revisión, recálculo)
+        no está descrito en el CU.
+      security:
+        - bearerAuth: []
+      x-roles: [COORDINADOR_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-06]
+        features: [CU-PRE-26.5-habilitar-ajustes-coordinador-pre.feature]
+        reglas: [RN10, Anexo B.1 Habilitar Calificación de Prioridad]
+      responses:
+        '200':
+          description: Ajustes habilitados. Devuelve la priorización actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ================= Tramo SYMP (criterio 5) =================
+
+  /proyectos/{proyectoId}/priorizacion/calificacion-symp:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    put:
+      tags: [Priorizacion]
+      operationId: guardarCalificacionPriorizacionSymp
+      summary: Guardar la calificación en progreso del criterio 5 (botón "Guardar")
+      description: |
+        FA01 (Técnico SYMP). Guardado parcial. Solo subcriterios del criterio 5 (RN01).
+        Requiere la calificación de los criterios 1–4 revisada (Descripción; Antecedentes del BDD).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_SYMP]
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-03]
+        features: [CU-PRE-26.5-calificar-criterio-5.feature]
+        reglas: [FA01, RN01, RN05, RN08]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalificacionPriorizacionRequest'
+      responses:
+        '200':
+          description: Calificación guardada. Devuelve la priorización actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CalificacionSympNoDisponible'
+        '422':
+          $ref: '#/components/responses/SubcriterioFueraDeAlcance'
+
+  /proyectos/{proyectoId}/priorizacion/calificacion-symp/envio:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [Priorizacion]
+      operationId: calificarPriorizacionSymp
+      summary: Calificar la priorización del criterio 5 y enviarla a revisión
+      description: |
+        Botón "Calificar Priorización" del Técnico SYMP. Guarda, valida que todos los
+        subcriterios del criterio 5 tengan puntaje (RN04) y notifica al Coordinador SYMP
+        (FB1 Técnico SYMP paso 6).
+        ⚠️ PENDIENTE (ítem 40): obligatoriedad de calificar el criterio 5.
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_SYMP]
+      x-pendiente-resolucion: 'Obligatoriedad de la calificación del criterio 5 (Observaciones ítem 40)'
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-03]
+        features: [CU-PRE-26.5-calificar-criterio-5.feature]
+        reglas: [FB1 Técnico SYMP pasos 5–6, RN01, RN04, RN05]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalificacionPriorizacionRequest'
+      responses:
+        '200':
+          description: Calificación enviada a revisión del Coordinador SYMP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CalificacionSympNoDisponible'
+        '422':
+          $ref: '#/components/responses/CalificacionIncompletaOFueraDeAlcance'
+
+  /proyectos/{proyectoId}/priorizacion/calificacion-symp/revision:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [Priorizacion]
+      operationId: revisarCalificacionPriorizacionSymp
+      summary: Registrar "Priorización revisada Coordinador SYMP"
+      description: |
+        FB1 Técnico SYMP pasos 7–8. Completa el cálculo de la priorización (RN07): la
+        respuesta incluye `resultado` (A.2). El Sistema deshabilita la pantalla A.1 para el
+        Técnico SYMP y notifica al Técnico PRE y al Coordinador PRE. El mensaje A.4 es de UI.
+      security:
+        - bearerAuth: []
+      x-roles: [COORDINADOR_SYMP]
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-04, HU-PRE-26.5-05]
+        features:
+          - CU-PRE-26.5-revisar-calificacion-coordinador-symp.feature
+          - CU-PRE-26.5-calcular-prioridad.feature
+        reglas: [FB1 Técnico SYMP pasos 7–8, RN05, RN07, RN12, RN13, RN14]
+      responses:
+        '200':
+          description: Revisión registrada; priorización completada. Devuelve la priorización con su resultado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CalificacionNoEnviada'
+
+  /proyectos/{proyectoId}/priorizacion/calificacion-symp/habilitacion-ajustes:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [Priorizacion]
+      operationId: habilitarAjustesCalificacionPriorizacionSymp
+      summary: Habilitar ajustes de la calificación del criterio 5 al Técnico SYMP
+      description: |
+        Campo "Habilitar Calificación de Prioridad" del Coordinador SYMP (RN11). Vuelve a
+        habilitar al Técnico SYMP encargado del caso los campos de calificación del criterio 5.
+        Idempotente. El flujo posterior al ajuste no está descrito en el CU.
+      security:
+        - bearerAuth: []
+      x-roles: [COORDINADOR_SYMP]
+      x-trazabilidad:
+        historias: [HU-PRE-26.5-07]
+        features: [CU-PRE-26.5-habilitar-ajustes-coordinador-symp.feature]
+        reglas: [RN11, Anexo B.1 Habilitar Calificación de Prioridad]
+      responses:
+        '200':
+          description: Ajustes habilitados. Devuelve la priorización actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriorizacionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProyectoId:
+      name: proyectoId
+      in: path
+      required: true
+      description: Identificador interno del Proyecto.
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    # ----- Comunes (idénticas a CU-PRE-26) -----
+    BadRequest:
+      description: Solicitud mal formada o que no cumple el schema. Código `SOLICITUD_INVALIDA`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Token ausente, inválido o expirado. Código `NO_AUTENTICADO`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: El rol del usuario no está autorizado para la operación (`x-roles`). Código `ROL_NO_AUTORIZADO`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: El proyecto no existe (`PROYECTO_NO_ENCONTRADO`). Un proyecto fuera de la Unidad Ejecutora del actor responde 403.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    # ----- Propias de CU-PRE-26.5 -----
+    FiltroHabilitanteIncompleto:
+      description: |
+        El proyecto no ha pasado el filtro habilitante (Viabilidad CU-PRE-24, Elegibilidad
+        CU-PRE-25 y Opinión Técnica CU-PRE-26 emitidas). Código: `FILTRO_HABILITANTE_INCOMPLETO`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            codigo: FILTRO_HABILITANTE_INCOMPLETO
+            mensaje: El proyecto debe contar con Viabilidad, Elegibilidad y Opinión Técnica emitidas para ser priorizado.
+            timestamp: '2026-09-28T15:00:00Z'
+    CalificacionBloqueada:
+      description: |
+        La pantalla "Priorización: Matriz Multicriterio" está deshabilitada para el Técnico
+        (RN05; FB1 paso 8) y el Coordinador no ha habilitado ajustes (RN10/RN11).
+        Código: `CALIFICACION_BLOQUEADA`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            codigo: CALIFICACION_BLOQUEADA
+            mensaje: La calificación está bloqueada; solicite al Coordinador la habilitación de ajustes.
+            timestamp: '2026-09-28T15:00:00Z'
+    CalificacionSympNoDisponible:
+      description: |
+        Conflicto de estado del tramo SYMP. Códigos posibles:
+        - `CALIFICACION_PRE_PENDIENTE`: la calificación de los criterios 1–4 aún no fue
+          revisada por el Coordinador PRE (Descripción; FB1 Técnico PRE paso 8).
+        - `CALIFICACION_BLOQUEADA`: la pantalla está deshabilitada para el Técnico SYMP (RN05).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            prePendiente:
+              value:
+                codigo: CALIFICACION_PRE_PENDIENTE
+                mensaje: Debe completarse la calificación de los criterios 1, 2, 3 y 4 antes de calificar el criterio 5.
+                timestamp: '2026-09-28T15:00:00Z'
+            bloqueada:
+              value:
+                codigo: CALIFICACION_BLOQUEADA
+                mensaje: La calificación está bloqueada; solicite al Coordinador la habilitación de ajustes.
+                timestamp: '2026-09-28T15:00:00Z'
+    CalificacionNoEnviada:
+      description: |
+        El Técnico aún no ha enviado la calificación de su tramo con "Calificar Priorización";
+        no hay calificación que revisar. Código: `CALIFICACION_NO_ENVIADA`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            codigo: CALIFICACION_NO_ENVIADA
+            mensaje: No existe una calificación enviada a revisión.
+            timestamp: '2026-09-28T15:00:00Z'
+    SubcriterioFueraDeAlcance:
+      description: |
+        Se envió la calificación de un subcriterio que no corresponde al rol (RN01: Técnico PRE
+        solo criterios 1–4; Técnico SYMP solo criterio 5). Código: `SUBCRITERIO_FUERA_DE_ALCANCE`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            codigo: SUBCRITERIO_FUERA_DE_ALCANCE
+            mensaje: El usuario no puede calificar subcriterios de este criterio.
+            timestamp: '2026-09-28T15:00:00Z'
+            detalles:
+              - campo: calificaciones[5.1]
+                mensaje: Subcriterio del criterio 5, fuera del alcance del Técnico PRE.
+    CalificacionIncompletaOFueraDeAlcance:
+      description: |
+        Códigos posibles:
+        - `CALIFICACION_INCOMPLETA`: uno o más subcriterios del tramo no tienen puntaje (RN04).
+          `mensaje` = "Error. Debe seleccionar un puntaje para cada subcriterio"; `detalles`
+          lista los subcriterios faltantes.
+        - `SUBCRITERIO_FUERA_DE_ALCANCE`: subcriterio que no corresponde al rol (RN01).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            incompleta:
+              value:
+                codigo: CALIFICACION_INCOMPLETA
+                mensaje: Error. Debe seleccionar un puntaje para cada subcriterio
+                timestamp: '2026-09-28T15:00:00Z'
+                detalles:
+                  - campo: calificaciones[2.4]
+                    mensaje: Subcriterio sin puntaje.
+            fueraDeAlcance:
+              value:
+                codigo: SUBCRITERIO_FUERA_DE_ALCANCE
+                mensaje: El usuario no puede calificar subcriterios de este criterio.
+                timestamp: '2026-09-28T15:00:00Z'
+
+  schemas:
+
+    # ---------- Comunes (idénticos a CU-PRE-26) ----------
+    Error:
+      type: object
+      description: Esquema único de error para todas las respuestas 4xx/5xx del proyecto.
+      required: [codigo, mensaje, timestamp]
+      properties:
+        codigo:
+          type: string
+          description: Código de error estable, en UPPER_SNAKE_CASE.
+          example: ROL_NO_AUTORIZADO
+        mensaje:
+          type: string
+          description: Mensaje legible para el usuario.
+        timestamp:
+          type: string
+          format: date-time
+        detalles:
+          type: array
+          description: Detalle opcional por campo.
+          items:
+            $ref: '#/components/schemas/ErrorDetalle'
+    ErrorDetalle:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+          description: Nombre (camelCase) de la propiedad afectada.
+        mensaje:
+          type: string
+    EstadoAccion:
+      type: object
+      description: |
+        `visible` depende del rol; `habilitada` depende del estado del proyecto y de las
+        precondiciones (RN04, RN05, RN06, RN10, FA01).
+      required: [visible, habilitada]
+      properties:
+        visible:
+          type: boolean
+        habilitada:
+          type: boolean
+
+    # ---------- Enums ----------
+    ValorCalificacionSubcriterio:
+      type: string
+      description: Valores de la columna "Calificación" (RN08). "N/A" excluye el subcriterio del cálculo (RN13, RN14).
+      enum: ['N/A', '0', '1', '2', '3', '4', '5']
+      x-enum-varnames: [NO_APLICA, CERO, UNO, DOS, TRES, CUATRO, CINCO]
+    EstadoTramoCalificacion:
+      type: string
+      description: |
+        Estado de un tramo de calificación (PRE: criterios 1–4; SYMP: criterio 5), derivado de
+        FB1 pasos 4–8: PENDIENTE (sin enviar), ENVIADA_A_REVISION (tras "Calificar Priorización"),
+        REVISADA (tras "Priorización revisada Coordinador").
+      enum: [PENDIENTE, ENVIADA_A_REVISION, REVISADA]
+    CategoriaPriorizacion:
+      type: string
+      description: Categoría según los rangos de interpretación (RN09, Anexo A.2).
+      enum:
+        - PRIORIZADO_PARA_PROGRAMACION
+        - PRIORIZADO_CONDICIONAL
+        - ELEGIBLE_PARA_FORTALECIMIENTO
+        - NO_PRIORIZABLE_EN_ESTADO_ACTUAL
+
+    # ---------- Matriz (A.1) ----------
+    PriorizacionResponse:
+      type: object
+      required:
+        - proyectoId
+        - criterios
+        - calificacionPre
+        - calificacionSymp
+        - criteriosCalificables
+        - accionesDisponibles
+      properties:
+        proyectoId:
+          type: integer
+          format: int64
+        criterios:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriterioPriorizacion'
+        calificacionPre:
+          $ref: '#/components/schemas/TramoCalificacionPriorizacion'
+        calificacionSymp:
+          $ref: '#/components/schemas/TramoCalificacionPriorizacion'
+        criteriosCalificables:
+          type: array
+          description: |
+            Números de criterio cuya columna "Calificación" está habilitada para el usuario
+            autenticado (RN01, RN05, RN10, RN11). Vacío para Jefe DGI, Subjefe DGI y Coordinadores.
+          items:
+            type: integer
+        resultado:
+          allOf:
+            - $ref: '#/components/schemas/ResultadoPriorizacion'
+          nullable: true
+          description: |
+            Pantalla A.2 "Prioridad del proyecto". Presente cuando el Coordinador SYMP revisó el
+            criterio 5 (RN07). ⚠️ Tras revisar solo los criterios 1–4 queda en null (ítem 41).
+        accionesDisponibles:
+          $ref: '#/components/schemas/AccionesPriorizacion'
+
+    CriterioPriorizacion:
+      type: object
+      required: [criterioNumero, nombre, ponderacionCriterio, subcriterios]
+      properties:
+        criterioNumero:
+          type: integer
+          minimum: 1
+          maximum: 5
+        nombre:
+          type: string
+          example: RENTABILIDAD SOCIAL
+        ponderacionCriterio:
+          type: number
+          format: double
+          description: Ponderación definida por la DGI, en porcentaje 0–100.
+          example: 20
+        ponderacionCriterioAplicada:
+          type: number
+          format: double
+          nullable: true
+          description: Ponderación efectiva tras la redistribución por N/A total de otros criterios (RN14).
+        subcriterios:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubcriterioPriorizacion'
+
+    SubcriterioPriorizacion:
+      type: object
+      required: [subcriterioNumero, nombre, ponderacionSubcriterio]
+      properties:
+        subcriterioNumero:
+          type: string
+          example: '1.1'
+        nombre:
+          type: string
+          example: Tipo y solidez del indicador socioeconómico
+        ponderacionSubcriterio:
+          type: number
+          format: double
+          description: Ponderación dentro del criterio, en porcentaje 0–100.
+          example: 25
+        descripcionRequerimientoInformacion:
+          type: string
+          nullable: true
+          description: '"Descripción y requerimiento de información" del Anexo C (ventana "Ver Escala de Calificación").'
+        ponderacionSubcriterioAplicada:
+          type: number
+          format: double
+          nullable: true
+          description: Ponderación efectiva tras la redistribución por N/A dentro del criterio (RN13).
+        calificacion:
+          allOf:
+            - $ref: '#/components/schemas/ValorCalificacionSubcriterio'
+          nullable: true
+          description: null = subcriterio aún sin calificar.
+        puntaje:
+          type: number
+          format: double
+          nullable: true
+          description: Calificación × Ponderación subcriterio × Ponderación criterio × 20 (RN12), con ponderaciones aplicadas.
+          example: 5.00
+
+    TramoCalificacionPriorizacion:
+      type: object
+      required: [estado, edicionHabilitada]
+      properties:
+        estado:
+          $ref: '#/components/schemas/EstadoTramoCalificacion'
+        edicionHabilitada:
+          type: boolean
+          description: true si el Técnico del tramo puede calificar (no bloqueado o con ajustes habilitados).
+
+    AccionesPriorizacion:
+      type: object
+      description: Estado de los controles de la pantalla A.1 para el usuario autenticado (RN02, RN03, RN10, RN11).
+      required: [guardar, calificarPriorizacion, priorizacionRevisada, habilitarCalificacionPrioridad]
+      properties:
+        guardar:
+          $ref: '#/components/schemas/EstadoAccion'
+        calificarPriorizacion:
+          $ref: '#/components/schemas/EstadoAccion'
+        priorizacionRevisada:
+          $ref: '#/components/schemas/EstadoAccion'
+        habilitarCalificacionPrioridad:
+          $ref: '#/components/schemas/EstadoAccion'
+
+    # ---------- Resultado (A.2) ----------
+    ResultadoPriorizacion:
+      type: object
+      required: [puntajesCriterios, prioridadProyecto, categoriaPriorizacion, implicacionProgramacion, completa]
+      properties:
+        puntajesCriterios:
+          type: array
+          items:
+            $ref: '#/components/schemas/PuntajeCriterio'
+        prioridadProyecto:
+          type: number
+          format: double
+          description: Suma de los puntajes de todos los subcriterios (RN12).
+          example: 74.00
+        categoriaPriorizacion:
+          $ref: '#/components/schemas/CategoriaPriorizacion'
+        implicacionProgramacion:
+          type: string
+        completa:
+          type: boolean
+          description: true cuando el Coordinador SYMP revisó el criterio 5 (RN07). ⚠️ Ver ítem 40.
+    PuntajeCriterio:
+      type: object
+      required: [criterioNumero, nombre]
+      properties:
+        criterioNumero:
+          type: integer
+        nombre:
+          type: string
+        puntaje:
+          type: number
+          format: double
+          nullable: true
+          description: Suma de los puntajes de los subcriterios del criterio (interpretación; ítem 10).
+
+    # ---------- Calificación (request) ----------
+    CalificacionPriorizacionRequest:
+      type: object
+      description: |
+        Usado por guardar y calificar de ambos tramos (misma forma). En guardar se admiten
+        subcriterios omitidos; en calificar deben venir todos los del tramo (RN04).
+      required: [calificaciones]
+      properties:
+        calificaciones:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalificacionSubcriterioRequest'
+    CalificacionSubcriterioRequest:
+      type: object
+      required: [subcriterioNumero, calificacion]
+      properties:
+        subcriterioNumero:
+          type: string
+          pattern: '^[1-5]\.[1-9]$'
+          example: '1.1'
+        calificacion:
+          $ref: '#/components/schemas/ValorCalificacionSubcriterio'
+

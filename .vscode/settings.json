@@ -4,8 +4,12 @@
     "[java]": {
         "editor.tabSize": 4,
         "editor.insertSpaces": true,
-        "editor.detectIndentation": false
+        "editor.detectIndentation": false,
+        "editor.defaultFormatter": "redhat.java",
+        "editor.rulers": [120]
     },
+    "java.format.settings.url": "backend-srv/.vscode/eclipse-formatter.xml",
+    "java.format.settings.profile": "SIIP-SecJava",
     "jdk.format.options": {
         "indent-shift-width": 4,
         "tab-size": 4,
