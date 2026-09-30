@@ -254,13 +254,22 @@ export function pasoVecino(clave: string, direccion: -1 | 1, seFormula: SeFormul
   return pasos[indice + direccion] ?? null;
 }
 
+/** El proceso al que pertenece un capítulo. */
+const grupoDePaso = (clave: string) => GRUPOS_PASOS.find((g) => pasosDe(g).some((p) => p.clave === clave));
+
 /**
- * Ruta del capítulo anterior. Desde el primero se vuelve a la Ruta de
- * Preinversión, que es de donde se entra a formular.
+ * Ruta del capítulo anterior. Desde el primero se sale a la opción de menú de su
+ * proceso, que es donde se elige el proyecto.
+ *
+ * Antes se volvía al formulario de solicitud de CUP, que es del proceso anterior
+ * (1.1 Asignación CUP) y desde allí se terminaba en la bandeja de solicitudes
+ * (observación del 21/09/2026). La Ruta de Preinversión tampoco sirve de salida:
+ * es el primer capítulo, así que el botón no llevaba a ninguna parte.
  */
 export function rutaAnterior(idProyecto: number, clave: string, seFormula: SeFormula = TODOS): string {
   const anterior = pasoVecino(clave, -1, seFormula);
-  return anterior ? (rutaDePaso(idProyecto, anterior) as string) : `${raizProyecto(idProyecto)}/ruta-preinversion`;
+  if (anterior) return rutaDePaso(idProyecto, anterior) as string;
+  return grupoDePaso(clave)?.ruta ?? GRUPOS_PASOS[0].ruta;
 }
 
 /** Ruta del capítulo siguiente, o null si es el último con pantalla. */

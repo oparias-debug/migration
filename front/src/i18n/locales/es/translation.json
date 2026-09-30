@@ -189,6 +189,8 @@
       "botonGenerar": "Generar Ruta de Preinversión",
       "botonAceptar": "Aceptar",
       "botonModificar": "Modificar",
+      "botonRecalificar": "Volver a calificar los criterios",
+      "irRegistroEtapas": "Ir al Registro de Etapas",
       "botonGuardarModificacion": "Guardar modificación",
       "rutaAceptada": "La Ruta de Preinversión ha sido aceptada exitosamente.",
       "rutaModificada": "La Ruta de Preinversión ha sido modificada exitosamente.",

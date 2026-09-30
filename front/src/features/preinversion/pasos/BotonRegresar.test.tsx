@@ -27,11 +27,11 @@ beforeEach(() => navigate.mockReset());
 const CASOS: { caso: string; paso: string; iniciativa?: 'PROGRAMA'; destino: string }[] = [
   { caso: 'sigue el orden del árbol', paso: 'legal', destino: '/preinversion/proyectos/7/analisis-riesgo' },
   // Antes cada capítulo llevaba su propio destino y el primero terminaba en el
-  // formulario de solicitud de CUP, que es de otro proceso.
+  // formulario de solicitud de CUP, que es del proceso anterior.
   {
-    caso: 'desde el primer capítulo vuelve a la Ruta de Preinversión',
+    caso: 'desde el primer capítulo se sale a la opción de menú del proceso',
     paso: 'seleccion-etapa',
-    destino: '/preinversion/proyectos/7/ruta-preinversion',
+    destino: '/preinversion/creacion-ruta',
   },
   {
     caso: 'en un proyecto no salta ningún capítulo',

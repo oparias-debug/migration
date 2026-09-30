@@ -251,7 +251,14 @@ export function EtapasPage() {
 
 
           <div className="acciones-form">
-            <button type="button" className="btn neutro" onClick={() => navigate(`/preinversion/proyectos/${idProyecto}`)}>
+            {/* Se vuelve a la Ruta de Preinversión, que es de donde se llega aquí.
+                Antes salía al formulario de solicitud de CUP, que es del proceso
+                anterior (observación del 21/09/2026). */}
+            <button
+              type="button"
+              className="btn neutro"
+              onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/ruta-preinversion`)}
+            >
               {t('preinversion.registro.botonRegresar')}
             </button>
             <button type="button" className="btn secundario" onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/ruta-preinversion`)}>

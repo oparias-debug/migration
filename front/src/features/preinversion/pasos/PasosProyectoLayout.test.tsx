@@ -276,7 +276,17 @@ describe('capítulo anterior y siguiente', () => {
 
   it('un paso sin pantalla no entra en la cadena', () => {
     expect(rutaSiguiente(7, 'flujo-socioeconomico')).toBeNull();
-    expect(rutaAnterior(7, 'elegibilidad')).toBe('/preinversion/proyectos/7/ruta-preinversion');
+    // Fuera de la cadena se sale a la opción de menú de su proceso.
+    expect(rutaAnterior(7, 'elegibilidad')).toBe('/preinversion/gestion-proyecto');
+  });
+
+  /**
+   * Desde el primer capítulo se sale al proceso, no al formulario de solicitud
+   * de CUP: ese es del proceso anterior y desde allí se acababa en la bandeja de
+   * solicitudes (observación del 21/09/2026).
+   */
+  it('desde el primer capítulo se sale a la opción de menú del proceso', () => {
+    expect(rutaAnterior(7, 'seleccion-etapa')).toBe('/preinversion/creacion-ruta');
   });
 });
 

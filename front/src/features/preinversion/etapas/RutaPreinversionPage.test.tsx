@@ -126,3 +126,74 @@ describe('RutaPreinversionPage', () => {
     expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/ficha-emergencia');
   });
 });
+
+/**
+ * La ruta ya aceptada es lo que se abre. Antes el formulario de criterios salía
+ * siempre debajo de las etapas vigentes y parecía que la ruta generada se
+ * hubiera perdido (observación del 21/09/2026: "me aparece nuevamente la
+ * pantalla con criterios, en vez que mostrarme la ruta que ya había generado").
+ */
+describe('cuando la ruta ya está aceptada', () => {
+  const conRutaAceptada = () => {
+    obtenerProyecto.mockResolvedValue({ data: proyecto('PROYECTO') });
+    obtenerRutaPreinversion.mockResolvedValue({
+      data: ruta({ etapasAceptadas: ['PERFIL', 'PREFACTIBILIDAD', 'EJECUCION'], fueModificada: true }),
+    });
+  };
+
+  it('se ven las etapas vigentes y no el formulario de criterios', async () => {
+    conRutaAceptada();
+    renderizar();
+
+    expect(await screen.findByText('Perfil, Prefactibilidad, Ejecución')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Tipo de capital*')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Generar Ruta de Preinversión' })).not.toBeInTheDocument();
+  });
+
+  it('se ofrece seguir al Registro de Etapas, modificar o volver a calificar', async () => {
+    conRutaAceptada();
+    renderizar();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ir al Registro de Etapas' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/proyectos/7/etapas');
+  });
+
+  it('volver a calificar los criterios es una decisión aparte, y se puede cancelar', async () => {
+    conRutaAceptada();
+    renderizar();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Volver a calificar los criterios' }));
+    expect(await screen.findByLabelText('Tipo de capital*')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(screen.queryByLabelText('Tipo de capital*')).not.toBeInTheDocument());
+    expect(screen.getByText('Perfil, Prefactibilidad, Ejecución')).toBeInTheDocument();
+  });
+
+  // El botón salía al formulario de solicitud de CUP, que es del proceso anterior,
+  // y desde allí se acababa en la bandeja de solicitudes.
+  it('"Regresar" sale a la opción de menú del proceso, no al formulario de CUP', async () => {
+    conRutaAceptada();
+    renderizar();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Regresar' }));
+    expect(navigate).toHaveBeenCalledWith('/preinversion/creacion-ruta');
+  });
+});
+
+/**
+ * Un programa no califica criterios, pero su ruta existe y llega del servidor:
+ * antes sólo se veía el aviso y la pantalla no dejaba ver nada.
+ */
+describe('la ruta fija de un programa', () => {
+  it('muestra las etapas además del aviso', async () => {
+    obtenerProyecto.mockResolvedValue({ data: proyecto('PROGRAMA') });
+    obtenerRutaPreinversion.mockResolvedValue({ data: ruta({ etapasAceptadas: ['PERFIL', 'EJECUCION'] }) });
+
+    renderizar();
+
+    expect(await screen.findByText('Perfil, Ejecución')).toBeInTheDocument();
+    expect(screen.getByText(/sus etapas ya están definidas/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Tipo de capital*')).not.toBeInTheDocument();
+  });
+});

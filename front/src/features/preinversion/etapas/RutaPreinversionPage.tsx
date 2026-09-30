@@ -9,6 +9,7 @@ import type { CriteriosCalificacion, NombreEtapa, RutaPreinversionSugerida } fro
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
+import { BotonRegresar } from '../pasos/BotonRegresar';
 import {
   COMPLEJIDAD_OPCIONES,
   NOMBRE_ETAPA_OPCIONES,
@@ -49,6 +50,15 @@ export function RutaPreinversionPage() {
   const [fueModificada, setFueModificada] = useState(false);
   const [sugerencia, setSugerencia] = useState<RutaPreinversionSugerida | null>(null);
   const [modificando, setModificando] = useState(false);
+  /**
+   * Los criterios sólo se piden cuando hay que calificarlos: si la ruta ya está
+   * aceptada, lo que se abre es la ruta, y volver a calificar es una decisión
+   * aparte. Antes el formulario salía siempre debajo de las etapas vigentes y
+   * parecía que la ruta generada se hubiera perdido (observación del
+   * 21/09/2026: "me aparece nuevamente la pantalla con criterios, en vez que
+   * mostrarme la ruta que ya había generado").
+   */
+  const [recalificando, setRecalificando] = useState(false);
   const [etapasSeleccionadas, setEtapasSeleccionadas] = useState<NombreEtapa[]>([]);
   const [justificacion, setJustificacion] = useState('');
   const [errorJustificacion, setErrorJustificacion] = useState<string | undefined>();
@@ -102,6 +112,7 @@ export function RutaPreinversionPage() {
       setEtapasAceptadas(data.etapasAceptadas);
       setFueModificada(data.fueModificada);
       setSugerencia(null);
+      setRecalificando(false);
       await Swal.fire({ icon: 'success', text: t('preinversion.rutaPreinversion.rutaAceptada') });
       navigate(`/preinversion/proyectos/${idProyecto}/etapas`);
     } catch (error_) {
@@ -179,9 +190,19 @@ export function RutaPreinversionPage() {
         )}
 
         {!esEmergencia && !esIniciativaProyecto && (
-          // RN07/RN08: Programa y Estudios Generales no califican criterios; el botón
-          // "Ruta de Preinversión" queda desactivado y la ruta ya viene fija.
-          <p className="aviso-consulta">{t('preinversion.rutaPreinversion.rutaFijaProgramaEstudio')}</p>
+          // RN07/RN08: Programa y Estudios Generales no califican criterios, pero
+          // su ruta sí existe y llega en etapasAceptadas: antes sólo se veía el
+          // aviso y la pantalla no dejaba ver nada (observación del 21/09/2026).
+          <>
+            {etapasAceptadas.length > 0 && (
+              <div className="fr">
+                <FormRow label={t('preinversion.rutaPreinversion.etapasVigentes')} ancho>
+                  <p className="campo-asignado">{etapasAceptadas.map(formatNombreEtapa).join(', ')}</p>
+                </FormRow>
+              </div>
+            )}
+            <p className="aviso-consulta">{t('preinversion.rutaPreinversion.rutaFijaProgramaEstudio')}</p>
+          </>
         )}
 
         {esIniciativaProyecto && !esEmergencia && etapasAceptadas.length > 0 && !modificando && (
@@ -190,10 +211,23 @@ export function RutaPreinversionPage() {
               <p className="campo-asignado">{etapasAceptadas.map(formatNombreEtapa).join(', ')}</p>
             </FormRow>
             {fueModificada && <p className="aviso-consulta">{t('preinversion.rutaPreinversion.rutaFueModificada')}</p>}
+            {puedeGestionar && !sugerencia && !recalificando && (
+              <div className="acciones-form">
+                <button type="button" className="btn primario" onClick={() => navigate(`/preinversion/proyectos/${idProyecto}/etapas`)}>
+                  {t('preinversion.rutaPreinversion.irRegistroEtapas')}
+                </button>
+                <button type="button" className="btn secundario" onClick={() => setModificando(true)} disabled={guardando}>
+                  {t('preinversion.rutaPreinversion.botonModificar')}
+                </button>
+                <button type="button" className="btn secundario" onClick={() => setRecalificando(true)} disabled={guardando}>
+                  {t('preinversion.rutaPreinversion.botonRecalificar')}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {esIniciativaProyecto && !esEmergencia && !modificando && (
+        {esIniciativaProyecto && !esEmergencia && !modificando && (etapasAceptadas.length === 0 || recalificando || sugerencia) && (
           <>
             {!sugerencia ? (
               puedeGestionar && (
@@ -229,14 +263,14 @@ export function RutaPreinversionPage() {
                     </select>
                   </FormRow>
                   <div className="acciones-form">
+                    {recalificando && (
+                      <button type="button" className="btn neutro" onClick={() => setRecalificando(false)} disabled={guardando}>
+                        {t('common.cancelar')}
+                      </button>
+                    )}
                     <button type="submit" className="btn primario" disabled={guardando}>
                       {t('preinversion.rutaPreinversion.botonGenerar')}
                     </button>
-                    {etapasAceptadas.length > 0 && (
-                      <button type="button" className="btn secundario" onClick={() => setModificando(true)} disabled={guardando}>
-                        {t('preinversion.rutaPreinversion.botonModificar')}
-                      </button>
-                    )}
                   </div>
                 </form>
               )
@@ -298,9 +332,7 @@ export function RutaPreinversionPage() {
         )}
 
         <div className="acciones-form">
-          <button type="button" className="btn neutro" onClick={() => navigate(`/preinversion/proyectos/${idProyecto}`)}>
-            {t('preinversion.registro.botonRegresar')}
-          </button>
+          <BotonRegresar idProyecto={idProyecto} paso="seleccion-etapa" />
         </div>
       </div>
     </div>
