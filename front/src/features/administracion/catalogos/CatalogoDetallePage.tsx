@@ -134,6 +134,14 @@ export function CatalogoDetallePage() {
         <section>
           <h2 className="seccion">{t(`${CLAVE}.datos`)}</h2>
           <div className="fr">
+            {/* El código identifica al catálogo y no se puede cambiar (Regla 17: el
+                contrato deja "code" fuera del cuerpo de actualización a propósito).
+                Se muestra igual: estaba sólo en la banda del título, y en los datos
+                se veía el código del padre pero no el propio, así que parecía que
+                la ficha no lo trajera (observación del 30/09/2026). */}
+            <FormRow label={t(`${CLAVE}.codigo`)} controlId="det-codigo">
+              <input id="det-codigo" className="mono" type="text" value={catalogo.code ?? ''} readOnly />
+            </FormRow>
             <FormRow label={t(`${CLAVE}.nombre`)} controlId="det-nombre" required>
               <input id="det-nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
             </FormRow>

@@ -269,3 +269,39 @@ describe('la jerarquía de catálogos se ve', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
+
+
+/**
+ * El código sólo estaba en la banda del título. En los datos se veía el código
+ * del catálogo padre pero no el propio, así que parecía que la ficha no lo
+ * trajera (observación del 30/09/2026).
+ */
+describe('el código del catálogo se ve en sus datos', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
+    swalFire.mockResolvedValue({ isConfirmed: true });
+    buscarListaRegistros.mockResolvedValue({ data: { content: [] } });
+    consultarCatalogosHijos.mockResolvedValue({ data: [] });
+    consultarCatalogo.mockResolvedValue({ data: { ...CATALOGO, code: 'JERARQUICO', parent: 'PRUEBA' } });
+  });
+
+  it('lo muestra junto al nombre', async () => {
+    montarFicha();
+    expect(await screen.findByLabelText('Código')).toHaveValue('JERARQUICO');
+  });
+
+  // Regla 17: el código identifica al catálogo y el contrato lo deja fuera del
+  // cuerpo de actualización, así que no se ofrece cambiarlo.
+  it('no se puede cambiar, y guardar datos no lo manda', async () => {
+    montarFicha();
+    const codigo = await screen.findByLabelText('Código');
+    expect(codigo).toHaveAttribute('readonly');
+
+    actualizarDescriptoresCatalogo.mockResolvedValue({ data: {} });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar datos' }));
+    await waitFor(() => expect(actualizarDescriptoresCatalogo).toHaveBeenCalled());
+    const enviado = actualizarDescriptoresCatalogo.mock.calls[0][0].catalogDescriptorsUpdateRequest;
+    expect(enviado).not.toHaveProperty('code');
+  });
+});
