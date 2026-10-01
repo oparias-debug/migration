@@ -116,6 +116,39 @@ class DocumentosViabilidadTest {
                 .isInstanceOf(ValidacionNegocioException.class).hasMessageContaining("nombre");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"informe", "anexo.abcdefghijk", "anexo.x{", "anexo.-"})
+    void lasExtensionesAusentesLargasONoAlfanumericasNoPasanAlNombreEnDisco(String nombre) {
+        DocumentoViabilidad documento = documentos.cargar(proyecto, TipoDocumentoViabilidad.OTRO_DOCUMENTO,
+                archivo(nombre), tecnico);
+
+        assertThat(documento.getNombreArchivo()).isEqualTo(nombre);
+        assertThat(Path.of(documento.getRutaArchivo()).getFileName().toString()).doesNotContain(".");
+    }
+
+    @Test
+    void laExtensionAlfanumericaSeConservaEnMinusculasEnElNombreEnDisco() {
+        DocumentoViabilidad documento = documentos.cargar(proyecto, TipoDocumentoViabilidad.OTRO_DOCUMENTO,
+                archivo("video.MP4"), tecnico);
+
+        assertThat(Path.of(documento.getRutaArchivo()).getFileName().toString()).endsWith(".mp4");
+    }
+
+    @Test
+    void siNoSePuedeEliminarElDocumentoReemplazadoSeInformaElFallo() throws IOException {
+        // Un directorio con contenido en la ruta del documento vigente impide eliminarlo.
+        Path anterior = Files.createDirectories(directorio.resolve("anterior"));
+        Files.createFile(anterior.resolve("contenido.txt"));
+        DocumentoViabilidad vigente = DocumentoViabilidad.builder().id(9L).rutaArchivo(anterior.toString()).build();
+        when(repositorio.findFirstByProyectoIdAndTipoDocumento(5L, TipoDocumentoViabilidad.DOCUMENTO_PREINVERSION))
+                .thenReturn(Optional.of(vigente));
+        MultipartFile nuevo = archivo("nuevo.pdf");
+
+        assertThatThrownBy(() -> documentos.cargar(proyecto, TipoDocumentoViabilidad.DOCUMENTO_PREINVERSION, nuevo,
+                tecnico)).isInstanceOf(IllegalStateException.class).hasMessageContaining("eliminar");
+        verify(repositorio, never()).delete(vigente);
+    }
+
     @Test
     void siNoSePuedeEscribirElArchivoSeInformaElFallo() throws IOException {
         // Un archivo común en el lugar del directorio del proyecto impide crear la carpeta.

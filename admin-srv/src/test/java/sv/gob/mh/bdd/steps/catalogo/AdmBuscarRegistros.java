@@ -66,6 +66,18 @@ public class AdmBuscarRegistros {
         assertThat(obtenidos).containsExactlyElementsOf(registros.asMaps());
     }
 
+    /** Regla 23: cada fila es un registro y su registro padre; la celda vacía significa sin padre. */
+    @Entonces("^el sistema retorna para cada registro su registro padre:$")
+    public void el_sistema_retorna_para_cada_registro_su_padre(DataTable registros) {
+        assertThat(contexto.getUltimoStatus()).isEqualTo(200);
+        Map<String, String> obtenidos = new LinkedHashMap<>();
+        contexto.getUltimoCuerpo().forEach(registro -> obtenidos.put(registro.path("keyValue").asText(),
+                registro.path("parentRecord").isNull() ? null : registro.path("parentRecord").asText(null)));
+        Map<String, String> esperados = new LinkedHashMap<>();
+        registros.asMaps().forEach(fila -> esperados.put(fila.get("keyValue"), fila.get("parentRecord")));
+        assertThat(obtenidos).containsExactlyEntriesOf(esperados);
+    }
+
     private static Map<String, String> valoresDe(JsonNode registro) {
         Map<String, String> valores = new LinkedHashMap<>();
         registro.path("values").forEach(valor -> valores.put(valor.path("field").asText(), valor.path("valor").asText()));

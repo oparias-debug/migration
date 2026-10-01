@@ -22,6 +22,7 @@ import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 import sv.gob.mh.siip.model.preinversion.dto.CuatrimestreDto;
 import sv.gob.mh.siip.model.preinversion.service.AvanceFinancieroPapService;
 import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapService;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-32-navegar-seguimiento-metas.feature (SF-2). "Siguiente" es pura navegación (decisión
@@ -30,7 +31,6 @@ import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapService;
  */
 public class Pre32NavegarSeguimientoMetas {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final int ANIO = 2028;
 
     private final InstitucionRepository institucionRepository;
@@ -71,7 +71,7 @@ public class Pre32NavegarSeguimientoMetas {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
         assertThat(avanceFinancieroService.listar(unidadEjecutora.getId(), ANIO, CuatrimestreDto.CUATRIMESTRE_I, 0, 20))

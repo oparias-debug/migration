@@ -31,7 +31,7 @@ public final class RegistroApiMapper {
         Catalogo catalogo = registro.getCatalogo();
         CatalogRecordResponseDto dto = new CatalogRecordResponseDto()
                 .catalog(catalogo.getCodigo())
-                .parentRecord(registro.getRegistroPadre() != null ? registro.getRegistroPadre().clave() : null)
+                .parentRecord(clavePadre(registro))
                 .active(EnumeradosApi.aActiveStatus(registro.estadoEfectivo()))
                 .fromDate(registro.getFechaDesde())
                 .toDate(registro.getFechaHasta())
@@ -45,6 +45,7 @@ public final class RegistroApiMapper {
         Registro registro = proyectado.registro();
         return new CatalogRecordFieldValuesResponseDto()
                 .keyValue(registro.getClave())
+                .parentRecord(clavePadre(registro))
                 .active(EnumeradosApi.aActiveStatus(registro.estadoEfectivo()))
                 .values(proyectado.campos().stream().map((CampoDefinicion campo) -> aValor(campo, registro)).toList());
     }
@@ -54,5 +55,10 @@ public final class RegistroApiMapper {
                 .field(campo.getNombre())
                 .qualifier(EnumeradosApi.calificador(campo))
                 .valor(registro.valor(campo));
+    }
+
+    /** Regla 23: el KEY del registro padre, o {@code null} si el catálogo no tiene padre. */
+    private static String clavePadre(Registro registro) {
+        return registro.getRegistroPadre() != null ? registro.getRegistroPadre().clave() : null;
     }
 }

@@ -34,7 +34,8 @@ public class ElegibilidadCalificacion {
     public static final String ESPECIFICAR_INCOMPLETO = "ESPECIFICAR_INCOMPLETO";
 
     /** Mensaje literal de RN03. */
-    public static final String MENSAJE_ESPECIFICAR_INCOMPLETO = "Se debe completar la información de la columna 'Especificar' para los criterios seleccionados";
+    public static final String MENSAJE_ESPECIFICAR_INCOMPLETO =
+            "Se debe completar la información de la columna 'Especificar' para los criterios seleccionados";
 
     /** Longitud máxima del "Especificar" de texto libre (columna de 2000). */
     public static final int LONGITUD_MAXIMA_TEXTO = 2000;
@@ -153,10 +154,11 @@ public class ElegibilidadCalificacion {
         }
         List<String> codigos = codigosSeleccionados(respuesta);
         Map<String, String> opciones = vigentes.opciones(criterio);
-        codigos.stream()
+        detalles.addAll(codigos.stream()
                 .filter(codigo -> !opciones.containsKey(codigo))
-                .forEach(codigo -> detalles.add(detalle(respuesta,
-                        "La opción '" + codigo + "' no pertenece al catálogo del criterio.")));
+                .map(codigo -> detalle(respuesta,
+                        "La opción '" + codigo + "' no pertenece al catálogo del criterio."))
+                .toList());
         if (codigos.size() > 1 && !Boolean.TRUE.equals(criterio.getPermiteSeleccionMultiple())) {
             detalles.add(detalle(respuesta, "El criterio admite una sola opción en \"Especificar\"."));
         }

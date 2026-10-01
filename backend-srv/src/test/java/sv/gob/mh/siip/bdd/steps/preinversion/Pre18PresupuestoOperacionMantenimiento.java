@@ -37,11 +37,11 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** Steps de integración del backend para las reglas ejecutables de CU-PRE-18. */
 public class Pre18PresupuestoOperacionMantenimiento {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private final InstitucionRepository instituciones;
     private final UnidadEjecutoraRepository unidades;
@@ -221,7 +221,7 @@ public class Pre18PresupuestoOperacionMantenimiento {
 
     private void autenticar(String usuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, usuario);
+        AutenticacionDePrueba.autenticar(usuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

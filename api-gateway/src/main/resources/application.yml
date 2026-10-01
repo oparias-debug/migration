@@ -37,8 +37,8 @@ spring:
           filters:
             - RemoveRequestHeader=Cookie
             - RewritePath=/back/(?<segment>.*), /${segment}
-        # admin-srv y siipsafi-srv, a diferencia de backend-srv, validan el JWT por su cuenta
-        # (plantilla DINAFI): el token del cliente les llega tal cual en Authorization.
+        # Los tres servicios validan el JWT por su cuenta: TokenRelay (default-filters) les pasa
+        # el token del cliente tal cual en Authorization.
         - id: admin-srv
           uri: ${ADMIN_SRV_URL:http://admin-srv:8080}
           predicates:

@@ -110,6 +110,7 @@ import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 import sv.gob.mh.siip.security.ActorContexto;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Steps BDD de CU-PRE-24 "Viabilidad" (HU-PRE-24-01 solicitar, HU-PRE-24-02 enviar comentarios,
@@ -127,7 +128,6 @@ import sv.gob.mh.siip.security.ActorContexto;
  */
 public class Pre24Viabilidad {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
 
     private static final String BOTON_SOLICITAR = "Solicitar Viabilidad";
@@ -1081,7 +1081,7 @@ public class Pre24Viabilidad {
 
     private static void autenticar(Usuario usuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, usuario.getNombreUsuario());
+        AutenticacionDePrueba.autenticar(usuario.getNombreUsuario());
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

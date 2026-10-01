@@ -25,6 +25,7 @@ import sv.gob.mh.siip.model.preinversion.dto.AvanceFinancieroPAPResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.CuatrimestreDto;
 import sv.gob.mh.siip.model.preinversion.dto.GuardarAvanceEstudioRequestDto;
 import sv.gob.mh.siip.model.preinversion.service.AvanceFinancieroPapService;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-32-consultar.feature (RN-A.c). Solo lectura para Coordinador PRE, Coordinador PRO, Técnico
@@ -35,7 +36,6 @@ import sv.gob.mh.siip.model.preinversion.service.AvanceFinancieroPapService;
  */
 public class Pre32Consultar {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final int ANIO = 2028;
 
     private final InstitucionRepository institucionRepository;
@@ -95,7 +95,7 @@ public class Pre32Consultar {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

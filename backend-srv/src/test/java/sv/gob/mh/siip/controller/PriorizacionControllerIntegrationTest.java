@@ -56,6 +56,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Pruebas de integración HTTP de CU-PRE-26.5 "Priorización": recorren el contrato
@@ -68,7 +69,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 @Transactional
 class PriorizacionControllerIntegrationTest {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final String BASE = "/proyectos/{proyectoId}/priorizacion";
     private static final String PRE = BASE + "/calificacion-pre";
     private static final String SYMP = BASE + "/calificacion-symp";
@@ -136,13 +136,13 @@ class PriorizacionControllerIntegrationTest {
     @Test
     @DisplayName("Sin OT favorable, proyecto inexistente o rol sin acceso: 409, 404 y 403")
     void rechazaElAccesoSinFiltroHabilitanteOSinRol() throws Exception {
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoPre))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoPre)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath(CODIGO).value("FILTRO_HABILITANTE_INCOMPLETO"));
-        mockMvc.perform(get(BASE, Long.MAX_VALUE).header(HEADER_USUARIO, tecnicoPre))
+        mockMvc.perform(get(BASE, Long.MAX_VALUE).with(AutenticacionDePrueba.como(tecnicoPre)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath(CODIGO).value("PROYECTO_NO_ENCONTRADO"));
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isForbidden());
     }
 
@@ -150,7 +150,7 @@ class PriorizacionControllerIntegrationTest {
     @DisplayName("Técnico PRE: guardar, validaciones de la matriz, calificar, bloqueo y habilitación de ajustes")
     void calificacionDeLosCriteriosUnoACuatro() throws Exception {
         emitirOtFavorable();
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoPre))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.criterios", hasSize(5)))
                 .andExpect(jsonPath("$.criterios[0].subcriterios", hasSize(4)))
@@ -175,14 +175,14 @@ class PriorizacionControllerIntegrationTest {
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath(CODIGO).value("CALIFICACION_INCOMPLETA"))
                 .andExpect(jsonPath("$.mensaje").value("Error. Debe seleccionar un puntaje para cada subcriterio"));
-        mockMvc.perform(post(PRE + REVISION, proyecto.getId()).header(HEADER_USUARIO, coordinadorPre))
+        mockMvc.perform(post(PRE + REVISION, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorPre)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath(CODIGO).value("CALIFICACION_NO_ENVIADA"));
         calificar(put(SYMP, proyecto.getId()), tecnicoSymp, Map.of("5.1", "3"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath(CODIGO).value("CALIFICACION_PRE_PENDIENTE"));
         // Sin enviar, la habilitación de ajustes no cambia nada.
-        mockMvc.perform(post(PRE + AJUSTES, proyecto.getId()).header(HEADER_USUARIO, coordinadorPre))
+        mockMvc.perform(post(PRE + AJUSTES, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(ESTADO_PRE).value("PENDIENTE"));
 
@@ -193,11 +193,11 @@ class PriorizacionControllerIntegrationTest {
         calificar(put(PRE, proyecto.getId()), tecnicoPre, Map.of("1.1", "2"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath(CODIGO).value("CALIFICACION_BLOQUEADA"));
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, coordinadorPre))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accionesDisponibles.priorizacionRevisada.habilitada").value(true))
                 .andExpect(jsonPath("$.accionesDisponibles.habilitarCalificacionPrioridad.habilitada").value(true));
-        mockMvc.perform(post(PRE + AJUSTES, proyecto.getId()).header(HEADER_USUARIO, coordinadorPre))
+        mockMvc.perform(post(PRE + AJUSTES, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accionesDisponibles.habilitarCalificacionPrioridad.habilitada").value(false));
         calificar(put(PRE, proyecto.getId()), tecnicoPre, Map.of("1.1", "2"))
@@ -212,7 +212,7 @@ class PriorizacionControllerIntegrationTest {
         enviarYRevisar(PRE, tecnicoPre, coordinadorPre, todos(SUBCRITERIOS_PRE, "5"))
                 .andExpect(jsonPath(ESTADO_PRE).value(REVISADA))
                 .andExpect(jsonPath("$.resultado").doesNotExist());
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoSymp))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoSymp)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(CALIFICABLES, contains(5)));
         calificar(put(SYMP, proyecto.getId()), tecnicoSymp, Map.of("5.1", "4"))
@@ -223,15 +223,15 @@ class PriorizacionControllerIntegrationTest {
 
         // El Coordinador PRE reabre los criterios 1 a 4 antes de la revisión del criterio 5: la priorización
         // se completa cuando vuelva a revisarlos.
-        mockMvc.perform(post(PRE + AJUSTES, proyecto.getId()).header(HEADER_USUARIO, coordinadorPre))
+        mockMvc.perform(post(PRE + AJUSTES, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorPre)))
                 .andExpect(status().isOk());
         calificar(post(PRE + ENVIO, proyecto.getId()), tecnicoPre, todos(SUBCRITERIOS_PRE, "5"))
                 .andExpect(status().isOk());
-        mockMvc.perform(post(SYMP + REVISION, proyecto.getId()).header(HEADER_USUARIO, coordinadorSymp))
+        mockMvc.perform(post(SYMP + REVISION, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorSymp)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(ESTADO_SYMP).value(REVISADA))
                 .andExpect(jsonPath("$.resultado").doesNotExist());
-        mockMvc.perform(post(PRE + REVISION, proyecto.getId()).header(HEADER_USUARIO, coordinadorPre))
+        mockMvc.perform(post(PRE + REVISION, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultado.prioridadProyecto").value(100.0))
                 .andExpect(jsonPath("$.resultado.categoriaPriorizacion").value("PRIORIZADO_PARA_PROGRAMACION"))
@@ -239,7 +239,7 @@ class PriorizacionControllerIntegrationTest {
                 .andExpect(jsonPath("$.resultado.puntajesCriterios[3].puntaje").value(25.0))
                 .andExpect(jsonPath("$.resultado.completa").value(true));
 
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, jefeDgi))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(jefeDgi)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(CALIFICABLES, empty()))
                 .andExpect(jsonPath("$.accionesDisponibles.guardar.visible").value(false))
@@ -247,7 +247,7 @@ class PriorizacionControllerIntegrationTest {
         calificar(put(SYMP, proyecto.getId()), jefeDgi, Map.of("5.1", "1"))
                 .andExpect(status().isForbidden());
 
-        mockMvc.perform(post(SYMP + AJUSTES, proyecto.getId()).header(HEADER_USUARIO, coordinadorSymp))
+        mockMvc.perform(post(SYMP + AJUSTES, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorSymp)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.calificacionSymp.edicionHabilitada").value(true));
         enviarYRevisar(SYMP, tecnicoSymp, coordinadorSymp, todos(SUBCRITERIOS_SYMP, "0"))
@@ -258,7 +258,7 @@ class PriorizacionControllerIntegrationTest {
     private ResultActions enviarYRevisar(String tramo, String tecnico, String coordinador,
             Map<String, String> calificaciones) throws Exception {
         calificar(post(tramo + ENVIO, proyecto.getId()), tecnico, calificaciones).andExpect(status().isOk());
-        return mockMvc.perform(post(tramo + REVISION, proyecto.getId()).header(HEADER_USUARIO, coordinador))
+        return mockMvc.perform(post(tramo + REVISION, proyecto.getId()).with(AutenticacionDePrueba.como(coordinador)))
                 .andExpect(status().isOk());
     }
 
@@ -268,7 +268,7 @@ class PriorizacionControllerIntegrationTest {
         List<Map<String, String>> items = new ArrayList<>();
         calificaciones.forEach((numero, valor) -> items.add(Map.of("subcriterioNumero", numero, "calificacion",
                 valor)));
-        return mockMvc.perform(peticion.header(HEADER_USUARIO, usuario)
+        return mockMvc.perform(peticion.with(AutenticacionDePrueba.como(usuario))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of("calificaciones", items))));
     }

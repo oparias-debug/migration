@@ -41,16 +41,19 @@ public class CatalogoRepositoryImpl implements CatalogoRepository {
 
     @Override
     public List<Catalogo> listarHijos(String codigoPadre) {
-        return jpa.findByCatalogoPadreCodigoOrderByCodigoAsc(codigoPadre).stream()
+        return jpa.findByCatalogoPadre_CodigoOrderByCodigoAsc(codigoPadre).stream()
                 .map(CatalogoPersistenceMapper::aModelo)
                 .toList();
     }
 
+    /** El padre llega por código (la existencia ya la verificó el caso de uso) y se enlaza por id. */
     @Override
     public Catalogo guardar(Catalogo catalogo) {
         CatalogoEntity entidad = catalogo.getId() == null ? new CatalogoEntity()
                 : jpa.findById(catalogo.getId()).orElseThrow();
-        CatalogoPersistenceMapper.copiar(catalogo, entidad);
+        String codigoPadre = catalogo.getCatalogoPadreCodigo();
+        CatalogoEntity padre = codigoPadre == null ? null : jpa.findByCodigo(codigoPadre).orElseThrow();
+        CatalogoPersistenceMapper.copiar(catalogo, entidad, padre);
         return CatalogoPersistenceMapper.aModelo(jpa.saveAndFlush(entidad));
     }
 }

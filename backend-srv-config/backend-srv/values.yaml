@@ -23,8 +23,10 @@ fullnameOverride: "backend-srv"
 
 containerPort: 8080
 
+# Sin Route: backend-srv no se publica fuera del cluster. Solo lo invoca api-gateway, por el Service
+# (ClusterIP). Decisión de seguridad del equipo: no habilitarla en ningún ambiente.
 route:
-  enabled: true
+  enabled: false
   name: backend-srv 
   prefix: "backend-srv"
 
@@ -300,7 +302,11 @@ verificacion:
   # CORS, asi que sale correcto por construccion. NO se deduce a ojo: hacerlo fallo en 4
   # de 8 servicios ya existentes, que viven en namespaces distintos, y una URL equivocada
   # deja la verificacion colgada 900 s antes de rendirse.
-  baseUrl: "https://backend-srv-mh-dev-dgicp-siip2.apps.gcp-op-desa.cloud.mh.gob.sv"
+  # Vacía a propósito: con route.enabled: false no hay URL pública que verificar, y apuntar a
+  # una que no responde cuelga la verificación 900 s. Cuando api-gateway esté desplegado en la
+  # entidad (hoy no tiene repo ni -config), la verificación debe pasar por él.
+  baseUrl: ""
+  # Antes: "https://backend-srv-mh-dev-dgicp-siip2.apps.gcp-op-desa.cloud.mh.gob.sv"
   # Emisor del token: el authentication-service del marco, que hace de fachada del
   # Keycloak del ambiente. Mismo host que el resto de URLs del marco de este fichero.
   # OJO con el path: /oidc/realm/ en SINGULAR. El plural devuelve 404.

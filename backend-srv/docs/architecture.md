@@ -13,7 +13,7 @@ sv.gob.mh.siip
 ├── config/                      # Beans, OpenAPI (springdoc), manejo global de errores, seed de datos dev
 ├── controller/                  # Controladores REST (uno por caso de uso / recurso)
 ├── exception/                   # Excepciones de dominio
-├── security/                    # ActorContexto (claims JWT), AuditorAwareImpl (JPA auditing)
+├── security/                    # SecurityConfig (valida el JWT), ActorContexto, AuditorAwareImpl
 └── model/
     ├── administracion/          # domain, enums, mapper, repository, service
     ├── common/                  # domain, enums, repository (p.ej. Auditable)

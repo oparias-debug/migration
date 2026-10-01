@@ -78,7 +78,7 @@ public class AdmModificarCatalogo {
         CatalogoEntity catalogo = fixtures.catalogo(codigo);
         switch (descriptor) {
             case "nombre" -> assertThat(catalogo.getNombre()).isEqualTo(NOMBRE_NUEVO);
-            case "padre" -> assertThat(catalogo.getCatalogoPadreCodigo()).isEqualTo(PADRE_NUEVO);
+            case "padre" -> assertThat(fixtures.codigoPadre(codigo)).isEqualTo(PADRE_NUEVO);
             case "active" -> assertThat(catalogo.getEstado()).isEqualTo(EstadoVigencia.INACTIVE);
             default -> {
                 assertThat(catalogo.getFechaDesde()).isEqualTo(fromDateSolicitada);

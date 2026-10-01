@@ -33,13 +33,30 @@ class CatalogoPersistenceMapperTest {
                 List.of(new CampoDefinicion(10L, "codigo", TipoCampo.STRING, true, 1),
                         new CampoDefinicion(99L, "nombre", TipoCampo.STRING, false, 2)));
 
-        CatalogoPersistenceMapper.copiar(modelo, entidad);
+        CatalogoPersistenceMapper.copiar(modelo, entidad, null);
 
         assertThat(entidad.getCampos()).hasSize(2);
         assertThat(entidad.getCampos().get(0)).isSameAs(existente);
         assertThat(entidad.getCampos().get(1).getId()).isNull();
         assertThat(entidad.getCampos().get(1).getNombre()).isEqualTo("nombre");
         assertThat(entidad.getCampos().get(1).getCatalogo()).isSameAs(entidad);
+    }
+
+    @Test
+    @DisplayName("Regla 15: el padre se enlaza por su entidad (id) y el modelo lo recibe por código")
+    void enlazaElCatalogoPadrePorId() {
+        CatalogoEntity padre = new CatalogoEntity();
+        padre.setId(5L);
+        padre.setCodigo("REGION");
+        CatalogoEntity entidad = new CatalogoEntity();
+        Catalogo modelo = new Catalogo(null, "DEPARTAMENTO", "Departamento", "REGION",
+                new Periodo(EstadoVigencia.ACTIVE, null, null),
+                List.of(new CampoDefinicion(null, "codigo", TipoCampo.STRING, true, 1)));
+
+        CatalogoPersistenceMapper.copiar(modelo, entidad, padre);
+
+        assertThat(entidad.getCatalogoPadre()).isSameAs(padre);
+        assertThat(CatalogoPersistenceMapper.aModelo(entidad).getCatalogoPadreCodigo()).isEqualTo("REGION");
     }
 
     @Test

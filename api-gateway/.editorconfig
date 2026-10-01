@@ -1,0 +1,7 @@
+root = true
+
+# Sonar de la entidad (java:S1120): indentación de 2 espacios.
+[*.java]
+indent_style = space
+indent_size = 2
+max_line_length = 120

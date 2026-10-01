@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +38,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-01-responder-observaciones.feature deja explicitamente sin escenario el ciclo
@@ -117,7 +119,13 @@ class SegundaRondaObservacionesTest {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("X-Usuario", nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+    }
+
+    /** autenticarComo() deja el usuario en el hilo: se limpia para que no lo herede la siguiente prueba. */
+    @AfterEach
+    void limpiarAutenticacion() {
+        AutenticacionDePrueba.limpiar();
     }
 }

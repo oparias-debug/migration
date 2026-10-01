@@ -2,6 +2,7 @@ package sv.gob.mh.siip.controller;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -67,7 +69,6 @@ class AnalisisAmbientalControllerTest {
     @MockitoBean
     private AnalisisAmbientalService analisisAmbientalService;
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private Proyecto proyecto;
     Usuario usuarioAuthenticado;
 
@@ -87,6 +88,7 @@ class AnalisisAmbientalControllerTest {
         given(analisisAmbientalService.obtenerAnalisisAmbiental(idProyecto)).willReturn(mockDto);
 
         mockMvc.perform(get("/proyectos/{idProyecto}/analisis-ambiental", idProyecto) // Ajusta tu ruta base real
+                        .with(AutenticacionDePrueba.como("tecnico.urp"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idProyecto").value(idProyecto))
@@ -187,7 +189,7 @@ class AnalisisAmbientalControllerTest {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 
@@ -258,5 +260,9 @@ class AnalisisAmbientalControllerTest {
         return fila;
     }
 
-
+    /** autenticarComo() deja el usuario en el hilo: se limpia para que no lo herede la siguiente prueba. */
+    @AfterEach
+    void limpiarAutenticacion() {
+        AutenticacionDePrueba.limpiar();
+    }
 }

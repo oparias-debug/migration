@@ -57,11 +57,11 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** CU-PRE-32-generar-reporte.feature (SF-3, Anexo A.6). */
 public class Pre32GenerarReporte {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
     private static final int ANIO = 2028;
     private static final String NOMBRE_INSTITUCION = "Institucion Reporte 32 (BDD)";
@@ -243,7 +243,7 @@ public class Pre32GenerarReporte {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

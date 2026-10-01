@@ -14,7 +14,7 @@ mano.
 
 ```
 src/main/resources/openapi/
-├── administracion/        # CU-ADM-01 a CU-ADM-04
+├── administracion/        # CU-ADM-02 y CU-ADM-03 (CU-ADM-01 y CU-ADM-04 viven en admin-srv)
 └── preinversion/          # CU-PRE-01 ... CU-PRE-33, un .yaml por CU
 ```
 
@@ -85,8 +85,7 @@ Los `.feature` (Gherkin en español) son la especificación funcional de cada CU
 
 ```
 src/test/resources/features/
-├── adm/      # CU-ADM-*
-└── pre/      # CU-PRE-*
+└── pre/      # CU-PRE-* (los de CU-ADM-01 y CU-ADM-04 están en admin-srv)
 src/test/java/sv/gob/mh/siip/bdd/
 ├── RunCucumberTest.java            # runner; no se toca al agregar features
 ├── CucumberSpringConfiguration.java # @SpringBootTest sobre H2
@@ -136,7 +135,12 @@ negocio.
 
 `backend-srv` no usa el pilar de auditoría remota del marco. Tiene auditoría local:
 `AuditoriaAspect` (AOP) registra en la entidad `LogAuditoria`, y `AuditorAwareImpl` alimenta
-`@EnableJpaAuditing` con el usuario del header `X-Usuario` (ver `ActorContexto`).
+`@EnableJpaAuditing` con el usuario del JWT (ver `ActorContexto`). `AuditoriaAspect` registra los
+headers de cada petición con `Authorization` y `Cookie` enmascarados.
+
+En las pruebas, el usuario se simula con `AutenticacionDePrueba`: `.with(AutenticacionDePrueba.como(usuario))`
+en MockMvc, o `AutenticacionDePrueba.autenticar(usuario)` en los steps que llaman a los servicios
+directamente (un hook de Cucumber limpia el contexto al terminar cada escenario).
 
 ## Análisis estático (SonarQube)
 

@@ -98,11 +98,15 @@ Igual que el código: por revisión en Gerrit sobre la rama del ambiente
   cómo (scripts DDL entregados al DBA o una herramienta de migraciones).
 - **Flowable en Oracle.** Su esquema separado debe provisionarlo el DBA como otro
   usuario/esquema, con grants cruzados hacia el `*_POOL`.
-- **Route pública.** `route.enabled: true` publica backend-srv fuera del cluster, pero
-  backend-srv **no tiene seguridad propia**: confía en que solo api-gateway lo invoque y toma
-  el usuario del header `X-Usuario`. Con la Route abierta, cualquiera puede llamarlo sin
-  token. Hoy la usa `verificacion.baseUrl` (karate-verify); hay que decidir con infra si se
-  deshabilita, se restringe o se cambia la verificación para que pase por api-gateway.
+- **Sin Route.** `route.enabled: false` por decisión de seguridad: backend-srv no se publica
+  fuera del cluster y solo lo invoca api-gateway, por el Service (`ClusterIP`). Además valida el
+  JWT por su cuenta (`SECURITY_URL_KEYCLOAK` y `SECURITY_REALM` de este ConfigMap).
+  `verificacion.baseUrl` queda vacía, así que karate-verify no verifica nada (lo dice en el log)
+  hasta que api-gateway esté desplegado en la entidad y la verificación pase por él.
+- **Solo api-gateway, también dentro del cluster.** Sin Route nadie llega desde afuera, pero
+  otro pod del cluster sí puede llamar al Service. Para que el único cliente sea api-gateway
+  falta una `NetworkPolicy` que solo admita su tráfico; el chart no trae plantilla y depende de
+  dónde se despliegue api-gateway (namespace y labels).
 - **Recursos.** `limits.memory: 512Mi` y la `startupProbe` (~65 s) son los de la plantilla.
   Spring Boot + Hibernate + Flowable puede superar ambos; validar en el primer despliegue.
 - **URLs `<...>`** de los overlays: confirmar con infra.

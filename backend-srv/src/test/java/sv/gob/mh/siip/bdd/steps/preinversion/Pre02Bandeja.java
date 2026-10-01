@@ -24,6 +24,7 @@ import sv.gob.mh.siip.model.preinversion.repository.*;
 import sv.gob.mh.siip.model.preinversion.service.*;
 import sv.gob.mh.siip.model.programacion.repository.*;
 import sv.gob.mh.siip.security.ActorContexto;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** Persistencia y servicios reales; interacciones de pantalla se verifican además en Vitest. */
 public class Pre02Bandeja {
@@ -85,7 +86,7 @@ public class Pre02Bandeja {
         return usuarios.save(Usuario.builder().nombreUsuario(nombre).nombreCompleto(nombre).rol(rol).activo(true).build());
     }
     private void autenticar(Usuario u) {
-        var request = new MockHttpServletRequest(); request.addHeader("X-Usuario", u.getNombreUsuario());
+        var request = new MockHttpServletRequest(); AutenticacionDePrueba.autenticar(u.getNombreUsuario());
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
     private SolicitudPreinversion actual() { return solicitudes.findById(solicitud.getId()).orElseThrow(); }

@@ -148,6 +148,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.security.ActorContexto;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Steps BDD de CU-PRE-26 "Opinión Técnica" (HU-PRE-26-01 a HU-PRE-26-10).
@@ -166,7 +167,6 @@ import sv.gob.mh.siip.security.ActorContexto;
  */
 public class Pre26OpinionTecnica {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
 
     private static final String OPINION_TECNICA = "Opinión Técnica";
@@ -1801,7 +1801,7 @@ public class Pre26OpinionTecnica {
 
     private static void autenticar(Usuario usuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, usuario.getNombreUsuario());
+        AutenticacionDePrueba.autenticar(usuario.getNombreUsuario());
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

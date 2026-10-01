@@ -34,6 +34,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-05-consultar.feature. Igual criterio que Pre04ConsultarDescargar para
@@ -45,7 +46,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre05Consultar {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
@@ -190,7 +190,7 @@ public class Pre05Consultar {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

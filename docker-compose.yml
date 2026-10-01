@@ -6,8 +6,7 @@ services:
       context: ./backend-srv
       dockerfile: Dockerfile.local
     container_name: siip-backend-srv
-    # Sin puerto publicado al host: backend-srv no tiene seguridad propia (confía en
-    # api-gateway/Keycloak), así que solo debe ser alcanzable dentro de microred.
+    # Sin puerto publicado al host: se llega por api-gateway (/back/**).
     expose:
       - "8081"
     environment:
@@ -18,6 +17,9 @@ services:
       DB_SCHEMA: ${DB_SCHEMA}
       GATEWAY_URL: ${GATEWAY_URL}
       SPRING_PROFILES_ACTIVE: dev
+      # Valida el JWT que reenvía api-gateway contra el Keycloak local, como admin-srv.
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
     networks:
       - microred
     depends_on:
@@ -42,15 +44,38 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${DB_DRIVER_CLASS_NAME}
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
-      # En la entidad las tablas de CU-ADM-01 (catálogos) las crean los scripts de admin-srv/sql
-      # (ddl-auto: none). En local no se corren: Hibernate las crea vacías en cada arranque, como
-      # hace backend-srv con las suyas.
-      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      # Las tablas de CU-ADM-01 (catálogos) y CU-ADM-04 (calendarios) no las crea Hibernate: en la
+      # entidad, los scripts Oracle de admin-srv/sql; en local, admin-srv-init antes del primer
+      # arranque, junto con la carga inicial de catálogos. validate solo comprueba que coincidan con
+      # las entidades, así que los datos sobreviven a los reinicios de admin-srv.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       # Misma plantilla que siipsafi-srv: ver los comentarios de ese servicio.
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
       CONFIG_SERVICE_URL: ""
       REMOTE_LOGGER_ENABLED: "false"
+    networks:
+      - microred
+    depends_on:
+      admin-srv-init:
+        condition: service_completed_successfully
+
+  # Esquema de admin-srv y carga inicial de catálogos en la base local. Corre y termina antes de
+  # cada arranque de admin-srv, pero solo actúa la primera vez (cuando catalogo está vacío); en los
+  # siguientes sale sin tocar nada. Ver postgresql/init-catalogos.sh.
+  admin-srv-init:
+    image: postgres:17
+    container_name: siip-admin-srv-init
+    entrypoint: ["bash", "/init-catalogos.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${DB_USER}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_DATABASE}
+    volumes:
+      - ./postgresql/init-catalogos.sh:/init-catalogos.sh:ro
+      - ./admin-srv/sql:/admin-srv-sql:ro
+    restart: "no"
     networks:
       - microred
     depends_on:

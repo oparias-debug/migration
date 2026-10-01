@@ -47,11 +47,11 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** CU-PRE-32-buscar-avance.feature (RN-A.a, RN-B.a). */
 public class Pre32BuscarAvance {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
     private static final int ANIO = 2028;
 
@@ -235,7 +235,7 @@ public class Pre32BuscarAvance {
                 .montoEjecutado(BigDecimal.valueOf(1000)).fechaRegistro(LocalDateTime.now(ZONA)).build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

@@ -129,6 +129,10 @@ export interface CatalogRecordFieldValuesResponse {
      * Valor KEY del registro, para correlacionar los elementos del listado.
      */
     'keyValue': string;
+    /**
+     * Valor KEY del registro padre en el catálogo padre, o `null` (Regla 23).
+     */
+    'parentRecord'?: string | null;
     'active': ActiveStatus;
     'values': Array<CatalogRecordValueResponse>;
 }

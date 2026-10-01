@@ -3,7 +3,9 @@ package sv.gob.mh.siip.model.preinversion.service;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -33,6 +35,7 @@ public class AlertaEliminacionAutomaticaScheduler {
     private static final int MESES_PARA_ALERTA = 3;
     private static final int DIAS_HABILES_PARA_ARCHIVAR = 5;
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
+    private static final Set<DayOfWeek> FIN_DE_SEMANA = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
 
     private final SolicitudPreinversionRepository solicitudRepository;
     private final ProyectoRepository proyectoRepository;
@@ -119,8 +122,7 @@ public class AlertaEliminacionAutomaticaScheduler {
         LocalDateTime limite = hasta.toLocalDate().atStartOfDay();
         while (cursor.isBefore(limite)) {
             cursor = cursor.plusDays(1);
-            if (!DayOfWeek.SATURDAY.equals(cursor.getDayOfWeek())
-                && !DayOfWeek.SUNDAY.equals(cursor.getDayOfWeek())) {
+            if (!FIN_DE_SEMANA.contains(cursor.getDayOfWeek())) {
                 diasHabiles++;
             }
         }

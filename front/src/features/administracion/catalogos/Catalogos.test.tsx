@@ -519,28 +519,32 @@ describe('registro padre al crear en un catálogo jerárquico', () => {
     );
   });
 
-  it('presenta el catálogo padre como lista de selección', async () => {
+  it('ofrece los registros del catálogo padre', async () => {
     montarFicha();
-    expect(await screen.findByText('Cundinamarca')).toBeInTheDocument();
-    expect(screen.getByText('Boyacá')).toBeInTheDocument();
-    // Es para elegir, no para administrar: ni estado ni botones de edición.
-    expect(screen.getByLabelText('Buscar en DEPARTAMENTO')).toBeInTheDocument();
+    const padre = (await screen.findByLabelText(/Registro padre en DEPARTAMENTO/)) as HTMLSelectElement;
+    await waitFor(() => expect(within(padre).getByRole('option', { name: /Cundinamarca/ })).toBeInTheDocument());
+    expect(within(padre).getByRole('option', { name: /Boyacá/ })).toBeInTheDocument();
   });
 
   it('se puede acotar la lista buscando', async () => {
     montarFicha();
-    await screen.findByText('Boyacá');
+    const inicial = (await screen.findByLabelText(/Registro padre en DEPARTAMENTO/)) as HTMLSelectElement;
+    await waitFor(() => expect(within(inicial).getByRole('option', { name: /Boyacá/ })).toBeInTheDocument());
 
-    fireEvent.change(screen.getByLabelText('Buscar en DEPARTAMENTO'), { target: { value: 'cund' } });
+    fireEvent.change(screen.getByLabelText('Buscar el registro padre'), { target: { value: 'cund' } });
 
-    expect(screen.getByText('Cundinamarca')).toBeInTheDocument();
-    expect(screen.queryByText('Boyacá')).not.toBeInTheDocument();
+    const padre = screen.getByLabelText(/Registro padre en DEPARTAMENTO/) as HTMLSelectElement;
+    expect(within(padre).getByRole('option', { name: /Cundinamarca/ })).toBeInTheDocument();
+    expect(within(padre).queryByRole('option', { name: /Boyacá/ })).not.toBeInTheDocument();
   });
 
   it('crear el distrito manda el departamento elegido como registro padre', async () => {
     montarFicha();
-    // Se elige pulsando la fila.
-    fireEvent.click(await screen.findByRole('button', { name: 'CUN' }));
+    // El desplegable se pinta antes de que lleguen los registros del padre.
+    const padre = (await screen.findByLabelText(/Registro padre en DEPARTAMENTO/)) as HTMLSelectElement;
+    await waitFor(() => expect(within(padre).getByRole('option', { name: /Cundinamarca/ })).toBeInTheDocument());
+
+    fireEvent.change(padre, { target: { value: 'CUN' } });
     fireEvent.change(screen.getByLabelText('codigo*'), { target: { value: 'GIR' } });
     fireEvent.change(screen.getByLabelText('descripcion'), { target: { value: 'Girardot' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar registro' }));
@@ -564,7 +568,7 @@ describe('registro padre al crear en un catálogo jerárquico', () => {
   // El contrato lo exige cuando el catálogo cuelga de otro (Reglas 8 y 23).
   it('sin elegir padre no se manda nada', async () => {
     montarFicha();
-    await screen.findByText('Cundinamarca');
+    await screen.findByLabelText(/Registro padre en DEPARTAMENTO/);
 
     fireEvent.change(screen.getByLabelText('codigo*'), { target: { value: 'GIR' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar registro' }));
@@ -573,10 +577,37 @@ describe('registro padre al crear en un catálogo jerárquico', () => {
     expect(crearRegistro).not.toHaveBeenCalled();
   });
 
+  it('la tabla de registros muestra el registro padre de cada uno', async () => {
+    const departamentos = buscarListaRegistros.getMockImplementation()!;
+    buscarListaRegistros.mockImplementation((p: { code: string }) =>
+      p.code === 'TIPO-DOC'
+        ? Promise.resolve({
+            data: [
+              {
+                keyValue: 'GIR',
+                parentRecord: 'CUN',
+                active: 'ACTIVE',
+                values: [
+                  { field: 'codigo', qualifier: 'KEY', valor: 'GIR' },
+                  { field: 'descripcion', qualifier: 'FIELD', valor: 'Girardot' },
+                ],
+              },
+            ],
+          })
+        : departamentos(p),
+    );
+    montarFicha();
+
+    expect(await screen.findByRole('columnheader', { name: 'Registro padre en DEPARTAMENTO' })).toBeInTheDocument();
+    const fila = (await screen.findByRole('cell', { name: 'Girardot' })).closest('tr') as HTMLElement;
+    // Con los registros del padre ya cargados, la celda lleva también su descripción.
+    await waitFor(() => expect(within(fila).getByRole('cell', { name: 'CUN — Cundinamarca' })).toBeInTheDocument());
+  });
+
   it('un catálogo sin padre no pide registro padre', async () => {
     consultarCatalogoPorCodigo.mockResolvedValue({ data: { ...CATALOGO, parent: null } });
     montarFicha();
     await screen.findByRole('button', { name: 'Guardar registro' });
-    expect(screen.queryByText(/Registro padre en/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Registro padre/)).not.toBeInTheDocument();
   });
 });

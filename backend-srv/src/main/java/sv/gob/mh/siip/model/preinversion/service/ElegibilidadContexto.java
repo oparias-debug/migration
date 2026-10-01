@@ -64,7 +64,8 @@ public record ElegibilidadContexto(Usuario actor, Proyecto proyecto, Elegibilida
             return;
         }
         String mensaje = esReemision()
-                ? "La ficha de Elegibilidad está bloqueada; solo se habilita cuando la Opinión Técnica envía comentarios."
+                ? ("La ficha de Elegibilidad está bloqueada; solo se habilita cuando la Opinión Técnica "
+                        + "envía comentarios.")
                 : "La ficha de Elegibilidad solo se habilita cuando el proyecto está en estado \"Proyecto viable\".";
         throw new ConflictoEstadoException(FICHA_ELEGIBILIDAD_DESHABILITADA, mensaje);
     }

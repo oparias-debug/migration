@@ -2,6 +2,7 @@ package sv.gob.mh.siip.controller;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Pruebas de integración del controlador para el módulo de Análisis de Riesgo (CU-PRE-15).
@@ -74,7 +76,6 @@ class AnalisisRiesgoControllerTest {
     @Autowired
     private AnalisisRiesgoService analisisRiesgoService;
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private Proyecto proyecto;
     private String nombreUsuarioTecnico;
 
@@ -90,7 +91,7 @@ class AnalisisRiesgoControllerTest {
         crearUsuarioYProyecto();
 
         mockMvc.perform(get("/proyectos/{idProyecto}/analisis-riesgo", this.proyecto.getId())
-                        .header(HEADER_USUARIO, this.nombreUsuarioTecnico)
+                        .with(AutenticacionDePrueba.como(this.nombreUsuarioTecnico))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idProyecto").value(this.proyecto.getId()))
@@ -109,19 +110,21 @@ class AnalisisRiesgoControllerTest {
         Long idProyectoInexistente = this.proyecto.getId() + 1_000_000L;
 
         mockMvc.perform(get("/proyectos/{idProyecto}/analisis-riesgo", idProyectoInexistente)
-                        .header(HEADER_USUARIO, this.nombreUsuarioTecnico)
+                        .with(AutenticacionDePrueba.como(this.nombreUsuarioTecnico))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
 
     /**
-     * RN01: sin actor autenticado (sin header X-Usuario) el sistema debe rechazar con 401,
+     * RN01: sin actor autenticado (sin JWT) el sistema debe rechazar con 401,
      * no procesar la petición como si fuera anónima válida.
      */
     @Test
     @DisplayName("Debe retornar 401 al consultar el análisis de riesgo sin autenticación")
     void deberiaRetornar401SinAutenticacion() throws Exception {
         crearUsuarioYProyecto();
+        // crearUsuarioYProyecto() autentica al técnico; esta prueba necesita la petición sin JWT.
+        AutenticacionDePrueba.limpiar();
 
         mockMvc.perform(get("/proyectos/{idProyecto}/analisis-riesgo", this.proyecto.getId())
                         .contentType(MediaType.APPLICATION_JSON))
@@ -154,7 +157,7 @@ class AnalisisRiesgoControllerTest {
                 .build());
 
         mockMvc.perform(get("/proyectos/{idProyecto}/analisis-riesgo", this.proyecto.getId())
-                        .header(HEADER_USUARIO, nombreUsuarioAjeno)
+                        .with(AutenticacionDePrueba.como(nombreUsuarioAjeno))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
@@ -199,7 +202,7 @@ class AnalisisRiesgoControllerTest {
         requestDto.setFilas(List.of(riesgo1, riesgo2, riesgo3));
 
         mockMvc.perform(put("/proyectos/{idProyecto}/analisis-riesgo", this.proyecto.getId())
-                        .header(HEADER_USUARIO, this.nombreUsuarioTecnico)
+                        .with(AutenticacionDePrueba.como(this.nombreUsuarioTecnico))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
@@ -209,6 +212,9 @@ class AnalisisRiesgoControllerTest {
                 .andExpect(jsonPath("$.filas[1].calificacionRiesgo").value("MEDIO"))
                 .andExpect(jsonPath("$.filas[2].calificacionRiesgo").value("BAJO"));
 
+        // MockMvc limpia el SecurityContext del hilo al terminar la petición: la llamada directa al
+        // servicio necesita volver a autenticar.
+        AutenticacionDePrueba.autenticar(this.nombreUsuarioTecnico);
         AnalisisRiesgoDto analisisRiesgoEncontrado = analisisRiesgoService.obtenerAnalisisRiesgo(this.proyecto.getId());
 
         org.assertj.core.api.Assertions.assertThat(analisisRiesgoEncontrado.getFilas()).hasSize(3);
@@ -242,14 +248,14 @@ class AnalisisRiesgoControllerTest {
 
         // 1. Guardamos el estado con el riesgo crítico incompleto
         mockMvc.perform(put("/proyectos/{idProyecto}/analisis-riesgo", this.proyecto.getId())
-                        .header(HEADER_USUARIO, this.nombreUsuarioTecnico)
+                        .with(AutenticacionDePrueba.como(this.nombreUsuarioTecnico))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk());
 
         // 2. Intentamos avanzar a Análisis Legal, esperamos 400 con el mensaje literal de la RN06
         mockMvc.perform(post("/proyectos/{idProyecto}/analisis-riesgo/avance", this.proyecto.getId())
-                        .header(HEADER_USUARIO, this.nombreUsuarioTecnico)
+                        .with(AutenticacionDePrueba.como(this.nombreUsuarioTecnico))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensaje").value("Se requiere completar los campos obligatorios"));
@@ -306,7 +312,7 @@ class AnalisisRiesgoControllerTest {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 
@@ -325,5 +331,11 @@ class AnalisisRiesgoControllerTest {
         fila.setCostoAccionMitigacion(costoAccionMitigacion);
 
         return fila;
+    }
+
+    /** autenticarComo() deja el usuario en el hilo: se limpia para que no lo herede la siguiente prueba. */
+    @AfterEach
+    void limpiarAutenticacion() {
+        AutenticacionDePrueba.limpiar();
     }
 }

@@ -10,16 +10,19 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import sv.gob.mh.shared.enums.EstadoVigencia;
 
-/** Tabla CATALOGO: catálogos del catalogMaster (CU-ADM-01). DDL en {@code sql/V001__crear_tablas_catalogo.sql}. */
+/** Tabla CATALOGO: catálogos del catalogMaster (CU-ADM-01). DDL en {@code sql/V001} y {@code sql/V003}. */
 @Entity
 @Table(name = "CATALOGO")
 public class CatalogoEntity {
@@ -36,9 +39,10 @@ public class CatalogoEntity {
     @Column(name = "NOMBRE", nullable = false, length = 300)
     private String nombre;
 
-    /** Código del catálogo padre, sin relación JPA: solo referencia por código de negocio. */
-    @Column(name = "CATALOGO_PADRE_CODIGO", length = 100)
-    private String catalogoPadreCodigo;
+    /** Catálogo padre (Regla 15), enlazado por su id; {@code null} si no tiene. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_CATALOGO_PADRE")
+    private CatalogoEntity catalogoPadre;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ESTADO", nullable = false, length = 20)
@@ -78,12 +82,17 @@ public class CatalogoEntity {
         this.nombre = nombre;
     }
 
-    public String getCatalogoPadreCodigo() {
-        return catalogoPadreCodigo;
+    public CatalogoEntity getCatalogoPadre() {
+        return catalogoPadre;
     }
 
-    public void setCatalogoPadreCodigo(String catalogoPadreCodigo) {
-        this.catalogoPadreCodigo = catalogoPadreCodigo;
+    public void setCatalogoPadre(CatalogoEntity catalogoPadre) {
+        this.catalogoPadre = catalogoPadre;
+    }
+
+    /** Código del catálogo padre, que es como lo identifican el dominio y el contrato. */
+    public String getCatalogoPadreCodigo() {
+        return catalogoPadre == null ? null : catalogoPadre.getCodigo();
     }
 
     public EstadoVigencia getEstado() {

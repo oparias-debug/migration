@@ -21,6 +21,10 @@ spring:
     hibernate.ddl-auto: ${JPA_DDL_AUTO:validate}
     properties.hibernate.default_schema: ${DB_SCHEMA:public}
     show-sql: ${JPA_SHOW_SQL:false}
+  # JWT de Keycloak que reenvía api-gateway (ver security/SecurityConfig). Mismas variables que el
+  # ConfigMap del chart y que admin-srv; tiene que ser el mismo realm contra el que valida el
+  # gateway. El emisor se consulta en la primera petición, no al arrancar.
+  security.oauth2.resourceserver.jwt.issuer-uri: https://${SECURITY_URL_KEYCLOAK:keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv}/realms/${SECURITY_REALM:MHINTERNO}
 
 logging.level:
   root: ${LOG_LEVEL:INFO}

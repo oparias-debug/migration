@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -55,8 +57,6 @@ class AuthControllerTest {
 
     private static final String KEYCLOAK_TOKEN_URI =
             "http://localhost:8080/auth/realms/test/protocol/openid-connect/token";
-    private static final String FORMATO_BODY_LOGIN =
-            "client_id=%s&client_secret=%s&username=%s&password=%s&grant_type=password";
     private final String clientId = "test-client";
     private final String clientSecret = "test-secret";
 
@@ -80,7 +80,7 @@ class AuthControllerTest {
         when(webClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.contentType(any(MediaType.class))).thenReturn(requestBodySpec);
-        doReturn(requestHeadersSpec).when(requestBodySpec).bodyValue(anyString());
+        doReturn(requestHeadersSpec).when(requestBodySpec).body(any(BodyInserter.class));
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
     }
 
@@ -158,9 +158,8 @@ class AuthControllerTest {
 
         // Verificar que se llamó al WebClient
         verify(webClient).post();
-        verify(requestBodySpec).bodyValue(
-                String.format(FORMATO_BODY_LOGIN,
-                        clientId, clientSecret, "", "testpass"));
+        verify(requestBodySpec).body(any(BodyInserter.class));
+        assertEquals("", authController.formularioLogin(loginRequest).getFirst("username"));
     }
 
     @Test
@@ -186,9 +185,78 @@ class AuthControllerTest {
 
         // Verificar que se llamó al WebClient
         verify(webClient).post();
-        verify(requestBodySpec).bodyValue(
-                String.format(FORMATO_BODY_LOGIN,
-                        clientId, clientSecret, "testuser", ""));
+        verify(requestBodySpec).body(any(BodyInserter.class));
+        assertEquals("", authController.formularioLogin(loginRequest).getFirst("password"));
+    }
+
+    @Test
+    void login_CuandoKeycloakRechazaLasCredenciales_DeberiaRetornarUnauthorized() {
+        setupWebClientMocks();
+        WebClientResponseException rechazo = WebClientResponseException.create(
+                HttpStatus.UNAUTHORIZED.value(), "Unauthorized", null, null, null);
+        when(responseSpec.bodyToMono(TokenResponse.class)).thenReturn(Mono.error(rechazo));
+
+        StepVerifier.create(authController.login(new LoginRequest("testuser", "incorrecta")))
+                .expectErrorSatisfies(error -> {
+                    ResponseStatusException ex = (ResponseStatusException) error;
+                    assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+                    assertEquals(AuthController.CREDENCIALES_INVALIDAS, ex.getReason());
+                    assertEquals(rechazo, ex.getCause());
+                })
+                .verify();
+    }
+
+    @Test
+    void login_CuandoKeycloakRespondeBadRequest_DeberiaRetornarUnauthorized() {
+        // Keycloak responde 400 invalid_grant, p. ej., con la cuenta deshabilitada.
+        setupWebClientMocks();
+        when(responseSpec.bodyToMono(TokenResponse.class)).thenReturn(Mono.error(
+                WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "Bad Request", null, null, null)));
+
+        StepVerifier.create(authController.login(new LoginRequest("testuser", "testpass")))
+                .expectErrorSatisfies(error ->
+                        assertEquals(HttpStatus.UNAUTHORIZED, ((ResponseStatusException) error).getStatusCode()))
+                .verify();
+    }
+
+    @Test
+    void login_CuandoKeycloakFallaConError5xx_DeberiaPropagarloSinConvertirlo() {
+        setupWebClientMocks();
+        WebClientResponseException caida = WebClientResponseException.create(
+                HttpStatus.SERVICE_UNAVAILABLE.value(), "Service Unavailable", null, null, null);
+        when(responseSpec.bodyToMono(TokenResponse.class)).thenReturn(Mono.error(caida));
+
+        StepVerifier.create(authController.login(new LoginRequest("testuser", "testpass")))
+                .expectErrorMatches(caida::equals)
+                .verify();
+    }
+
+    @Test
+    void formularioLogin_ArmaLosCamposDelGrantPassword() {
+        MultiValueMap<String, String> formulario =
+                authController.formularioLogin(new LoginRequest("testuser", "testpass"));
+
+        assertEquals(List.of("grant_type", "username", "password", "client_id", "client_secret"),
+                List.copyOf(formulario.keySet()));
+        assertEquals("password", formulario.getFirst("grant_type"));
+        assertEquals("testuser", formulario.getFirst("username"));
+        assertEquals("testpass", formulario.getFirst("password"));
+        assertEquals(clientId, formulario.getFirst("client_id"));
+        assertEquals(clientSecret, formulario.getFirst("client_secret"));
+    }
+
+    @Test
+    void formularioLogin_CaracteresEspecialesNoAgreganCampos() {
+        // Antes se concatenaba sin codificar: este username agregaba un client_id propio y el
+        // password se partía en el '&'.
+        LoginRequest malicioso = new LoginRequest("u&client_id=otro", "a&b+c%d=e");
+
+        MultiValueMap<String, String> formulario = authController.formularioLogin(malicioso);
+
+        assertEquals(5, formulario.size());
+        assertEquals(List.of(clientId), formulario.get("client_id"));
+        assertEquals("u&client_id=otro", formulario.getFirst("username"));
+        assertEquals("a&b+c%d=e", formulario.getFirst("password"));
     }
 
     @Test

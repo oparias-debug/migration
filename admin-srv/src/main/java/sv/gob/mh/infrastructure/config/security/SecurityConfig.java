@@ -28,8 +28,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /** Rutas de CU-ADM-01, cuyo 401 lleva el schema {@code Error} de su contrato. */
+    /** Rutas de CU-ADM-01 y CU-ADM-04, cuyo 401 lleva el schema {@code Error} de su contrato. */
     private static final String RUTAS_CATALOGOS = "/api/v1/catalogos/**";
+    private static final String RUTAS_CALENDARIOS = "/api/v1/calendarios/**";
 
     @Value("${cors.allowed-origins:*}")
     private String allowedOrigins;
@@ -56,7 +57,6 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/info").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/v1/demo/security/publico").permitAll()
                 // Everything else requires JWT authentication
                 .anyRequest().authenticated()
             )
@@ -67,10 +67,12 @@ public class SecurityConfig {
             .build();
     }
 
-    /** El 401 estándar de Bearer, salvo en las rutas de catálogos, que responden con su contrato. */
+    /** El 401 estándar de Bearer, salvo en las rutas de catálogos y calendarios, que responden con su contrato. */
     private static AuthenticationEntryPoint authenticationEntryPoint(ObjectMapper objectMapper) {
         LinkedHashMap<RequestMatcher, AuthenticationEntryPoint> porRuta = new LinkedHashMap<>();
         porRuta.put(PathPatternRequestMatcher.withDefaults().matcher(RUTAS_CATALOGOS),
+                new CatalogosAuthenticationEntryPoint(objectMapper));
+        porRuta.put(PathPatternRequestMatcher.withDefaults().matcher(RUTAS_CALENDARIOS),
                 new CatalogosAuthenticationEntryPoint(objectMapper));
         DelegatingAuthenticationEntryPoint entryPoint = new DelegatingAuthenticationEntryPoint(porRuta);
         entryPoint.setDefaultEntryPoint(new BearerTokenAuthenticationEntryPoint());

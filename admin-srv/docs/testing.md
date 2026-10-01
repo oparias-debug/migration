@@ -12,12 +12,11 @@ ciclo revisa en cada cambio.
 src/test/
 ├── java/sv/gob/mh/
 │   ├── ApplicationTest.java                        # el contexto arranca
-│   ├── SecurityControllerTest.java                 # @SpringBootTest + MockMvc + jwt()
-│   ├── api/controller/SecurityControllerUnitTest.java
+│   ├── api/controller/catalogo/CatalogosSeguridadTest.java  # @SpringBootTest + MockMvc + jwt()
 │   ├── infrastructure/config/OpenApiConfigTest.java
 │   └── pruebas/{integration,smoke,stress}/runners/ # runners Karate por tipo
 ├── pruebas/
-│   ├── integration/features/  health/, security/   # Karate contra un servicio desplegado
+│   ├── integration/features/  health/              # Karate contra un servicio desplegado
 │   ├── integration/oauth2-token-helper.feature      # obtiene el token (contraseña o cliente)
 │   ├── smoke/features/                              # disponibilidad rápida
 │   ├── stress/features/                             # carga: load, spike, single-request
@@ -40,7 +39,7 @@ src/test/
 
 ```bash
 ./mvnw test                               # todas
-./mvnw test -Dtest=SecurityControllerTest # una clase
+./mvnw test -Dtest=CatalogosSeguridadTest # una clase
 ./mvnw verify -Preport                    # con cobertura JaCoCo: target/site/jacoco/index.html
 ```
 

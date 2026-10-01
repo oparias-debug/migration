@@ -62,8 +62,6 @@ $env:DB_USER = "<usuario>"; $env:DB_PASSWORD = "<password>"
 | Health | `http://localhost:8080/actuator/health` |
 | OpenAPI | `http://localhost:8080/v3/api-docs` |
 | Swagger UI | `http://localhost:8080/swagger-ui` |
-| Endpoint de ejemplo, público | `http://localhost:8080/api/v1/demo/security/publico` |
-| Endpoint de ejemplo, autenticado | `http://localhost:8080/api/v1/demo/security/autenticado` |
 
 Spring Boot DevTools no está incluido: un cambio de código requiere reiniciar.
 

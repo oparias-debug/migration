@@ -39,11 +39,11 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** CU-PRE-30-bloqueo-fuera-calendario.feature (RN-A.b). */
 public class Pre30BloqueoFueraCalendario {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final String MENSAJE_ESPERADO = "Periodo de ingreso de información ha finalizado.";
     /** Año sin evento PROGRAMACION_PAP configurado en ningún escenario BDD. */
     private static final int ANIO_SIN_EVENTO = 2045;
@@ -108,7 +108,7 @@ public class Pre30BloqueoFueraCalendario {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

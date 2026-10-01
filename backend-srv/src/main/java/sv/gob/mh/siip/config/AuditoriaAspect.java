@@ -2,9 +2,12 @@ package sv.gob.mh.siip.config;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
@@ -23,6 +26,10 @@ public class AuditoriaAspect {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(AuditoriaAspect.class.getName());
 
+    /** Headers con credenciales: se registran enmascarados para que el token no quede en el log. */
+    private static final Set<String> HEADERS_SENSIBLES = Set.of("authorization", "cookie");
+    private static final String VALOR_ENMASCARADO = "***";
+
     @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
     public void restController() {
     }
@@ -37,7 +44,9 @@ public class AuditoriaAspect {
 
         // Headers
         String headers = Collections.list(request.getHeaderNames()).stream()
-                .map(h -> h + "=" + request.getHeader(h))
+                .map(h -> h + "=" + (HEADERS_SENSIBLES.contains(h.toLowerCase(Locale.ROOT))
+                        ? VALOR_ENMASCARADO
+                        : request.getHeader(h)))
                 .collect(Collectors.joining(", "));
 
         // Query params
@@ -56,22 +65,24 @@ public class AuditoriaAspect {
 
         LOGGER.info("📥 [{}] {}?{} \nHeaders: {} \nBody: {}", method, uri, queryParams, headers, bodyJson);
 
-        Object result;
-        try {
-            result = joinPoint.proceed();
-            LOGGER.info("📤 Respuesta: {}", result);
-        } catch (Exception e) { // NOSONAR java:S2139 -- ver justificacion abajo
-            // Este aspecto es el unico punto que deja rastro de auditoria de la peticion
-            // que fallo (metodo, URI, headers y body ya logueados arriba);
-            // ManejadorErroresGlobal
-            // solo traduce la excepcion a respuesta HTTP y no vuelve a loguearla, asi que
-            // no hay
-            // log duplicado. El relanzamiento es obligatorio para que el status HTTP
-            // (401/403/404/...) se resuelva correctamente en vez de responder 200 vacio.
-            LOGGER.error("❌ Error al ejecutar [{}] {}: {}", method, uri, e.getMessage(), e);
-            throw e;
-        }
-
+        Object result = joinPoint.proceed();
+        LOGGER.info("📤 Respuesta: {}", result);
         return result;
+    }
+
+    /**
+     * Unico rastro de auditoria de la peticion que fallo (metodo, URI, headers y body ya se registraron
+     * al entrar): ManejadorErroresGlobal solo traduce la excepcion a respuesta HTTP y no vuelve a
+     * registrarla. Se registra sin capturarla, asi que la excepcion sigue intacta y el status HTTP
+     * (401/403/404/...) se resuelve igual.
+     *
+     * @param error excepcion que lanzo el controller
+     */
+    @AfterThrowing(pointcut = "restController()", throwing = "error")
+    public void logError(Throwable error) {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+                .getRequest();
+        LOGGER.error("❌ Error al ejecutar [{}] {}: {}", request.getMethod(), request.getRequestURI(),
+                error.getMessage(), error);
     }
 }

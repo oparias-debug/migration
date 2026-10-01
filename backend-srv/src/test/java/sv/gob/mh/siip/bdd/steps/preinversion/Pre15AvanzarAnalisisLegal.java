@@ -36,6 +36,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * @author Luis Medrano
@@ -60,7 +61,6 @@ public class Pre15AvanzarAnalisisLegal {
     AnalisisRiesgoRequestDto objetoAAnalizar;
     private final AnalisisRiesgoController analisisRiesgoController;
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private Proyecto proyecto;
 
     public Pre15AvanzarAnalisisLegal(UsuarioRepository usuarioRepository,
@@ -357,7 +357,7 @@ public class Pre15AvanzarAnalisisLegal {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

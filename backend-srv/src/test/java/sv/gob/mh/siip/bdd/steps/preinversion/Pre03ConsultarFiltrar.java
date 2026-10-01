@@ -40,6 +40,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Ejercita {@link ProyectoCapturaService} real (antes esta clase reconstruía su propia
@@ -50,7 +51,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre03ConsultarFiltrar {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private final ProyectoCapturaService proyectoCapturaService;
     private final InstitucionRepository institucionRepository;
@@ -249,7 +249,7 @@ public class Pre03ConsultarFiltrar {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, this.usuarioAutenticado.getNombreUsuario());
+        AutenticacionDePrueba.autenticar(this.usuarioAutenticado.getNombreUsuario());
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

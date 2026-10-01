@@ -36,12 +36,12 @@ final class CatalogoPersistenceMapper {
     /**
      * Copia el modelo sobre la entidad. Los campos se sincronizan por id: los que conservan su id
      * se actualizan (y conservan su lista ENUM), los nuevos se agregan y el resto se elimina
-     * (orphanRemoval).
+     * (orphanRemoval). {@code padre} es la entidad del catálogo padre del modelo, o {@code null}.
      */
-    static void copiar(Catalogo modelo, CatalogoEntity entidad) {
+    static void copiar(Catalogo modelo, CatalogoEntity entidad, CatalogoEntity padre) {
         entidad.setCodigo(modelo.getCodigo());
         entidad.setNombre(modelo.getNombre());
-        entidad.setCatalogoPadreCodigo(modelo.getCatalogoPadreCodigo());
+        entidad.setCatalogoPadre(padre);
         entidad.setEstado(modelo.getEstado());
         entidad.setFechaDesde(modelo.getFechaDesde());
         entidad.setFechaHasta(modelo.getFechaHasta());

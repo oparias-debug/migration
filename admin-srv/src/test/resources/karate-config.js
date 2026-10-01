@@ -29,9 +29,7 @@ function buildBaseConfig(env) {
       health: '/actuator/health',
       healthLive: '/actuator/health/liveness',
       healthReady: '/actuator/health/readiness',
-      securityPublico: '/api/v1/demo/security/publico',
-      securityAutenticado: '/api/v1/demo/security/autenticado',
-      securityExpedientes: '/api/v1/demo/security/expedientes'
+      catalogos: '/api/v1/catalogos'
     }
   };
 

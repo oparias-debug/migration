@@ -40,6 +40,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Pruebas de integración HTTP de CU-PRE-24 "Viabilidad": recorren el contrato
@@ -52,7 +53,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 @Transactional
 class ViabilidadControllerIntegrationTest {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final String BASE = "/proyectos/{proyectoId}/viabilidad";
 
     @Autowired private MockMvc mockMvc;
@@ -95,10 +95,10 @@ class ViabilidadControllerIntegrationTest {
                 .andExpect(jsonPath("$.documento.nombreArchivo").value("preinversion.pdf"))
                 .andExpect(jsonPath("$.accionesDisponibles.solicitarViabilidad").value(true));
 
-        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estadoProyecto").value("En viabilidad"))
                 .andExpect(jsonPath("$.documentos.length()").value(1))
@@ -112,12 +112,12 @@ class ViabilidadControllerIntegrationTest {
                 .andExpect(jsonPath("$.comentariosViabilizador[0].campo").value("OBJETIVO_GENERAL"))
                 .andExpect(jsonPath("$.accionesDisponibles.emitirViabilidad").value(true));
 
-        mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estadoProyecto").value("Proyecto viable"))
                 .andExpect(jsonPath("$.elegibilidadHabilitada").value(true));
 
-        mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("FICHA_VIABILIDAD_DESHABILITADA"));
     }
@@ -126,18 +126,18 @@ class ViabilidadControllerIntegrationTest {
     @DisplayName("Enviar comentarios devuelve el proyecto en estado Observado")
     void flujoDeDevolucion() throws Exception {
         cargarDocumento("DOCUMENTO_PREINVERSION", "preinversion.docx").andExpect(status().isCreated());
-        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_VIABILIDAD_EN_CURSO"));
 
-        mockMvc.perform(post(BASE + "/devoluciones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(post(BASE + "/devoluciones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.proyectoId").value(proyecto.getId()))
                 .andExpect(jsonPath("$.estadoProyecto").value("Observado"));
 
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accionesDisponibles.solicitarViabilidad").value(true));
     }
@@ -145,18 +145,18 @@ class ViabilidadControllerIntegrationTest {
     @Test
     @DisplayName("Los errores de negocio usan los códigos del contrato")
     void erroresDelContrato() throws Exception {
-        mockMvc.perform(get(BASE, 999_999_999L).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(get(BASE, 999_999_999L).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("PROYECTO_NO_ENCONTRADO"));
 
         mockMvc.perform(get(BASE, proyecto.getId()))
                 .andExpect(status().isUnauthorized());
 
-        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.codigo").value("ACCESO_DENEGADO"));
 
-        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.codigo").value("DOCUMENTO_PREINVERSION_REQUERIDO"));
 
@@ -164,7 +164,7 @@ class ViabilidadControllerIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_INVALIDA"));
 
-        mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_VIABILIDAD_NO_VIGENTE"));
 
@@ -178,19 +178,19 @@ class ViabilidadControllerIntegrationTest {
     void emitirSinJustificacion() throws Exception {
         cargarDocumento("OTRO_DOCUMENTO", "anexo.xlsx").andExpect(status().isCreated());
         cargarDocumento("DOCUMENTO_PREINVERSION", "preinversion.pdf").andExpect(status().isCreated());
-        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(post(BASE + "/solicitudes", proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isNoContent());
 
         cargarDocumento("OTRO_DOCUMENTO", "otro.pdf")
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_VIABILIDAD_EN_CURSO"));
 
-        mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.codigo").value("JUSTIFICACION_VIABILIDAD_REQUERIDA"));
 
         mockMvc.perform(put("/proyectos/{idProyecto}/identificacion", proyecto.getId())
-                        .header(HEADER_USUARIO, tecnicoUrp)
+                        .with(AutenticacionDePrueba.como(tecnicoUrp))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"objetivoGeneral\":\"Nuevo objetivo\"}"))
                 .andExpect(status().isConflict())
@@ -203,12 +203,12 @@ class ViabilidadControllerIntegrationTest {
         return mockMvc.perform(multipart(BASE + "/documentos", proyecto.getId())
                 .file(archivo)
                 .param("tipoDocumento", tipo)
-                .header(HEADER_USUARIO, tecnicoUrp));
+                .with(AutenticacionDePrueba.como(tecnicoUrp)));
     }
 
     private ResultActions guardarComentarios(String json) throws Exception {
         return mockMvc.perform(put(BASE + "/comentarios", proyecto.getId())
-                .header(HEADER_USUARIO, viabilizador)
+                .with(AutenticacionDePrueba.como(viabilizador))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json));
     }

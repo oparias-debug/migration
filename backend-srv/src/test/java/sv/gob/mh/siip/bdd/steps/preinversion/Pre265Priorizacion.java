@@ -96,6 +96,7 @@ import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 import sv.gob.mh.siip.security.ActorContexto;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Steps BDD de CU-PRE-26.5 "Priorización" (HU-PRE-26.5-01 a HU-PRE-26.5-08).
@@ -112,7 +113,6 @@ import sv.gob.mh.siip.security.ActorContexto;
  */
 public class Pre265Priorizacion {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
 
     private static final String MATRIZ = "Priorización: Matriz multicriterio";
@@ -1059,7 +1059,7 @@ public class Pre265Priorizacion {
 
     private static void autenticar(Usuario usuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, usuario.getNombreUsuario());
+        AutenticacionDePrueba.autenticar(usuario.getNombreUsuario());
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

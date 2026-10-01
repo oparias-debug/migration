@@ -3,7 +3,6 @@ package sv.gob.mh.siip.model.preinversion.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -130,10 +129,6 @@ public class PriorizacionRevision {
     }
 
     private static List<Usuario> unir(List<Usuario> primeros, List<Usuario> segundos) {
-        List<Usuario> todos = new ArrayList<>(primeros);
-        segundos.stream()
-                .filter((Usuario u) -> todos.stream().noneMatch((Usuario t) -> t.getId().equals(u.getId())))
-                .forEach(todos::add);
-        return todos;
+        return DestinatariosOpinionTecnica.unir(primeros, segundos);
     }
 }

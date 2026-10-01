@@ -41,6 +41,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-30-habilitar-modificaciones-fuera-plazo.feature (SF-4/SF-5). No existe en el sistema un
@@ -49,7 +50,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre30HabilitarModificacionesFueraPlazo {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
@@ -189,7 +189,7 @@ public class Pre30HabilitarModificacionesFueraPlazo {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

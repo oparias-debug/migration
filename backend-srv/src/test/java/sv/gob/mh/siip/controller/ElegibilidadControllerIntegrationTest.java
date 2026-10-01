@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +22,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
+import sv.gob.mh.siip.bdd.support.SufijosPrueba;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
 import sv.gob.mh.siip.model.common.domain.Usuario;
@@ -52,6 +52,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Pruebas de integración HTTP de CU-PRE-25 "Elegibilidad": recorren el contrato
@@ -64,7 +65,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 @Transactional
 class ElegibilidadControllerIntegrationTest {
 
-  private static final String HEADER_USUARIO = "X-Usuario";
   private static final String BASE = "/proyectos/{proyectoId}/elegibilidad";
   private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
 
@@ -95,7 +95,7 @@ class ElegibilidadControllerIntegrationTest {
 
   @BeforeEach
   void prepararDatos() {
-    sufijo = UUID.randomUUID().toString().substring(0, 8);
+    sufijo = SufijosPrueba.nuevo(8);
     Institucion institucion = institucionRepository.save(ProyectoFixtures.nuevaInstitucion("MH-ELE-" + sufijo,
         "Institución Elegibilidad"));
     UnidadEjecutora unidad = unidadEjecutoraRepository.save(ProyectoFixtures.nuevaUnidadEjecutora("UEE-" + sufijo,
@@ -134,7 +134,7 @@ class ElegibilidadControllerIntegrationTest {
   @Test
   @DisplayName("Calificar, guardar y emitir la Elegibilidad por primera vez")
   void flujoDeEmision() throws Exception {
-    mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.estadoProyecto").value("Proyecto viable"))
         .andExpect(jsonPath("$.accionesDisponibles.guardarCalificacion").value(true))
@@ -165,18 +165,18 @@ class ElegibilidadControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.respuestas.length()").value(1));
 
-    mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+    mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.accionesDisponibles.guardarCalificacion").value(false))
         .andExpect(jsonPath("$.dimensiones[*].criterios[?(@.criterioId == " + ods.getId()
             + ")].respuesta.especificarOpciones[0].nombre").value("Fin de la pobreza"));
 
-    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.proyectoId").value(proyecto.getId()))
         .andExpect(jsonPath("$.estadoProyecto").value("Proyecto elegible"));
 
-    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.codigo").value("FICHA_ELEGIBILIDAD_DESHABILITADA"));
     guardar("{\"respuestas\":[]}")
@@ -187,7 +187,7 @@ class ElegibilidadControllerIntegrationTest {
   @Test
   @DisplayName("La nueva emisión tras comentarios de OT exige responderlos (RN15)")
   void nuevaEmisionTrasComentariosOt() throws Exception {
-    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isOk());
     OpinionTecnica ot = opinionTecnicaRepository.save(OpinionTecnica.builder().proyecto(proyecto)
         .resultado(ResultadoOpinionTecnica.OBSERVADO).fechaEmision(LocalDateTime.now(ZONA).plusMinutes(1))
@@ -195,10 +195,10 @@ class ElegibilidadControllerIntegrationTest {
     ComentarioOpinionTecnica comentario = comentarioOtRepository.save(ComentarioOpinionTecnica.builder()
         .opinionTecnica(ot).apartado(ComentarioOpinionTecnica.ELEGIBILIDAD).comentario("Precisar los ODS").build());
 
-    mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.accionesDisponibles.guardarCalificacion").value(true));
-    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isUnprocessableEntity())
         .andExpect(jsonPath("$.codigo").value("COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER"))
         .andExpect(jsonPath("$.mensaje")
@@ -206,7 +206,7 @@ class ElegibilidadControllerIntegrationTest {
 
     comentario.setJustificacionInstitucion("Se precisaron los ODS");
     comentarioOtRepository.save(comentario);
-    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.estadoProyecto").value("Proyecto elegible"));
   }
@@ -216,12 +216,13 @@ class ElegibilidadControllerIntegrationTest {
   void especificarIncompleto() throws Exception {
     guardar("{\"respuestas\":["
         + "{\"criterioId\":" + ods.getId() + ",\"aplica\":true,\"especificarCodigosOpcion\":[\" \"]},"
-        + "{\"criterioId\":" + planesRegionales.getId() + ",\"aplica\":true,\"especificarTexto\":\"  \"}]}")
+        + "{\"criterioId\":" + planesRegionales.getId() + ",\"aplica\":true,\"especificarTexto\":\"  \"},"
+        + "{\"criterioId\":" + planGobierno.getId() + ",\"aplica\":true,\"especificarCodigosOpcion\":null}]}")
         .andExpect(status().isUnprocessableEntity())
         .andExpect(jsonPath("$.codigo").value("ESPECIFICAR_INCOMPLETO"))
         .andExpect(jsonPath("$.mensaje")
             .value("Se debe completar la información de la columna 'Especificar' para los criterios seleccionados"))
-        .andExpect(jsonPath("$.detalles.length()").value(2))
+        .andExpect(jsonPath("$.detalles.length()").value(3))
         .andExpect(jsonPath("$.detalles[0].campo").value("respuestas[criterioId=" + ods.getId() + "]"));
   }
 
@@ -248,11 +249,11 @@ class ElegibilidadControllerIntegrationTest {
     guardarComo(tecnicoPre, "{\"respuestas\":[]}")
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.codigo").value("ACCESO_DENEGADO"));
-    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
         .andExpect(status().isForbidden());
-    mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, coordinadorPre))
+    mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(coordinadorPre)))
         .andExpect(status().isForbidden());
-    mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoPre))
+    mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoPre)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.accionesDisponibles.emitirElegibilidad").value(false));
   }
@@ -260,16 +261,16 @@ class ElegibilidadControllerIntegrationTest {
   @Test
   @DisplayName("Proyecto inexistente o que aún no es viable")
   void proyectoNoDisponible() throws Exception {
-    mockMvc.perform(get(BASE, 999_999_999L).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(get(BASE, 999_999_999L).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.codigo").value("PROYECTO_NO_ENCONTRADO"));
 
     proyecto.setEstado(EstadoProyecto.EN_FORMULACION);
     proyectoRepository.save(proyecto);
-    mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.accionesDisponibles.guardarCalificacion").value(false));
-    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).header(HEADER_USUARIO, viabilizador))
+    mockMvc.perform(post(BASE + "/emisiones", proyecto.getId()).with(AutenticacionDePrueba.como(viabilizador)))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.codigo").value("FICHA_ELEGIBILIDAD_DESHABILITADA"));
   }
@@ -279,7 +280,7 @@ class ElegibilidadControllerIntegrationTest {
   }
 
   private ResultActions guardarComo(String usuario, String json) throws Exception {
-    return mockMvc.perform(put(BASE + "/calificacion", proyecto.getId()).header(HEADER_USUARIO, usuario)
+    return mockMvc.perform(put(BASE + "/calificacion", proyecto.getId()).with(AutenticacionDePrueba.como(usuario))
         .contentType(MediaType.APPLICATION_JSON).content(json));
   }
 

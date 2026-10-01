@@ -25,6 +25,8 @@ La imagen es la misma en todos los ambientes. Para cambiar un valor en un ambien
 | `FLOWABLE_DB_SCHEMA` | No | `flowable` | — | esquema de Flowable | No |
 | `FLOWABLE_DB_SCHEMA_UPDATE` | No | `false` (`drop-create` en perfil `dev`) | — | `false` | No |
 | `GATEWAY_URL` | No | `http://localhost:8080` | `http://localhost:8080` | URL pública de api-gateway | No |
+| `SECURITY_URL_KEYCLOAK` | No | `keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv` | — (ver nota) | host del Keycloak del ambiente | No |
+| `SECURITY_REALM` | No | `MHINTERNO` | — (ver nota) | realm de SIIP | No |
 | `HTTP_PORT` | No | `8081` | — | `8080` | No |
 | `SPRING_PROFILES_ACTIVE` | No | `prod` | `dev` | `prod` | No |
 | `LOG_LEVEL` | No | `INFO` | — | `WARN` | No |
@@ -33,6 +35,11 @@ Notas:
 
 - `GATEWAY_URL` solo se usa para los `servers` del OpenAPI (el Swagger UI arma las URLs
   como `<GATEWAY_URL>/back/...`). backend-srv no llama a api-gateway.
+- `SECURITY_URL_KEYCLOAK` y `SECURITY_REALM` arman el emisor del JWT que valida backend-srv
+  (`https://<host>/realms/<realm>`); son las mismas del ConfigMap del chart y de admin-srv, y
+  tienen que apuntar al realm contra el que valida api-gateway. En local, como el Keycloak va
+  por `http://`, docker-compose fija directamente
+  `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` y `..._JWK_SET_URI`.
 - `HTTP_PORT` tiene que coincidir con el `containerPort` del chart (8080). En local se queda
   en 8081, que es a donde apunta api-gateway en `docker-compose.yml`.
 - Las probes del chart usan `/actuator/health/liveness` y `/actuator/health/readiness`,
@@ -59,9 +66,11 @@ coincide con las entidades, el pod no arranca y el error queda en el log.
 
 El `configMap.data` del chart trae de la plantilla del marco DINAFI `CONFIG_SERVICE_URL`,
 `AUTHZ_SERVICE_URL`, `AUDIT_SERVICE_URL`, `LOG_SERVICE_URL`, `SECURITY_URL_KEYCLOAK`,
-`SECURITY_REALM`, `CORS_*` y `REMOTE_LOGGER_ENABLED`. backend-srv no las usa:
+`SECURITY_REALM`, `CORS_*` y `REMOTE_LOGGER_ENABLED`. backend-srv usa solo `SECURITY_URL_KEYCLOAK`
+y `SECURITY_REALM` (para validar el JWT); el resto no:
 
-- la autenticación la hace api-gateway, que propaga el usuario en el header `X-Usuario`;
+- la autorización es por rol de negocio (`USUARIO.ROL`, en `ActorContexto`), no por el
+  `authorization-service`;
 - la auditoría es local (`AuditoriaAspect` + `LogAuditoria`, ver [Arquitectura](architecture.md));
 - no expone CORS porque solo lo invoca api-gateway.
 
@@ -81,6 +90,7 @@ El `configMap.data` del chart trae de la plantilla del marco DINAFI `CONFIG_SERV
 - **DDL del esquema en la entidad.** No hay migraciones (Flyway/Liquibase). Con `validate`,
   las tablas de negocio y las de Flowable tienen que existir antes de desplegar, creadas con
   el usuario dueño del esquema. Falta definir cómo se entrega ese DDL al DBA.
-- **Route pública del chart.** backend-srv no tiene seguridad propia; si la Route queda
-  habilitada, se puede llamar sin pasar por api-gateway. Ver los pendientes del `README.md` de
+- **Sin Route.** El chart tiene `route.enabled: false`: backend-srv no se publica fuera del
+  cluster y solo lo invoca api-gateway. Falta una `NetworkPolicy` para que tampoco lo llame otro
+  pod del cluster, y que karate-verify pase por api-gateway. Ver el `README.md` de
   `dgicp-siip2/backend-srv-config`.

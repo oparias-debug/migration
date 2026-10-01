@@ -28,18 +28,6 @@ class ExcepcionesHttpTest {
     }
 
     @Test
-    void inconsistenciaFechaException_conservaCodigoYMensaje() {
-        InconsistenciaFechaException conCodigo = new InconsistenciaFechaException("RN08", "rango invertido");
-        InconsistenciaFechaException sinCodigo = new InconsistenciaFechaException("fuera de periodo");
-
-        assertThat(conCodigo.getCodigo()).isEqualTo("RN08");
-        assertThat(conCodigo).hasMessage("rango invertido");
-        assertThat(sinCodigo.getCodigo()).isNull();
-        assertThat(sinCodigo).hasMessage("fuera de periodo");
-        assertThat(statusDe(InconsistenciaFechaException.class)).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-    }
-
-    @Test
     void formatoArchivoNoSoportadoException_respondeUnsupportedMediaType() {
         assertThat(new FormatoArchivoNoSoportadoException("no es PDF/A")).hasMessage("no es PDF/A");
         assertThat(statusDe(FormatoArchivoNoSoportadoException.class))

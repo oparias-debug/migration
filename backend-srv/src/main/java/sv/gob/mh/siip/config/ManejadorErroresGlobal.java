@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import sv.gob.mh.siip.exception.AccesoDenegadoException;
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.FormatoArchivoNoSoportadoException;
-import sv.gob.mh.siip.exception.InconsistenciaFechaException;
 import sv.gob.mh.siip.exception.NoAutenticadoException;
 import sv.gob.mh.siip.exception.OperacionNoPermitidaException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
@@ -59,12 +58,6 @@ public class ManejadorErroresGlobal {
     @ExceptionHandler(FormatoArchivoNoSoportadoException.class)
     public ResponseEntity<ErrorDto> manejarFormatoArchivoNoSoportado(Throwable ex) {
         return respuesta(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "FORMATO_ARCHIVO_NO_SOPORTADO", ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(InconsistenciaFechaException.class)
-    public ResponseEntity<ErrorDto> manejarInconsistenciaFecha(InconsistenciaFechaException ex) {
-        String codigo = ex.getCodigo() != null ? ex.getCodigo() : "INCONSISTENCIA_FECHA";
-        return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, codigo, ex.getMessage(), null);
     }
 
     @ExceptionHandler(ReglaNegocioException.class)

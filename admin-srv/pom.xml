@@ -271,6 +271,18 @@
                             <modelPackage>sv.gob.mh.api.dto.catalogo</modelPackage>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>generate-cu-adm-04-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/CU-ADM-04-gestion-de-calendario.openapi.yaml</inputSpec>
+                            <apiPackage>sv.gob.mh.api.controller.calendario</apiPackage>
+                            <modelPackage>sv.gob.mh.api.dto.calendario</modelPackage>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 

@@ -25,11 +25,11 @@ import sv.gob.mh.siip.model.preinversion.dto.EstadoRevisionAvancePAPDto;
 import sv.gob.mh.siip.model.preinversion.dto.RegistrarObservacionesAvanceDgicpRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionAvancePAPDto;
 import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapRevisionService;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** CU-PRE-33-registrar-observaciones.feature (SF-2, pasos 1-3). */
 public class Pre33RegistrarObservaciones {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final int ANIO = 2030;
     private static final String OBSERVACIONES = "Revisar el avance reportado en la etapa Perfil.";
 
@@ -99,7 +99,7 @@ public class Pre33RegistrarObservaciones {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

@@ -1,8 +1,10 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,17 +39,15 @@ public class DocumentosAnexosOpinionTecnica {
      * @param comentario comentario DGICP a la documentación anexa, o {@code null}
      * @return la sección de documentos anexos
      */
-    public DocumentosAnexosOpinionTecnicaDto seccion(Long idProyecto, List<DocumentoOpinionTecnica> notas,
+    public DocumentosAnexosOpinionTecnicaDto seccion(Long idProyecto, Collection<DocumentoOpinionTecnica> notas,
             ComentarioOpinionTecnica comentario) {
-        List<DocumentoAnexoDto> documentos = new ArrayList<>();
-        notas.stream()
+        Stream<DocumentoAnexoDto> notaSolicitud = notas.stream()
                 .filter((DocumentoOpinionTecnica n) ->
                         n.getTipoDocumento() == TipoDocumentoOpinionTecnica.NOTA_SOLICITUD_OT)
-                .map(DocumentosAnexosOpinionTecnica::documento)
-                .forEach(documentos::add);
-        documentosViabilidad.listar(idProyecto).stream()
-                .map(DocumentosAnexosOpinionTecnica::documento)
-                .forEach(documentos::add);
+                .map(DocumentosAnexosOpinionTecnica::documento);
+        Stream<DocumentoAnexoDto> deViabilidad = documentosViabilidad.listar(idProyecto).stream()
+                .map(DocumentosAnexosOpinionTecnica::documento);
+        List<DocumentoAnexoDto> documentos = new ArrayList<>(Stream.concat(notaSolicitud, deViabilidad).toList());
         DocumentosAnexosOpinionTecnicaDto dto = new DocumentosAnexosOpinionTecnicaDto(documentos);
         if (comentario != null) {
             dto.setComentarioDgicpDocumentosAnexos(comentario.getComentario());
@@ -60,7 +60,7 @@ public class DocumentosAnexosOpinionTecnica {
      * @param notas notas de la gestión
      * @return la "Nota de OT" firmada por el Director DGICP, si se cargó (FA01 paso 1.5)
      */
-    public static Optional<DocumentoAnexoDto> notaOt(List<DocumentoOpinionTecnica> notas) {
+    public static Optional<DocumentoAnexoDto> notaOt(Collection<DocumentoOpinionTecnica> notas) {
         return notas.stream()
                 .filter((DocumentoOpinionTecnica n) -> n.getTipoDocumento() == TipoDocumentoOpinionTecnica.NOTA_OT)
                 .findFirst()

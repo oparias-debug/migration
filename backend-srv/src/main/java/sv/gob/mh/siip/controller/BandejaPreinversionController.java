@@ -18,7 +18,7 @@ import sv.gob.mh.siip.model.preinversion.service.BandejaPreinversionService;
 
 @RestController
 public class BandejaPreinversionController implements PreinversinBandejaPreinversinApi, CatlogosBandejaPreinversinApi {
-    
+
     private final BandejaPreinversionService service;
 
     public BandejaPreinversionController(BandejaPreinversionService service) {
@@ -38,8 +38,7 @@ public class BandejaPreinversionController implements PreinversinBandejaPreinver
     }
 
     @Override
-    public ResponseEntity<SolicitudActivaItemDto> asignarTecnicoPre(
-            Long idSolicitud,
+    public ResponseEntity<SolicitudActivaItemDto> asignarTecnicoPre(Long idSolicitud,
             AsignacionTecnicoPreRequestDto request) {
         return ResponseEntity.ok(service.asignar(idSolicitud, request));
     }

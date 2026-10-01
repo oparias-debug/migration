@@ -27,15 +27,15 @@ import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
 import sv.gob.mh.siip.model.preinversion.service.ProyectoService;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
- * CU-PRE-01-cambiar-unidad-ejecutora.feature. Simula la peticion autenticada agregando el header
- * X-Usuario directamente al contexto de request (en producto lo agrega api-gateway tras validar
- * el JWT; ver ActorContexto), y ejecuta el caso a traves del ProyectoService real.
+ * CU-PRE-01-cambiar-unidad-ejecutora.feature. Simula la peticion autenticada dejando un JWT de
+ * prueba en el SecurityContext (AutenticacionDePrueba; en producto lo valida SecurityConfig), y
+ * ejecuta el caso a traves del ProyectoService real.
  */
 public class Pre01CambiarUnidadEjecutora {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
@@ -128,7 +128,7 @@ public class Pre01CambiarUnidadEjecutora {
 
     private void autenticarComoAdministradorDelSistema() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuarioAdmin);
+        AutenticacionDePrueba.autenticar(nombreUsuarioAdmin);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

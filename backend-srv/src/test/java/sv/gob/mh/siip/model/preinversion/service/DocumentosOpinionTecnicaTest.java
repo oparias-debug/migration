@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.common.domain.Usuario;
@@ -47,6 +50,54 @@ class DocumentosOpinionTecnicaTest {
 
     private static MockMultipartFile archivo(String nombre) {
         return new MockMultipartFile("nota", nombre, "application/pdf", "contenido".getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Extensión con la que queda el archivo en disco. */
+    private String extensionEnDisco(String nombre) {
+        String enDisco = Path.of(documentos.cargar(gestion, TipoDocumentoOpinionTecnica.NOTA_OT, archivo(nombre),
+                usuario).getRutaArchivo()).getFileName().toString();
+        int punto = enDisco.lastIndexOf('.');
+        return punto < 0 ? "" : enDisco.substring(punto);
+    }
+
+    @Test
+    void soloConservaEnDiscoExtensionesAsciiCortas() {
+        assertThat(extensionEnDisco("nota.Pdf")).isEqualTo(".pdf");
+        assertThat(extensionEnDisco("nota.7z")).isEqualTo(".7z");
+        assertThat(extensionEnDisco("nota")).isEmpty();
+        assertThat(extensionEnDisco("nota.")).isEmpty();
+        assertThat(extensionEnDisco("nota.pd f")).isEmpty();
+        assertThat(extensionEnDisco("nota.pdé")).isEmpty();
+        assertThat(extensionEnDisco("nota.extensionlarga")).isEmpty();
+    }
+
+    @Test
+    void siNoSePuedeEliminarLaNotaReemplazadaSeInformaElFallo() throws IOException {
+        // Un directorio con contenido en la ruta de la nota vigente impide eliminarla.
+        Path anterior = Files.createDirectories(directorio.resolve("anterior"));
+        Files.createFile(anterior.resolve("contenido.txt"));
+        DocumentoOpinionTecnica vigente = DocumentoOpinionTecnica.builder().id(4L).rutaArchivo(anterior.toString())
+                .build();
+        when(repositorio.findFirstByOpinionTecnicaIdAndTipoDocumento(8L, TipoDocumentoOpinionTecnica.NOTA_OT))
+                .thenReturn(Optional.of(vigente));
+        MultipartFile nueva = archivo("nota.pdf");
+
+        assertThatThrownBy(() -> documentos.cargar(gestion, TipoDocumentoOpinionTecnica.NOTA_OT, nueva, usuario))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("eliminar");
+        verify(repositorio, never()).delete(vigente);
+    }
+
+    @Test
+    void siNoSePuedeEscribirLaNotaSeInformaElFallo() throws IOException {
+        // Un archivo común en el lugar del directorio del proyecto impide crear la carpeta.
+        Files.createDirectories(directorio.resolve("opinion-tecnica"));
+        Files.createFile(directorio.resolve("opinion-tecnica").resolve("2"));
+        MultipartFile nota = archivo("nota.pdf");
+
+        assertThatThrownBy(() -> documentos.cargar(gestion, TipoDocumentoOpinionTecnica.NOTA_OT, nota, usuario))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("almacenar");
     }
 
     @Test

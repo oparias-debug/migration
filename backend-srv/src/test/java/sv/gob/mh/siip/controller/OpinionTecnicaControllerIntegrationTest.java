@@ -55,6 +55,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Pruebas de integración HTTP de CU-PRE-26 "Opinión Técnica": recorren el contrato
@@ -67,7 +68,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 @Transactional
 class OpinionTecnicaControllerIntegrationTest {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final String BASE = "/proyectos/{proyectoId}/opiniones-tecnicas";
     private static final String GESTION = BASE + "/{opinionTecnicaId}";
     private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
@@ -131,7 +131,7 @@ class OpinionTecnicaControllerIntegrationTest {
     @DisplayName("Solicitar OT, revisar y enviar comentarios DGICP, y justificar (RN04, FA02, FA03, RN14)")
     void solicitudRevisionYComentarios() throws Exception {
         mockMvc.perform(get("/proyectos/{proyectoId}/tipos-solicitud-opinion-tecnica", proyecto.getId())
-                        .header(HEADER_USUARIO, tecnicoUrp))
+                        .with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tiposSolicitud[0].tipoSolicitud").value("OPINION_TECNICA"))
                 .andExpect(jsonPath("$.tiposSolicitud[0].habilitado").value(true))
@@ -140,7 +140,7 @@ class OpinionTecnicaControllerIntegrationTest {
 
         mockMvc.perform(multipart(BASE, proyecto.getId())
                         .file(new MockMultipartFile("notaSolicitudOt", "vacia.pdf", "application/pdf", new byte[0]))
-                        .header(HEADER_USUARIO, tecnicoUrp))
+                        .with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.codigo").value("NOTA_SOLICITUD_OT_REQUERIDA"))
                 .andExpect(jsonPath("$.detalles[0].campo").value("notaSolicitudOt"));
@@ -156,12 +156,12 @@ class OpinionTecnicaControllerIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("OPINION_TECNICA_EN_CURSO"));
 
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoPre))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.opinionesTecnicas[0].opinionTecnicaId").value(idGestion))
                 .andExpect(jsonPath("$.opinionesTecnicas[0].estadoGestion").value("EN_CURSO"));
 
-        mockMvc.perform(get(GESTION, proyecto.getId(), idGestion).header(HEADER_USUARIO, tecnicoPre))
+        mockMvc.perform(get(GESTION, proyecto.getId(), idGestion).with(AutenticacionDePrueba.como(tecnicoPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.encabezado.cup").value(proyecto.getCup()))
                 .andExpect(jsonPath("$.encabezado.etapaActual").value("Perfil"))
@@ -179,7 +179,7 @@ class OpinionTecnicaControllerIntegrationTest {
                 .andExpect(jsonPath("$.camposEditables.justificacionInstitucion").value(false));
 
         mockMvc.perform(post(GESTION + "/asignacion", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, coordinadorPre)
+                        .with(AutenticacionDePrueba.como(coordinadorPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"tecnicoPreId\": " + idTecnicoPre + "}"))
                 .andExpect(status().isOk())
@@ -188,29 +188,29 @@ class OpinionTecnicaControllerIntegrationTest {
 
         // RN07 b: asignada la gestión, otro Técnico PRE no la revisa.
         mockMvc.perform(put(GESTION + "/comentarios-dgicp", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, otroTecnicoPre)
+                        .with(AutenticacionDePrueba.como(otroTecnicoPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(comentario("1.1")))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get(GESTION, proyecto.getId(), idGestion).header(HEADER_USUARIO, otroTecnicoPre))
+        mockMvc.perform(get(GESTION, proyecto.getId(), idGestion).with(AutenticacionDePrueba.como(otroTecnicoPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accionesDisponibles.enviarComentarios.habilitada").value(false));
 
         mockMvc.perform(post(GESTION + "/envio-comentarios", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoUrp)
+                        .with(AutenticacionDePrueba.como(tecnicoUrp))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(comentario("1.2")))
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(put(GESTION + "/comentarios-dgicp", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoPre)
+                        .with(AutenticacionDePrueba.como(tecnicoPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(comentario("9.9")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_INVALIDA"));
 
         mockMvc.perform(put(GESTION + "/comentarios-dgicp", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoPre)
+                        .with(AutenticacionDePrueba.como(tecnicoPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(comentario("1.1")))
                 .andExpect(status().isOk())
@@ -218,14 +218,14 @@ class OpinionTecnicaControllerIntegrationTest {
                 .andExpect(jsonPath("$.estadoGestion").value("EN_CURSO"));
 
         mockMvc.perform(post(GESTION + "/envio-comentarios", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoPre)
+                        .with(AutenticacionDePrueba.como(tecnicoPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"comentarioDgicpDocumentosAnexos\": \"  \"}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.codigo").value("COMENTARIOS_DGICP_REQUERIDOS"));
 
         mockMvc.perform(post(GESTION + "/envio-comentarios", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoPre)
+                        .with(AutenticacionDePrueba.como(tecnicoPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(comentario("1.2")))
                 .andExpect(status().isOk())
@@ -236,7 +236,7 @@ class OpinionTecnicaControllerIntegrationTest {
                 .andExpect(jsonPath("$.rutaRetorno.filtrosAprobacion[1]").value("OPINION_TECNICA"));
 
         mockMvc.perform(put(GESTION + "/justificaciones-institucion", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoUrp)
+                        .with(AutenticacionDePrueba.como(tecnicoUrp))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"justificacionesApartados\": [{\"apartadoCodigo\": \"1.2\", "
                                 + "\"justificacionInstitucion\": \"Se amplió el análisis\"}]}"))
@@ -247,18 +247,18 @@ class OpinionTecnicaControllerIntegrationTest {
                 .andExpect(jsonPath("$.accionesDisponibles.enviarAjustes.habilitada").value(true));
 
         mockMvc.perform(put(GESTION + "/justificaciones-institucion", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoUrp)
+                        .with(AutenticacionDePrueba.como(tecnicoUrp))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"justificacionInstitucionElegibilidad\": \"La responde el Viabilizador\"}"))
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(put(GESTION + "/justificaciones-institucion", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, viabilizador)
+                        .with(AutenticacionDePrueba.como(viabilizador))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"justificacionInstitucionElegibilidad\": \"Sin comentario que responder\"}"))
                 .andExpect(status().isBadRequest());
 
-        mockMvc.perform(get(GESTION, proyecto.getId(), idGestion).header(HEADER_USUARIO, viabilizador))
+        mockMvc.perform(get(GESTION, proyecto.getId(), idGestion).with(AutenticacionDePrueba.como(viabilizador)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.numeroDevoluciones").value(1))
                 .andExpect(jsonPath("$.camposEditables.justificacionInstitucion").value(false))
@@ -272,19 +272,19 @@ class OpinionTecnicaControllerIntegrationTest {
         long idGestion = idGestionCreada;
 
         mockMvc.perform(post(GESTION + "/visto-bueno", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, coordinadorPre))
+                        .with(AutenticacionDePrueba.como(coordinadorPre)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("CONCLUSIONES_NO_REGISTRADAS"));
 
         mockMvc.perform(put(GESTION + "/conclusiones", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoPre)
+                        .with(AutenticacionDePrueba.como(tecnicoPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"conclusiones\": \"   \"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("SOLICITUD_INVALIDA"));
 
         mockMvc.perform(put(GESTION + "/conclusiones", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoPre)
+                        .with(AutenticacionDePrueba.como(tecnicoPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"conclusiones\": \"Cumple los requisitos de la etapa\"}"))
                 .andExpect(status().isOk())
@@ -294,12 +294,12 @@ class OpinionTecnicaControllerIntegrationTest {
         mockMvc.perform(emitir(idGestion, tecnicoPre, bytes(), NUMERO_NOTA))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("VISTO_BUENO_OT_PENDIENTE"));
-        mockMvc.perform(get(GESTION + "/informe", proyecto.getId(), idGestion).header(HEADER_USUARIO, tecnicoPre))
+        mockMvc.perform(get(GESTION + "/informe", proyecto.getId(), idGestion).with(AutenticacionDePrueba.como(tecnicoPre)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("OPINION_TECNICA_NO_EMITIDA"));
 
         mockMvc.perform(post(GESTION + "/visto-bueno", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, coordinadorPre))
+                        .with(AutenticacionDePrueba.como(coordinadorPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.vistoBuenoOt").value(true));
 
@@ -317,23 +317,23 @@ class OpinionTecnicaControllerIntegrationTest {
                 .andExpect(jsonPath("$.disponibleEnCapturaProyectos").value(false));
 
         mockMvc.perform(put(GESTION + "/comentarios-dgicp", proyecto.getId(), idGestion)
-                        .header(HEADER_USUARIO, tecnicoPre)
+                        .with(AutenticacionDePrueba.como(tecnicoPre))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(comentario("1.2")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("OPINION_TECNICA_YA_EMITIDA"));
 
-        mockMvc.perform(get(GESTION, proyecto.getId(), idGestion).header(HEADER_USUARIO, tecnicoPre))
+        mockMvc.perform(get(GESTION, proyecto.getId(), idGestion).with(AutenticacionDePrueba.como(tecnicoPre)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estadoGestion").value("FAVORABLE"))
                 .andExpect(jsonPath("$.notaOt.nombreArchivo").value("nota-ot.pdf"))
                 .andExpect(jsonPath("$.numeroNotaOt").value(NUMERO_NOTA))
                 .andExpect(jsonPath("$.accionesDisponibles.guardar.habilitada").value(false));
 
-        mockMvc.perform(get(BASE, proyecto.getId()).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(get(BASE, proyecto.getId()).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.opinionesTecnicas[0].numeroNotaOt").value(NUMERO_NOTA));
-        mockMvc.perform(get(GESTION + "/informe", proyecto.getId(), idGestion).header(HEADER_USUARIO, tecnicoUrp))
+        mockMvc.perform(get(GESTION + "/informe", proyecto.getId(), idGestion).with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.opinionTecnica").value("FAVORABLE"))
                 .andExpect(jsonPath("$.numeroNotaOt").value(NUMERO_NOTA))
@@ -341,19 +341,19 @@ class OpinionTecnicaControllerIntegrationTest {
                 .andExpect(jsonPath("$.conclusiones").value("Cumple los requisitos de la etapa"));
 
         mockMvc.perform(post("/proyectos/{proyectoId}/actualizaciones-opinion-tecnica", proyecto.getId())
-                        .header(HEADER_USUARIO, tecnicoUrp))
+                        .with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.tipoSolicitud").value("ACTUALIZACION_OT"))
                 .andExpect(jsonPath("$.camposHabilitados", hasItem("CU-PRE-04")));
 
         mockMvc.perform(get("/proyectos/{proyectoId}/tipos-solicitud-opinion-tecnica", proyecto.getId())
-                        .header(HEADER_USUARIO, tecnicoUrp))
+                        .with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tiposSolicitud[0].habilitado").value(false))
                 .andExpect(jsonPath("$.tiposSolicitud[1].habilitado").value(false));
 
         mockMvc.perform(post("/proyectos/{proyectoId}/actualizaciones-opinion-tecnica", proyecto.getId())
-                        .header(HEADER_USUARIO, tecnicoUrp))
+                        .with(AutenticacionDePrueba.como(tecnicoUrp)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("ACTUALIZACION_OT_NO_DISPONIBLE"));
     }
@@ -363,7 +363,7 @@ class OpinionTecnicaControllerIntegrationTest {
     void accesoALaGestion() throws Exception {
         solicitar().andExpect(status().isCreated());
 
-        mockMvc.perform(get(GESTION, proyecto.getId(), idGestionCreada + 1000).header(HEADER_USUARIO, tecnicoPre))
+        mockMvc.perform(get(GESTION, proyecto.getId(), idGestionCreada + 1000).with(AutenticacionDePrueba.como(tecnicoPre)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("OPINION_TECNICA_NO_ENCONTRADA"));
         mockMvc.perform(emitir(idGestionCreada, coordinadorPre, bytes(), NUMERO_NOTA))
@@ -375,14 +375,14 @@ class OpinionTecnicaControllerIntegrationTest {
         return multipart(GESTION + "/emision-favorable", proyecto.getId(), idGestion)
                 .file(new MockMultipartFile("notaOt", "nota-ot.pdf", "application/pdf", nota))
                 .param("numeroNotaOt", numero)
-                .header(HEADER_USUARIO, usuario);
+                .with(AutenticacionDePrueba.como(usuario));
     }
 
     /** "Solicitar OT" como Técnico URP; guarda el identificador de la gestión creada. */
     private ResultActions solicitar() throws Exception {
         ResultActions resultado = mockMvc.perform(multipart(BASE, proyecto.getId())
                 .file(new MockMultipartFile("notaSolicitudOt", "nota-solicitud.pdf", "application/pdf", bytes()))
-                .header(HEADER_USUARIO, tecnicoUrp));
+                .with(AutenticacionDePrueba.como(tecnicoUrp)));
         String cuerpo = resultado.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         JsonNode json = objectMapper.readTree(cuerpo);
         if (json.has("opinionTecnicaId")) {

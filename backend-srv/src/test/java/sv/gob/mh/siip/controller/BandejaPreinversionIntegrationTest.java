@@ -22,6 +22,7 @@ import sv.gob.mh.siip.model.preinversion.domain.*;
 import sv.gob.mh.siip.model.preinversion.enums.*;
 import sv.gob.mh.siip.model.preinversion.repository.*;
 import sv.gob.mh.siip.model.programacion.repository.*;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -61,64 +62,64 @@ class BandejaPreinversionIntegrationTest {
     }
     @Test void autenticacionYRoles() throws Exception {
         mvc.perform(get("/solicitudes")).andExpect(status().isUnauthorized());
-        mvc.perform(get("/solicitudes").header("X-Usuario", urp.getNombreUsuario())).andExpect(status().isForbidden());
-        mvc.perform(get("/solicitudes/archivadas").header("X-Usuario", tecnico.getNombreUsuario())).andExpect(status().isForbidden());
-        mvc.perform(get("/catalogos/tecnicos-pre").header("X-Usuario", tecnico.getNombreUsuario())).andExpect(status().isForbidden());
-        mvc.perform(post("/solicitudes/{id}/archivo", solicitud.getId()).header("X-Usuario", tecnico.getNombreUsuario())).andExpect(status().isForbidden());
-        mvc.perform(put("/solicitudes/{id}/asignacion", solicitud.getId()).header("X-Usuario", tecnico.getNombreUsuario())
+        mvc.perform(get("/solicitudes").with(AutenticacionDePrueba.como(urp.getNombreUsuario()))).andExpect(status().isForbidden());
+        mvc.perform(get("/solicitudes/archivadas").with(AutenticacionDePrueba.como(tecnico.getNombreUsuario()))).andExpect(status().isForbidden());
+        mvc.perform(get("/catalogos/tecnicos-pre").with(AutenticacionDePrueba.como(tecnico.getNombreUsuario()))).andExpect(status().isForbidden());
+        mvc.perform(post("/solicitudes/{id}/archivo", solicitud.getId()).with(AutenticacionDePrueba.como(tecnico.getNombreUsuario()))).andExpect(status().isForbidden());
+        mvc.perform(put("/solicitudes/{id}/asignacion", solicitud.getId()).with(AutenticacionDePrueba.como(tecnico.getNombreUsuario()))
                 .contentType(MediaType.APPLICATION_JSON).content("{\"idTecnicoAsignado\":" + otro.getId() + "}"))
                 .andExpect(status().isForbidden());
     }
     @Test void tecnicoSoloVeSusCasos() throws Exception {
-        mvc.perform(get("/solicitudes").header("X-Usuario", tecnico.getNombreUsuario()))
+        mvc.perform(get("/solicitudes").with(AutenticacionDePrueba.como(tecnico.getNombreUsuario())))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.contenido[0].idSolicitud").value(solicitud.getId()))
                 .andExpect(jsonPath("$.contenido.length()").value(1));
-        mvc.perform(get("/solicitudes").header("X-Usuario", otro.getNombreUsuario()))
+        mvc.perform(get("/solicitudes").with(AutenticacionDePrueba.como(otro.getNombreUsuario())))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.contenido.length()").value(0));
     }
     @Test void asignarNoCambiaEstadoYRepetirConservaFecha() throws Exception {
         String url = "/solicitudes/" + solicitud.getId() + "/asignacion";
-        mvc.perform(put(url).header("X-Usuario", coordinador.getNombreUsuario()).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(put(url).with(AutenticacionDePrueba.como(coordinador.getNombreUsuario())).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"idTecnicoAsignado\":" + otro.getId() + "}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("ENVIADO_DGICP_REGISTRO"))
                 .andExpect(jsonPath("$.asignadoA.idUsuario").value(otro.getId()));
         var fecha = solicitudes.findById(solicitud.getId()).orElseThrow().getFechaAsignacion();
-        mvc.perform(put(url).header("X-Usuario", coordinador.getNombreUsuario()).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(put(url).with(AutenticacionDePrueba.como(coordinador.getNombreUsuario())).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"idTecnicoAsignado\":" + otro.getId() + "}" )).andExpect(status().isOk());
         assertThat(solicitudes.findById(solicitud.getId()).orElseThrow().getFechaAsignacion()).isEqualTo(fecha);
     }
     @Test void archivarRetiraActivaYConservaProyectoYFecha() throws Exception {
         String url = "/solicitudes/" + solicitud.getId() + "/archivo";
-        mvc.perform(post(url).header("X-Usuario", coordinador.getNombreUsuario())).andExpect(status().isOk())
+        mvc.perform(post(url).with(AutenticacionDePrueba.como(coordinador.getNombreUsuario()))).andExpect(status().isOk())
                 .andExpect(jsonPath("$.estadoSolicitud").value("ARCHIVADA"));
         var fecha = solicitudes.findById(solicitud.getId()).orElseThrow().getFechaArchivo();
-        mvc.perform(post(url).header("X-Usuario", coordinador.getNombreUsuario())).andExpect(status().isOk());
+        mvc.perform(post(url).with(AutenticacionDePrueba.como(coordinador.getNombreUsuario()))).andExpect(status().isOk());
         assertThat(solicitudes.findById(solicitud.getId()).orElseThrow().getFechaArchivo()).isEqualTo(fecha);
         assertThat(solicitud.getProyecto().getEstado()).isEqualTo(EstadoProyecto.ENVIADO_DGICP_REGISTRO);
-        mvc.perform(get("/solicitudes").header("X-Usuario", tecnico.getNombreUsuario())).andExpect(jsonPath("$.contenido.length()").value(0));
-        mvc.perform(get("/solicitudes/archivadas").header("X-Usuario", coordinador.getNombreUsuario()))
+        mvc.perform(get("/solicitudes").with(AutenticacionDePrueba.como(tecnico.getNombreUsuario()))).andExpect(jsonPath("$.contenido.length()").value(0));
+        mvc.perform(get("/solicitudes/archivadas").with(AutenticacionDePrueba.como(coordinador.getNombreUsuario())))
                 .andExpect(jsonPath("$.contenido[0].idSolicitud").value(solicitud.getId()));
     }
     @Test void emitidasYProyectosSinEnviarNoSonActivos() throws Exception {
         solicitud.setEstado(EstadoSolicitud.APROBADA); solicitudes.saveAndFlush(solicitud);
-        mvc.perform(get("/solicitudes").header("X-Usuario", tecnico.getNombreUsuario())).andExpect(jsonPath("$.contenido.length()").value(0));
+        mvc.perform(get("/solicitudes").with(AutenticacionDePrueba.como(tecnico.getNombreUsuario()))).andExpect(jsonPath("$.contenido.length()").value(0));
         solicitud.setEstado(EstadoSolicitud.REGISTRADA); solicitud.getProyecto().setEstado(EstadoProyecto.EN_REGISTRO); solicitudes.saveAndFlush(solicitud);
-        mvc.perform(get("/solicitudes").header("X-Usuario", tecnico.getNombreUsuario())).andExpect(jsonPath("$.contenido.length()").value(0));
+        mvc.perform(get("/solicitudes").with(AutenticacionDePrueba.como(tecnico.getNombreUsuario()))).andExpect(jsonPath("$.contenido.length()").value(0));
     }
     @Test void filtroPaginacionYConteosGlobales() throws Exception {
         solicitudes.saveAndFlush(SolicitudPreinversion.builder().proyecto(solicitud.getProyecto()).estado(EstadoSolicitud.REGISTRADA)
                 .tipoSolicitud(TipoSolicitud.OPINION_TECNICA).fechaSolicitud(LocalDateTime.now()).tecnicoAsignado(tecnico).build());
-        mvc.perform(get("/solicitudes").param("tipoSolicitud", "CUP").param("tamanio", "1").header("X-Usuario", coordinador.getNombreUsuario()))
+        mvc.perform(get("/solicitudes").param("tipoSolicitud", "CUP").param("tamanio", "1").with(AutenticacionDePrueba.como(coordinador.getNombreUsuario())))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.contenido.length()").value(1))
                 .andExpect(jsonPath("$.contenido[0].tipoSolicitud").value("CUP"))
                 .andExpect(jsonPath("$.conteoPorTecnico[0].cantidadCup").value(1))
                 .andExpect(jsonPath("$.conteoPorTecnico[0].cantidadOpinionTecnica").value(1));
     }
     @Test void entradasInvalidasYRecursosAusentes() throws Exception {
-        mvc.perform(put("/solicitudes/{id}/asignacion", solicitud.getId()).header("X-Usuario", coordinador.getNombreUsuario())
+        mvc.perform(put("/solicitudes/{id}/asignacion", solicitud.getId()).with(AutenticacionDePrueba.como(coordinador.getNombreUsuario()))
                 .contentType(MediaType.APPLICATION_JSON).content("{}" )).andExpect(status().isBadRequest());
-        mvc.perform(put("/solicitudes/{id}/asignacion", solicitud.getId()).header("X-Usuario", coordinador.getNombreUsuario())
+        mvc.perform(put("/solicitudes/{id}/asignacion", solicitud.getId()).with(AutenticacionDePrueba.como(coordinador.getNombreUsuario()))
                 .contentType(MediaType.APPLICATION_JSON).content("{\"idTecnicoAsignado\":" + urp.getId() + "}" )).andExpect(status().isNotFound());
-        mvc.perform(post("/solicitudes/999999/archivo").header("X-Usuario", coordinador.getNombreUsuario())).andExpect(status().isNotFound());
+        mvc.perform(post("/solicitudes/999999/archivo").with(AutenticacionDePrueba.como(coordinador.getNombreUsuario()))).andExpect(status().isNotFound());
     }
 }

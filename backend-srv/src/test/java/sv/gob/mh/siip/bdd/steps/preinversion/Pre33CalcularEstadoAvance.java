@@ -45,11 +45,11 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** CU-PRE-33-calcular-estado-avance.feature (RN-B.c, RN-F). */
 public class Pre33CalcularEstadoAvance {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
     private static final int ANIO = 2030;
 
@@ -198,7 +198,7 @@ public class Pre33CalcularEstadoAvance {
                 .fechaRegistro(LocalDateTime.now(ZONA)).build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
         AvanceMetasEstudioDto estudio = service.obtenerAvanceMetasEstudio(proyecto.getCup(), ANIO, CuatrimestreDto.CUATRIMESTRE_II);

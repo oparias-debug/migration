@@ -16,8 +16,8 @@ public enum CategoriaPriorizacion {
     ELEGIBLE_PARA_FORTALECIMIENTO,
     NO_PRIORIZABLE_EN_ESTADO_ACTUAL;
 
-    private static final Pattern MARCAS = Pattern.compile("\\p{M}");
-    private static final Pattern ESPACIOS = Pattern.compile("\\s+");
+    private static final Pattern MARCAS = Pattern.compile("\\p{M}", Pattern.UNICODE_CHARACTER_CLASS);
+    private static final Pattern ESPACIOS = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
 
     /**
      * @param nombre nombre de la categoría en el catálogo, p. ej. "Priorizado para programación"

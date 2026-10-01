@@ -9,19 +9,22 @@ import java.util.Map;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Entonces;
+import sv.gob.mh.bdd.support.CatalogoFixtures;
 import sv.gob.mh.bdd.support.ContextoCatalogoBdd;
 import sv.gob.mh.bdd.support.TablasCatalogoBdd;
-import sv.gob.mh.infrastructure.persistence.entity.catalogo.CatalogoEntity;
 import sv.gob.mh.infrastructure.persistence.repository.catalogo.CatalogoJpaRepository;
 
 /** CU-ADM-01-crear-catalogo.feature (HU-ADM-01-01): POST /catalogos. */
 public class AdmCrearCatalogo {
 
     private final CatalogoJpaRepository catalogoRepository;
+    private final CatalogoFixtures fixtures;
     private final ContextoCatalogoBdd contexto;
 
-    public AdmCrearCatalogo(CatalogoJpaRepository catalogoRepository, ContextoCatalogoBdd contexto) {
+    public AdmCrearCatalogo(CatalogoJpaRepository catalogoRepository, CatalogoFixtures fixtures,
+            ContextoCatalogoBdd contexto) {
         this.catalogoRepository = catalogoRepository;
+        this.fixtures = fixtures;
         this.contexto = contexto;
     }
 
@@ -74,8 +77,7 @@ public class AdmCrearCatalogo {
     public void el_catalogo_queda_registrado_como_hijo(String hijo, String padre) {
         el_catalogo_queda_creado(hijo);
         assertThat(contexto.getUltimoCuerpo().path("parent").asText()).isEqualTo(padre);
-        CatalogoEntity catalogo = catalogoRepository.findByCodigo(hijo).orElseThrow();
-        assertThat(catalogo.getCatalogoPadreCodigo()).isEqualTo(padre);
+        assertThat(fixtures.codigoPadre(hijo)).isEqualTo(padre);
     }
 
     /** Regla 23: crear un registro del hijo sin registro padre se rechaza con REGISTRO_PADRE_REQUERIDO. */

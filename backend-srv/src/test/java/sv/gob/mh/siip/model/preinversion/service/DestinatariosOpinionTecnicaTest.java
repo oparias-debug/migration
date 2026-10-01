@@ -77,6 +77,15 @@ class DestinatariosOpinionTecnicaTest {
     }
 
     @Test
+    void unirConservaElPrimeroDeCadaUsuarioYElOrden() {
+        Usuario repetido = Usuario.builder().id(1L).correo("otro@test").build();
+
+        assertThat(DestinatariosOpinionTecnica.unir(List.of(urp, viabilizador), List.of(repetido, tecnicoPre)))
+                .containsExactly(urp, viabilizador, tecnicoPre)
+                .first().isSameAs(urp);
+    }
+
+    @Test
     void unProyectoSinUnidadEjecutoraNoTieneTecnicosUrp() {
         assertThat(destinatarios.tecnicosUrp(Proyecto.builder().id(9L).build())).isEmpty();
     }

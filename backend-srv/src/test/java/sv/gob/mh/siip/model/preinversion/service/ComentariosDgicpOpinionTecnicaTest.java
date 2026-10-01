@@ -97,6 +97,19 @@ class ComentariosDgicpOpinionTecnicaTest {
     }
 
     @Test
+    void sinListaDeApartadosSoloRegistraLosComentariosGenerales() {
+        ComentariosDgicpRequestDto request = new ComentariosDgicpRequestDto().comentariosApartados(null)
+                .comentarioDgicpDocumentosAnexos(" Revisar anexos ");
+
+        ComentariosDgicpOpinionTecnica.Registrados registrados = comentarios.registrar(gestion, false, request);
+
+        assertThat(registrados.proyecto()).isTrue();
+        ArgumentCaptor<ComentarioOpinionTecnica> guardado = ArgumentCaptor.forClass(ComentarioOpinionTecnica.class);
+        verify(repositorio).save(guardado.capture());
+        assertThat(guardado.getValue().getApartado()).isEqualTo(ComentarioOpinionTecnica.DOCUMENTOS_ANEXOS);
+    }
+
+    @Test
     void rechazaApartadosAjenosAlFormularioORepetidos() {
         ComentariosDgicpRequestDto ajeno = request("9.9");
         ComentariosDgicpRequestDto deAnexoA1 = request("1.2");

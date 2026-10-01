@@ -45,6 +45,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-06-consultar.feature. A diferencia de CU-PRE-04/CU-PRE-05, ninguna regla de este CU
@@ -63,7 +64,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre06Consultar {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final String PANTALLA_ANALISIS_POBLACION = "Análisis de la Población";
     private static final String PANTALLA_AREA_INFLUENCIA = "Área de Influencia";
 
@@ -222,7 +222,7 @@ public class Pre06Consultar {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

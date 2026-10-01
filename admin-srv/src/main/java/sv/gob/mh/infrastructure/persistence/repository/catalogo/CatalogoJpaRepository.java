@@ -19,5 +19,5 @@ public interface CatalogoJpaRepository extends JpaRepository<CatalogoEntity, Lon
 
     List<CatalogoEntity> findAllByOrderByCodigoAsc();
 
-    List<CatalogoEntity> findByCatalogoPadreCodigoOrderByCodigoAsc(String catalogoPadreCodigo);
+    List<CatalogoEntity> findByCatalogoPadre_CodigoOrderByCodigoAsc(String codigoPadre);
 }

@@ -234,6 +234,27 @@ class AnalisisMercadoServiceImplTest {
     }
 
     @Test
+    void guardar_ofertaNegativaYTasaDeDemandaDeMenos100_seRechazan() {
+        prepararGuardado("P-01");
+        AnalisisMercadoRequestDto conValoresFueraDeRango = request(filaCompleta("P-01").oferta(-1d).tasaDemanda(-100d));
+
+        assertThatThrownBy(() -> service.guardar(1L, conValoresFueraDeRango))
+                .isInstanceOfSatisfying(ValidacionNegocioException.class,
+                        ex -> assertThat(campos(ex)).containsExactly("filas[0].oferta", "filas[0].tasaDemanda"));
+    }
+
+    @Test
+    void guardar_filaSinProductoPeroConValores_seConservaComoIncompleta() {
+        prepararGuardado("P-01");
+
+        AnalisisMercadoDto resultado = service.guardar(1L, request(filaCompleta("P-01"),
+                new FilaAnalisisMercadoRequestDto().tasaOferta(3d)));
+
+        assertThat(resultado.getFilas()).hasSize(2);
+        assertThat(resultado.getFilas().get(1).getTasaOferta()).isEqualTo(3d);
+    }
+
+    @Test
     void guardar_tasaNegativaMayorQueMenos100_seAdmite() {
         prepararGuardado("P-01");
 

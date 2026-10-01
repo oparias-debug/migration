@@ -33,7 +33,9 @@ class AuditoriaAspectTest {
         logAppender.start();
         logger.addAppender(logAppender);
         request = new MockHttpServletRequest("POST", "/proyectos");
-        request.addHeader("X-Usuario", "tecnico.urp");
+        request.addHeader("X-Trace-Id", "abc-123");
+        request.addHeader("Authorization", "Bearer token-secreto");
+        request.addHeader("Cookie", "SESSION=cookie-secreta");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         joinPoint = mock(ProceedingJoinPoint.class);
     }
@@ -58,7 +60,10 @@ class AuditoriaAspectTest {
         assertThat(resultado).isEqualTo("resultado");
         assertThat(logAppender.list).hasSize(2);
         String entrada = logAppender.list.get(0).getFormattedMessage();
-        assertThat(entrada).contains("[POST] /proyectos?pagina=1", "X-Usuario=tecnico.urp", "Body: cuerpo-json");
+        // Las credenciales no quedan en el log.
+        assertThat(entrada).contains("[POST] /proyectos?pagina=1", "X-Trace-Id=abc-123", "Body: cuerpo-json")
+                .contains("Authorization=***", "Cookie=***")
+                .doesNotContain("token-secreto", "cookie-secreta");
         assertThat(logAppender.list.get(1).getFormattedMessage()).contains("Respuesta: resultado");
     }
 
@@ -81,6 +86,8 @@ class AuditoriaAspectTest {
         when(joinPoint.proceed()).thenThrow(falla);
 
         assertThatThrownBy(() -> aspect.logFullRequestAndResponse(joinPoint)).isSameAs(falla);
+        // Spring invoca el @AfterThrowing con la misma excepción, que sigue su curso.
+        aspect.logError(falla);
 
         ILoggingEvent error = logAppender.list.get(logAppender.list.size() - 1);
         assertThat(error.getLevel()).isEqualTo(Level.ERROR);

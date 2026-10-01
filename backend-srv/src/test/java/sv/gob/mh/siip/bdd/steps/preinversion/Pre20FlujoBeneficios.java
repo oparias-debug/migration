@@ -38,11 +38,11 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** Steps BDD ejecutables del CU-PRE-20 contra la lógica de flujo de beneficios. */
 public class Pre20FlujoBeneficios {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final String CODIGO_PARAMETRO = "BEN20";
 
     private final InstitucionRepository instituciones;
@@ -431,7 +431,7 @@ public class Pre20FlujoBeneficios {
 
     private void autenticar(String usuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, usuario);
+        AutenticacionDePrueba.autenticar(usuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

@@ -13,7 +13,8 @@ public class SecurityConfig {
     // /back/** ya no se autoriza aquí por rol Keycloak (ROLE_ADMIN/ROLE_USER):
     // los casos de uso de back (p.ej. CU-PRE-01) tienen su propio modelo de
     // roles de negocio (RolUsuario: TECNICO_URP/TECNICO_PRE/ADMINISTRADOR,
-    // resuelto desde USUARIO.ROL vía el header X-Usuario) y hacen su propia
+    // resuelto desde USUARIO.ROL con el usuario del JWT, que back valida por su
+    // cuenta) y hacen su propia
     // autorización fina por endpoint en ActorContexto — mantener también un
     // gate por rol Keycloak aquí duplicaría el modelo de roles en dos sistemas
     // que habría que sincronizar a mano. El gateway solo exige un JWT válido.

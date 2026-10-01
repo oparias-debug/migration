@@ -19,14 +19,12 @@ Servicio de Administración
 
 ### Endpoints principales
 
-<!-- Completar con los endpoints REST expuestos. Los de ejemplo vienen en SecurityController -->
+| Endpoint | Descripción | Seguridad |
+|----------|-------------|-----------|
+| `/api/v1/catalogos/**` | CU-ADM-01, Administración de Catálogos | JWT + rol `ADMINISTRADOR` o `ADMINISTRADOR_DE_CATALOGOS` |
+| `/api/v1/calendarios/**` | CU-ADM-04, Gestión de Calendario | JWT + rol `ADMINISTRADOR` o `ADMINISTRADOR_CALENDARIO` |
 
-| Método | Endpoint | Descripción | Seguridad |
-|--------|----------|-------------|-----------|
-| GET | `/api/v1/demo/security/publico` | Ejemplo público (`permitAll` en `SecurityConfig`) | Ninguna |
-| GET | `/api/v1/demo/security/autenticado` | Ejemplo autenticado: devuelve los claims del JWT | JWT |
-| GET | `/api/v1/demo/security/expedientes` | Ejemplo autorizado: `VIEW` sobre `expedientes-consulta` | JWT + permiso |
-| DELETE | `/api/v1/demo/security/expedientes/{id}` | Ejemplo autorizado: `DELETE` sobre `expedientes-registro` | JWT + permiso |
+El detalle de cada operación está en el contrato, [`api/openapi.yaml`](../api/openapi.yaml).
 
 ---
 

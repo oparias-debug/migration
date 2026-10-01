@@ -35,6 +35,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 
 import java.util.List;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * @author Luis Medrano
@@ -54,7 +55,6 @@ public class Pre12registrarLocalizacion {
 
     private final ContextoProyectoBdd contextoProyecto;
     private final LocalizacionService localizacionService;
-    private static final String HEADER_USUARIO = "X-Usuario";
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
     private final UsuarioRepository usuarioRepository;
@@ -540,7 +540,7 @@ public class Pre12registrarLocalizacion {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

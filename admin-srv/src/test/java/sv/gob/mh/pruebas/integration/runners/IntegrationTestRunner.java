@@ -18,7 +18,7 @@ import com.intuit.karate.junit5.Karate;
  * mvn test -Dtest=IntegrationTestRunner -Djwt.token="your-token-here"
  *
  * # Ejecutar solo tests con tag específico
- * mvn test -Dtest=IntegrationTestRunner -Dkarate.options="--tags @security"
+ * mvn test -Dtest=IntegrationTestRunner -Dkarate.options="--tags @health"
  *
  * # Ejecutar con configuración personalizada (variables del ConfigMap)
  * mvn test -Dtest=IntegrationTestRunner -Dkarate.env=qa -Dbase.url=https://mi-servicio.apps.gcp-op-desa.cloud.mh.gob.sv
@@ -35,15 +35,6 @@ public class IntegrationTestRunner {
                 .relativeTo(getClass());
     }
 
-    /**
-     * Ejecuta solo tests de Security
-     */
-    @Karate.Test
-    Karate testSecurityOnly() {
-        return Karate.run("classpath:integration/features")
-                .tags("@security")
-                .relativeTo(getClass());
-    }
 
     /**
      * Ejecuta solo tests de Health
@@ -55,25 +46,7 @@ public class IntegrationTestRunner {
                 .relativeTo(getClass());
     }
 
-    /**
-     * Ejecuta solo tests públicos (sin autenticación)
-     */
-    @Karate.Test
-    Karate testPublicOnly() {
-        return Karate.run("classpath:integration/features")
-                .tags("@public")
-                .relativeTo(getClass());
-    }
 
-    /**
-     * Ejecuta solo tests autenticados
-     */
-    @Karate.Test
-    Karate testAuthenticatedOnly() {
-        return Karate.run("classpath:integration/features")
-                .tags("@authenticated")
-                .relativeTo(getClass());
-    }
 
     /**
      * Ejecuta solo tests críticos

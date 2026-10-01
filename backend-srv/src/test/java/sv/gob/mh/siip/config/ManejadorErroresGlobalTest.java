@@ -19,7 +19,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import sv.gob.mh.siip.exception.AccesoDenegadoException;
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.FormatoArchivoNoSoportadoException;
-import sv.gob.mh.siip.exception.InconsistenciaFechaException;
 import sv.gob.mh.siip.exception.NoAutenticadoException;
 import sv.gob.mh.siip.exception.OperacionNoPermitidaException;
 import sv.gob.mh.siip.exception.RecursoNoEncontradoException;
@@ -224,25 +223,6 @@ class ManejadorErroresGlobalTest {
         assertNotNull(body);
         assertEquals("FORMATO_ARCHIVO_NO_SOPORTADO", body.getCodigo());
         assertEquals("El archivo no es PDF/A", body.getMensaje());
-    }
-
-    @Test
-    @DisplayName("Debería manejar InconsistenciaFechaException con y sin código propio y retornar status 422")
-    void testManejarInconsistenciaFecha() {
-        ResponseEntity<ErrorDto> conCodigo = manejadorErroresGlobal
-                .manejarInconsistenciaFecha(new InconsistenciaFechaException("RANGO_INVERTIDO", "Rango invertido"));
-        ResponseEntity<ErrorDto> sinCodigo = manejadorErroresGlobal
-                .manejarInconsistenciaFecha(new InconsistenciaFechaException("Fuera del periodo"));
-
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, conCodigo.getStatusCode());
-        ErrorDto body = conCodigo.getBody();
-        assertNotNull(body);
-        assertEquals("RANGO_INVERTIDO", body.getCodigo());
-        assertEquals("Rango invertido", body.getMensaje());
-        ErrorDto generico = sinCodigo.getBody();
-        assertNotNull(generico);
-        assertEquals("INCONSISTENCIA_FECHA", generico.getCodigo());
-        assertEquals("Fuera del periodo", generico.getMensaje());
     }
 
     @Test

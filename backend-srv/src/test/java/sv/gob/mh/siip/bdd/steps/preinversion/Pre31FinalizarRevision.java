@@ -25,11 +25,11 @@ import sv.gob.mh.siip.model.preinversion.dto.EstadoPAPDto;
 import sv.gob.mh.siip.model.preinversion.dto.FinalizarRevisionRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.RevisionProgramacionPAPDto;
 import sv.gob.mh.siip.model.preinversion.service.ProgramacionMetasFisicasPapRevisionService;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** CU-PRE-31-finalizar-revision.feature (SF-6, RN-D, RN-E). */
 public class Pre31FinalizarRevision {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final int ANIO = 2027;
     private static final String COMENTARIOS_FINANCIERO = "Reporte financiero revisado sin observaciones.";
     private static final String COMENTARIOS_METAS = "Reporte de metas físicas revisado sin observaciones.";
@@ -108,7 +108,7 @@ public class Pre31FinalizarRevision {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -112,12 +113,6 @@ public class Convenio {
     @Column(name = "JUSTIFICACION_ELIMINACION", length = 2000)
     private String justificacionEliminacion;
 
-    @Column(name = "FECHA_CREACION")
-    private LocalDateTime fechaCreacion;
-    @Column(name = "USUARIO_CREACION", length = 100)
-    private String usuarioCreacion;
-    @Column(name = "FECHA_MODIFICACION")
-    private LocalDateTime fechaModificacion;
-    @Column(name = "USUARIO_MODIFICACION", length = 100)
-    private String usuarioModificacion;
+    @Embedded
+    private AuditoriaConvenio auditoria;
 }

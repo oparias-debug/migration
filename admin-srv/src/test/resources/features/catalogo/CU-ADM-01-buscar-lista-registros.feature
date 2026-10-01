@@ -37,6 +37,26 @@ Característica: Buscar una lista de registros de un catálogo
     Cuando busco la lista de registros del catálogo "CAT-A" sin indicar lista de campos
     Entonces el sistema retorna "INACTIVE" para todos los registros del catálogo "CAT-A"
 
+  Escenario: Listar los registros de un catálogo hijo indica el registro padre de cada uno
+    Dado que existe el catálogo "CAT-HIJO" con catálogo padre "CAT-PADRE"
+    Y que el catálogo "CAT-PADRE" contiene un registro con KEY "P01"
+    Y que el catálogo "CAT-HIJO" contiene los registros enlazados al registro padre "P01":
+      | codigo |
+      | H01    |
+      | H02    |
+    Cuando busco la lista de registros del catálogo "CAT-HIJO" sin indicar lista de campos
+    Entonces el sistema retorna para cada registro su registro padre:
+      | keyValue | parentRecord |
+      | H01      | P01          |
+      | H02      | P01          |
+
+  Escenario: Listar los registros de un catálogo sin padre no indica registro padre
+    Cuando busco la lista de registros del catálogo "CAT-A" sin indicar lista de campos
+    Entonces el sistema retorna para cada registro su registro padre:
+      | keyValue | parentRecord |
+      | 01       |              |
+      | 02       |              |
+
   # ℹ️ Sin escenario (ambigüedad, ver historias-CU-ADM-01.md): el CU no indica qué ocurre al solicitar
   # en el listado un campo inexistente (la Regla 4 solo lo define para la búsqueda por KEY), ni qué se
   # retorna para un catálogo sin registros. Tampoco se genera escenario de permisos: la historia menciona

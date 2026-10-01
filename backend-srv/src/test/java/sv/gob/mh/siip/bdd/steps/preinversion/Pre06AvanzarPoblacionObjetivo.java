@@ -16,6 +16,7 @@ import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.common.repository.InstitucionRepository;
 import sv.gob.mh.siip.model.common.repository.UnidadEjecutoraRepository;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-06-avanzar-poblacion-objetivo.feature. Igual criterio que
@@ -35,7 +36,6 @@ import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
  */
 public class Pre06AvanzarPoblacionObjetivo {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private final InstitucionRepository institucionRepository;
     private final UnidadEjecutoraRepository unidadEjecutoraRepository;
@@ -83,7 +83,7 @@ public class Pre06AvanzarPoblacionObjetivo {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

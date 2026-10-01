@@ -8,7 +8,6 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -34,8 +33,8 @@ public class DocumentosOpinionTecnica {
 
     public static final String NOTA_SOLICITUD_OT_REQUERIDA = "NOTA_SOLICITUD_OT_REQUERIDA";
 
-    /** Solo se conserva en disco una extensión alfanumérica corta; cualquier otra se descarta. */
-    private static final Pattern EXTENSION_SEGURA = Pattern.compile("[a-z0-9]{1,10}");
+    /** Solo se conserva en disco una extensión alfanumérica corta (ASCII); cualquier otra se descarta. */
+    private static final int LONGITUD_MAXIMA_EXTENSION = 10;
 
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
 
@@ -145,6 +144,11 @@ public class DocumentosOpinionTecnica {
     private static String sufijoExtension(String nombre) {
         int punto = nombre.lastIndexOf('.');
         String extension = punto < 0 ? "" : nombre.substring(punto + 1).toLowerCase(Locale.ROOT);
-        return EXTENSION_SEGURA.matcher(extension).matches() ? ("." + extension) : "";
+        return extensionSegura(extension) ? ("." + extension) : "";
+    }
+
+    private static boolean extensionSegura(String extension) {
+        return !extension.isEmpty() && extension.length() <= LONGITUD_MAXIMA_EXTENSION
+                && extension.chars().allMatch((int c) -> (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'));
     }
 }

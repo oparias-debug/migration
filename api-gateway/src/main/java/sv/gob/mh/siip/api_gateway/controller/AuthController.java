@@ -15,12 +15,17 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.server.ResponseStatusException;
 
 import reactor.core.publisher.Mono;
+import sv.gob.mh.siip.api_gateway.config.ArgumentosSensibles;
 import sv.gob.mh.siip.api_gateway.dto.LoginRequest;
 import sv.gob.mh.siip.api_gateway.dto.TokenResponse;
 
+// login recibe el password y refresh el refresh token: la auditoría no registra sus argumentos.
+@ArgumentosSensibles
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+  static final String CREDENCIALES_INVALIDAS = "Usuario o contraseña incorrectos";
 
   private final WebClient webClient;
   private final String keycloakTokenUri;
@@ -43,14 +48,28 @@ public class AuthController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
           "El campo Username y password no deben venir vacios.");
     }
-    String bodyValue = String.format(
-        "client_id=%s&client_secret=%s&username=%s&password=%s&grant_type=password",
-        clientId, clientSecret, loginRequest.getUsername(), loginRequest.getPassword());
-
+    // fromFormData codifica cada valor: un password con &, + o % llega tal cual a Keycloak y un
+    // username no puede agregar campos al formulario (antes se concatenaba sin codificar).
     return webClient.post().uri(keycloakTokenUri)
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        .bodyValue(bodyValue)
-        .retrieve().bodyToMono(TokenResponse.class);
+        .body(BodyInserters.fromFormData(formularioLogin(loginRequest)))
+        .retrieve().bodyToMono(TokenResponse.class)
+        // Un 4xx de Keycloak es un rechazo de las credenciales (401 invalid_grant; 400 si la cuenta
+        // está deshabilitada o incompleta): al front le llega 401, y como es 4xx no deja traza en el
+        // log. Un 5xx o Keycloak caído sigue saliendo como error del servidor, con su log.
+        .onErrorResume(WebClientResponseException.class, ex -> ex.getStatusCode().is4xxClientError()
+            ? Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, CREDENCIALES_INVALIDAS, ex))
+            : Mono.error(ex));
+  }
+
+  MultiValueMap<String, String> formularioLogin(LoginRequest loginRequest) {
+    MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+    formData.add("grant_type", "password");
+    formData.add("username", loginRequest.getUsername());
+    formData.add("password", loginRequest.getPassword());
+    formData.add("client_id", clientId);
+    formData.add("client_secret", clientSecret);
+    return formData;
   }
 
   @PostMapping("/refresh")

@@ -41,7 +41,7 @@ public class ReglaNegocioException extends RuntimeException {
     public ReglaNegocioException(String codigo, String mensaje, List<ErrorDetalleDto> detalles) {
         super(mensaje);
         this.codigo = codigo;
-        this.detalles = detalles;
+        this.detalles = detalles == null ? null : List.copyOf(detalles);
     }
 
     public String getCodigo() {
@@ -49,6 +49,6 @@ public class ReglaNegocioException extends RuntimeException {
     }
 
     public List<ErrorDetalleDto> getDetalles() {
-        return detalles;
+        return detalles == null ? null : List.copyOf(detalles);
     }
 }

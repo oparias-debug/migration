@@ -28,6 +28,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * @author Luis Medrano
@@ -41,7 +42,6 @@ public class Pre12ConsultarLocalizacion {
     private SectorActividad sector;
     private EjeTematico ejeTematico;
     private final ContextoProyectoBdd contextoProyecto;
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final String DISTRITO = "Distrito BDD PRE08";
 
 
@@ -174,7 +174,7 @@ public class Pre12ConsultarLocalizacion {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

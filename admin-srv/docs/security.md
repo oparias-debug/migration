@@ -7,9 +7,9 @@ Dos capas, con responsables distintos:
 | **Autenticación**: ¿quién es? | Spring Security como *resource server* OAuth2 contra Keycloak, realm `MHINTERNO` | Nada por endpoint: **todo exige JWT** salvo lo listado como `permitAll` en `SecurityConfig` |
 | **Autorización**: ¿puede hacer esto? | `@PermissionsAllowed` (aspecto AOP del proyecto), que consulta a `authorization-service` | La anotación con operación y recurso, y que el permiso exista en el autorizador |
 
-El servicio trae los tres casos como ejemplo vivo en `SecurityController`
-(`/publico`, `/autenticado`, `/expedientes` y `DELETE /expedientes/{id}` bajo `/api/v1/demo/security`). Se pueden borrar en
-cuanto el servicio tenga sus propios recursos.
+Hoy los endpoints del servicio (CU-ADM-01 y CU-ADM-04) se autorizan por rol de realm con
+`@PreAuthorize`; `@PermissionsAllowed` queda disponible en el marco, pero ningún endpoint lo usa
+todavía.
 
 ---
 
@@ -57,7 +57,8 @@ curl -s -X POST "https://authentication-service-mh-dev-dinafi-usi-frmk.apps.<dom
 ```
 
 ```bash
-curl -H "Authorization: Bearer $TOKEN" https://<route>/api/v1/demo/security/autenticado
+# 200 con el rol ADMINISTRADOR o ADMINISTRADOR_DE_CATALOGOS; 403 sin él; 401 sin token
+curl -H "Authorization: Bearer $TOKEN" https://<route>/api/v1/catalogos
 ```
 
 ---
@@ -122,7 +123,7 @@ grupo.
 
 ```bash
 # con un usuario que tiene el permiso: 200
-curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $TOKEN" https://<route>/api/v1/demo/security/expedientes
+curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $TOKEN" https://<route>/<endpoint con @PermissionsAllowed>
 # con un usuario sin el permiso: 403
 # sin token: 401
 ```
@@ -136,7 +137,7 @@ reinicio de `authorization-service` en dev.
 
 `src/test/resources/application.yml` apunta el `issuer-uri` a un mock y la base a H2, así que
 las pruebas arrancan sin Keycloak ni Oracle. Para simular un usuario se usa el
-post-procesador `jwt()` de `spring-security-test`, como en `SecurityControllerTest`:
+post-procesador `jwt()` de `spring-security-test`, como en `CatalogosSeguridadTest`:
 
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

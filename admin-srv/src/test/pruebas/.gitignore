@@ -70,7 +70,6 @@ buildNumber.properties
 stress/data/*-generated.csv
 integration/data/*-generated.json
 !stress/data/usuarios.csv
-!integration/data/test-data.json
 
 # ============================================================================
 # NODE MODULES

@@ -205,7 +205,6 @@ public class SecurityConfig {
                 // Endpoints públicos
                 .requestMatchers("/actuator/health/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/v1/demo/security/publico").permitAll()
                 // Endpoints protegidos
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2

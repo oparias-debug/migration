@@ -39,8 +39,7 @@ La capa API es el **punto de entrada** de la aplicación. Recibe peticiones HTTP
 api/
 ├── controller/
 │   ├── ProductoController.java
-│   ├── CategoriaController.java
-│   └── SecurityController.java
+│   └── CategoriaController.java
 └── dto/
     ├── ProductoRequestDTO.java
     ├── ProductoResponseDTO.java

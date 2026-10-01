@@ -51,6 +51,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-29-consultar-buscar.feature (Banco de Proyectos). Cada escenario crea sus propias Unidades
@@ -59,7 +60,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre29ConsultarBuscar {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final String PANTALLA = "Banco de Proyectos";
 
     /** Estados que FB paso 1 + mockup del Anexo A.1 exigen ver en el Banco. */
@@ -374,7 +374,7 @@ public class Pre29ConsultarBuscar {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

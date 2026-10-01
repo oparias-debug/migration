@@ -34,6 +34,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-31-sincronizacion-automatica.feature (SF-4/SF-5). Ejercita directamente
@@ -44,7 +45,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre31SincronizacionAutomatica {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final int ANIO = 2027;
 
     private final InstitucionRepository institucionRepository;
@@ -147,7 +147,7 @@ public class Pre31SincronizacionAutomatica {
         etapaMetaRepository.save(EtapaMetaFisicaPap.builder().etapaPreinversion(etapa).build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

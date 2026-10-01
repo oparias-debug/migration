@@ -44,6 +44,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-03.5-modificar-ruta.feature. El clic en "Modificar"/"Guardar" comparte texto con pasos ya
@@ -52,7 +53,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre35ModificarRuta {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final List<NombreEtapaDto> RUTA_COMPLETA = List.of(NombreEtapaDto.PERFIL,
             NombreEtapaDto.PREFACTIBILIDAD, NombreEtapaDto.FACTIBILIDAD, NombreEtapaDto.DISENO,
             NombreEtapaDto.EJECUCION);
@@ -236,7 +236,7 @@ public class Pre35ModificarRuta {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

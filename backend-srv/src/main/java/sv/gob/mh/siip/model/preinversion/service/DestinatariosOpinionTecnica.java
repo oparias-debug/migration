@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
@@ -94,12 +97,10 @@ public class DestinatariosOpinionTecnica {
     }
 
     /** Une las listas sin repetir usuarios, en el orden recibido. */
-    @SafeVarargs
-    private static List<Usuario> unir(List<Usuario>... listas) {
-        Map<Long, Usuario> porId = new LinkedHashMap<>();
-        for (List<Usuario> lista : listas) {
-            lista.forEach(u -> porId.putIfAbsent(u.getId(), u));
-        }
+    static List<Usuario> unir(List<Usuario> primeros, List<Usuario> segundos) {
+        Map<Long, Usuario> porId = Stream.concat(primeros.stream(), segundos.stream())
+                .collect(Collectors.toMap(Usuario::getId, Function.identity(), (Usuario a, Usuario b) -> a,
+                        LinkedHashMap::new));
         return new ArrayList<>(porId.values());
     }
 }

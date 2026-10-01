@@ -122,8 +122,8 @@ configuración del autorizador ([security.md](security.md) §2).
 | Rama | Gerrit, ambos repositorios | Existe la rama `<destino>` con el contenido del origen |
 | ArgoCD | Hub, `<destino>-dgicp-siip-admin-srv` | `Synced` y `Healthy` en cada clúster del ambiente |
 | Pod | Namespace del destino | `Running`, imagen con el mismo tag que el origen |
-| Route | `oc get route` | Host `admin-srv-mh-<destino>-dgicp-siip.apps.<dominio del clúster>`, admitida |
-| Health | `https://<route>/q/health` | `UP` |
+| Route | `oc get route` | Ninguna: admin-srv no se publica (`route.enabled: false`) |
+| Health | `oc port-forward svc/admin-srv 8080:80` y `/actuator/health` | `UP` |
 | Login | Endpoint autenticado con un token del Keycloak del destino | `200` |
 | Config-server | Log del pod | `Configuración cargada exitosamente desde config server` |
 | Pruebas | Rama `pruebas-funcional-<destino>` ([testing.md](testing.md) §6) | Veredicto `OK` |

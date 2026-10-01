@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * 401 de las rutas de CU-ADM-01 con el schema {@code Error} de su contrato ({@code codigo:
+ * 401 de las rutas de CU-ADM-01 y CU-ADM-04 con el schema {@code Error} de su contrato ({@code codigo:
  * NO_AUTENTICADO}). El token ausente, inválido o expirado se detecta en el filtro de seguridad,
  * antes del controller, así que el manejador de errores de catálogos no llega a verlo.
  */

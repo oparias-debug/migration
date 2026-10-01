@@ -44,6 +44,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-01-registrar-nuevo-proyecto.feature. El clic en botones genericos ("Guardar",
@@ -60,7 +61,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre01RegistrarNuevoProyecto {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private static final Map<String, String> PROPIEDAD_POR_CAMPO = Map.of(
             "Iniciativa de inversión", "iniciativaInversion",
@@ -312,7 +312,7 @@ public class Pre01RegistrarNuevoProyecto {
                 .save(ProyectoFixtures.nuevoEjeTematico("EJE-BDD-" + sufijo, "Eje temático de prueba"));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuarioTecnico);
+        AutenticacionDePrueba.autenticar(nombreUsuarioTecnico);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

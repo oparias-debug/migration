@@ -1267,6 +1267,10 @@ components:
         keyValue:
           type: string
           description: Valor KEY del registro, para correlacionar los elementos del listado.
+        parentRecord:
+          type: string
+          nullable: true
+          description: Valor KEY del registro padre en el catálogo padre, o `null` (Regla 23).
         active:
           $ref: '#/components/schemas/ActiveStatus'
         values:

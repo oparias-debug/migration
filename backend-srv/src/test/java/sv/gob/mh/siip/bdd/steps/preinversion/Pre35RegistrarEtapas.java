@@ -49,6 +49,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-03.5-registrar-etapas.feature. El clic en "Guardar" comparte texto con
@@ -64,7 +65,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre35RegistrarEtapas {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private static final Map<String, String> PROPIEDAD_POR_CAMPO = Map.of(
             "Costo de la etapa", "costo",
@@ -436,7 +436,7 @@ public class Pre35RegistrarEtapas {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

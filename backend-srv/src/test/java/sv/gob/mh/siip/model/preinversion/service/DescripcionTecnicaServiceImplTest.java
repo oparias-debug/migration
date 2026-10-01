@@ -131,6 +131,21 @@ class DescripcionTecnicaServiceImplTest {
     }
 
     @Test
+    void obtenerDescripcionTecnicaRegistradaEnBlancoUsaLaDescripcionAutocompletada() {
+        Proyecto proyecto = Proyecto.builder().id(1L).descripcionProyecto("Descripción base").build();
+        when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyecto));
+        DescripcionTecnica registrada = DescripcionTecnica.builder().proyecto(proyecto).descripcion("   ").build();
+        when(descripcionTecnicaRepository.findByProyectoId(1L)).thenReturn(Optional.of(registrada));
+        when(opinionTecnicaRepository.findFirstByProyectoIdOrderByFechaEmisionDesc(1L)).thenReturn(Optional.empty());
+        when(componenteRepository.findByProyectoId(1L)).thenReturn(List.of());
+        when(mapper.toDto(registrada)).thenReturn(new DescripcionTecnicaDto());
+
+        DescripcionTecnicaDto resultado = service.obtenerDescripcionTecnica(1L);
+
+        assertThat(resultado.getDescripcionProyecto()).isEqualTo("Descripción base");
+    }
+
+    @Test
     void guardarDescripcionTecnicaReemplazaLosComponentesConLasFilasEnviadas() {
         Proyecto proyecto = Proyecto.builder().id(1L).descripcionProyecto("Descripción base").build();
         when(proyectoRepository.findById(1L)).thenReturn(Optional.of(proyecto));

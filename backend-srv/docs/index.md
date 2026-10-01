@@ -5,9 +5,10 @@ Ministerio de Hacienda: catálogos administrativos, calendario,
 usuarios/roles/permisos, gestión de proyectos, procesos de preinversión y
 motor de workflow (Flowable BPM).
 
-Lo invoca solo `api-gateway`, que autentica al usuario contra Keycloak y le
-pasa su identidad en el header `X-Usuario`. `backend-srv` no tiene seguridad
-propia: no valida tokens y no debe exponerse directamente.
+Lo invoca `api-gateway`, que autentica al usuario contra Keycloak y le reenvía
+el token. `backend-srv` valida ese JWT por su cuenta (`security/SecurityConfig`)
+y toma el usuario de su `preferred_username`; el rol de negocio sale de
+`USUARIO.ROL`.
 
 Su configuración por ambiente (base de datos, esquemas, logging, recursos) no
 vive en este repositorio sino en `dgicp-siip2/backend-srv-config`.

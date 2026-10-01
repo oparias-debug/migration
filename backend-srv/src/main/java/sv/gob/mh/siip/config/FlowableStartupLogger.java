@@ -15,12 +15,11 @@ public class FlowableStartupLogger {
     private static final Logger LOGGER = LoggerFactory.getLogger(FlowableStartupLogger.class);
 
     @Bean
-    public CommandLineRunner init(final RepositoryService repositoryService,
-            final RuntimeService runtimeService,
+    public CommandLineRunner init(final RepositoryService repositoryService, final RuntimeService runtimeService,
             final TaskService taskService) {
 
         return (String[] strings) -> {
-            LOGGER.info("Number of process definitions : {}",repositoryService.createProcessDefinitionQuery().count());
+            LOGGER.info("Number of process definitions : {}", repositoryService.createProcessDefinitionQuery().count());
             LOGGER.info("Number of tasks : {}", taskService.createTaskQuery().count());
         };
     }

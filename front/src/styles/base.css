@@ -669,17 +669,6 @@ tbody tr { cursor: pointer; -webkit-user-select: none; user-select: none; }
 .campo-con-accion input { flex: 1; min-width: 0; }
 .campo-con-accion .btn { white-space: nowrap; }
 
-/* Lista de selección de un catálogo: se elige pulsando la fila, así que la fila
-   entera responde y el primer valor va como enlace para poder llegar con el
-   teclado sin añadir una columna de botones. */
-.lista-seleccion .fila-elegible { cursor: pointer; }
-.lista-seleccion .fila-elegible:hover { background: var(--n50); }
-.lista-seleccion .fila-elegible.elegida { background: #e6eefb; font-weight: 700; }
-.enlace-fila {
-  font: inherit; color: var(--azul); background: none; border: 0; padding: 0;
-  cursor: pointer; text-align: left; text-decoration: underline;
-}
-
 /* Caja de búsqueda sobre una tabla. Nombre propio: .buscador es la de la barra
    superior y lleva margin-left:auto, que aquí la mandaría al margen derecho. */
 .buscador-tabla { max-width: 420px; }

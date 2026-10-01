@@ -9,22 +9,6 @@ Feature: Pruebas de Pico (Spike) — Ráfagas de peticiones
     * configure connectTimeout = 5000
     * configure readTimeout = 5000
 
-  @stress @spike @critical
-  Scenario: Spike - 10 peticiones rápidas al endpoint público
-    * def results = []
-    * def doRequest =
-    """
-    function() {
-      var start = java.lang.System.currentTimeMillis();
-      var response = karate.call('classpath:stress/features/stress-single-request.feature', { targetPath: '/api/v1/demo/security/hello' });
-      var elapsed = java.lang.System.currentTimeMillis() - start;
-      return { status: response.responseStatus, time: elapsed };
-    }
-    """
-    * def results = karate.repeat(10, doRequest)
-    * def failures = karate.filter(results, function(x){ return x.status != 200 })
-    * assert failures.length == 0
-
   @stress @spike @health
   Scenario: Spike - 10 peticiones rápidas al health check
     * def doRequest =
@@ -44,7 +28,7 @@ Feature: Pruebas de Pico (Spike) — Ráfagas de peticiones
     * def doRequest =
     """
     function() {
-      karate.call('classpath:stress/features/stress-single-request.feature', { targetPath: '/api/v1/demo/security/hello' });
+      karate.call('classpath:stress/features/stress-single-request.feature', { targetPath: '/actuator/health/liveness' });
       return true;
     }
     """

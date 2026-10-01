@@ -36,6 +36,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Ejercita {@link ProyectoCapturaService} real para obtener el listado (antes esta clase
@@ -51,7 +52,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre03NavegarRegistroEtapas {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
 
     private final ProyectoCapturaService proyectoCapturaService;
     private final InstitucionRepository institucionRepository;
@@ -147,7 +147,7 @@ public class Pre03NavegarRegistroEtapas {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, usuario.getNombreUsuario());
+        AutenticacionDePrueba.autenticar(usuario.getNombreUsuario());
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

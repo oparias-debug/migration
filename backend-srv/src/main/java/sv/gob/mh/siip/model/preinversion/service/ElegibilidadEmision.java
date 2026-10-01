@@ -32,10 +32,12 @@ import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
 @Transactional
 public class ElegibilidadEmision {
 
-    public static final String COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER = ViabilidadSolicitud.COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER;
+    public static final String COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER =
+            ViabilidadSolicitud.COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER;
 
     /** Mensaje literal de RN15. */
-    public static final String MENSAJE_COMENTARIOS_OT_SIN_RESPONDER = "Es necesario responder los comentarios de la Opinión Técnica previo a la emisión de elegibilidad";
+    public static final String MENSAJE_COMENTARIOS_OT_SIN_RESPONDER =
+            "Es necesario responder los comentarios de la Opinión Técnica previo a la emisión de elegibilidad";
 
     /** Longitud de la columna ELEGIBILIDAD.CRITERIOS_CUMPLIDOS. */
     public static final int LONGITUD_CRITERIOS_CUMPLIDOS = 2000;
@@ -86,12 +88,12 @@ public class ElegibilidadEmision {
 
         if (reemision) {
             notificacionService.notificarObservacionesElegibilidadAtendidas(proyecto,
-                    destinatarios(RolUsuario.TECNICO_PRE, RolUsuario.TECNICO_SYMP));
+                    destinatarios(List.of(RolUsuario.TECNICO_PRE, RolUsuario.TECNICO_SYMP)));
             return;
         }
         List<Usuario> destinatarios = new ArrayList<>(usuarioRepository.findByRolAndUnidadEjecutora_IdAndActivoTrue(
                 RolUsuario.TECNICO_URP, proyecto.getUnidadEjecutora().getId()));
-        destinatarios.addAll(destinatarios(RolUsuario.TECNICO_PRE));
+        destinatarios.addAll(destinatarios(List.of(RolUsuario.TECNICO_PRE)));
         notificacionService.notificarEmisionElegibilidad(proyecto, destinatarios);
     }
 
@@ -108,7 +110,7 @@ public class ElegibilidadEmision {
                 : codigos;
     }
 
-    private List<Usuario> destinatarios(RolUsuario... roles) {
+    private List<Usuario> destinatarios(List<RolUsuario> roles) {
         List<Usuario> destinatarios = new ArrayList<>();
         for (RolUsuario rol : roles) {
             destinatarios.addAll(usuarioRepository.findByRolAndActivoTrue(rol));

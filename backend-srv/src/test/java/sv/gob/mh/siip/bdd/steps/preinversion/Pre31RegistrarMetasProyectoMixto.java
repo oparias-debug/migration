@@ -45,6 +45,7 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * CU-PRE-31-registrar-metas-proyecto-mixto.feature (SF-1 + SF-2 en un mismo CUP, RN-B literales
@@ -54,7 +55,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
  */
 public class Pre31RegistrarMetasProyectoMixto {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final int ANIO = 2027;
     private static final double EJECUTADO_PERFIL = 40d;
 
@@ -133,7 +133,7 @@ public class Pre31RegistrarMetasProyectoMixto {
                 Entregable.ESTUDIO_DE_PERFIL, ANIO - 1, EJECUTADO_PERFIL);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

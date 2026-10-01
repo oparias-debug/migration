@@ -47,13 +47,16 @@ public class CatalogoFixtures {
         this.registroRepository = registroRepository;
     }
 
-    /** Borra todos los registros (primero sus enlaces al padre, Regla 23) y catálogos. */
+    /** Borra todos los registros y catálogos, primero sus enlaces al padre (Reglas 15 y 23). */
     public void limpiar() {
         List<RegistroEntity> registros = registroRepository.findAll();
         registros.forEach(registro -> registro.setRegistroPadre(null));
         registroRepository.flush();
         registroRepository.deleteAll(registros);
-        catalogoRepository.deleteAll();
+        List<CatalogoEntity> catalogos = catalogoRepository.findAll();
+        catalogos.forEach(catalogo -> catalogo.setCatalogoPadre(null));
+        catalogoRepository.flush();
+        catalogoRepository.deleteAll(catalogos);
     }
 
     // ---------- Catálogos ----------
@@ -62,7 +65,11 @@ public class CatalogoFixtures {
         CatalogoEntity catalogo = new CatalogoEntity();
         catalogo.setCodigo(codigo);
         catalogo.setNombre(nombre != null ? nombre : "Catálogo " + codigo);
-        catalogo.setCatalogoPadreCodigo(padre);
+        if (padre != null) {
+            // El padre se enlaza por id (FK): si el escenario no lo preparó, se crea con los campos por defecto.
+            asegurarCatalogo(padre);
+        }
+        catalogo.setCatalogoPadre(padre == null ? null : catalogoRepository.findByCodigo(padre).orElseThrow());
         catalogo.setEstado(EstadoVigencia.ACTIVE);
         for (int i = 0; i < campos.size(); i++) {
             CampoDefinicionEntity campo = new CampoDefinicionEntity();
@@ -93,6 +100,11 @@ public class CatalogoFixtures {
     }
 
     @Transactional(readOnly = true)
+    /** Código del catálogo padre guardado, leído dentro de la transacción (el padre es una relación lazy). */
+    public String codigoPadre(String codigo) {
+        return catalogo(codigo).getCatalogoPadreCodigo();
+    }
+
     public CatalogoEntity catalogo(String codigo) {
         return catalogoRepository.findByCodigo(codigo).orElseThrow();
     }

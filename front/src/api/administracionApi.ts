@@ -9,7 +9,9 @@ import { createHttpClient } from './httpClient';
  * de preinversión, así que también lleva su propia instancia de axios. El motivo
  * de no reutilizar el `httpClient` genérico está explicado en preinversionApi.
  */
-const administracionAxios = createHttpClient('/back');
+// CU-ADM-04 (Calendario) vive en admin-srv, detrás de /admin/** de api-gateway,
+// que monta su contrato bajo /api/v1.
+const adminSrvAxios = createHttpClient('/admin/api/v1');
 
 // CU-ADM-01 vive en admin-srv, detrás de /admin/** de api-gateway, que monta su
 // contrato bajo /api/v1. Ése es el destino por defecto y el de la entidad.
@@ -41,9 +43,9 @@ export type {
 } from './generated/administracion-catalogos-admin';
 
 // CU-ADM-04 (Gestión de Calendario). El generador lo partió en dos clases, una
-// por tag: el mantenimiento del calendario y las consultas de cálculo, que el
-// back usa para contar días hábiles y que aquí sirven para comprobar lo cargado.
-export const calendariosApi = new CalendariosGestinApi(undefined, undefined, administracionAxios);
-export const consultasCalendarioApi = new CalendariosConsultasApi(undefined, undefined, administracionAxios);
+// por tag: el mantenimiento del calendario y las consultas de cálculo (días
+// hábiles, tipo de día...), que aquí sirven para comprobar lo cargado.
+export const calendariosApi = new CalendariosGestinApi(undefined, undefined, adminSrvAxios);
+export const consultasCalendarioApi = new CalendariosConsultasApi(undefined, undefined, adminSrvAxios);
 
 export type { Calendario, CalendarioResumen, CalendarItem } from './generated/administracion-calendario';

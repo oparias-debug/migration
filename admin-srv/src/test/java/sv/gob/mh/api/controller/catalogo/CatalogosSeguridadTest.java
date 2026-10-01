@@ -54,7 +54,7 @@ class CatalogosSeguridadTest {
     @Test
     @DisplayName("Fuera de catálogos, el 401 sigue siendo el estándar de Bearer, sin cuerpo")
     void sinTokenFueraDeCatalogos() throws Exception {
-        mockMvc.perform(get("/api/v1/demo/security/autenticado"))
+        mockMvc.perform(get("/api/v1/fuera-de-catalogos"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string(""));
     }

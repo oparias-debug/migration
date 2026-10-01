@@ -48,11 +48,11 @@ import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** CU-PRE-30-registrar-estudio-arrastre.feature (SF-1, RN-B.a, RN-B.c, RN-B.d). */
 public class Pre30RegistrarEstudioArrastre {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final int ANIO = 2027;
     private static final double COSTO_ETAPA = 10000d;
     private static final double EJECUTADO_ANIO_ANTERIOR = 4000d;
@@ -268,7 +268,7 @@ public class Pre30RegistrarEstudioArrastre {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

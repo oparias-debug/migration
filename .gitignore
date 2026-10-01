@@ -1,6 +1,7 @@
 .env
 */target/*
 target/*
-api-gateway/*
 front/tsconfig.tsbuildinfo
-.env
+front/.scannerwork/*
+*hs_err_pid*.log
+PENDIENTES.md

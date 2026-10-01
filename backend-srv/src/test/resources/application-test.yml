@@ -5,6 +5,9 @@ spring:
     username: sa
     password:
   jpa.hibernate.ddl-auto: create-drop
+  # Las pruebas no hablan con Keycloak: usan jwt() de spring-security-test o
+  # AutenticacionDePrueba, que no pasan por el decodificador.
+  security.oauth2.resourceserver.jwt.issuer-uri: http://localhost:0/mock-oidc
 
 flowable.database-schema-update: drop-create
 

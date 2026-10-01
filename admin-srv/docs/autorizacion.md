@@ -45,19 +45,13 @@ Tres cosas que conviene saber desde el principio:
 
 ## 2. Lo que trae la plantilla
 
-`SecurityController` expone cuatro niveles, de menos a más exigente:
+La plantilla traía un controlador de ejemplo (`SecurityController`, bajo
+`/api/v1/demo/security`) y su padrón (`authz/ejemplo-authz.json`); en admin-srv ya se quitaron.
+Lo que queda del marco es el mecanismo: `@PermissionsAllowed`, el aspecto que lo aplica y el
+cliente de `authorization-service`.
 
-| Endpoint | Exige | Sin lo que exige |
-|---|---|---|
-| `GET /api/v1/demo/security/publico` | nada | — |
-| `GET /api/v1/demo/security/autenticado` | sesión | `401` |
-| `GET /api/v1/demo/security/expedientes` | `VIEW` sobre `expedientes-consulta` | `403` |
-| `DELETE /api/v1/demo/security/expedientes/{id}` | `DELETE` sobre `expedientes-registro` | `403` |
-
-El cuarto es el que enseña de verdad la autorización: con el padrón de ejemplo cargado, **dos
-usuarios autenticados obtienen respuestas distintas del mismo endpoint**.
-
-Es de ejemplo. Bórralo en cuanto el servicio tenga sus propios recursos.
+Hoy ningún endpoint de admin-srv lo usa: CU-ADM-01 y CU-ADM-04 se autorizan por rol de realm con
+`@PreAuthorize`. El resto de esta guía aplica cuando un endpoint pase a exigir un permiso.
 
 ---
 
@@ -66,10 +60,9 @@ Es de ejemplo. Bórralo en cuanto el servicio tenga sus propios recursos.
 Sin padrón, los endpoints con permiso responden `403` a todo el mundo. Es lo correcto —el marco
 falla cerrado—, pero no se puede probar nada.
 
-El archivo [`authz/ejemplo-authz.json`](../authz/ejemplo-authz.json)
-trae dos grupos de **ejemplo** —`EJEMPLO_GRUPO_ADMIN` y `EJEMPLO_GRUPO_CONSULTA`—, que **no existen**
-hasta que alguien los cree. Antes de cargarlo, o creas esos dos grupos y te los asignas, o cambias los
-dos nombres por grupos a los que ya pertenezcas: ver §8. Se carga con una sola llamada:
+El padrón vive en un archivo `authz/<componente>-authz.json` del repositorio, con el formato del
+`import` (§4 muestra un ejemplo). Los grupos que nombre **tienen que existir** y el usuario
+pertenecer a ellos: ver §8. Se carga con una sola llamada:
 
 ```bash
 COMPONENT_ID="<el service.name de tu servicio>"
@@ -79,7 +72,7 @@ TOKEN="<un token de un usuario con sesión>"
 curl -sS -X POST "$AUTHZ_URL/import/$COMPONENT_ID?mode=merge" \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  --data @authz/ejemplo-authz.json
+  --data @authz/<componente>-authz.json
 ```
 
 La respuesta dice cuántos recursos y permisos se crearon o actualizaron. Es **idempotente**:
@@ -95,7 +88,7 @@ El formato del `export` es el mismo del `import`: exportas, editas y vuelves a i
 
 ---
 
-## 4. El padrón del ejemplo
+## 4. Un padrón de ejemplo
 
 Cuatro recursos, en jerarquía:
 
@@ -182,8 +175,7 @@ vienen dentro del token. Así que el ejemplo no funciona hasta que existan de ve
 y tú pertenezcas a ellos. La plantilla **no los crea** —ni al generar el componente ni al
 desplegarlo—: es una decisión de directorio, y se hace a mano.
 
-`authz/ejemplo-authz.json` trae dos nombres de ejemplo, los mismos que usan las pruebas de la
-plantilla:
+El padrón de ejemplo de §4 usa dos nombres de grupo:
 
 | Grupo | Para qué está |
 |---|---|

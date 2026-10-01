@@ -108,7 +108,7 @@ public class SeleccionEtapasRegistro {
     /**
      * Crea las filas de {@link EtapaPreinversion} que falten para reflejar la selección vigente.
      */
-    public void sincronizar(Proyecto proyecto, Collection<TipoEtapaPreinversion> seleccion) {
+    public void sincronizar(Proyecto proyecto, Iterable<TipoEtapaPreinversion> seleccion) {
         for (TipoEtapaPreinversion tipoEtapa : seleccion) {
             if (etapaPreinversionRepository.findByProyectoIdAndTipoEtapa(proyecto.getId(), tipoEtapa).isEmpty()) {
                 etapaPreinversionRepository.save(nuevaEtapa(proyecto, tipoEtapa));

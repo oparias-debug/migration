@@ -35,6 +35,7 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 
 /**
@@ -56,7 +57,6 @@ public class Pre16RegistrarAnalisisLegal {
     @Autowired
     private AnalisisLegalService analisisLegalService;
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private Proyecto proyecto;
     AnalisisLegalDto analisisGuardado;
     AnalisisLegalDto analisisEncontrado;
@@ -338,7 +338,7 @@ public class Pre16RegistrarAnalisisLegal {
 
     private void autenticarComo(String nombreUsuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 

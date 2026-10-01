@@ -2,6 +2,8 @@ package sv.gob.mh.siip.model.preinversion.service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Cómputo de días hábiles del plazo de atención de comentarios de la OT (CU-PRE-26, RN08 y RN09): de
@@ -9,6 +11,8 @@ import java.time.LocalDate;
  * "Lineamientos del Proceso de Inversión Pública", que no están incluidos: no se descuentan feriados.
  */
 final class DiasHabilesOpinionTecnica {
+
+    private static final Set<DayOfWeek> FIN_DE_SEMANA = EnumSet.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
 
     /** Plazo para atender los comentarios DGICP (RN08, Anexo A2 c). */
     public static final int PLAZO = 5;
@@ -52,7 +56,6 @@ final class DiasHabilesOpinionTecnica {
     }
 
     private static boolean esHabil(LocalDate fecha) {
-        DayOfWeek dia = fecha.getDayOfWeek();
-        return !DayOfWeek.SATURDAY.equals(dia) && !DayOfWeek.SUNDAY.equals(dia);
+        return !FIN_DE_SEMANA.contains(fecha.getDayOfWeek());
     }
 }

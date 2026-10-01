@@ -79,8 +79,7 @@ el tag en el repositorio `-config` y ArgoCD despliega.
 | ArgoCD | Ficha → ArgoCD | `Synced` y `Healthy` |
 | Pod | Ficha → Kubernetes | `Running`, 1/1 |
 | Health | `https://admin-srv-mh-dev-dgicp-siip.apps.<dominio>/actuator/health` | `"status": "UP"` |
-| Endpoint público | `…/api/v1/demo/security/publico` | `200` con JSON |
-| Endpoint autenticado | `…/api/v1/demo/security/autenticado` con `Authorization: Bearer <JWT>` | `200` con los claims; sin token `401` |
+| Endpoint protegido | `…/api/v1/catalogos` sin `Authorization` | `401` |
 
 ---
 

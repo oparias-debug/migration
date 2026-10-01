@@ -144,9 +144,12 @@ final class ValidacionAnalisisMercado {
 
     /** Fila agregada con "+" y nunca diligenciada: no aporta nada y no se guarda. */
     private static boolean estaVacia(FilaAnalisisMercadoRequestDto fila) {
-        return fila == null || (codigoProducto(fila) == null && fila.getDemanda() == null
-                && fila.getOferta() == null && fila.getAniosAProyectar() == null
-                && fila.getTasaDemanda() == null && fila.getTasaOferta() == null);
+        return fila == null || (codigoProducto(fila) == null && sinValores(fila));
+    }
+
+    private static boolean sinValores(FilaAnalisisMercadoRequestDto fila) {
+        return fila.getDemanda() == null && fila.getOferta() == null && fila.getAniosAProyectar() == null
+                && fila.getTasaDemanda() == null && fila.getTasaOferta() == null;
     }
 
     private static ErrorDetalleDto detalle(String campo, String mensaje) {

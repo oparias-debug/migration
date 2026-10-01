@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +26,7 @@ import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
+import sv.gob.mh.siip.bdd.support.SufijosPrueba;
 import sv.gob.mh.siip.exception.AccesoDenegadoException;
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.ReglaNegocioException;
@@ -80,6 +80,7 @@ import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
 import sv.gob.mh.siip.model.programacion.repository.MacroSectorRepository;
 import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 import sv.gob.mh.siip.security.ActorContexto;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /**
  * Steps BDD de CU-PRE-25 "Elegibilidad" (HU-PRE-25-01 calificar criterios, HU-PRE-25-02 emitir,
@@ -98,7 +99,6 @@ import sv.gob.mh.siip.security.ActorContexto;
  */
 public class Pre25Elegibilidad {
 
-  private static final String HEADER_USUARIO = "X-Usuario";
   private static final ZoneId ZONA = ZoneId.of("America/El_Salvador");
 
   private static final String BOTON_GUARDAR = "Guardar";
@@ -200,7 +200,7 @@ public class Pre25Elegibilidad {
   @Before("@CU-PRE-25")
   public void prepararEscenario() {
     activo = true;
-    String sufijo = UUID.randomUUID().toString().substring(0, 8);
+    String sufijo = SufijosPrueba.nuevo(8);
     Institucion institucion = instituciones.save(ProyectoFixtures.nuevaInstitucion("MH-CU25-" + sufijo,
         "Ministerio de Hacienda CU25"));
     UnidadEjecutora unidad = unidades.save(ProyectoFixtures.nuevaUnidadEjecutora("UE25-" + sufijo,
@@ -868,7 +868,7 @@ public class Pre25Elegibilidad {
 
   private static void autenticar(Usuario usuario) {
     MockHttpServletRequest request = new MockHttpServletRequest();
-    request.addHeader(HEADER_USUARIO, usuario.getNombreUsuario());
+    AutenticacionDePrueba.autenticar(usuario.getNombreUsuario());
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
   }
 }

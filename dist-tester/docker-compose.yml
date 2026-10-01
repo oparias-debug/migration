@@ -17,6 +17,9 @@ services:
       DB_SCHEMA: ${DB_SCHEMA}
       GATEWAY_URL: ${GATEWAY_URL}
       SPRING_PROFILES_ACTIVE: dev
+      # Valida el JWT que reenvía api-gateway contra el Keycloak local, como admin-srv.
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
     networks:
       - microred
     depends_on:

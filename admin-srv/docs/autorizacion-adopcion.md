@@ -80,7 +80,7 @@ sólo uno borra.** Y se comprueba sin navegador:
 TOKEN="<el token del usuario>"
 SRV="https://<host-del-servicio>"
 
-curl -s -o /dev/null -w "%{http_code}" -X DELETE "$SRV/api/v1/demo/security/expedientes/1" -H "Authorization: Bearer $TOKEN"
+curl -s -o /dev/null -w "%{http_code}" -X DELETE "$SRV/<endpoint con @PermissionsAllowed>" -H "Authorization: Bearer $TOKEN"
 ```
 
 ---

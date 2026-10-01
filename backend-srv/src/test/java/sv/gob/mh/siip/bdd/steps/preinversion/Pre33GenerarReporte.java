@@ -30,11 +30,11 @@ import sv.gob.mh.siip.model.common.repository.UnidadEjecutoraRepository;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 import sv.gob.mh.siip.model.preinversion.dto.CuatrimestreDto;
 import sv.gob.mh.siip.model.preinversion.service.AvanceMetasFisicasPapService;
+import sv.gob.mh.siip.security.AutenticacionDePrueba;
 
 /** CU-PRE-33-generar-reporte.feature (SF-4). */
 public class Pre33GenerarReporte {
 
-    private static final String HEADER_USUARIO = "X-Usuario";
     private static final int ANIO = 2030;
 
     private final InstitucionRepository institucionRepository;
@@ -141,7 +141,7 @@ public class Pre33GenerarReporte {
                 .build());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(HEADER_USUARIO, nombreUsuario);
+        AutenticacionDePrueba.autenticar(nombreUsuario);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }
