@@ -156,7 +156,8 @@ public class Pre35ModificarRuta {
         // El contrato solo exige que el campo exista; una justificación en blanco la rechaza el servicio.
         ModificarRutaPreinversionRequestDto enBlanco = new ModificarRutaPreinversionRequestDto()
                 .justificacion("   ").etapas(RUTA_COMPLETA);
-        assertThatThrownBy(() -> service.modificarRutaPreinversion(proyecto.getId(), enBlanco))
+        Long idProyecto = proyecto.getId();
+        assertThatThrownBy(() -> service.modificarRutaPreinversion(idProyecto, enBlanco))
                 .isInstanceOf(ValidacionNegocioException.class);
         RequestContextHolder.resetRequestAttributes();
     }

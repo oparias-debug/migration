@@ -102,6 +102,8 @@ export function FichaEmergenciaPage() {
           tipoEvento: data.tipoEvento,
         });
         reset(fichaToFormValues(data));
+        // El back deriva el departamento del distrito guardado (Anexo C.5).
+        setDepartamentoFiltro(data.departamento ?? '');
       })
       .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)))
       .finally(() => setCargando(false));

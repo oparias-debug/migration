@@ -7,15 +7,15 @@ import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import sv.gob.mh.siip.model.common.domain.Departamento;
-import sv.gob.mh.siip.model.common.domain.Municipio;
-import sv.gob.mh.siip.model.common.repository.DepartamentoRepository;
-import sv.gob.mh.siip.model.common.repository.MunicipioRepository;
 import sv.gob.mh.siip.model.administracion.dto.AplicaActualizacionOtDto;
 import sv.gob.mh.siip.model.administracion.dto.ContenidoIniciativaResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.ProductoIndicadorDto;
 import sv.gob.mh.siip.model.administracion.dto.TipoCostoResumenDto;
 import sv.gob.mh.siip.model.administracion.dto.UbicacionGeograficaDto;
+import sv.gob.mh.siip.model.common.domain.Departamento;
+import sv.gob.mh.siip.model.common.domain.Municipio;
+import sv.gob.mh.siip.model.common.repository.DepartamentoRepository;
+import sv.gob.mh.siip.model.common.repository.MunicipioRepository;
 import sv.gob.mh.siip.model.preinversion.mapper.SeleccionYRegistroDeEtapasMapper;
 import sv.gob.mh.siip.model.preinversion.repository.ProductoIndicadorCatalogoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.TipoCostoRepository;
@@ -28,7 +28,10 @@ public class CatalogosSeleccionEtapasServiceImpl implements CatalogosSeleccionEt
     private static final String CUPRE_04 = "CUPRE-04";
 
     /** RN: "Nivel nacional" (campo Coordenadas de la Ficha de emergencia) es un valor mas de distrito. */
-    private static final String NIVEL_NACIONAL = "Nivel nacional";
+    public static final String NIVEL_NACIONAL = "Nivel nacional";
+
+    /** Distrito especial que abarca un departamento: "{departamento} - Nivel departamental". */
+    public static final String SUFIJO_NIVEL_DEPARTAMENTAL = " - Nivel departamental";
 
     /**
      * Anexo F — "Contenido de Iniciativas de Proyecto" (RN20), 30 filas, transcritas íntegras desde
@@ -139,7 +142,7 @@ public class CatalogosSeleccionEtapasServiceImpl implements CatalogosSeleccionEt
         }
         for (Departamento depto : departamentoRepository.findAll()) {
             resultado.add(new UbicacionGeograficaDto()
-                    .distrito(depto.getNombre() + " - Nivel departamental")
+                    .distrito(depto.getNombre() + SUFIJO_NIVEL_DEPARTAMENTAL)
                     .departamento(depto.getNombre())
                     .region(depto.getRegion()));
         }

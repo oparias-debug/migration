@@ -12,6 +12,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import sv.gob.mh.siip.model.common.domain.Departamento;
+import sv.gob.mh.siip.model.common.domain.Municipio;
+import sv.gob.mh.siip.model.common.repository.MunicipioRepository;
 import sv.gob.mh.siip.model.preinversion.domain.ComponenteCostoEmergencia;
 import sv.gob.mh.siip.model.preinversion.domain.FichaEmergencia;
 import sv.gob.mh.siip.model.preinversion.domain.ProductoIndicadorCatalogo;
@@ -28,12 +31,16 @@ class FichaEmergenciaEnsambladorTest {
 
     private final ProductoIndicadorCatalogoRepository catalogoRepository =
             mock(ProductoIndicadorCatalogoRepository.class);
-    private final FichaEmergenciaEnsamblador ensamblador = new FichaEmergenciaEnsamblador(catalogoRepository);
+    private final MunicipioRepository municipioRepository = mock(MunicipioRepository.class);
+    private final FichaEmergenciaEnsamblador ensamblador =
+            new FichaEmergenciaEnsamblador(catalogoRepository, municipioRepository);
 
     private final Proyecto proyecto = proyectoEmergencia();
 
     private static Proyecto proyectoEmergencia() {
         Proyecto proyecto = Proyecto.builder().id(1L).cup("CUP-1").nombre("Emergencia").build();
+        proyecto.setDescripcionProyecto("Descripción de CU-PRE-01");
+        proyecto.setMontoEstimadoInversion(5000d);
         proyecto.setNumeroDecretoLegislativo("DL-9");
         proyecto.setTipoEvento("Sismo");
         return proyecto;
@@ -53,12 +60,24 @@ class FichaEmergenciaEnsambladorTest {
     }
 
     @Test
+    void construir_sinFicha_precargaDescripcionEInversionDesdeCuPre01() {
+        FichaEmergenciaDto dto = ensamblador.construir(proyecto, null);
+
+        assertThat(dto.getDescripcionProyecto()).isEqualTo("Descripción de CU-PRE-01");
+        assertThat(dto.getInversionEstimada()).isEqualTo(5000d);
+        assertThat(dto.getObjetivoGeneral()).isNull();
+        assertThat(dto.getDepartamento()).isNull();
+    }
+
+    @Test
     void construir_fichaCompleta_resuelveProductosYSumaComponentes() {
         ProductoIndicadorCatalogo catalogado = ProductoIndicadorCatalogo.builder().id(1L).codigoProducto("P-01")
                 .producto("Puente").build();
         ProductoIndicadorCatalogo otro = ProductoIndicadorCatalogo.builder().id(2L).codigoProducto("P-03")
                 .producto("Otro").build();
         when(catalogoRepository.findByCodigoProductoIn(List.of("P-01", "P-02"))).thenReturn(List.of(otro, catalogado));
+        when(municipioRepository.findByNombreIgnoreCase("Soyapango"))
+                .thenReturn(List.of(municipio("Soyapango", "San Salvador")));
         FichaEmergencia ficha = FichaEmergencia.builder()
                 .planteamientoProblema("Problema").objetivoGeneral("Objetivo").descripcionProyecto("Descripción")
                 .productos(List.of("P-01", "P-02")).distrito("Soyapango").latitud(1d).longitud(2d)
@@ -80,7 +99,7 @@ class FichaEmergenciaEnsambladorTest {
         assertThat(dto.getPlanteamientoProblema()).isEqualTo("Problema");
         assertThat(dto.getObjetivoGeneral()).isEqualTo("Objetivo");
         assertThat(dto.getDescripcionProyecto()).isEqualTo("Descripción");
-        assertThat(dto.getDepartamento()).isNull();
+        assertThat(dto.getDepartamento()).isEqualTo("San Salvador");
         assertThat(dto.getDistrito()).isEqualTo("Soyapango");
         assertThat(dto.getLatitud()).isEqualTo(1d);
         assertThat(dto.getLongitud()).isEqualTo(2d);
@@ -108,5 +127,34 @@ class FichaEmergenciaEnsambladorTest {
         assertThat(dto.getComponentesCosto()).isEmpty();
         assertThat(dto.getTotalComponentesCosto()).isNull();
         verify(catalogoRepository, never()).findByCodigoProductoIn(any());
+    }
+
+    @Test
+    void derivarDepartamento_nivelNacionalYNivelDepartamental_seDerivanDelTexto() {
+        assertThat(ensamblador.derivarDepartamento("Nivel nacional")).isEqualTo("Nivel nacional");
+        assertThat(ensamblador.derivarDepartamento("Ahuachapán - Nivel departamental")).isEqualTo("Ahuachapán");
+        verify(municipioRepository, never()).findByNombreIgnoreCase(any());
+    }
+
+    @Test
+    void derivarDepartamento_sinDistritoOFueraDelCatalogo_devuelveNull() {
+        when(municipioRepository.findByNombreIgnoreCase("Inexistente")).thenReturn(List.of());
+
+        assertThat(ensamblador.derivarDepartamento(null)).isNull();
+        assertThat(ensamblador.derivarDepartamento(" ")).isNull();
+        assertThat(ensamblador.derivarDepartamento("Inexistente")).isNull();
+    }
+
+    @Test
+    void derivarDepartamento_distritoHomonimoEnVariosDepartamentos_devuelveNull() {
+        when(municipioRepository.findByNombreIgnoreCase("San Lorenzo")).thenReturn(List.of(
+                municipio("San Lorenzo", "Ahuachapán"), municipio("San Lorenzo", "San Vicente")));
+
+        assertThat(ensamblador.derivarDepartamento("San Lorenzo")).isNull();
+    }
+
+    private static Municipio municipio(String nombre, String departamento) {
+        return Municipio.builder().nombre(nombre).departamento(Departamento.builder().nombre(departamento).build())
+                .build();
     }
 }

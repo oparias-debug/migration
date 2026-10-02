@@ -26,30 +26,18 @@
         },
         {
             "type": "java",
-            "name": "FrontendApplication",
-            "request": "launch",
-            "mainClass": "sv.gob.mh.siip.frontend.FrontendApplication",
-            "projectName": "frontend",
-            "env": {
-                "SPRING_PROFILES_ACTIVE": "dev",
-                "GATEWAY_URL": "http://localhost:8080",
-                "FRONT_PORT": "80"
-            }
-        },
-        {
-            "type": "java",
             "name": "BackApplication",
             "request": "launch",
             "mainClass": "sv.gob.mh.siip.SiipApplication",
             "projectName": "backend-srv",
             "env": {
+                "DB_URL": "jdbc:postgresql://localhost:5432/preinversiondb",
+                "DB_DRIVER_CLASS_NAME": "org.postgresql.Driver",
                 "DB_USER": "micro",
                 "DB_PASSWORD": "micro123",
-                "DB_SERVER": "localhost",
-                "DB_NAME": "preinversiondb",
+                "DB_SCHEMA": "public",
                 "GATEWAY_URL": "http://localhost:8080",
                 "SPRING_PROFILES_ACTIVE": "dev"
-
             }
         }
     ]

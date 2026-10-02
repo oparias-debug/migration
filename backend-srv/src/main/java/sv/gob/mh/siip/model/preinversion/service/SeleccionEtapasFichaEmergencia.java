@@ -31,6 +31,9 @@ public class SeleccionEtapasFichaEmergencia {
 
     private static final String CAMPO_OBLIGATORIO = "*Campo obligatorio";
 
+    /** Margen para comparar montos en dólares (medio centavo). */
+    private static final double TOLERANCIA_MONTO = 0.005D;
+
     /**
      * Estados desde los que se puede registrar la ficha y remitir el proyecto a Viabilidad: el
      * proyecto tiene CUP y todavía no llegó a Viabilidad, o Viabilidad lo devolvió (OBSERVADO). En
@@ -65,12 +68,14 @@ public class SeleccionEtapasFichaEmergencia {
      * @throws ConflictoEstadoException si el estado del proyecto no admite registrar la ficha (ver
      * {@link #ESTADOS_REGISTRABLES})
      * @throws ValidacionNegocioException si faltan campos obligatorios
-     * ("Existen campos sin diligenciar").
+     * ("Existen campos sin diligenciar") o si el Total de los componentes de costo no es igual a la
+     * Inversión estimada (Anexo B.1, código {@code TOTAL_COMPONENTES_DISTINTO_INVERSION}).
      */
     public FichaEmergenciaDto registrar(Long idProyecto, FichaEmergenciaRequestDto request) {
         Proyecto proyecto = proyectos.buscarDeEmergencia(idProyecto);
         exigirEstadoRegistrable(proyecto);
         validarObligatorios(request);
+        validarTotalComponentes(request);
 
         FichaEmergencia ficha = fichaEmergenciaRepository.findByProyectoId(idProyecto)
                 .orElseGet(() -> FichaEmergencia.builder().proyecto(proyecto).build());
@@ -106,6 +111,27 @@ public class SeleccionEtapasFichaEmergencia {
         }
     }
 
+    /**
+     * Anexo B.1, campo "Total": la suma de los componentes de costo "debe ser igual al campo
+     * Inversión Estimada". Solo se exige cuando se registró al menos un componente.
+     */
+    private static void validarTotalComponentes(FichaEmergenciaRequestDto request) {
+        if (request.getComponentesCosto().isEmpty()) {
+            return;
+        }
+        double total = request.getComponentesCosto().stream()
+                .mapToDouble(ComponenteCostoDto::getCosto)
+                .sum();
+        Double inversionEstimada = request.getInversionEstimada();
+        if (inversionEstimada == null || Math.abs(total - inversionEstimada) > TOLERANCIA_MONTO) {
+            throw new ValidacionNegocioException("TOTAL_COMPONENTES_DISTINTO_INVERSION",
+                    "El Total de los componentes de costo debe ser igual a la Inversión estimada.",
+                    List.of(new ErrorDetalleDto().campo("componentesCosto")
+                            .mensaje("El Total (" + total + ") no es igual a la Inversión estimada ("
+                                    + (inversionEstimada == null ? "sin dato" : inversionEstimada) + ").")));
+        }
+    }
+
     private static void exigirTexto(String valor, String campo, List<ErrorDetalleDto> detalles) {
         if (valor == null || valor.isBlank()) {
             detalles.add(new ErrorDetalleDto().campo(campo).mensaje(CAMPO_OBLIGATORIO));
@@ -123,7 +149,11 @@ public class SeleccionEtapasFichaEmergencia {
         ficha.setDireccionEspecifica(request.getDireccionEspecifica());
         ficha.setPoblacionObjetivo(request.getPoblacionObjetivo());
         ficha.setInversionEstimada(request.getInversionEstimada());
-        ficha.setArchivoPresupuestoUrl(request.getArchivoPresupuestoUrl());
+        // Los archivos solo se reemplazan si el cliente manda una referencia nueva: si no la manda
+        // (no hay endpoint de carga), se conserva la guardada.
+        if (request.getArchivoPresupuestoUrl() != null) {
+            ficha.setArchivoPresupuestoUrl(request.getArchivoPresupuestoUrl());
+        }
         ficha.setComponentesCosto(request.getComponentesCosto().stream()
                 .map((ComponenteCostoDto componente)
                         -> new ComponenteCostoEmergencia(componente.getTipoCosto(), componente.getCosto()))
@@ -134,6 +164,8 @@ public class SeleccionEtapasFichaEmergencia {
                 .map((FuenteFinanciamientoDto fuente) -> FuenteFinanciamiento.valueOf(fuente.name()))
                 .toList());
         ficha.setFuenteRecursos(request.getFuenteRecursos());
-        ficha.setArchivoProgramacionUrl(request.getArchivoProgramacionUrl());
+        if (request.getArchivoProgramacionUrl() != null) {
+            ficha.setArchivoProgramacionUrl(request.getArchivoProgramacionUrl());
+        }
     }
 }

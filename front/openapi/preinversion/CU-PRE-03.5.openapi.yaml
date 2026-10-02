@@ -438,7 +438,7 @@ paths:
     get:
       operationId: obtenerFichaEmergencia
       summary: Consultar la Ficha de proyectos de emergencia (Anexo A.4)
-      description: 'Solo aplica a proyectos categorizados como "Proyecto de emergencia" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados (nulos si aún no se ha completado el formulario).
+      description: 'Solo aplica a proyectos categorizados como "Proyecto de emergencia" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados. Si aún no se ha completado el formulario, los editables van nulos salvo `descripcionProyecto` e `inversionEstimada`, que se precargan desde CU-PRE-01 para que el Técnico URP los modifique o complete (Anexo B.1); `objetivoGeneral` va nulo porque CU-PRE-01 no guarda un objetivo.
 
         '
       tags:
@@ -498,7 +498,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/FichaEmergencia'
         '400':
-          description: '"Existen campos sin diligenciar" (FA-05, paso 5.5): faltan uno o más de los campos obligatorios (Planteamiento del problema, Producto, Distrito, Población objetivo — Departamento se valida de forma transitiva a través de Distrito, ver contrato-CU-PRE-03.5.md). `Error.detalles` lista los campos faltantes.
+          description: '"Existen campos sin diligenciar" (FA-05, paso 5.5): faltan uno o más de los campos obligatorios (Planteamiento del problema, Producto, Distrito, Población objetivo — Departamento se valida de forma transitiva a través de Distrito, ver contrato-CU-PRE-03.5.md). `Error.detalles` lista los campos faltantes. También responde 400, con código `TOTAL_COMPONENTES_DISTINTO_INVERSION` y detalle en `componentesCosto`, si hay componentes de costo y su Total no es igual a `inversionEstimada` (Anexo B.1, campo "Total").
 
             '
           content:
@@ -883,7 +883,7 @@ components:
         archivoPresupuestoUrl:
           type: string
           nullable: true
-          description: 'Referencia al archivo Excel de presupuesto cargado. El CU no detalla el mecanismo de carga (formato, límites, endpoint de subida); se deja como referencia de string a un archivo ya subido por un mecanismo no descrito aquí — ver contrato-CU-PRE-03.5.md.
+          description: 'Referencia al archivo Excel de presupuesto cargado. El CU no detalla el mecanismo de carga (formato, límites, endpoint de subida); se deja como referencia de string a un archivo ya subido por un mecanismo no descrito aquí — ver contrato-CU-PRE-03.5.md. Si no se envía (o va nulo), se conserva la referencia ya guardada.
 
             '
         componentesCosto:
@@ -958,7 +958,9 @@ components:
         departamento:
           type: string
           nullable: true
-          description: Derivado automáticamente del distrito seleccionado.
+          description: 'Derivado automáticamente del distrito seleccionado (catálogo Anexo C.5). Nulo si el distrito no está en el catálogo o si su nombre se repite en varios departamentos.
+
+            '
         distrito:
           type: string
           nullable: true

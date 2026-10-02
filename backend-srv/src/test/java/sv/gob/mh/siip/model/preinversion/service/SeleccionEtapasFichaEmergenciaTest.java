@@ -2,6 +2,7 @@ package sv.gob.mh.siip.model.preinversion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -152,10 +153,8 @@ class SeleccionEtapasFichaEmergenciaTest {
         assertThat(ficha.getPoblacionObjetivo()).isEqualTo("Familias");
         assertThat(ficha.getInversionEstimada()).isEqualTo(1000d);
         assertThat(ficha.getArchivoPresupuestoUrl()).isEqualTo("presupuesto.pdf");
-        assertThat(ficha.getComponentesCosto()).singleElement().satisfies((ComponenteCostoEmergencia c) -> {
-            assertThat(c.getTipoCosto()).isEqualTo("Obra");
-            assertThat(c.getCosto()).isEqualTo(800d);
-        });
+        assertThat(ficha.getComponentesCosto()).extracting(ComponenteCostoEmergencia::getTipoCosto,
+                ComponenteCostoEmergencia::getCosto).containsExactly(tuple("Obra", 600d), tuple("Supervisión", 400d));
         assertThat(ficha.getCostosOperacion()).isEqualTo(10d);
         assertThat(ficha.getCostosMantenimiento()).isEqualTo(20d);
         assertThat(ficha.getFuentesFinanciamiento()).containsExactly(FuenteFinanciamiento.FONDO_GENERAL);
@@ -177,6 +176,51 @@ class SeleccionEtapasFichaEmergenciaTest {
         verify(fichaRepository).save(existente);
     }
 
+    @Test
+    void registrar_fichaExistente_sinArchivosEnElRequest_conservaLosGuardados() {
+        FichaEmergencia existente = FichaEmergencia.builder().id(5L).proyecto(proyecto)
+                .archivoPresupuestoUrl("presupuesto-v1.xlsx").archivoProgramacionUrl("programacion-v1.pdf").build();
+        when(fichaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(Optional.of(existente));
+        FichaEmergenciaRequestDto request = requestCompleto().archivoPresupuestoUrl(null).archivoProgramacionUrl(null);
+
+        fichaEmergencia.registrar(ID_PROYECTO, request);
+
+        assertThat(existente.getArchivoPresupuestoUrl()).isEqualTo("presupuesto-v1.xlsx");
+        assertThat(existente.getArchivoProgramacionUrl()).isEqualTo("programacion-v1.pdf");
+    }
+
+    @Test
+    void registrar_totalDeComponentesDistintoDeLaInversion_lanzaValidacionSinGuardar() {
+        FichaEmergenciaRequestDto request = requestCompleto().inversionEstimada(1200d);
+
+        assertThatThrownBy(() -> fichaEmergencia.registrar(ID_PROYECTO, request))
+                .isInstanceOfSatisfying(ValidacionNegocioException.class, (ValidacionNegocioException ex) -> {
+                    assertThat(ex.getCodigo()).isEqualTo("TOTAL_COMPONENTES_DISTINTO_INVERSION");
+                    assertThat(ex.getDetalles()).extracting(ErrorDetalleDto::getCampo)
+                            .containsExactly("componentesCosto");
+                });
+        verify(fichaRepository, never()).save(any());
+        verify(proyectos, never()).guardar(any());
+    }
+
+    @Test
+    void registrar_componentesSinInversionEstimada_lanzaValidacion() {
+        FichaEmergenciaRequestDto request = requestCompleto().inversionEstimada(null);
+
+        assertThatThrownBy(() -> fichaEmergencia.registrar(ID_PROYECTO, request))
+                .isInstanceOf(ValidacionNegocioException.class);
+    }
+
+    @Test
+    void registrar_sinComponentes_noExigeTotal() {
+        when(fichaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(Optional.empty());
+        FichaEmergenciaRequestDto request = requestCompleto().inversionEstimada(null).componentesCosto(List.of());
+
+        fichaEmergencia.registrar(ID_PROYECTO, request);
+
+        verify(fichaRepository).save(any());
+    }
+
     private static FichaEmergenciaRequestDto requestCompleto() {
         return new FichaEmergenciaRequestDto()
                 .planteamientoProblema("Inundación")
@@ -190,7 +234,8 @@ class SeleccionEtapasFichaEmergenciaTest {
                 .poblacionObjetivo("Familias")
                 .inversionEstimada(1000d)
                 .archivoPresupuestoUrl("presupuesto.pdf")
-                .componentesCosto(List.of(new ComponenteCostoDto().tipoCosto("Obra").costo(800d)))
+                .componentesCosto(List.of(new ComponenteCostoDto().tipoCosto("Obra").costo(600d),
+                        new ComponenteCostoDto().tipoCosto("Supervisión").costo(400d)))
                 .costosOperacion(10d)
                 .costosMantenimiento(20d)
                 .fuentesFinanciamiento(List.of(FuenteFinanciamientoDto.FONDO_GENERAL))

@@ -6,6 +6,8 @@ import java.math.RoundingMode;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
+import sv.gob.mh.siip.model.preinversion.domain.PresupuestoProyecto;
 import sv.gob.mh.siip.model.preinversion.dto.PresupuestoDto;
 import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
@@ -20,6 +22,9 @@ import sv.gob.mh.siip.model.preinversion.repository.PresupuestoProyectoRepositor
 @Component
 @Transactional
 public class CostoEtapaEjecucion {
+
+    /** El costo se guarda redondeado a centavos. */
+    private static final int DECIMALES_MONTO = 2;
 
     private final EtapaPreinversionRepository etapas;
     private final PresupuestoProyectoRepository presupuestos;
@@ -41,10 +46,12 @@ public class CostoEtapaEjecucion {
      */
     public void actualizar(Long idProyecto, PresupuestoDto presupuesto) {
         double total = presupuesto.getInversionEstimadaPreciosMercado().getTotal();
-        etapas.findByProyectoIdAndTipoEtapa(idProyecto, TipoEtapaPreinversion.EJECUCION).ifPresent(etapa -> {
-            etapa.setCosto(BigDecimal.valueOf(total).setScale(2, RoundingMode.HALF_UP).doubleValue());
-            etapas.save(etapa);
-        });
+        etapas.findByProyectoIdAndTipoEtapa(idProyecto, TipoEtapaPreinversion.EJECUCION)
+                .ifPresent((EtapaPreinversion etapa) -> {
+                    etapa.setCosto(BigDecimal.valueOf(total).setScale(DECIMALES_MONTO, RoundingMode.HALF_UP)
+                            .doubleValue());
+                    etapas.save(etapa);
+                });
     }
 
     /**
@@ -55,6 +62,7 @@ public class CostoEtapaEjecucion {
      */
     public void recalcular(Long idProyecto) {
         presupuestos.findByProyectoId(idProyecto)
-                .ifPresent(p -> actualizar(idProyecto, ensamblador.dto(p.getProyecto(), p)));
+                .ifPresent((PresupuestoProyecto presupuesto) ->
+                        actualizar(idProyecto, ensamblador.dto(presupuesto.getProyecto(), presupuesto)));
     }
 }

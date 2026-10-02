@@ -40,7 +40,7 @@ import { createHttpClient } from './httpClient';
 // path de la operación). Por eso se le da su propia instancia con
 // baseURL: '/back' en vez de reusar httpClient (baseURL: '/'), que haría que
 // las requests salieran a /proyectos en lugar de /back/proyectos.
-// api-gateway reescribe /back/** -> back:8081/** (RewritePath, ver
+// api-gateway reescribe /back/** -> backend-srv:8081/** (RewritePath, ver
 // httpd.conf / application.yml de api-gateway).
 const preinversionAxios = createHttpClient('/back');
 export const preinversionApi = new PreinversinRegistroYSolicitudDeCUPApi(undefined, undefined, preinversionAxios);
