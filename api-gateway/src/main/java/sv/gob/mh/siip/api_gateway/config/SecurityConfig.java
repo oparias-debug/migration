@@ -32,6 +32,9 @@ public class SecurityConfig {
                                 "/admin/v3/api-docs/**",
                                 "/siipsafi/v3/api-docs/**").permitAll()
                                 .pathMatchers("/error/**", "/auth/**").permitAll()
+                                // Probes de liveness/readiness del chart (api-gateway-config): el
+                                // kubelet los llama sin token. Solo health: info y metrics no.
+                                .pathMatchers("/actuator/health", "/actuator/health/**").permitAll()
                                 .anyExchange().authenticated())
                 .oauth2ResourceServer(
                         oauth2 -> oauth2.jwt(

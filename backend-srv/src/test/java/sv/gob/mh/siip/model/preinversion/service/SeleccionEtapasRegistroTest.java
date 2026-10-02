@@ -17,8 +17,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
+import sv.gob.mh.siip.model.preinversion.domain.EtapaMetaFisicaPap;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
+import sv.gob.mh.siip.model.preinversion.domain.FuenteFinanciamientoEtapaPap;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.ActualizarEtapasRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
@@ -27,7 +30,9 @@ import sv.gob.mh.siip.model.preinversion.dto.EtapaRegistroRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.mapper.SeleccionYRegistroDeEtapasMapper;
+import sv.gob.mh.siip.model.preinversion.repository.EtapaMetaFisicaPapRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
+import sv.gob.mh.siip.model.preinversion.repository.FuenteFinanciamientoEtapaPapRepository;
 
 class SeleccionEtapasRegistroTest {
 
@@ -36,7 +41,12 @@ class SeleccionEtapasRegistroTest {
     private final EtapaPreinversionRepository etapaRepository = mock(EtapaPreinversionRepository.class);
     private final SeleccionEtapasProyectos proyectos = mock(SeleccionEtapasProyectos.class);
     private final SeleccionYRegistroDeEtapasMapper mapper = mock(SeleccionYRegistroDeEtapasMapper.class);
-    private final SeleccionEtapasRegistro registro = new SeleccionEtapasRegistro(etapaRepository, proyectos, mapper);
+    private final EtapaMetaFisicaPapRepository metaFisicaRepository = mock(EtapaMetaFisicaPapRepository.class);
+    private final FuenteFinanciamientoEtapaPapRepository fuenteRepository =
+            mock(FuenteFinanciamientoEtapaPapRepository.class);
+    private final EtapasOpinionTecnica etapasOpinionTecnica = mock(EtapasOpinionTecnica.class);
+    private final SeleccionEtapasRegistro registro = new SeleccionEtapasRegistro(etapaRepository,
+            metaFisicaRepository, fuenteRepository, etapasOpinionTecnica, proyectos, mapper);
 
     private final Proyecto proyecto = Proyecto.builder().id(ID_PROYECTO).build();
     private final List<EtapaDto> dtos = List.of(new EtapaDto());
@@ -58,6 +68,33 @@ class SeleccionEtapasRegistroTest {
 
         assertThat(resultado).isSameAs(dtos);
         verify(mapper).toDtoList(List.of(perfil, ejecucion));
+        verify(etapaRepository, never()).save(any());
+    }
+
+    @Test
+    void listar_noIncluyeLasEtapasFueraDeRuta() {
+        EtapaPreinversion perfil = etapa(TipoEtapaPreinversion.PERFIL);
+        EtapaPreinversion fuera = etapa(TipoEtapaPreinversion.DISENO);
+        fuera.setFueraDeRuta(true);
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(fuera, perfil));
+
+        registro.listar(ID_PROYECTO);
+
+        verify(mapper).toDtoList(List.of(perfil));
+    }
+
+    @Test
+    void actualizar_etapaFueraDeRuta_lanzaConflicto() {
+        EtapaPreinversion fuera = etapa(TipoEtapaPreinversion.DISENO);
+        fuera.setFueraDeRuta(true);
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(etapa(TipoEtapaPreinversion.PERFIL),
+                fuera));
+        ActualizarEtapasRequestDto request = new ActualizarEtapasRequestDto()
+                .addEtapasItem(item(NombreEtapaDto.DISENO, 1d, "01/02/2025", "28/02/2025"));
+
+        assertThatThrownBy(() -> registro.actualizar(ID_PROYECTO, request))
+                .isInstanceOfSatisfying(ConflictoEstadoException.class, (ConflictoEstadoException ex) ->
+                        assertThat(ex.getCodigo()).isEqualTo("ETAPA_FUERA_DE_RUTA"));
         verify(etapaRepository, never()).save(any());
     }
 
@@ -96,9 +133,8 @@ class SeleccionEtapasRegistroTest {
     void actualizar_fechasValidas_guardaCostoFechasYHabilitaLaEtapa() {
         EtapaPreinversion ejecucion = etapa(TipoEtapaPreinversion.EJECUCION);
         ejecucion.setCosto(500d);
-        when(etapaRepository.findByProyectoIdAndTipoEtapa(ID_PROYECTO, TipoEtapaPreinversion.EJECUCION))
-                .thenReturn(Optional.of(ejecucion));
-        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of());
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(ejecucion,
+                etapa(TipoEtapaPreinversion.DISENO), etapa(TipoEtapaPreinversion.PREFACTIBILIDAD)));
 
         List<EtapaDto> resultado = registro.actualizar(ID_PROYECTO, new ActualizarEtapasRequestDto()
                 .addEtapasItem(item(NombreEtapaDto.DISENO, 100d, "01/02/2025", "28/02/2025"))
@@ -126,7 +162,69 @@ class SeleccionEtapasRegistroTest {
     }
 
     @Test
+    void actualizar_fechasVacias_seGuardanComoSinFecha() {
+        EtapaPreinversion perfil = etapaConFechas(TipoEtapaPreinversion.PERFIL, "2025-01-01", "2025-01-31");
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(perfil));
+
+        registro.actualizar(ID_PROYECTO, new ActualizarEtapasRequestDto()
+                .addEtapasItem(item(NombreEtapaDto.PERFIL, 10d, "", " ")));
+
+        assertThat(perfil.getFechaInicio()).isNull();
+        assertThat(perfil.getFechaFin()).isNull();
+        assertThat(perfil.getCosto()).isEqualTo(10d);
+        verify(etapaRepository).save(perfil);
+    }
+
+    @Test
+    void actualizar_etapaFueraDeLaRuta_lanzaConflictoSinGuardar() {
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(etapa(TipoEtapaPreinversion.PERFIL),
+                etapa(TipoEtapaPreinversion.EJECUCION)));
+        ActualizarEtapasRequestDto request = new ActualizarEtapasRequestDto()
+                .addEtapasItem(item(NombreEtapaDto.PERFIL, 1d, "01/01/2025", "31/01/2025"))
+                .addEtapasItem(item(NombreEtapaDto.DISENO, 1d, "01/02/2025", "28/02/2025"));
+
+        assertThatThrownBy(() -> registro.actualizar(ID_PROYECTO, request))
+                .isInstanceOfSatisfying(ConflictoEstadoException.class, (ConflictoEstadoException ex) -> {
+                    assertThat(ex.getCodigo()).isEqualTo("ETAPA_FUERA_DE_RUTA");
+                    assertThat(ex.getMessage()).contains("DISENO");
+                });
+        verify(etapaRepository, never()).save(any());
+    }
+
+    @Test
+    void actualizar_etapaBloqueada_ignoraSusValoresYGuardaLasDemas() {
+        EtapaPreinversion perfil = etapa(TipoEtapaPreinversion.PERFIL);
+        EtapaPreinversion bloqueada = etapaConFechas(TipoEtapaPreinversion.DISENO, "2025-02-01", "2025-02-28");
+        bloqueada.setCosto(300d);
+        bloqueada.setBloqueadaPorModificacion(true);
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(perfil, bloqueada));
+
+        registro.actualizar(ID_PROYECTO, new ActualizarEtapasRequestDto()
+                .addEtapasItem(item(NombreEtapaDto.PERFIL, 1d, "01/01/2025", "31/01/2025"))
+                .addEtapasItem(item(NombreEtapaDto.DISENO, 999d, "01/06/2025", "30/06/2025")));
+
+        assertThat(bloqueada.getCosto()).isEqualTo(300d);
+        assertThat(bloqueada.getFechaInicio()).isEqualTo(LocalDate.of(2025, 2, 1));
+        assertThat(perfil.getCosto()).isEqualTo(1d);
+        verify(etapaRepository).save(perfil);
+        verify(etapaRepository, never()).save(bloqueada);
+    }
+
+    @Test
+    void actualizar_sinEtapasTodavia_creaLasInicialesYRegistraSobreEllas() {
+        EtapaPreinversion perfil = etapa(TipoEtapaPreinversion.PERFIL);
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(), List.of(perfil));
+
+        registro.actualizar(ID_PROYECTO, new ActualizarEtapasRequestDto()
+                .addEtapasItem(item(NombreEtapaDto.PERFIL, 5d, "01/01/2025", "31/01/2025")));
+
+        assertThat(perfil.getCosto()).isEqualTo(5d);
+        verify(etapaRepository).save(perfil);
+    }
+
+    @Test
     void actualizar_fechaNoCalendario_lanzaFechaInvalidaSinGuardar() {
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(etapa(TipoEtapaPreinversion.PERFIL)));
         ActualizarEtapasRequestDto request = new ActualizarEtapasRequestDto()
                 .addEtapasItem(item(NombreEtapaDto.PERFIL, 1d, "32/01/2025", "15/03/2025"));
 
@@ -175,7 +273,7 @@ class SeleccionEtapasRegistroTest {
     }
 
     @Test
-    void sincronizar_bloqueandoEmitidas_marcaSoloLasEmitidasFueraDeLaSeleccion() {
+    void reemplazarSeleccion_eliminaLasNoEmitidasYDejaFueraDeRutaLasEmitidas() {
         EtapaPreinversion emitidaFuera = etapa(TipoEtapaPreinversion.FACTIBILIDAD);
         emitidaFuera.setTieneOpinionTecnica(true);
         EtapaPreinversion noEmitidaFuera = etapa(TipoEtapaPreinversion.PREFACTIBILIDAD);
@@ -186,13 +284,97 @@ class SeleccionEtapasRegistroTest {
         when(etapaRepository.findByProyectoIdAndTipoEtapa(ID_PROYECTO, TipoEtapaPreinversion.PERFIL))
                 .thenReturn(Optional.of(emitidaDentro));
 
-        registro.sincronizarBloqueandoEmitidas(proyecto, List.of(TipoEtapaPreinversion.PERFIL));
+        registro.reemplazarSeleccion(proyecto, List.of(TipoEtapaPreinversion.PERFIL));
 
-        assertThat(emitidaFuera.getBloqueadaPorModificacion()).isTrue();
-        assertThat(noEmitidaFuera.getBloqueadaPorModificacion()).isFalse();
-        assertThat(emitidaDentro.getBloqueadaPorModificacion()).isFalse();
+        assertThat(emitidaFuera.getFueraDeRuta()).isTrue();
+        assertThat(emitidaFuera.getTieneOpinionTecnica()).isTrue();
+        assertThat(emitidaDentro.getFueraDeRuta()).isFalse();
+        verify(etapaRepository).delete(noEmitidaFuera);
+        verify(etapaRepository, never()).delete(emitidaFuera);
         verify(etapaRepository).save(emitidaFuera);
         verify(etapaRepository, times(1)).save(any());
+        verify(etapasOpinionTecnica).recalcularBloqueos(ID_PROYECTO);
+    }
+
+    @Test
+    void reemplazarSeleccion_etapaQueEsperaNuevaOtYSaleDeLaRuta_seConservaFueraDeRuta() {
+        EtapaPreinversion enEspera = etapa(TipoEtapaPreinversion.DISENO);
+        enEspera.setBloqueadaPorModificacion(true);
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(enEspera));
+
+        registro.reemplazarSeleccion(proyecto, List.of(TipoEtapaPreinversion.PERFIL));
+
+        assertThat(enEspera.getFueraDeRuta()).isTrue();
+        verify(etapaRepository, never()).delete(any());
+    }
+
+    @Test
+    void reemplazarSeleccion_etapaFueraDeRutaVueltaASeleccionar_regresaConSuInformacion() {
+        EtapaPreinversion fuera = etapaConFechas(TipoEtapaPreinversion.DISENO, "2025-02-01", "2025-02-28");
+        fuera.setTieneOpinionTecnica(true);
+        fuera.setFueraDeRuta(true);
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(fuera));
+        when(etapaRepository.findByProyectoIdAndTipoEtapa(ID_PROYECTO, TipoEtapaPreinversion.DISENO))
+                .thenReturn(Optional.of(fuera));
+
+        registro.reemplazarSeleccion(proyecto, List.of(TipoEtapaPreinversion.DISENO));
+
+        assertThat(fuera.getFueraDeRuta()).isFalse();
+        assertThat(fuera.getFechaInicio()).isEqualTo(LocalDate.of(2025, 2, 1));
+        verify(etapaRepository).save(fuera);
+        verify(etapaRepository, never()).delete(any());
+        verify(etapasOpinionTecnica).recalcularBloqueos(ID_PROYECTO);
+    }
+
+    @Test
+    void reemplazarSeleccion_creaLasEtapasNuevasDeLaSeleccion() {
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of());
+
+        registro.reemplazarSeleccion(proyecto, List.of(TipoEtapaPreinversion.PERFIL, TipoEtapaPreinversion.DISENO));
+
+        ArgumentCaptor<EtapaPreinversion> guardadas = ArgumentCaptor.forClass(EtapaPreinversion.class);
+        verify(etapaRepository, times(2)).save(guardadas.capture());
+        assertThat(guardadas.getAllValues()).extracting(EtapaPreinversion::getTipoEtapa)
+                .containsExactly(TipoEtapaPreinversion.PERFIL, TipoEtapaPreinversion.DISENO);
+        verify(etapaRepository, never()).delete(any());
+    }
+
+    @Test
+    void reemplazarSeleccion_etapaFueraConProgramacionCuatrimestral_lanzaConflictoSinTocarNada() {
+        EtapaPreinversion conMetas = etapa(TipoEtapaPreinversion.PREFACTIBILIDAD);
+        EtapaPreinversion conFuentes = etapa(TipoEtapaPreinversion.FACTIBILIDAD);
+        EtapaPreinversion sinProgramacion = etapa(TipoEtapaPreinversion.DISENO);
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(conMetas, conFuentes, sinProgramacion));
+        when(metaFisicaRepository.findByEtapaPreinversionId(any())).thenReturn(Optional.empty());
+        when(metaFisicaRepository.findByEtapaPreinversionId(conMetas.getId()))
+                .thenReturn(Optional.of(new EtapaMetaFisicaPap()));
+        when(fuenteRepository.findByEtapaPreinversionId(any())).thenReturn(List.of());
+        when(fuenteRepository.findByEtapaPreinversionId(conFuentes.getId()))
+                .thenReturn(List.of(new FuenteFinanciamientoEtapaPap()));
+        List<TipoEtapaPreinversion> seleccion = List.of(TipoEtapaPreinversion.PERFIL);
+
+        assertThatThrownBy(() -> registro.reemplazarSeleccion(proyecto, seleccion))
+                .isInstanceOfSatisfying(ConflictoEstadoException.class, (ConflictoEstadoException ex) -> {
+                    assertThat(ex.getCodigo()).isEqualTo("ETAPA_CON_PROGRAMACION");
+                    assertThat(ex.getMessage()).contains("PREFACTIBILIDAD", "FACTIBILIDAD")
+                            .doesNotContain("DISENO");
+                });
+        verify(etapaRepository, never()).delete(any());
+        verify(etapaRepository, never()).save(any());
+    }
+
+    @Test
+    void reemplazarSeleccion_etapaEmitidaConProgramacion_seConservaSinRechazar() {
+        EtapaPreinversion emitida = etapa(TipoEtapaPreinversion.DISENO);
+        emitida.setTieneOpinionTecnica(true);
+        when(etapaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(List.of(emitida));
+        when(fuenteRepository.findByEtapaPreinversionId(emitida.getId()))
+                .thenReturn(List.of(new FuenteFinanciamientoEtapaPap()));
+
+        registro.reemplazarSeleccion(proyecto, List.of());
+
+        assertThat(emitida.getFueraDeRuta()).isTrue();
+        verify(etapaRepository, never()).delete(any());
     }
 
     @Test

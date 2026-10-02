@@ -33,3 +33,9 @@ Característica: Registrar la Ficha de proyectos de emergencia
 
   Escenario: Solo la etapa "Perfil" está disponible para proyectos de emergencia
     Entonces el sistema muestra únicamente la etapa "Perfil" en la sección "Registro de Etapas" para un proyecto de emergencia (RN09)
+
+  # DN-03 (docs/decisiones-negocio.md): un proyecto de emergencia no entra a la ruta normal de
+  # preinversión; de la Ficha de proyectos de emergencia pasa directamente a Viabilidad.
+  Escenario: Un proyecto de emergencia no tiene Ruta de Preinversión (DN-03)
+    Cuando el Técnico URP intenta generar, aceptar o modificar la Ruta de Preinversión del proyecto de emergencia
+    Entonces el sistema rechaza las tres operaciones porque el proyecto de emergencia pasa directamente a "Viabilidad" (CU-PRE-24)

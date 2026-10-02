@@ -119,7 +119,20 @@ class CatalogosSeleccionEtapasServiceImplTest {
     void listarContenidoIniciativasProyecto_devuelveLasFilasDelAnexoF() {
         List<ContenidoIniciativaResumenDto> contenido = service.listarContenidoIniciativasProyecto();
 
-        assertThat(contenido).hasSize(26);
+        assertThat(contenido).hasSize(30);
+        assertThat(contenido).extracting(ContenidoIniciativaResumenDto::getUbicacionCasoUso)
+                .contains("CUPRE-10", "CUPRE-13", "CUPRE-22.2", "CUPRE-22.4");
+        ContenidoIniciativaResumenDto situacionBase = contenido.stream()
+                .filter(fila -> "CUPRE-10".equals(fila.getUbicacionCasoUso())).findFirst().orElseThrow();
+        assertThat(situacionBase.getAplicaPerfil()).isTrue();
+        assertThat(situacionBase.getAplicaPrefactibilidad()).isFalse();
+        assertThat(situacionBase.getAplicaPrograma()).isFalse();
+        assertThat(situacionBase.getAplicaActualizacionOt()).isEqualTo(AplicaActualizacionOtDto.NO_APLICA_AL_CU);
+        ContenidoIniciativaResumenDto financieraInversion = contenido.stream()
+                .filter(fila -> "CUPRE-22.2".equals(fila.getUbicacionCasoUso())).findFirst().orElseThrow();
+        assertThat(financieraInversion.getAplicaPrograma()).isTrue();
+        assertThat(financieraInversion.getAplicaEstudioGeneral()).isFalse();
+        assertThat(financieraInversion.getAplicaActualizacionOt()).isEqualTo(AplicaActualizacionOtDto.APLICA);
         ContenidoIniciativaResumenDto antecedentes = contenido.get(0);
         assertThat(antecedentes.getContenido()).isEqualTo("Antecedentes");
         assertThat(antecedentes.getUbicacionCasoUso()).isEqualTo("CUPRE-04");

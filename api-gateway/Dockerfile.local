@@ -1,0 +1,17 @@
+# Imagen para desarrollo local (docker-compose.yml del monorepo siip). El Dockerfile de al
+# lado es el del ambiente de la entidad: su imagen base vive en el registry interno del MH
+# y no se puede descargar fuera de esa red. Requiere compilar antes en el host:
+#   mvn clean package -DskipTests
+# En local el gateway espera a que Keycloak esté listo (wait-for-keycloak.sh); en la entidad
+# eso lo resuelven los probes de readiness del chart (api-gateway-config).
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+COPY target/app.jar app.jar
+COPY wait-for-keycloak.sh wait-for-keycloak.sh
+
+RUN apt-get update && apt-get install -y curl \
+    && chmod +x wait-for-keycloak.sh && apt-get clean
+
+ENTRYPOINT ["./wait-for-keycloak.sh"]

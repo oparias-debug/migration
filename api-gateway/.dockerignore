@@ -1,0 +1,9 @@
+# Ignore everything by default
+*
+
+# Allow necessary files for build
+!pom.xml
+!src/
+!target/
+# Solo lo usa Dockerfile.local (docker-compose del monorepo)
+!wait-for-keycloak.sh

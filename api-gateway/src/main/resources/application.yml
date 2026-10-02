@@ -1,9 +1,9 @@
 server:
-  port: 8080
+  port: ${HTTP_PORT:8080}
 
 spring:
   application:
-    name: api-gateway
+    name: dgicp-siip2-api-gateway
 
   security:
     oauth2:
@@ -74,3 +74,22 @@ keycloak:
   token-uri: ${KEYCLOAK_INTERNAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
   client-id: ${KEYCLOAK_CLIENT_ID}
   client-secret: ${KEYCLOAK_CLIENT_SECRET}
+
+# Actuator: los probes de liveness/readiness del chart (api-gateway-config). A diferencia de
+# los servicios internos, el gateway tiene Route pública: solo se expone health (sin detalles),
+# y SecurityConfig lo deja pasar sin token.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true

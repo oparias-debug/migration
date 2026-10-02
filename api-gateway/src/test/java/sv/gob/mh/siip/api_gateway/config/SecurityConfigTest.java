@@ -85,6 +85,14 @@ class SecurityConfigTest {
     client.get().uri("/auth/login").exchange().expectStatus().isNotFound();
     client.get().uri("/v3/api-docs/back").exchange().expectStatus().isNotFound();
     client.get().uri("/back/swagger-ui/index.html").exchange().expectStatus().isNotFound();
+    client.get().uri("/actuator/health/liveness").exchange().expectStatus().isNotFound();
+    client.get().uri("/actuator/health/readiness").exchange().expectStatus().isNotFound();
+  }
+
+  @Test
+  void actuatorFueraDeHealth_sinToken_devuelve401() {
+    client.get().uri("/actuator/metrics").exchange().expectStatus().isUnauthorized();
+    client.get().uri("/actuator/info").exchange().expectStatus().isUnauthorized();
   }
 
   /** Permite asignar el contexto de aplicación, que en ServerHttpSecurity es protegido. */

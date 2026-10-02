@@ -29,3 +29,10 @@ Característica: Modificar la Ruta de Preinversión de un proyecto
     Entonces el sistema bloquea la etapa que ya contaba con Opinión Técnica
     Y no se pierde la información previamente registrada en esa etapa
     Y el Técnico URP deberá volver a pasar por el proceso de aprobación hasta obtener la Opinión Técnica nuevamente si actualiza dicha etapa
+
+  Escenario: La etapa bloqueada se desbloquea cuando las etapas anteriores obtienen Opinión Técnica (RN13)
+    Dado un proyecto de iniciativa "Proyecto" en formulación en alguna de las etapas PERFIL, PREFACTIBILIDAD, FACTIBILIDAD o DISEÑO
+    Y una de esas etapas ya cuenta con Opinión Técnica emitida
+    Y el Técnico URP modifica la Ruta de Preinversión seleccionando una etapa anterior a la ya emitida
+    Cuando se emite la Opinión Técnica de la etapa anterior que se agregó a la ruta
+    Entonces la etapa bloqueada se desbloquea y es la siguiente en gestionar su Opinión Técnica

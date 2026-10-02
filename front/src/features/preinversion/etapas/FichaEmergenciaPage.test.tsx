@@ -103,6 +103,17 @@ beforeEach(() => {
 });
 
 describe('FichaEmergenciaPage', () => {
+  it('muestra la Declaratoria de Emergencia (N° de DL y Tipo de evento) de CU-PRE-01 sin permitir editarla', async () => {
+    obtenerFichaEmergencia.mockResolvedValue({ data: ficha({ numeroDecretoLegislativo: 'DL-123', tipoEvento: 'Tormenta tropical' }) });
+
+    renderizar();
+
+    expect(await screen.findByRole('heading', { name: 'Declaratoria de Emergencia' })).toBeInTheDocument();
+    expect(screen.getByText('DL-123')).toBeInTheDocument();
+    expect(screen.getByText('Tormenta tropical')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /N° de DL/ })).not.toBeInTheDocument();
+  });
+
   it('registra la ficha con los campos obligatorios diligenciados (FA-05)', async () => {
     registrarFichaEmergencia.mockResolvedValue({ data: ficha({ planteamientoProblema: 'Deslizamientos.' }) });
 

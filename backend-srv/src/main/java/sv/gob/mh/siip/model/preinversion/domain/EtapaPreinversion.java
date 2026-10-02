@@ -98,11 +98,23 @@ public class EtapaPreinversion extends Auditable {
     private Boolean tieneOpinionTecnica = false;
 
     /**
-     * RN13: true si esta etapa ya tenía Opinión Técnica y una modificación de ruta posterior
-     * requiere pasar nuevamente por ella. No se pierde su información, pero queda de solo lectura
-     * hasta obtener Opinión Técnica nuevamente.
+     * RN13: true mientras la etapa espera una nueva Opinión Técnica. Tenía OT y la ruta se modificó
+     * agregando antes una etapa que todavía no la tiene: su OT anterior deja de valer
+     * ({@link #tieneOpinionTecnica} pasa a {@code false}), conserva su información y queda de solo
+     * lectura. Se desbloquea cuando todas las etapas anteriores de la ruta tienen OT; entonces se
+     * puede actualizar y gestionar su OT de nuevo. Ver {@code EtapasOpinionTecnica#recalcularBloqueos}.
      */
     @Column(name = "BLOQUEADA_POR_MODIFICACION", nullable = false)
     @Builder.Default
     private Boolean bloqueadaPorModificacion = false;
+
+    /**
+     * La etapa tenía Opinión Técnica (o la esperaba por RN13) y una modificación de la ruta la dejó
+     * fuera. No se elimina, para no perder su información, pero no forma parte de la ruta vigente: no
+     * se lista en Registro de Etapas ni cuenta para la Opinión Técnica. Vuelve a la ruta si se la
+     * selecciona de nuevo.
+     */
+    @Column(name = "FUERA_DE_RUTA", nullable = false)
+    @Builder.Default
+    private Boolean fueraDeRuta = false;
 }

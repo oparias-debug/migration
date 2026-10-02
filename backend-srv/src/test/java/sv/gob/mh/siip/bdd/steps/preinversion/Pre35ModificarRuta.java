@@ -1,9 +1,11 @@
 package sv.gob.mh.siip.bdd.steps.preinversion;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -15,6 +17,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
 import sv.gob.mh.siip.bdd.support.SufijosPrueba;
+import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
 import sv.gob.mh.siip.model.common.domain.Usuario;
@@ -39,6 +42,7 @@ import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
+import sv.gob.mh.siip.model.preinversion.service.EtapasOpinionTecnica;
 import sv.gob.mh.siip.model.preinversion.service.SeleccionYRegistroDeEtapasService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
@@ -53,6 +57,9 @@ import sv.gob.mh.siip.security.AutenticacionDePrueba;
  */
 public class Pre35ModificarRuta {
 
+    private static final Double COSTO_DISENO = 250000.0;
+    private static final LocalDate INICIO_DISENO = LocalDate.of(2026, 3, 1);
+
     private static final List<NombreEtapaDto> RUTA_COMPLETA = List.of(NombreEtapaDto.PERFIL,
             NombreEtapaDto.PREFACTIBILIDAD, NombreEtapaDto.FACTIBILIDAD, NombreEtapaDto.DISENO,
             NombreEtapaDto.EJECUCION);
@@ -66,6 +73,7 @@ public class Pre35ModificarRuta {
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
     private final SeleccionYRegistroDeEtapasService service;
+    private final EtapasOpinionTecnica etapasOpinionTecnica;
     private final Validator validator;
 
     private Proyecto proyecto;
@@ -79,7 +87,7 @@ public class Pre35ModificarRuta {
             ProyectoRepository proyectoRepository, EtapaPreinversionRepository etapaPreinversionRepository,
             MacroSectorRepository macroSectorRepository, SectorActividadRepository sectorActividadRepository,
             EjeTematicoRepository ejeTematicoRepository, SeleccionYRegistroDeEtapasService service,
-            Validator validator) {
+            EtapasOpinionTecnica etapasOpinionTecnica, Validator validator) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -89,6 +97,7 @@ public class Pre35ModificarRuta {
         this.sectorActividadRepository = sectorActividadRepository;
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.service = service;
+        this.etapasOpinionTecnica = etapasOpinionTecnica;
         this.validator = validator;
     }
 
@@ -144,6 +153,11 @@ public class Pre35ModificarRuta {
     @Entonces("el sistema no habilita la selección de la nueva ruta de preinversión, ya que el campo es obligatorio \\(RN03)")
     public void el_sistema_no_habilita_la_seleccion_sin_justificacion() {
         assertThat(violaciones).isNotEmpty();
+        // El contrato solo exige que el campo exista; una justificación en blanco la rechaza el servicio.
+        ModificarRutaPreinversionRequestDto enBlanco = new ModificarRutaPreinversionRequestDto()
+                .justificacion("   ").etapas(RUTA_COMPLETA);
+        assertThatThrownBy(() -> service.modificarRutaPreinversion(proyecto.getId(), enBlanco))
+                .isInstanceOf(ValidacionNegocioException.class);
         RequestContextHolder.resetRequestAttributes();
     }
 
@@ -152,46 +166,71 @@ public class Pre35ModificarRuta {
         crearProyectoYAutenticar();
         proyecto.setEstado(EstadoProyecto.EN_FORMULACION);
         proyecto = proyectoRepository.save(proyecto);
-        service.aceptarRutaPreinversion(proyecto.getId(), criteriosCompletos());
+        // Ruta Perfil + Diseño + Ejecución, para poder agregar después Prefactibilidad antes de Diseño.
+        service.aceptarRutaPreinversion(proyecto.getId(), new CriteriosCalificacionDto()
+                .tipoCapital(TipoCapitalDto.CAPITAL_FISICO)
+                .tamanioProyecto(TamanioProyectoDto.PEQUENIO)
+                .complejidad(ComplejidadProyectoDto.BAJA));
     }
 
     @Dado("una de esas etapas ya cuenta con Opinión Técnica emitida")
     public void una_de_esas_etapas_ya_cuenta_con_opinion_tecnica_emitida() {
-        EtapaPreinversion etapa = etapaPreinversionRepository
-                .findByProyectoIdAndTipoEtapa(proyecto.getId(), TipoEtapaPreinversion.PREFACTIBILIDAD).orElseThrow();
-        etapa.setTieneOpinionTecnica(true);
-        etapaPreinversionRepository.save(etapa);
+        etapasOpinionTecnica.marcarEmitida(proyecto.getId(), TipoEtapaPreinversion.PERFIL);
+        EtapaPreinversion diseno = diseno();
+        diseno.setCosto(COSTO_DISENO);
+        diseno.setFechaInicio(INICIO_DISENO);
+        etapaPreinversionRepository.save(diseno);
+        etapasOpinionTecnica.marcarEmitida(proyecto.getId(), TipoEtapaPreinversion.DISENO);
     }
 
     @Cuando("el Técnico URP modifica la Ruta de Preinversión seleccionando una etapa anterior a la ya emitida")
     public void el_tecnico_urp_modifica_la_ruta_seleccionando_una_etapa_anterior() {
-        // Nueva seleccion que ya no incluye PREFACTIBILIDAD (la que tenia Opinion Tecnica).
+        // Se agrega PREFACTIBILIDAD, anterior a DISENO, que ya tenia Opinion Tecnica.
         rutaModificada = service.modificarRutaPreinversion(proyecto.getId(),
                 new ModificarRutaPreinversionRequestDto()
-                        .justificacion("Se retrocede la ruta tras revision del alcance.")
-                        .etapas(List.of(NombreEtapaDto.PERFIL, NombreEtapaDto.EJECUCION)));
+                        .justificacion("Se requiere un estudio de prefactibilidad tras revision del alcance.")
+                        .etapas(List.of(NombreEtapaDto.PERFIL, NombreEtapaDto.PREFACTIBILIDAD,
+                                NombreEtapaDto.DISENO, NombreEtapaDto.EJECUCION)));
     }
 
     @Entonces("el sistema bloquea la etapa que ya contaba con Opinión Técnica")
     public void el_sistema_bloquea_la_etapa_que_ya_contaba_con_opinion_tecnica() {
-        EtapaPreinversion etapa = etapaPreinversionRepository
-                .findByProyectoIdAndTipoEtapa(proyecto.getId(), TipoEtapaPreinversion.PREFACTIBILIDAD).orElseThrow();
-        assertThat(etapa.getBloqueadaPorModificacion()).isTrue();
+        assertThat(diseno().getBloqueadaPorModificacion()).isTrue();
+        assertThat(rutaModificada.getEtapasAceptadas()).contains(NombreEtapaDto.DISENO);
     }
 
     @Entonces("no se pierde la información previamente registrada en esa etapa")
     public void no_se_pierde_la_informacion_previamente_registrada() {
-        EtapaPreinversion etapa = etapaPreinversionRepository
-                .findByProyectoIdAndTipoEtapa(proyecto.getId(), TipoEtapaPreinversion.PREFACTIBILIDAD).orElseThrow();
-        assertThat(etapa.getTieneOpinionTecnica()).isTrue();
+        EtapaPreinversion diseno = diseno();
+        assertThat(diseno.getCosto()).isEqualTo(COSTO_DISENO);
+        assertThat(diseno.getFechaInicio()).isEqualTo(INICIO_DISENO);
     }
 
     @Entonces("el Técnico URP deberá volver a pasar por el proceso de aprobación hasta obtener la Opinión Técnica nuevamente si actualiza dicha etapa")
     public void debera_volver_a_pasar_por_el_proceso_de_aprobacion() {
-        EtapaPreinversion etapa = etapaPreinversionRepository
-                .findByProyectoIdAndTipoEtapa(proyecto.getId(), TipoEtapaPreinversion.PREFACTIBILIDAD).orElseThrow();
-        assertThat(etapa.getBloqueadaPorModificacion()).isTrue();
+        // Su OT anterior deja de valer: la siguiente OT es la de Prefactibilidad y después la de Diseño.
+        assertThat(diseno().getTieneOpinionTecnica()).isFalse();
+        assertThat(etapasOpinionTecnica.paraOpinionTecnica(proyecto.getId()).actual())
+                .isEqualTo(TipoEtapaPreinversion.PREFACTIBILIDAD);
         RequestContextHolder.resetRequestAttributes();
+    }
+
+    @Cuando("se emite la Opinión Técnica de la etapa anterior que se agregó a la ruta")
+    public void se_emite_la_opinion_tecnica_de_la_etapa_anterior_agregada() {
+        etapasOpinionTecnica.marcarEmitida(proyecto.getId(), TipoEtapaPreinversion.PREFACTIBILIDAD);
+    }
+
+    @Entonces("la etapa bloqueada se desbloquea y es la siguiente en gestionar su Opinión Técnica")
+    public void la_etapa_bloqueada_se_desbloquea() {
+        assertThat(diseno().getBloqueadaPorModificacion()).isFalse();
+        assertThat(etapasOpinionTecnica.paraOpinionTecnica(proyecto.getId()).actual())
+                .isEqualTo(TipoEtapaPreinversion.DISENO);
+        RequestContextHolder.resetRequestAttributes();
+    }
+
+    private EtapaPreinversion diseno() {
+        return etapaPreinversionRepository
+                .findByProyectoIdAndTipoEtapa(proyecto.getId(), TipoEtapaPreinversion.DISENO).orElseThrow();
     }
 
     // -----------------------------------------------------------------------------------------

@@ -13,8 +13,11 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 
+import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.domain.ComponenteCostoEmergencia;
 import sv.gob.mh.siip.model.preinversion.domain.FichaEmergencia;
@@ -42,7 +45,7 @@ class SeleccionEtapasFichaEmergenciaTest {
     private final Proyecto proyecto = proyectoEmergencia();
 
     private static Proyecto proyectoEmergencia() {
-        Proyecto proyecto = Proyecto.builder().id(ID_PROYECTO).estado(EstadoProyecto.EN_REGISTRO).build();
+        Proyecto proyecto = Proyecto.builder().id(ID_PROYECTO).estado(EstadoProyecto.CUP_ASIGNADO).build();
         proyecto.setEsProyectoEmergencia(true);
         return proyecto;
     }
@@ -99,6 +102,32 @@ class SeleccionEtapasFichaEmergenciaTest {
                 .isInstanceOfSatisfying(ValidacionNegocioException.class, (ValidacionNegocioException ex) ->
                         assertThat(ex.getDetalles()).extracting(ErrorDetalleDto::getCampo)
                                 .containsExactly("productos"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = EstadoProyecto.class, names = {"EN_VIABILIDAD", "VIABLE", "EN_EJECUCION", "EN_REGISTRO"})
+    void registrar_enEstadoNoRegistrable_lanzaConflictoSinGuardarNiCambiarElEstado(EstadoProyecto estado) {
+        proyecto.setEstado(estado);
+
+        assertThatThrownBy(() -> fichaEmergencia.registrar(ID_PROYECTO, requestCompleto()))
+                .isInstanceOfSatisfying(ConflictoEstadoException.class, (ConflictoEstadoException ex) ->
+                        assertThat(ex.getCodigo()).isEqualTo("FICHA_EMERGENCIA_NO_EDITABLE"));
+        assertThat(proyecto.getEstado()).isEqualTo(estado);
+        verify(fichaRepository, never()).save(any());
+        verify(proyectos, never()).guardar(any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = EstadoProyecto.class, names = {"CUP_ASIGNADO", "EN_FORMULACION", "PROYECTO_FORMULADO",
+        "OBSERVADO"})
+    void registrar_enEstadoDeFormulacion_remiteAViabilidad(EstadoProyecto estado) {
+        proyecto.setEstado(estado);
+        when(fichaRepository.findByProyectoId(ID_PROYECTO)).thenReturn(Optional.empty());
+
+        fichaEmergencia.registrar(ID_PROYECTO, requestCompleto());
+
+        assertThat(proyecto.getEstado()).isEqualTo(EstadoProyecto.EN_VIABILIDAD);
+        verify(proyectos).guardar(proyecto);
     }
 
     @Test

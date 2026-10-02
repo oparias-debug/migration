@@ -50,7 +50,14 @@ export function FichaEmergenciaPage() {
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
-  const [encabezado, setEncabezado] = useState<{ cup: string; nombreProyecto: string; etapaActual: string; etapaFutura: string } | null>(null);
+  const [encabezado, setEncabezado] = useState<{
+    cup: string;
+    nombreProyecto: string;
+    etapaActual: string;
+    etapaFutura: string;
+    numeroDecretoLegislativo?: string | null;
+    tipoEvento?: string | null;
+  } | null>(null);
   const [departamentoFiltro, setDepartamentoFiltro] = useState('');
 
   const puedeEditar = hasRole('TECNICO_URP');
@@ -91,6 +98,8 @@ export function FichaEmergenciaPage() {
           nombreProyecto: data.nombreProyecto,
           etapaActual: data.etapaActual,
           etapaFutura: data.etapaFutura,
+          numeroDecretoLegislativo: data.numeroDecretoLegislativo,
+          tipoEvento: data.tipoEvento,
         });
         reset(fichaToFormValues(data));
       })
@@ -198,6 +207,18 @@ export function FichaEmergenciaPage() {
           </FormRow>
           <FormRow label={t('preinversion.fichaEmergencia.campoEtapaFutura')}>
             <p className="campo-asignado">{formatNombreEtapa(encabezado.etapaFutura)}</p>
+          </FormRow>
+        </div>
+
+        {/* Bloque "Declaratoria de Emergencia" del Anexo A.4: N° de DL y Tipo de evento vienen de
+            CU-PRE-01 y no son editables (Anexo B.1). */}
+        <h2 className="seccion">{t('preinversion.fichaEmergencia.seccionDeclaratoria')}</h2>
+        <div className="fr">
+          <FormRow label={t('preinversion.registro.campoNumeroDecreto')}>
+            <p className="campo-asignado">{encabezado.numeroDecretoLegislativo ?? t('common.noAplica')}</p>
+          </FormRow>
+          <FormRow label={t('preinversion.registro.campoTipoEvento')}>
+            <p className="campo-asignado">{encabezado.tipoEvento ?? t('common.noAplica')}</p>
           </FormRow>
         </div>
 

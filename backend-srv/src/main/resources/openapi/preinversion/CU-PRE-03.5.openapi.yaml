@@ -52,7 +52,7 @@ paths:
     put:
       operationId: modificarRutaPreinversion
       summary: Modificar la Ruta de Preinversión ya establecida (botón "Modificar", FA-02)
-      description: 'RN03: `justificacion` es obligatoria. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`.
+      description: 'RN03: `justificacion` es obligatoria (vacía o solo espacios cuenta como faltante). RN02: la nueva selección debe incluir PERFIL y EJECUCION. RN07/RN08: solo para iniciativa PROYECTO. Las etapas que quedan fuera de la nueva selección se eliminan. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`.
 
         '
       tags:
@@ -77,7 +77,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/RutaPreinversion'
         '400':
-          description: 'El campo "Justifique Modificación" no fue completado (RN03); la historia BDD lo describe como "no habilita la selección de la nueva ruta", modelado aquí como el bloqueo estándar de un campo obligatorio faltante.
+          description: '`RUTA_MODIFICADA_INVALIDA`, con un detalle por campo: el campo "Justifique Modificación" no fue completado (RN03; la historia BDD lo describe como "no habilita la selección de la nueva ruta", modelado aquí como el bloqueo estándar de un campo obligatorio faltante) o `etapas` no incluye PERFIL y EJECUCION (RN02).
 
             '
           content:
@@ -100,6 +100,14 @@ paths:
                 $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
         '404':
           description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '409':
+          description: 'Iniciativa distinta de PROYECTO (RN07/RN08). `PROYECTO_EMERGENCIA_SIN_RUTA`: el proyecto es de emergencia; no tiene Ruta de Preinversión y pasa de la Ficha de proyectos de emergencia directamente a Viabilidad (CU-PRE-24, DN-03). `ETAPA_CON_PROGRAMACION`: una etapa que queda fuera de la ruta no tiene Opinión Técnica pero sí programación cuatrimestral (CU-PRE-30/31); quitarla borraría esa programación.
+
+            '
           content:
             application/json:
               schema:
@@ -164,7 +172,7 @@ paths:
               schema:
                 $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
         '409':
-          description: 'El proyecto tiene `iniciativaInversion` distinta de PROYECTO (RN07/RN08: botón "Ruta de Preinversión" desactivado para Estudios Generales/Programa). Inferido de RN07/RN08, sin un escenario BDD que llame al endpoint en ese caso — la BDD solo describe la desactivación del botón en el cliente.
+          description: 'El proyecto tiene `iniciativaInversion` distinta de PROYECTO (RN07/RN08: botón "Ruta de Preinversión" desactivado para Estudios Generales/Programa). Inferido de RN07/RN08, sin un escenario BDD que llame al endpoint en ese caso — la BDD solo describe la desactivación del botón en el cliente. `PROYECTO_EMERGENCIA_SIN_RUTA`: el proyecto es de emergencia; no tiene Ruta de Preinversión y pasa de la Ficha de proyectos de emergencia directamente a Viabilidad (CU-PRE-24, DN-03).
 
             '
           content:
@@ -218,6 +226,14 @@ paths:
                 $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
         '404':
           description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: ../administracion/CU-ADM-03-manejo-errores.openapi.yaml#/components/schemas/Error
+        '409':
+          description: '`PROYECTO_EMERGENCIA_SIN_RUTA`: el proyecto es de emergencia; no tiene Ruta de Preinversión y pasa de la Ficha de proyectos de emergencia directamente a Viabilidad (CU-PRE-24, DN-03). `ETAPA_CON_PROGRAMACION`: una etapa que queda fuera de la ruta no tiene Opinión Técnica pero sí programación cuatrimestral (CU-PRE-30/31); quitarla borraría esa programación.
+
+            '
           content:
             application/json:
               schema:
@@ -531,14 +547,13 @@ components:
       - GRANDE
     ComplejidadProyecto:
       type: string
-      description: 'Catálogo de complejidad del proyecto (Anexo C.4), listado fijo. Incluye "TODAS_LAS_COMPLEJIDADES" porque el propio catálogo original lo lista como una cuarta opción seleccionable, no como una categoría derivada de las otras tres.
+      description: 'Catálogo de complejidad del proyecto (Anexo C.4), listado fijo. El Anexo C.4 lista además "Todas las complejidades", pero la v1.2 del CU confirmó que es una abreviatura de Baja, Media y Alta en la matriz B.2, no una opción seleccionable.
 
         '
       enum:
       - BAJA
       - MEDIA
       - ALTA
-      - TODAS_LAS_COMPLEJIDADES
     NombreEtapa:
       type: string
       description: 'Etapas de la Ruta de Preinversión. No incluye un valor distinto para "Estudio General": RN07/RN08 tratan a Estudios Generales y Programa como usuarios de las mismas PERFIL/EJECUCIÓN que Proyecto, no como una etapa con nombre propio.
@@ -682,12 +697,12 @@ components:
           format: double
         fechaInicio:
           type: string
-          pattern: ^\d{2}/\d{2}/\d{4}$
-          description: Formato dd/mm/aaaa (RN04, confirmado v1.3).
+          pattern: ^(\d{2}/\d{2}/\d{4})?$
+          description: Formato dd/mm/aaaa (RN04, confirmado v1.3). Vacío o ausente equivale a "sin fecha" (RN19 solo la marca en rojo).
         fechaFin:
           type: string
-          pattern: ^\d{2}/\d{2}/\d{4}$
-          description: Formato dd/mm/aaaa (RN04, confirmado v1.3).
+          pattern: ^(\d{2}/\d{2}/\d{4})?$
+          description: Formato dd/mm/aaaa (RN04, confirmado v1.3). Vacío o ausente equivale a "sin fecha" (RN19 solo la marca en rojo).
     ActualizarEtapasRequest:
       type: object
       required:

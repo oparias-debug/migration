@@ -1,0 +1,11 @@
+# envs/values-ocp-test-3t.yaml -- overlay por cluster (ambiente tst, cluster ocp-test-3t).
+# Derivado de admin-srv-config (Gen-ScaffolderEnvOverlays.js). Se aplica: helm -f values.yaml -f envs/values-ocp-test-3t.yaml
+# (ApplicationSet 05-cd-multicluster). Sobreescribe SOLO lo acoplado al cluster.
+# registry -> Quay 3t; Keycloak = el de admin-srv en este cluster; admin-srv en mh-tst-dgicp-siip:
+# CONFIRMAR con infra (P-06).
+image:
+  repository: "quay-quay-quay.apps.ocp-hub-3t.mh.gob.sv/mh-dgicp-siip2/api-gateway"
+configMap:
+  data:
+    ADMIN_SRV_URL: "http://admin-srv.mh-tst-dgicp-siip.svc"
+    KEYCLOAK_INTERNAL_URL: "https://keycloak-mh-test.apps.gcp-op-desa.cloud.mh.gob.sv"

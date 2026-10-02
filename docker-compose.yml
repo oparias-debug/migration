@@ -110,7 +110,11 @@ services:
         condition: service_healthy
 
   api-gateway:
-    build: ./api-gateway
+    # Dockerfile.local: el Dockerfile de al lado es el de la entidad (imagen base del registry
+    # interno del MH). Requiere mvn clean package -DskipTests en api-gateway/ antes del build.
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile.local
     ports:
       - "8080:8080"
     environment:

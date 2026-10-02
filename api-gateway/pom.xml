@@ -10,11 +10,11 @@
 		<relativePath /> <!-- usa el repo central -->
 	</parent>
 
-	<groupId>sv.gob.mh.siip</groupId>
-	<artifactId>api-gateway</artifactId>
+	<groupId>sv.gob.mh</groupId>
+	<artifactId>dgicp-siip2-api-gateway</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>api-gateway</name>
-	<description>Api wateway</description>
+	<name>dgicp-siip2-api-gateway</name>
+	<description>API Gateway de SIIP</description>
 
 	<properties>
 		<java.version>21</java.version>
@@ -109,6 +109,19 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<!-- Mismo artefacto que la plantilla DINAFI: target/app.jar, que copian Dockerfile y
+				     Dockerfile.local sin depender de la versión del pom. -->
+				<executions>
+					<execution>
+						<id>repackage</id>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+						<configuration>
+							<finalName>app</finalName>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

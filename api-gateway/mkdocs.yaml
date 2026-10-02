@@ -1,0 +1,13 @@
+site_name: 'dgicp-siip2-api-gateway'
+
+site_description: 'API Gateway de SIIP'
+
+nav:
+  - Inicio: index.md
+  - Arquitectura: architecture.md
+  - Configuración de variables: helm-configuration.md
+  - Ambiente local: local-development.md
+  - Despliegue: deployment.md
+
+plugins:
+  - techdocs-core

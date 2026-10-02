@@ -2,7 +2,9 @@ package sv.gob.mh.siip.model.preinversion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,11 +16,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
+import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.domain.RutaPreinversion;
 import sv.gob.mh.siip.model.preinversion.dto.ComplejidadProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.CriteriosCalificacionDto;
+import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
 import sv.gob.mh.siip.model.preinversion.dto.ModificarRutaPreinversionRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.RutaPreinversionDto;
@@ -160,7 +164,7 @@ class SeleccionEtapasRutaTest {
         assertThat(existente.getComplejidad()).isEqualTo(ComplejidadProyecto.ALTA);
         assertThat(existente.getFueModificada()).isFalse();
         assertThat(existente.getJustificacionUltimaModificacion()).isNull();
-        verify(registro).sincronizar(proyecto, List.of(TipoEtapaPreinversion.PERFIL,
+        verify(registro).reemplazarSeleccion(proyecto, List.of(TipoEtapaPreinversion.PERFIL,
                 TipoEtapaPreinversion.PREFACTIBILIDAD, TipoEtapaPreinversion.FACTIBILIDAD,
                 TipoEtapaPreinversion.DISENO, TipoEtapaPreinversion.EJECUCION));
     }
@@ -175,12 +179,12 @@ class SeleccionEtapasRutaTest {
         verify(rutaRepository).save(guardada.capture());
         assertThat(guardada.getValue().getProyecto()).isSameAs(proyecto);
         assertThat(guardada.getValue().getTipoCapital()).isNull();
-        verify(registro).sincronizar(proyecto,
+        verify(registro).reemplazarSeleccion(proyecto,
                 List.of(TipoEtapaPreinversion.PERFIL, TipoEtapaPreinversion.EJECUCION));
     }
 
     @Test
-    void modificar_marcaRutaModificadaYSincronizaBloqueandoEmitidas() {
+    void modificar_marcaRutaModificadaYReemplazaLaSeleccion() {
         ModificarRutaPreinversionRequestDto request = new ModificarRutaPreinversionRequestDto()
                 .justificacion("Cambio de alcance")
                 .etapas(List.of(NombreEtapaDto.PERFIL, NombreEtapaDto.EJECUCION));
@@ -191,8 +195,92 @@ class SeleccionEtapasRutaTest {
         verify(rutaRepository).save(guardada.capture());
         assertThat(guardada.getValue().getFueModificada()).isTrue();
         assertThat(guardada.getValue().getJustificacionUltimaModificacion()).isEqualTo("Cambio de alcance");
-        verify(registro).sincronizarBloqueandoEmitidas(proyecto,
+        verify(registro).reemplazarSeleccion(proyecto,
                 List.of(TipoEtapaPreinversion.PERFIL, TipoEtapaPreinversion.EJECUCION));
+    }
+
+    @Test
+    void generar_proyectoDeEmergencia_lanzaConflicto() {
+        proyecto.setEsProyectoEmergencia(true);
+        CriteriosCalificacionDto criterios =
+                criterios(TipoCapitalDto.CAPITAL_FISICO, TamanioProyectoDto.GRANDE, ComplejidadProyectoDto.ALTA);
+
+        assertThatThrownBy(() -> ruta.generar(ID_PROYECTO, criterios))
+                .isInstanceOfSatisfying(ConflictoEstadoException.class, (ConflictoEstadoException ex) ->
+                        assertThat(ex.getCodigo()).isEqualTo("PROYECTO_EMERGENCIA_SIN_RUTA"));
+    }
+
+    @Test
+    void aceptar_proyectoDeEmergencia_lanzaConflictoSinGuardar() {
+        proyecto.setEsProyectoEmergencia(true);
+        CriteriosCalificacionDto criterios =
+                criterios(TipoCapitalDto.CAPITAL_FISICO, TamanioProyectoDto.GRANDE, ComplejidadProyectoDto.ALTA);
+
+        assertThatThrownBy(() -> ruta.aceptar(ID_PROYECTO, criterios))
+                .isInstanceOfSatisfying(ConflictoEstadoException.class, (ConflictoEstadoException ex) ->
+                        assertThat(ex.getCodigo()).isEqualTo("PROYECTO_EMERGENCIA_SIN_RUTA"));
+        verify(rutaRepository, never()).save(any());
+        verify(registro, never()).reemplazarSeleccion(any(), any());
+    }
+
+    @Test
+    void modificar_proyectoDeEmergencia_lanzaConflictoSinGuardar() {
+        proyecto.setEsProyectoEmergencia(true);
+        ModificarRutaPreinversionRequestDto request = modificacion("Cambio",
+                NombreEtapaDto.PERFIL, NombreEtapaDto.EJECUCION);
+
+        assertThatThrownBy(() -> ruta.modificar(ID_PROYECTO, request))
+                .isInstanceOfSatisfying(ConflictoEstadoException.class, (ConflictoEstadoException ex) ->
+                        assertThat(ex.getCodigo()).isEqualTo("PROYECTO_EMERGENCIA_SIN_RUTA"));
+        verify(rutaRepository, never()).save(any());
+        verify(registro, never()).reemplazarSeleccion(any(), any());
+    }
+
+    @Test
+    void modificar_iniciativaPrograma_lanzaConflictoSinGuardar() {
+        proyecto.setIniciativaInversion(IniciativaInversion.PROGRAMA);
+        ModificarRutaPreinversionRequestDto request = modificacion("Agregar diseño",
+                NombreEtapaDto.PERFIL, NombreEtapaDto.DISENO, NombreEtapaDto.EJECUCION);
+
+        assertThatThrownBy(() -> ruta.modificar(ID_PROYECTO, request))
+                .isInstanceOf(ConflictoEstadoException.class)
+                .hasMessageContaining("RN07/RN08");
+        verify(rutaRepository, never()).save(any());
+        verify(registro, never()).reemplazarSeleccion(any(), any());
+    }
+
+    @Test
+    void modificar_justificacionEnBlanco_lanzaValidacionSinGuardar() {
+        ModificarRutaPreinversionRequestDto request = modificacion("   ",
+                NombreEtapaDto.PERFIL, NombreEtapaDto.EJECUCION);
+
+        assertThatThrownBy(() -> ruta.modificar(ID_PROYECTO, request))
+                .isInstanceOfSatisfying(ValidacionNegocioException.class, (ValidacionNegocioException ex) -> {
+                    assertThat(ex.getCodigo()).isEqualTo("RUTA_MODIFICADA_INVALIDA");
+                    assertThat(ex.getDetalles()).extracting(ErrorDetalleDto::getCampo).containsExactly("justificacion");
+                });
+        verify(rutaRepository, never()).save(any());
+        verify(registro, never()).reemplazarSeleccion(any(), any());
+    }
+
+    @Test
+    void modificar_sinPerfilOEjecucion_lanzaValidacionSinGuardar() {
+        ModificarRutaPreinversionRequestDto sinEjecucion = modificacion("Cambio",
+                NombreEtapaDto.PERFIL, NombreEtapaDto.DISENO);
+        ModificarRutaPreinversionRequestDto vacia = modificacion("Cambio");
+
+        for (ModificarRutaPreinversionRequestDto request : List.of(sinEjecucion, vacia)) {
+            assertThatThrownBy(() -> ruta.modificar(ID_PROYECTO, request))
+                    .isInstanceOfSatisfying(ValidacionNegocioException.class, (ValidacionNegocioException ex) ->
+                            assertThat(ex.getDetalles()).extracting(ErrorDetalleDto::getCampo)
+                                    .containsExactly("etapas"));
+        }
+        verify(rutaRepository, never()).save(any());
+        verify(registro, never()).reemplazarSeleccion(any(), any());
+    }
+
+    private static ModificarRutaPreinversionRequestDto modificacion(String justificacion, NombreEtapaDto... etapas) {
+        return new ModificarRutaPreinversionRequestDto().justificacion(justificacion).etapas(List.of(etapas));
     }
 
     private static CriteriosCalificacionDto criterios(TipoCapitalDto tipo, TamanioProyectoDto tamanio,

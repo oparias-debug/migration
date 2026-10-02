@@ -34,14 +34,16 @@ public class PresupuestoInversionService {
     private final ActorContexto actor;
     private final PresupuestoInversionMacroactividades macroactividades;
     private final PresupuestoInversionEnsamblador ensamblador;
+    private final CostoEtapaEjecucion costoEjecucion;
 
     public PresupuestoInversionService(ProyectoRepository p, PresupuestoProyectoRepository pr, ActorContexto a,
-            PresupuestoInversionMacroactividades m, PresupuestoInversionEnsamblador e) {
+            PresupuestoInversionMacroactividades m, PresupuestoInversionEnsamblador e, CostoEtapaEjecucion c) {
         proyectos = p;
         presupuestos = pr;
         actor = a;
         macroactividades = m;
         ensamblador = e;
+        costoEjecucion = c;
     }
 
     public PresupuestoDto obtener(Long id) {
@@ -68,7 +70,7 @@ public class PresupuestoInversionService {
         actor.exigirRol(RolUsuario.TECNICO_URP);
         PresupuestoProyecto p = obtenerOCrear(buscarEditable(id));
         p.setPeriodosEstimados(req.getPeriodosEstimados());
-        return ensamblador.dto(buscar(id), p);
+        return conCostoEjecucion(id, ensamblador.dto(buscar(id), p));
     }
 
     public MacroactividadDto registrar(Long id, Integer producto, MacroactividadRequestDto req) {
@@ -76,7 +78,9 @@ public class PresupuestoInversionService {
         Proyecto proyecto = buscarEditable(id);
         PresupuestoInversionMacroactividades.validar(req);
         PresupuestoProyecto p = obtenerOCrear(proyecto);
-        return macroactividades.registrar(p, producto, req);
+        MacroactividadDto registrada = macroactividades.registrar(p, producto, req);
+        conCostoEjecucion(id, ensamblador.dto(proyecto, p));
+        return registrada;
     }
 
     public PresupuestoDto guardar(Long id) {
@@ -84,7 +88,7 @@ public class PresupuestoInversionService {
         Proyecto proyecto = buscar(id);
         PresupuestoProyecto p = obtenerOCrear(proyecto);
         macroactividades.exigirPorProducto(p, ensamblador.contarProductos(id));
-        return ensamblador.dto(proyecto, p);
+        return conCostoEjecucion(id, ensamblador.dto(proyecto, p));
     }
 
     public FuentesFinanciamientoRequestDto fuentes(Long id) {
@@ -99,6 +103,12 @@ public class PresupuestoInversionService {
         PresupuestoInversionFuentes.aplicar(p, req);
         presupuestos.save(p);
         return PresupuestoInversionFuentes.dto(p);
+    }
+
+    /** RN05/RN22 de CU-PRE-03.5: el total del presupuesto es el costo de la etapa de Ejecución. */
+    private PresupuestoDto conCostoEjecucion(Long id, PresupuestoDto presupuesto) {
+        costoEjecucion.actualizar(id, presupuesto);
+        return presupuesto;
     }
 
     private Proyecto buscar(Long id) {

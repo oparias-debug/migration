@@ -101,9 +101,9 @@ try {
 
     foreach ($service in $services.Keys) {
         $image = "$registry/siip-$($services[$service]):$Tag"
-        # El Dockerfile de backend-srv y admin-srv es el del ambiente de la entidad (imagen base en
+        # El Dockerfile de backend-srv, admin-srv y api-gateway es el del ambiente de la entidad (imagen base en
         # el registry interno de MH); fuera de esa red se usa su Dockerfile.local.
-        $dockerfile = if ($service -in @('backend-srv', 'admin-srv')) { "./$service/Dockerfile.local" } else { "./$service/Dockerfile" }
+        $dockerfile = if ($service -in @('backend-srv', 'admin-srv', 'api-gateway')) { "./$service/Dockerfile.local" } else { "./$service/Dockerfile" }
         Invoke-Step -Name "docker build $service -> $image" -Action { & docker build -t $image -f $dockerfile "./$service" }
 
         if (-not $SkipPush) {

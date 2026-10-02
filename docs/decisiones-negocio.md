@@ -8,6 +8,7 @@ contradicen. Cada decisión indica dónde está implementada.
 |----|-------|------|--------------|
 | DN-01 | 2026-09-24 | Definición de "Usuario interno" / "usuario central" | CU-PRE-17, CU-PRE-18, CU-PRE-20, CU-PRE-21 |
 | DN-02 | 2026-09-24 | Alcance del redondeo RN04 en CU-PRE-20 | CU-PRE-20 |
+| DN-03 | 2026-10-01 | Proyectos de emergencia sin Ruta de Preinversión | CU-PRE-03.5, CU-PRE-24 |
 
 ---
 
@@ -64,3 +65,27 @@ montos por período de cada beneficio conservan 2 decimales.
 **Implementación.** `BeneficiosProyectoService.respuesta` redondea
 `flujoBeneficiosPrecioMercadoPorPeriodo` y `flujoBeneficiosPrecioAjustadoPorPeriodo`. Lo cubren los
 escenarios BDD de RN04 en `CU-PRE-20-guardar-avanzar.feature`.
+
+---
+
+## DN-03 — Un proyecto de emergencia no tiene Ruta de Preinversión
+
+**Contexto.** CU-PRE-03.5 lleva al proyecto de emergencia por un camino propio: en Registro de
+Etapas solo muestra "Perfil" (FA-05, paso 5.1), y al guardar la Ficha de proyectos de emergencia
+(Anexo A.4) lo remite a Viabilidad (paso 5.5). Pero el CU no dice si ese proyecto puede, además,
+generar, aceptar o modificar una Ruta de Preinversión como un proyecto normal. El sistema no lo
+impedía: el aislamiento dependía solo de lo que mostraba la pantalla. Se preguntó a negocio el 2026-09-21.
+
+**Decisión.** Un proyecto de emergencia no entra a la ruta normal de preinversión. Al guardar la
+Ficha de proyectos de emergencia pasa directamente a Viabilidad (CU-PRE-24).
+
+**Consecuencias.**
+
+- Para un proyecto con `esProyectoEmergencia = true`, generar, aceptar y modificar la Ruta de
+  Preinversión responden 409 con código `PROYECTO_EMERGENCIA_SIN_RUTA`.
+- Su Registro de Etapas sigue mostrando solo "Perfil", que es el acceso a la ficha.
+
+**Implementación.** `SeleccionEtapasRuta.exigirQueNoSeaDeEmergencia`
+(`backend-srv/src/main/java/sv/gob/mh/siip/model/preinversion/service/SeleccionEtapasRuta.java`),
+llamado desde `generar`, `aceptar` y `modificar`. Lo cubre el escenario "Un proyecto de emergencia no
+tiene Ruta de Preinversión (DN-03)" de `CU-PRE-3.5-registrar-ficha-emergencia.feature`.

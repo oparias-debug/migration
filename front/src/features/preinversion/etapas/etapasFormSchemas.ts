@@ -13,7 +13,6 @@ const COMPLEJIDADES = [
   ComplejidadProyecto.Baja,
   ComplejidadProyecto.Media,
   ComplejidadProyecto.Alta,
-  ComplejidadProyecto.TodasLasComplejidades,
 ] as const;
 const NOMBRES_ETAPA = [
   NombreEtapa.Perfil,

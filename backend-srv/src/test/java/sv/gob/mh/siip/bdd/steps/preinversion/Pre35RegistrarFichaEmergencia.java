@@ -1,5 +1,6 @@
 package sv.gob.mh.siip.bdd.steps.preinversion;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ import io.cucumber.java.es.Entonces;
 import sv.gob.mh.siip.bdd.support.ContextoValidacionBdd;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
 import sv.gob.mh.siip.bdd.support.SufijosPrueba;
+import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
@@ -25,11 +27,16 @@ import sv.gob.mh.siip.model.common.repository.UnidadEjecutoraRepository;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
 import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
+import sv.gob.mh.siip.model.preinversion.dto.ComplejidadProyectoDto;
+import sv.gob.mh.siip.model.preinversion.dto.CriteriosCalificacionDto;
 import sv.gob.mh.siip.model.preinversion.dto.EtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.FichaEmergenciaDto;
 import sv.gob.mh.siip.model.preinversion.dto.FichaEmergenciaRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.ModificarRutaPreinversionRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.ProductoSeleccionadoDto;
+import sv.gob.mh.siip.model.preinversion.dto.TamanioProyectoDto;
+import sv.gob.mh.siip.model.preinversion.dto.TipoCapitalDto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.IniciativaInversion;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
@@ -78,6 +85,7 @@ public class Pre35RegistrarFichaEmergencia {
 
     private Proyecto proyecto;
     private FichaEmergenciaDto fichaGuardada;
+    private final List<ConflictoEstadoException> rechazosRuta = new ArrayList<>();
 
     // El paso "el Técnico URP hace clic en {string} sin haber completado el campo {string}" es
     // texto identico al de CU-PRE-06-registrar-matriz-interesados.feature; Cucumber no admite
@@ -181,6 +189,35 @@ public class Pre35RegistrarFichaEmergencia {
         ValidacionNegocioException excepcion = (ValidacionNegocioException) contextoValidacion.getUltimaExcepcion();
         assertThat(excepcion).isNotNull();
         assertThat(excepcion.getDetalles()).anyMatch(d -> propiedad.equals(d.getCampo()));
+        RequestContextHolder.resetRequestAttributes();
+    }
+
+    @Cuando("el Técnico URP intenta generar, aceptar o modificar la Ruta de Preinversión del proyecto de emergencia")
+    public void intenta_generar_aceptar_o_modificar_la_ruta_del_proyecto_de_emergencia() {
+        CriteriosCalificacionDto criterios = new CriteriosCalificacionDto().tipoCapital(TipoCapitalDto.CAPITAL_FISICO)
+                .tamanioProyecto(TamanioProyectoDto.GRANDE).complejidad(ComplejidadProyectoDto.ALTA);
+        ModificarRutaPreinversionRequestDto modificacion = new ModificarRutaPreinversionRequestDto()
+                .justificacion("Agregar diseño").etapas(List.of(NombreEtapaDto.PERFIL, NombreEtapaDto.DISENO,
+                        NombreEtapaDto.EJECUCION));
+        List<Runnable> operaciones = List.of(
+                () -> service.generarRutaPreinversion(proyecto.getId(), criterios),
+                () -> service.aceptarRutaPreinversion(proyecto.getId(), criterios),
+                () -> service.modificarRutaPreinversion(proyecto.getId(), modificacion));
+        for (Runnable operacion : operaciones) {
+            try {
+                operacion.run();
+            } catch (ConflictoEstadoException ex) {
+                rechazosRuta.add(ex);
+            }
+        }
+    }
+
+    @Entonces("el sistema rechaza las tres operaciones porque el proyecto de emergencia pasa directamente a \"Viabilidad\" \\(CU-PRE-24)")
+    public void el_sistema_rechaza_las_tres_operaciones_de_ruta() {
+        assertThat(rechazosRuta).hasSize(3).extracting(ConflictoEstadoException::getCodigo)
+                .containsOnly("PROYECTO_EMERGENCIA_SIN_RUTA");
+        assertThat(service.listarEtapas(proyecto.getId())).extracting(EtapaDto::getNombreEtapa)
+                .containsExactly(NombreEtapaDto.PERFIL);
         RequestContextHolder.resetRequestAttributes();
     }
 

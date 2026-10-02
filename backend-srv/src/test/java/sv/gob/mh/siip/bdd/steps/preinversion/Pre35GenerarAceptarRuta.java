@@ -307,7 +307,6 @@ public class Pre35GenerarAceptarRuta {
             case "Complejidad Baja" -> ComplejidadProyectoDto.BAJA;
             case "Complejidad Media" -> ComplejidadProyectoDto.MEDIA;
             case "Complejidad Alta" -> ComplejidadProyectoDto.ALTA;
-            case "Todas las complejidades" -> ComplejidadProyectoDto.TODAS_LAS_COMPLEJIDADES;
             default -> throw new IllegalArgumentException("Complejidad no reconocida: " + valor);
         };
     }

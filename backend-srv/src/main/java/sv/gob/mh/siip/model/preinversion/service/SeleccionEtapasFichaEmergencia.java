@@ -1,10 +1,13 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
+import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.domain.ComponenteCostoEmergencia;
 import sv.gob.mh.siip.model.preinversion.domain.FichaEmergencia;
@@ -27,6 +30,14 @@ import sv.gob.mh.siip.model.preinversion.repository.FichaEmergenciaRepository;
 public class SeleccionEtapasFichaEmergencia {
 
     private static final String CAMPO_OBLIGATORIO = "*Campo obligatorio";
+
+    /**
+     * Estados desde los que se puede registrar la ficha y remitir el proyecto a Viabilidad: el
+     * proyecto tiene CUP y todavía no llegó a Viabilidad, o Viabilidad lo devolvió (OBSERVADO). En
+     * cualquier otro estado, guardar haría retroceder el proyecto a EN_VIABILIDAD.
+     */
+    private static final Set<EstadoProyecto> ESTADOS_REGISTRABLES = EnumSet.of(EstadoProyecto.CUP_ASIGNADO,
+            EstadoProyecto.EN_FORMULACION, EstadoProyecto.PROYECTO_FORMULADO, EstadoProyecto.OBSERVADO);
 
     private final SeleccionEtapasProyectos proyectos;
     private final FichaEmergenciaRepository fichaEmergenciaRepository;
@@ -51,11 +62,14 @@ public class SeleccionEtapasFichaEmergencia {
     /**
      * Registra la ficha y remite el proyecto a Viabilidad.
      *
+     * @throws ConflictoEstadoException si el estado del proyecto no admite registrar la ficha (ver
+     * {@link #ESTADOS_REGISTRABLES})
      * @throws ValidacionNegocioException si faltan campos obligatorios
      * ("Existen campos sin diligenciar").
      */
     public FichaEmergenciaDto registrar(Long idProyecto, FichaEmergenciaRequestDto request) {
         Proyecto proyecto = proyectos.buscarDeEmergencia(idProyecto);
+        exigirEstadoRegistrable(proyecto);
         validarObligatorios(request);
 
         FichaEmergencia ficha = fichaEmergenciaRepository.findByProyectoId(idProyecto)
@@ -68,6 +82,15 @@ public class SeleccionEtapasFichaEmergencia {
         proyectos.guardar(proyecto);
 
         return ensamblador.construir(proyecto, ficha);
+    }
+
+    private static void exigirEstadoRegistrable(Proyecto proyecto) {
+        if (!ESTADOS_REGISTRABLES.contains(proyecto.getEstado())) {
+            String estado = proyecto.getEstado() == null ? "sin estado" : proyecto.getEstado().getEtiquetaUi();
+            throw new ConflictoEstadoException("FICHA_EMERGENCIA_NO_EDITABLE",
+                    "La Ficha de proyectos de emergencia no se puede registrar en el estado actual del proyecto ("
+                            + estado + ").");
+        }
     }
 
     private static void validarObligatorios(FichaEmergenciaRequestDto request) {

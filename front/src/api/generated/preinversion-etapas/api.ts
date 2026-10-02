@@ -27,14 +27,13 @@ export interface ActualizarEtapasRequest {
     'etapas': Array<EtapaRegistroRequest>;
 }
 /**
- * Catálogo de complejidad del proyecto (Anexo C.4), listado fijo. Incluye \"TODAS_LAS_COMPLEJIDADES\" porque el propio catálogo original lo lista como una cuarta opción seleccionable, no como una categoría derivada de las otras tres. 
+ * Catálogo de complejidad del proyecto (Anexo C.4), listado fijo. El Anexo C.4 lista además \"Todas las complejidades\", pero la v1.2 del CU confirmó que es una abreviatura de Baja, Media y Alta en la matriz B.2, no una opción seleccionable. 
  */
 
 export const ComplejidadProyecto = {
     Baja: 'BAJA',
     Media: 'MEDIA',
     Alta: 'ALTA',
-    TodasLasComplejidades: 'TODAS_LAS_COMPLEJIDADES',
 } as const;
 
 export type ComplejidadProyecto = typeof ComplejidadProyecto[keyof typeof ComplejidadProyecto];
@@ -122,11 +121,11 @@ export interface EtapaRegistroRequest {
     'nombreEtapa': NombreEtapa;
     'costo'?: number;
     /**
-     * Formato dd/mm/aaaa (RN04, confirmado v1.3).
+     * Formato dd/mm/aaaa (RN04, confirmado v1.3). Vacío o ausente equivale a \"sin fecha\" (RN19 solo la marca en rojo).
      */
     'fechaInicio'?: string;
     /**
-     * Formato dd/mm/aaaa (RN04, confirmado v1.3).
+     * Formato dd/mm/aaaa (RN04, confirmado v1.3). Vacío o ausente equivale a \"sin fecha\" (RN19 solo la marca en rojo).
      */
     'fechaFin'?: string;
 }
@@ -619,7 +618,7 @@ export const PreinversinSeleccinYRegistroDeEtapasApiAxiosParamCreator = function
             };
         },
         /**
-         * RN03: `justificacion` es obligatoria. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
+         * RN03: `justificacion` es obligatoria (vacía o solo espacios cuenta como faltante). RN02: la nueva selección debe incluir PERFIL y EJECUCION. RN07/RN08: solo para iniciativa PROYECTO. Las etapas que quedan fuera de la nueva selección se eliminan. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
          * @summary Modificar la Ruta de Preinversión ya establecida (botón \"Modificar\", FA-02)
          * @param {number} idProyecto 
          * @param {ModificarRutaPreinversionRequest} modificarRutaPreinversionRequest 
@@ -926,7 +925,7 @@ export const PreinversinSeleccinYRegistroDeEtapasApiFp = function(configuration?
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * RN03: `justificacion` es obligatoria. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
+         * RN03: `justificacion` es obligatoria (vacía o solo espacios cuenta como faltante). RN02: la nueva selección debe incluir PERFIL y EJECUCION. RN07/RN08: solo para iniciativa PROYECTO. Las etapas que quedan fuera de la nueva selección se eliminan. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
          * @summary Modificar la Ruta de Preinversión ya establecida (botón \"Modificar\", FA-02)
          * @param {number} idProyecto 
          * @param {ModificarRutaPreinversionRequest} modificarRutaPreinversionRequest 
@@ -1056,7 +1055,7 @@ export const PreinversinSeleccinYRegistroDeEtapasApiFactory = function (configur
             return localVarFp.listarEtapas(requestParameters.idProyecto, options).then((request) => request(axios, basePath));
         },
         /**
-         * RN03: `justificacion` es obligatoria. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
+         * RN03: `justificacion` es obligatoria (vacía o solo espacios cuenta como faltante). RN02: la nueva selección debe incluir PERFIL y EJECUCION. RN07/RN08: solo para iniciativa PROYECTO. Las etapas que quedan fuera de la nueva selección se eliminan. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
          * @summary Modificar la Ruta de Preinversión ya establecida (botón \"Modificar\", FA-02)
          * @param {PreinversinSeleccinYRegistroDeEtapasApiModificarRutaPreinversionRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1159,7 +1158,7 @@ export interface PreinversinSeleccinYRegistroDeEtapasApiInterface {
     listarEtapas(requestParameters: PreinversinSeleccinYRegistroDeEtapasApiListarEtapasRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<Etapa>>;
 
     /**
-     * RN03: `justificacion` es obligatoria. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
+     * RN03: `justificacion` es obligatoria (vacía o solo espacios cuenta como faltante). RN02: la nueva selección debe incluir PERFIL y EJECUCION. RN07/RN08: solo para iniciativa PROYECTO. Las etapas que quedan fuera de la nueva selección se eliminan. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
      * @summary Modificar la Ruta de Preinversión ya establecida (botón \"Modificar\", FA-02)
      * @param {PreinversinSeleccinYRegistroDeEtapasApiModificarRutaPreinversionRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1345,7 +1344,7 @@ export class PreinversinSeleccinYRegistroDeEtapasApi extends BaseAPI implements 
     }
 
     /**
-     * RN03: `justificacion` es obligatoria. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
+     * RN03: `justificacion` es obligatoria (vacía o solo espacios cuenta como faltante). RN02: la nueva selección debe incluir PERFIL y EJECUCION. RN07/RN08: solo para iniciativa PROYECTO. Las etapas que quedan fuera de la nueva selección se eliminan. RN13: si la nueva selección requiere Opinión Técnica para una etapa anterior a una ya emitida, el Sistema no rechaza la operación — la guarda igual, pero esa etapa queda reflejada con `bloqueadaPorModificacion = true` en `GET /proyectos/{idProyecto}/etapas` (sin perder su información ya registrada). Por eso este endpoint no define una respuesta 409 para ese caso: no es un error, es un efecto secundario visible en `Etapa`. 
      * @summary Modificar la Ruta de Preinversión ya establecida (botón \"Modificar\", FA-02)
      * @param {PreinversinSeleccinYRegistroDeEtapasApiModificarRutaPreinversionRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

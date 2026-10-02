@@ -24,6 +24,7 @@ import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.common.repository.InstitucionRepository;
 import sv.gob.mh.siip.model.common.repository.UnidadEjecutoraRepository;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
+import sv.gob.mh.siip.model.preinversion.domain.Componente;
 import sv.gob.mh.siip.model.preinversion.domain.EjeTematico;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
@@ -34,16 +35,21 @@ import sv.gob.mh.siip.model.preinversion.dto.ComplejidadProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.CriteriosCalificacionDto;
 import sv.gob.mh.siip.model.preinversion.dto.EtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.EtapaRegistroRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.MacroactividadInsumoRequestDto;
+import sv.gob.mh.siip.model.preinversion.dto.MacroactividadRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.TamanioProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.TipoCapitalDto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.IniciativaInversion;
 import sv.gob.mh.siip.model.preinversion.enums.TipoEtapaPreinversion;
+import sv.gob.mh.siip.model.preinversion.repository.ComponenteRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EjeTematicoRepository;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaPreinversionRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProyectoRepository;
 import sv.gob.mh.siip.model.preinversion.service.CatalogosSeleccionEtapasService;
+import sv.gob.mh.siip.model.preinversion.service.EtapasOpinionTecnica;
+import sv.gob.mh.siip.model.preinversion.service.PresupuestoInversionService;
 import sv.gob.mh.siip.model.preinversion.service.SeleccionYRegistroDeEtapasService;
 import sv.gob.mh.siip.model.programacion.domain.MacroSector;
 import sv.gob.mh.siip.model.programacion.domain.SectorActividad;
@@ -81,6 +87,9 @@ public class Pre35RegistrarEtapas {
     private final EjeTematicoRepository ejeTematicoRepository;
     private final SeleccionYRegistroDeEtapasService service;
     private final CatalogosSeleccionEtapasService catalogosSeleccionEtapasService;
+    private final ComponenteRepository componenteRepository;
+    private final PresupuestoInversionService presupuestoInversionService;
+    private final EtapasOpinionTecnica etapasOpinionTecnica;
     private final Validator validator;
 
     private Proyecto proyecto;
@@ -98,7 +107,9 @@ public class Pre35RegistrarEtapas {
             ProyectoRepository proyectoRepository, EtapaPreinversionRepository etapaPreinversionRepository,
             MacroSectorRepository macroSectorRepository, SectorActividadRepository sectorActividadRepository,
             EjeTematicoRepository ejeTematicoRepository, SeleccionYRegistroDeEtapasService service,
-            CatalogosSeleccionEtapasService catalogosSeleccionEtapasService, Validator validator) {
+            CatalogosSeleccionEtapasService catalogosSeleccionEtapasService, ComponenteRepository componenteRepository,
+            PresupuestoInversionService presupuestoInversionService, EtapasOpinionTecnica etapasOpinionTecnica,
+            Validator validator) {
         this.institucionRepository = institucionRepository;
         this.unidadEjecutoraRepository = unidadEjecutoraRepository;
         this.usuarioRepository = usuarioRepository;
@@ -109,6 +120,9 @@ public class Pre35RegistrarEtapas {
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.service = service;
         this.catalogosSeleccionEtapasService = catalogosSeleccionEtapasService;
+        this.componenteRepository = componenteRepository;
+        this.presupuestoInversionService = presupuestoInversionService;
+        this.etapasOpinionTecnica = etapasOpinionTecnica;
         this.validator = validator;
     }
 
@@ -285,17 +299,26 @@ public class Pre35RegistrarEtapas {
     public void se_emite_una_opinion_tecnica_o_actualizacion_al_proyecto() {
         crearProyectoYAutenticar(IniciativaInversion.PROYECTO, false);
         service.aceptarRutaPreinversion(proyecto.getId(), criteriosCompletos());
-        // CU-PRE-17 (Presupuesto de inversion) no esta implementado: se simula que ya fijo el
-        // costo de EJECUCION, para verificar la parte que si es responsabilidad de este CU (RN05/
-        // RN11): un actualizarEtapas posterior no debe poder sobreescribirlo.
-        EtapaPreinversion ejecucion = etapaPreinversionRepository
-                .findByProyectoIdAndTipoEtapa(proyecto.getId(), TipoEtapaPreinversion.EJECUCION).orElseThrow();
-        ejecucion.setCosto(500000.0);
-        etapaPreinversionRepository.save(ejecucion);
+        // Presupuesto de inversión (CU-PRE-17): un producto de CU-PRE-11 con una macroactividad de
+        // 300,000 + 200,000 a precios de mercado. Al registrarla, el costo de Ejecución ya se actualiza.
+        componenteRepository.save(Componente.builder().proyecto(proyecto).nombre("TC-OBRA")
+                .descripcion("Obra de prueba (BDD).").codigoProducto("P-01").cantidad(1.0)
+                .unidadMedida("Unidad (u)").build());
+        presupuestoInversionService.registrar(proyecto.getId(), 1, new MacroactividadRequestDto("Construcción")
+                .insumos(List.of(new MacroactividadInsumoRequestDto("OBRA").costosPorPeriodo(
+                        List.of(300000.0, 200000.0)))));
 
+        // El costo enviado por el cliente para EJECUCION se ignora (RN05/RN11).
         service.actualizarEtapas(proyecto.getId(), new ActualizarEtapasRequestDto()
                 .addEtapasItem(new EtapaRegistroRequestDto().nombreEtapa(NombreEtapaDto.EJECUCION)
                         .costo(999.0).fechaInicio("01/01/2027").fechaFin("31/12/2027")));
+
+        // Valor desactualizado, para comprobar que la emisión de la OT vuelve a tomar el del presupuesto.
+        EtapaPreinversion ejecucion = etapaPreinversionRepository
+                .findByProyectoIdAndTipoEtapa(proyecto.getId(), TipoEtapaPreinversion.EJECUCION).orElseThrow();
+        ejecucion.setCosto(1.0);
+        etapaPreinversionRepository.save(ejecucion);
+        etapasOpinionTecnica.marcarEmitida(proyecto.getId(), TipoEtapaPreinversion.PERFIL);
     }
 
     @Entonces("el sistema actualiza automáticamente el campo \"Costo de la etapa\" de Ejecución")
@@ -307,8 +330,11 @@ public class Pre35RegistrarEtapas {
 
     @Entonces("toma el valor del campo \"Total inversión\" del Anexo A.1 de CU-PRE-17 \"Presupuesto de inversión\"")
     public void toma_el_valor_de_total_inversion_de_cu_pre_17() {
-        // RN05/RN11: verificado arriba que el costo enviado por el cliente para EJECUCION (999.0)
-        // fue ignorado; la fuente real (CU-PRE-17) no esta implementada en el repositorio.
+        double totalPresupuesto = presupuestoInversionService.consultarSoloLectura(proyecto.getId()).orElseThrow()
+                .getInversionEstimadaPreciosMercado().getTotal();
+        EtapaDto ejecucion = service.listarEtapas(proyecto.getId()).stream()
+                .filter(e -> e.getNombreEtapa() == NombreEtapaDto.EJECUCION).findFirst().orElseThrow();
+        assertThat(ejecucion.getCosto()).isEqualTo(totalPresupuesto);
         RequestContextHolder.resetRequestAttributes();
     }
 

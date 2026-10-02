@@ -34,7 +34,6 @@ const COMPLEJIDAD_LABELS: Record<string, string> = {
   [ComplejidadProyecto.Baja]: 'Baja',
   [ComplejidadProyecto.Media]: 'Media',
   [ComplejidadProyecto.Alta]: 'Alta',
-  [ComplejidadProyecto.TodasLasComplejidades]: 'Todas las complejidades',
 };
 
 // Etiquetas del Anexo B.1 (RQ-T-02); ver descripción de FuenteFinanciamiento en el OpenAPI
@@ -91,7 +90,6 @@ export const COMPLEJIDAD_OPCIONES = [
   ComplejidadProyecto.Baja,
   ComplejidadProyecto.Media,
   ComplejidadProyecto.Alta,
-  ComplejidadProyecto.TodasLasComplejidades,
 ] as const;
 
 export const FUENTE_FINANCIAMIENTO_OPCIONES = [

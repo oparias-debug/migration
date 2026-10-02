@@ -1,11 +1,13 @@
-FROM eclipse-temurin:21-jdk
+FROM quay-quay-quay.apps.ocp-hub-3t.mh.gob.sv/mh-usi-ubi/openjdk-21-runtime-mh:21
+
+USER root
 
 WORKDIR /app
 
-COPY target/*.jar app.jar
-COPY wait-for-keycloak.sh wait-for-keycloak.sh
+COPY target/app.jar app.jar
 
-RUN apt-get update && apt-get install -y curl \
-    && chmod +x wait-for-keycloak.sh && apt-get clean
+EXPOSE 8080
 
-ENTRYPOINT ["./wait-for-keycloak.sh"]
+USER 185
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

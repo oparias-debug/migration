@@ -1,15 +1,18 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
+import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.domain.RutaPreinversion;
 import sv.gob.mh.siip.model.preinversion.dto.ComplejidadProyectoDto;
 import sv.gob.mh.siip.model.preinversion.dto.CriteriosCalificacionDto;
+import sv.gob.mh.siip.model.preinversion.dto.ErrorDetalleDto;
 import sv.gob.mh.siip.model.preinversion.dto.ModificarRutaPreinversionRequestDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.dto.RutaPreinversionDto;
@@ -64,11 +67,8 @@ public class SeleccionEtapasRuta {
     /** Calcula, sin persistir, las etapas sugeridas (solo para iniciativa PROYECTO, RN07/RN08). */
     public RutaPreinversionSugeridaDto generar(Long idProyecto, CriteriosCalificacionDto criterios) {
         Proyecto proyecto = proyectos.buscar(idProyecto);
-        if (proyecto.getIniciativaInversion() != IniciativaInversion.PROYECTO) {
-            throw new ConflictoEstadoException(
-                    "El botón \"Ruta de Preinversión\" está desactivado para proyectos que no son de iniciativa"
-                            + " PROYECTO (RN07/RN08).");
-        }
+        exigirQueNoSeaDeEmergencia(proyecto);
+        exigirIniciativaProyecto(proyecto);
         return new RutaPreinversionSugeridaDto()
                 .criterios(criterios)
                 .etapasSugeridas(calcularEtapasSugeridas(criterios).stream()
@@ -76,9 +76,13 @@ public class SeleccionEtapasRuta {
                         .toList());
     }
 
-    /** Persiste la ruta calculada y traslada sus etapas a Registro de Etapas. */
+    /**
+     * Persiste la ruta calculada y deja en Registro de Etapas solo sus etapas (ver
+     * {@link SeleccionEtapasRegistro#reemplazarSeleccion}).
+     */
     public RutaPreinversionDto aceptar(Long idProyecto, CriteriosCalificacionDto criterios) {
         Proyecto proyecto = proyectos.buscar(idProyecto);
+        exigirQueNoSeaDeEmergencia(proyecto);
         boolean esProyecto = proyecto.getIniciativaInversion() == IniciativaInversion.PROYECTO;
 
         List<TipoEtapaPreinversion> etapas = esProyecto ? calcularEtapasSugeridas(criterios) : RUTA_PROGRAMA_ESTUDIO;
@@ -93,17 +97,21 @@ public class SeleccionEtapasRuta {
         ruta.setJustificacionUltimaModificacion(null);
         rutaPreinversionRepository.save(ruta);
 
-        registro.sincronizar(proyecto, etapas);
+        registro.reemplazarSeleccion(proyecto, etapas);
 
         return construirRutaDto(proyecto);
     }
 
     /**
-     * Modifica manualmente la ruta (RN03). RN13: una etapa ya emitida que queda fuera de la nueva
-     * selección se marca bloqueadaPorModificacion en vez de rechazar la operación completa.
+     * Modifica manualmente la ruta (RN03). Las etapas que quedan fuera se eliminan; RN13: una etapa
+     * ya emitida se marca bloqueadaPorModificacion en vez de eliminarse (ver
+     * {@link SeleccionEtapasRegistro#reemplazarSeleccion}).
      */
     public RutaPreinversionDto modificar(Long idProyecto, ModificarRutaPreinversionRequestDto request) {
         Proyecto proyecto = proyectos.buscar(idProyecto);
+        exigirQueNoSeaDeEmergencia(proyecto);
+        exigirIniciativaProyecto(proyecto);
+        validarModificacion(request);
 
         List<TipoEtapaPreinversion> nuevaSeleccion = request.getEtapas().stream()
                 .map((NombreEtapaDto etapa) -> TipoEtapaPreinversion.valueOf(etapa.name()))
@@ -114,9 +122,50 @@ public class SeleccionEtapasRuta {
         ruta.setJustificacionUltimaModificacion(request.getJustificacion());
         rutaPreinversionRepository.save(ruta);
 
-        registro.sincronizarBloqueandoEmitidas(proyecto, nuevaSeleccion);
+        registro.reemplazarSeleccion(proyecto, nuevaSeleccion);
 
         return construirRutaDto(proyecto);
+    }
+
+    /**
+     * DN-03: un proyecto de emergencia no tiene Ruta de Preinversión. Pasa de la Ficha de proyectos
+     * de emergencia (Anexo A.4) directamente a Viabilidad (CU-PRE-24).
+     */
+    private static void exigirQueNoSeaDeEmergencia(Proyecto proyecto) {
+        if (Boolean.TRUE.equals(proyecto.getEsProyectoEmergencia())) {
+            throw new ConflictoEstadoException("PROYECTO_EMERGENCIA_SIN_RUTA",
+                    "Los proyectos de emergencia no tienen Ruta de Preinversión: pasan de la Ficha de proyectos"
+                            + " de emergencia directamente a Viabilidad (CU-PRE-24).");
+        }
+    }
+
+    /** RN07/RN08: Programa y Estudio General tienen siempre la ruta Perfil + Ejecución. */
+    private static void exigirIniciativaProyecto(Proyecto proyecto) {
+        if (proyecto.getIniciativaInversion() != IniciativaInversion.PROYECTO) {
+            throw new ConflictoEstadoException(
+                    "El botón \"Ruta de Preinversión\" está desactivado para proyectos que no son de iniciativa"
+                            + " PROYECTO (RN07/RN08).");
+        }
+    }
+
+    /**
+     * RN03: la justificación es obligatoria. RN02: Perfil y Ejecución son obligatorias en la nueva
+     * ruta.
+     */
+    private static void validarModificacion(ModificarRutaPreinversionRequestDto request) {
+        List<ErrorDetalleDto> detalles = new ArrayList<>();
+        if (request.getJustificacion() == null || request.getJustificacion().isBlank()) {
+            detalles.add(new ErrorDetalleDto().campo("justificacion").mensaje("*Campo obligatorio"));
+        }
+        List<NombreEtapaDto> etapas = request.getEtapas() == null ? List.of() : request.getEtapas();
+        if (!etapas.contains(NombreEtapaDto.PERFIL) || !etapas.contains(NombreEtapaDto.EJECUCION)) {
+            detalles.add(new ErrorDetalleDto().campo("etapas")
+                    .mensaje("La ruta debe incluir las etapas Perfil y Ejecución (RN02)."));
+        }
+        if (!detalles.isEmpty()) {
+            throw new ValidacionNegocioException("RUTA_MODIFICADA_INVALIDA",
+                    "La modificación de la Ruta de Preinversión no es válida.", detalles);
+        }
     }
 
     private RutaPreinversion obtenerOCrearRuta(Proyecto proyecto) {

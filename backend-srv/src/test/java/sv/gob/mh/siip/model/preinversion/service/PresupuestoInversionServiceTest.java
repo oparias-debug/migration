@@ -47,6 +47,7 @@ class PresupuestoInversionServiceTest {
     private PresupuestoProyectoRepository presupuestos;
     private MacroactividadPresupuestoRepository macros;
     private ActorContexto actor;
+    private CostoEtapaEjecucion costoEjecucion;
     private PresupuestoInversionService service;
     private Proyecto proyecto;
     private PresupuestoProyecto presupuesto;
@@ -60,8 +61,9 @@ class PresupuestoInversionServiceTest {
         actor = mock(ActorContexto.class);
         PresupuestoInversionMacroactividades macroactividades
                 = new PresupuestoInversionMacroactividades(macros, new ObjectMapper());
+        costoEjecucion = mock(CostoEtapaEjecucion.class);
         service = new PresupuestoInversionService(proyectos, presupuestos, actor, macroactividades,
-                new PresupuestoInversionEnsamblador(macroactividades, componentes));
+                new PresupuestoInversionEnsamblador(macroactividades, componentes), costoEjecucion);
         proyecto = Proyecto.builder().id(1L).build();
         presupuesto = PresupuestoProyecto.builder().id(2L).proyecto(proyecto).periodosEstimados(3).build();
         when(proyectos.findById(1L)).thenReturn(Optional.of(proyecto));
@@ -154,6 +156,8 @@ class PresupuestoInversionServiceTest {
         assertThat(response.getNumero()).isEqualTo("1.1");
         assertThat(response.getTotalPeriodoPrecioMercado()).containsExactly(10.0, 0.0, 5.0);
         verify(macros).save(any(MacroactividadPresupuesto.class));
+        // RN05/RN22 de CU-PRE-03.5: el total del presupuesto pasa al costo de la etapa de Ejecución.
+        verify(costoEjecucion).actualizar(org.mockito.ArgumentMatchers.eq(1L), any());
     }
 
     @Test
@@ -180,6 +184,7 @@ class PresupuestoInversionServiceTest {
         when(macros.countByPresupuestoIdAndNumeroProducto(2L, 2)).thenReturn(2L);
 
         assertThat(service.guardar(1L).getIdProyecto()).isEqualTo(1L);
+        verify(costoEjecucion).actualizar(org.mockito.ArgumentMatchers.eq(1L), any());
     }
 
     @Test

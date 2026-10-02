@@ -1,13 +1,12 @@
 package sv.gob.mh.siip.model.preinversion.enums;
 
 /**
- * Catálogo de complejidad del proyecto (Anexo C.4), listado fijo. Incluye
- * {@code TODAS_LAS_COMPLEJIDADES} porque el propio catálogo original lo lista como una cuarta
- * opción seleccionable, no como una categoría derivada de las otras tres. CU-PRE-03.5.
+ * Catálogo de complejidad del proyecto (Anexo C.4), listado fijo. CU-PRE-03.5. El Anexo C.4 lista
+ * además "Todas las complejidades", pero la v1.2 del CU confirmó que es una abreviatura de las
+ * otras tres en la matriz B.2, no una opción seleccionable.
  */
 public enum ComplejidadProyecto {
     BAJA,
     MEDIA,
-    ALTA,
-    TODAS_LAS_COMPLEJIDADES
+    ALTA
 }

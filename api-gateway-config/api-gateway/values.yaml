@@ -1,0 +1,277 @@
+# Default values for api-gateway (dgicp-siip2).
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: "quay-registry-quay-quay-enterprise.apps.gcp-op-desa.cloud.mh.gob.sv/mh-dgicp-siip2/api-gateway"
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets:
+  - name: quay-credentials
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: "api-gateway"
+
+containerPort: 8080
+
+# Con Route: api-gateway es el único punto de entrada público de SIIP (front y Swagger UI).
+# backend-srv, admin-srv y siipsafi-srv no tienen Route y solo los invoca el gateway (P-04).
+# Host por defecto de OpenShift: api-gateway-<namespace>.apps.<dominio del cluster>.
+route:
+  enabled: true
+  name: api-gateway
+  prefix: "api-gateway"
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+# Endurecimiento del pod. En OpenShift el SCC restricted-v2 ya impone casi todo esto,
+# pero sin declararlo el chart no es portable ni auditable: no se puede demostrar que el
+# contenedor no corre privilegiado sin ir a mirar el SCC del clúster.
+#
+# runAsNonRoot NO se declara aquí A PROPÓSITO. Exige que la imagen fije un USER
+# NUMÉRICO: con un nombre (por ejemplo 'apache') el kubelet no puede comprobar que no
+# sea root y se NIEGA a arrancar el contenedor. Como el SCC ya garantiza que no corre
+# como root, declararlo aquí no añade seguridad real y sí puede tumbar un servicio.
+# Se activa por servicio, cuando su imagen use un uid numérico; el ciclo avisa en cada
+# CR si el USER del Dockerfile es un nombre.
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+  # fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  privileged: false
+  capabilities:
+    drop:
+      - ALL
+  # readOnlyRootFilesystem se deja FUERA a propósito: Quarkus y httpd necesitan escribir
+  # en el directorio temporal. Activarlo exige montarlo como emptyDir, y eso es una
+  # decisión por servicio y no un valor por defecto seguro: puesto aquí sin más, dejaría
+  # los pods en CrashLoop.
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  type: ClusterIP
+  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  port: 80
+
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+# -- Expose the service via gateway-api HTTPRoute
+# Requires Gateway API resources and suitable controller installed within the cluster
+# (see: https://gateway-api.sigs.k8s.io/guides/)
+httpRoute:
+  # HTTPRoute enabled.
+  enabled: false
+  # HTTPRoute annotations.
+  annotations: {}
+  # Which Gateways this Route is attached to.
+  parentRefs:
+  - name: gateway
+    sectionName: http
+    # namespace: default
+  # Hostnames matching HTTP header.
+  hostnames:
+  - chart-example.local
+  # List of rules and filters applied.
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /headers
+  #   filters:
+  #   - type: RequestHeaderModifier
+  #     requestHeaderModifier:
+  #       set:
+  #       - name: My-Overwrite-Header
+  #         value: this-is-the-only-value
+  #       remove:
+  #       - User-Agent
+  # - matches:
+  #   - path:
+  #       type: PathPrefix
+  #       value: /echo
+  #     headers:
+  #     - name: version
+  #       value: v2
+
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+    
+envFrom:
+  - configMapRef:
+      name: api-gateway-cmp
+  # Load all variables from the Helm-managed ConfigMap
+  # =============================================================================
+  # Secret — Credenciales sensibles (OIDC)
+  # NO forma parte del chart: lo crea el owner del proyecto una sola vez tras el
+  # aprovisionamiento, por motivos de seguridad.
+  # El Secret debe llamarse: <project_name>-secret
+  # Claves esperadas:
+  #   KEYCLOAK_CLIENT_SECRET — Secreto del cliente confidencial KEYCLOAK_CLIENT_ID del
+  #                            realm (login por /auth/** y TokenRelay)
+  # Sin este Secret la aplicación NO arranca: es intencional, para que el fallo
+  # sea evidente en vez de intentar autenticarse con una credencial inválida.
+  # =============================================================================
+  - secretRef:
+      name: api-gateway-secret
+
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+  timeoutSeconds: 5
+
+startupProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 12
+  timeoutSeconds: 3
+
+
+# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# ConfigMap configuration
+# This creates a ConfigMap named: <release-name>-config
+# Example: if release name is "myapp", ConfigMap will be "myapp-config"
+configMap:
+  # Enable/disable ConfigMap creation
+  enabled: true
+  # Annotations for the ConfigMap
+  annotations: {}
+    # example.com/managed-by: "helm"
+  # Data to include in the ConfigMap (key-value pairs)
+  data:
+    HTTP_PORT: "8080"
+    # Servicios a los que enruta (Service, puerto 80). backend-srv y siipsafi-srv viven en el
+    # mismo namespace que el gateway (mh-<env>-dgicp-siip2); admin-srv en el de dgicp-siip, por
+    # eso va con <service>.<namespace>.svc. CONFIRMAR con infra la NetworkPolicy que admita ese
+    # tráfico entre namespaces (P-04).
+    BACKEND_SRV_URL: "http://backend-srv"
+    ADMIN_SRV_URL: "http://admin-srv.mh-dev-dgicp-siip.svc"
+    SIIPSAFI_SRV_URL: "http://siipsafi-srv"
+    # Security / Keycloak: mismo emisor que validan los servicios (SECURITY_URL_KEYCLOAK y
+    # SECURITY_REALM de sus -config). El gateway pide la URL completa, con esquema.
+    KEYCLOAK_INTERNAL_URL: "https://keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv"
+    KEYCLOAK_REALM: "MHINTERNO"
+    # Cliente confidencial del gateway en el realm. CONFIRMAR con infra: en local es
+    # api-gateway (keycloak/realm-export.json); en MHINTERNO aún no existe (P-07).
+    KEYCLOAK_CLIENT_ID: "<cliente-api-gateway>"
+
+# Verificacion post-despliegue. La lee el CICLO (task karate-verify), no la aplicacion.
+# La RAMA de este repo -config es el ambiente, asi que estos valores son de ESTE ambiente
+# y la promocion no los pisa: merge-*-image solo sincroniza image.tag e image.repository.
+# Vacios = no se verifica nada y el ciclo lo dice en el log; nunca se inventa una URL.
+verificacion:
+  # Lo lee el CICLO (task karate-verify y las pipelines de prueba), no la aplicacion:
+  # ningun template referencia .Values.verificacion, asi que el render de Helm no cambia.
+  # La RAMA de este repo -config ES el ambiente, de modo que estos valores son los de DEV.
+  #
+  # URL publica del servicio. Mismo patron que usa la propia plantilla para el origen de
+  # CORS, asi que sale correcto por construccion. NO se deduce a ojo: hacerlo fallo en 4
+  # de 8 servicios ya existentes, que viven en namespaces distintos, y una URL equivocada
+  # deja la verificacion colgada 900 s antes de rendirse.
+  # Vacía hasta que exista el despliegue (P-06): apuntar a una URL que no responde cuelga la
+  # verificación 900 s. Con el namespace mh-dev-dgicp-siip2, el host de la Route es:
+  #   "https://api-gateway-mh-dev-dgicp-siip2.apps.gcp-op-desa.cloud.mh.gob.sv"
+  # Desde entonces, la verificación de backend-srv, admin-srv y siipsafi-srv pasa por aquí (P-04).
+  baseUrl: ""
+  # Emisor del token: el authentication-service del marco, que hace de fachada del
+  # Keycloak del ambiente. Mismo host que el resto de URLs del marco de este fichero.
+  # OJO con el path: /oidc/realm/ en SINGULAR. El plural devuelve 404.
+  oauth2TokenUrl: "https://authentication-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/oidc/realm/MHINTERNO/protocol/openid-connect/token"

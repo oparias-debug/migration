@@ -36,9 +36,11 @@ public class EtapasOpinionTecnica {
     }
 
     private final EtapaPreinversionRepository etapaRepository;
+    private final CostoEtapaEjecucion costoEjecucion;
 
-    public EtapasOpinionTecnica(EtapaPreinversionRepository etapaRepository) {
+    public EtapasOpinionTecnica(EtapaPreinversionRepository etapaRepository, CostoEtapaEjecucion costoEjecucion) {
         this.etapaRepository = etapaRepository;
+        this.costoEjecucion = costoEjecucion;
     }
 
     /**
@@ -76,7 +78,8 @@ public class EtapasOpinionTecnica {
     }
 
     /**
-     * Registra que la etapa ya tiene Opinión Técnica (lo consulta CU-PRE-3.5, RN13).
+     * Registra que la etapa ya tiene Opinión Técnica (lo consulta CU-PRE-3.5, RN13). RN11 de
+     * CU-PRE-3.5: además actualiza el costo de la etapa de Ejecución desde el presupuesto de inversión.
      *
      * @param idProyecto identificador del proyecto
      * @param etapa etapa sobre la que se emitió la OT; {@code null} no hace nada
@@ -87,15 +90,45 @@ public class EtapasOpinionTecnica {
         }
         etapaRepository.findByProyectoIdAndTipoEtapa(idProyecto, etapa).ifPresent((EtapaPreinversion e) -> {
             e.setTieneOpinionTecnica(true);
+            e.setBloqueadaPorModificacion(false);
             etapaRepository.save(e);
         });
+        recalcularBloqueos(idProyecto);
+        costoEjecucion.recalcular(idProyecto);
     }
 
-    /** Etapas en orden de ruta, sin las que una modificación de la ruta dejó fuera (RN13 de CU-PRE-3.5). */
+    /**
+     * RN13 de CU-PRE-3.5: recorre la ruta vigente en orden. Una etapa queda bloqueada si tenía OT (o
+     * ya esperaba una nueva) y antes hay una etapa sin OT: su OT anterior deja de valer y debe
+     * obtenerla de nuevo. Una etapa bloqueada se desbloquea cuando todas las anteriores tienen OT.
+     * Se llama al aceptar o modificar la ruta y al emitir una OT.
+     *
+     * @param idProyecto identificador del proyecto
+     */
+    public void recalcularBloqueos(Long idProyecto) {
+        boolean hayAnteriorSinOt = false;
+        for (EtapaPreinversion etapa : vigentes(idProyecto)) {
+            boolean tieneOt = Boolean.TRUE.equals(etapa.getTieneOpinionTecnica());
+            boolean bloqueada = Boolean.TRUE.equals(etapa.getBloqueadaPorModificacion());
+            boolean debeBloquearse = hayAnteriorSinOt && (tieneOt || bloqueada);
+            if (debeBloquearse != bloqueada || (debeBloquearse && tieneOt)) {
+                etapa.setBloqueadaPorModificacion(debeBloquearse);
+                if (debeBloquearse) {
+                    etapa.setTieneOpinionTecnica(false);
+                }
+                etapaRepository.save(etapa);
+            }
+            if (!Boolean.TRUE.equals(etapa.getTieneOpinionTecnica())) {
+                hayAnteriorSinOt = true;
+            }
+        }
+    }
+
+    /** Etapas en orden de ruta, sin las que una modificación de la ruta dejó fuera (CU-PRE-3.5). */
     private List<EtapaPreinversion> vigentes(Long idProyecto) {
         return etapaRepository.findByProyectoId(idProyecto).stream()
                 .sorted(Comparator.comparing(EtapaPreinversion::getTipoEtapa))
-                .filter(e -> !Boolean.TRUE.equals(e.getBloqueadaPorModificacion()))
+                .filter(e -> !Boolean.TRUE.equals(e.getFueraDeRuta()))
                 .toList();
     }
 
