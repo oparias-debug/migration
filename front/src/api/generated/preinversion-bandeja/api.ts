@@ -272,7 +272,7 @@ export const PreinversinBandejaPreinversinApiAxiosParamCreator = function (confi
             };
         },
         /**
-         * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya canceló la instancia de proceso Flowable asociada y desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
+         * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
          * @summary Desarchivar una solicitud (RN11, nueva — no proviene del documento original)
          * @param {number} idSolicitud 
          * @param {*} [options] Override http request option.
@@ -444,7 +444,7 @@ export const PreinversinBandejaPreinversinApiFp = function(configuration?: Confi
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya canceló la instancia de proceso Flowable asociada y desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
+         * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
          * @summary Desarchivar una solicitud (RN11, nueva — no proviene del documento original)
          * @param {number} idSolicitud 
          * @param {*} [options] Override http request option.
@@ -516,7 +516,7 @@ export const PreinversinBandejaPreinversinApiFactory = function (configuration?:
             return localVarFp.asignarTecnicoPre(requestParameters.idSolicitud, requestParameters.asignacionTecnicoPreRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya canceló la instancia de proceso Flowable asociada y desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
+         * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
          * @summary Desarchivar una solicitud (RN11, nueva — no proviene del documento original)
          * @param {PreinversinBandejaPreinversinApiDesarchivarSolicitudRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -571,7 +571,7 @@ export interface PreinversinBandejaPreinversinApiInterface {
     asignarTecnicoPre(requestParameters: PreinversinBandejaPreinversinApiAsignarTecnicoPreRequest, options?: RawAxiosRequestConfig): AxiosPromise<SolicitudActivaItem>;
 
     /**
-     * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya canceló la instancia de proceso Flowable asociada y desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
+     * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
      * @summary Desarchivar una solicitud (RN11, nueva — no proviene del documento original)
      * @param {PreinversinBandejaPreinversinApiDesarchivarSolicitudRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -677,7 +677,7 @@ export class PreinversinBandejaPreinversinApi extends BaseAPI implements Preinve
     }
 
     /**
-     * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya canceló la instancia de proceso Flowable asociada y desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
+     * RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya desactivó el proyecto, así que no existe un estado previo seguro al cual volver. 
      * @summary Desarchivar una solicitud (RN11, nueva — no proviene del documento original)
      * @param {PreinversinBandejaPreinversinApiDesarchivarSolicitudRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

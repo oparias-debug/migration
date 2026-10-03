@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-22.1 Programación Financiera de la Preinversión del Proyecto
+  version: "1.0.0"
+  description: Programación financiera por etapa y período. Técnico URP edita y Técnico PRE consulta todas las Unidades Ejecutoras.
+paths:
+  /proyectos/{idProyecto}/programacion-financiera-preinversion:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: obtenerProgramacionFinancieraPreinversion
+      tags: [Preinversión - Programación Financiera]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP, Técnico PRE]
+      responses:
+        '200':
+          description: Programación financiera del proyecto.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProgramacionFinancieraPreinversion' }
+    put:
+      operationId: guardarProgramacionFinancieraPreinversion
+      tags: [Preinversión - Programación Financiera]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProgramacionFinancieraPreinversionRequest' }
+      responses:
+        '200':
+          description: Programación guardada y costo de etapa sincronizado con CU-PRE-03.5.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProgramacionFinancieraPreinversion' }
+  /proyectos/{idProyecto}/programacion-financiera-preinversion/periodos:
+    parameters:
+      - name: idProyecto
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: configurarPeriodosProgramacionPreinversion
+      tags: [Preinversión - Programación Financiera]
+      security: [{ bearerAuth: [] }]
+      x-roles: [Técnico URP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [periodosAProgramar]
+              properties:
+                periodosAProgramar: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Períodos configurados.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProgramacionFinancieraPreinversion' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    FilaProgramacionEtapaRequest:
+      type: object
+      required: [etapa, programacionPorPeriodo]
+      properties:
+        etapa: { $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa' }
+        programacionPorPeriodo:
+          type: array
+          minItems: 1
+          description: Monto monetario por período, redondeado a dos decimales.
+          items: { type: number, format: double }
+    FilaProgramacionEtapa:
+      type: object
+      required: [etapa, programacionPorPeriodo, totalProgramacion]
+      properties:
+        etapa: { $ref: './CU-PRE-03.5.openapi.yaml#/components/schemas/NombreEtapa' }
+        programacionPorPeriodo:
+          type: array
+          items: { type: number, format: double, nullable: true }
+        totalProgramacion:
+          type: number
+          format: double
+        costoEtapa:
+          type: number
+          format: double
+          nullable: true
+          description: 'Inferencia del contrato: igual a totalProgramacion y sincronizado con CU-PRE-03.5 (RN06).'
+    ProgramacionFinancieraPreinversionRequest:
+      type: object
+      required: [filas]
+      properties:
+        filas:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/FilaProgramacionEtapaRequest' }
+    ProgramacionFinancieraPreinversion:
+      type: object
+      required: [idProyecto, filas]
+      properties:
+        idProyecto: { type: integer, format: int64 }
+        periodosAProgramar: { type: integer, nullable: true }
+        filas:
+          type: array
+          items: { $ref: '#/components/schemas/FilaProgramacionEtapa' }
+        totalGeneralPorPeriodo:
+          type: array
+          items: { type: number, format: double }
+        totalGeneral: { type: number, format: double }

@@ -1,0 +1,1529 @@
+openapi: 3.0.3
+info:
+  title: SIIP v2 — Fragmento CU-PRE-26 Opinión Técnica
+  version: 0.3.0-cu-pre-26
+  description: |
+    Fragmento de contrato generado a partir del CU-PRE-26 "Opinión Técnica" y de sus
+    historias BDD (HU-PRE-26-01 a HU-PRE-26-10). Válido de forma standalone; se mezcla
+    después con el contrato consolidado del proyecto.
+
+    Convenciones:
+    - `operationId` en camelCase (verbo + sustantivo) → nombre del método Java y del hook TS.
+    - Schemas en PascalCase; propiedades JSON en camelCase; valores de enum en UPPER_SNAKE_CASE.
+    - Fechas en ISO-8601 (`format: date` / `date-time`). El formato DD/MM/AAAA del Anexo B.1
+      es de presentación y lo resuelve el cliente.
+    - `x-roles` usa los códigos de rol de los tags `@rol:` de las historias BDD.
+    - `x-trazabilidad` enlaza cada operación con su historia, feature y reglas de origen.
+
+    Ver `contrato-CU-PRE-26.md` para decisiones y conflictos pendientes.
+
+    Cambios 0.2.0 (implementación del backend, 2026-09-28):
+    - `EstadoProyecto` usa el catálogo de CU-PRE-01 (`VIABLE`, `ELEGIBLE`, ...): se genera en el mismo
+      paquete de DTOs y con valores propios rompía la compilación.
+    - `cup` pasa a `string`, como en el resto de contratos y en el dominio.
+    - Nuevo `GET /proyectos/{proyectoId}/opiniones-tecnicas` (`listarOpinionesTecnicas`): sin él no hay
+      forma de descubrir el `opinionTecnicaId` de la gestión vigente.
+    - Nuevo `estadoGestion` en la pantalla y en el listado.
+    - `encabezado.etapaActual` pasa a opcional: el proyecto puede no tener etapas registradas.
+    - Se documentan los códigos de error que el backend devuelve (`GestionNoRevisable`, 422 de
+      `envio-comentarios`, 409 de `asignacion`, códigos de 404).
+
+    Cambios 0.3.0 (revisión del backend, 2026-09-29):
+    - La "Nota de OT" y el "N° de nota de OT" son obligatorios al emitir la OT favorable (FA01 paso 1.5,
+      Anexo B.1 "Editable: Sí").
+    - El Viabilizador responde los comentarios DGICP a la Elegibilidad (Anexo B.1 "Respuesta
+      Institución"); el Técnico URP, los de los apartados y documentos (RN03). Nuevo
+      `camposEditables.justificacionInstitucionElegibilidad`.
+    - Solo el Técnico PRE asignado revisa y emite la gestión (RN07 b).
+    - Nuevos `numeroDevoluciones` (RN15) en la pantalla e `inversionEstimada` en el listado (Anexo A1.5).
+    - Nuevo `GET .../informe` (`obtenerInformeOpinionTecnica`, Anexo A.6).
+    - `ACTUALIZACION_OT_NO_DISPONIBLE` indica la causa real en el mensaje.
+  x-caso-uso: CU-PRE-26
+  x-modulo: Preinversión
+  x-submodulo: Gestión
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: OpinionTecnica
+    description: |
+      Módulo Preinversión › Gestión › OT. Solicitud, revisión, comentarios DGICP,
+      justificaciones de la Institución, visto bueno y emisión de la Opinión Técnica (CU-PRE-26).
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /proyectos/{proyectoId}/tipos-solicitud-opinion-tecnica:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    get:
+      tags: [OpinionTecnica]
+      operationId: consultarTiposSolicitudOpinionTecnica
+      summary: Consultar los tipos de solicitud de OT disponibles para el proyecto
+      description: |
+        Devuelve las opciones del desplegable "Tipo de solicitud" del menú GESTIÓN › OT
+        (Anexo A) con su estado de habilitación:
+        - "Actualización de OT" deshabilitada si la OT se solicita por primera vez (Anexo A – RN1).
+        - "Opinión Técnica" deshabilitada si se está solicitando una Actualización de OT (Anexo A – RN2).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP, VIABILIZADOR]
+      x-trazabilidad:
+        historias: [HU-PRE-26-01, HU-PRE-26-10]
+        features: [CU-PRE-26-solicitar-ot.feature, CU-PRE-26-actualizacion-ot.feature]
+        reglas: [Anexo A – RN1, Anexo A – RN2]
+      responses:
+        '200':
+          description: Tipos de solicitud con su estado de habilitación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TiposSolicitudOpinionTecnicaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    get:
+      tags: [OpinionTecnica]
+      operationId: listarOpinionesTecnicas
+      summary: Listar las gestiones de Opinión Técnica del proyecto
+      description: |
+        Gestiones de OT del proyecto, de la más reciente a la más antigua. La primera es la
+        vigente: el cliente la usa para abrir la pantalla del Anexo A.1 desde "Captura de
+        proyectos" (FB pasos 3–5) sin conocer de antemano su `opinionTecnicaId`. Sirve también de
+        base para el "Histórico de OT" (Anexo A1.5).
+        Agregado al implementar el backend: el fragmento original no tenía cómo descubrir el
+        identificador de la gestión.
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP, VIABILIZADOR, TECNICO_PRE, COORDINADOR_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26-03]
+        features: [CU-PRE-26-revisar-y-comentar.feature]
+        reglas: [FB 3–5, RN01, Anexo A1.5]
+      responses:
+        '200':
+          description: Gestiones de OT del proyecto (lista vacía si nunca se solicitó).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpinionesTecnicasProyectoResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [OpinionTecnica]
+      operationId: solicitarOpinionTecnica
+      summary: Solicitar a la DGICP la Opinión Técnica del proyecto
+      description: |
+        Botón "Solicitar OT" (RN04). Requiere anexar la "Nota de solicitud de OT".
+        El Sistema registra la "Fecha de solicitud" (no editable) y notifica al
+        Coordinador PRE con el correo del Anexo A2 a.
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP, VIABILIZADOR]
+      x-trazabilidad:
+        historias: [HU-PRE-26-01]
+        features: [CU-PRE-26-solicitar-ot.feature]
+        reglas: [RN04, RN07 a, Anexo A – RN2, Anexo B.1 Fecha de solicitud]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SolicitarOpinionTecnicaRequest'
+      responses:
+        '201':
+          description: Solicitud de Opinión Técnica registrada.
+          headers:
+            Location:
+              description: URI de la gestión de OT creada.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudOpinionTecnicaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: |
+            Conflicto de estado. Códigos posibles:
+            - `ACTUALIZACION_OT_EN_CURSO`: la opción "Opinión Técnica" está desactivada porque se
+              está solicitando una Actualización de OT (Anexo A – RN2).
+            - `OPINION_TECNICA_EN_CURSO`: ya hay una gestión de OT abierta para el proyecto.
+            - `ESTADO_PROYECTO_NO_PERMITE_SOLICITAR_OT`: el proyecto no está en "Proyecto viable"
+              ni "Proyecto elegible", o todavía debe pasar por Elegibilidad (FB paso 1; RN14).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                codigo: ACTUALIZACION_OT_EN_CURSO
+                mensaje: Se está solicitando una Actualización de OT; la opción Opinión Técnica no está disponible.
+                timestamp: '2026-09-27T15:00:00Z'
+        '422':
+          description: |
+            No se anexó la "Nota de solicitud de OT" (RN04). Código: `NOTA_SOLICITUD_OT_REQUERIDA`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                codigo: NOTA_SOLICITUD_OT_REQUERIDA
+                mensaje: Debe anexar la Nota de solicitud de OT para solicitar la Opinión Técnica.
+                timestamp: '2026-09-27T15:00:00Z'
+                detalles:
+                  - campo: notaSolicitudOt
+                    mensaje: Archivo requerido.
+
+  /proyectos/{proyectoId}/actualizaciones-opinion-tecnica:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+    post:
+      tags: [OpinionTecnica]
+      operationId: solicitarActualizacionOpinionTecnica
+      summary: Gestionar la Actualización de una Opinión Técnica previamente emitida
+      description: |
+        FA04. Se invoca después de que el usuario confirma con "SÍ" el mensaje del Anexo A.3
+        (la confirmación es solo de UI). El Sistema valida que exista una OT previa para la
+        etapa que se gestiona y habilita los campos definidos en la hoja "CU-PRE-3.5 … ANEXO"
+        (Anexo A.4). Después el usuario continúa con Viabilidad (CU-PRE-24).
+
+        ⚠️ PENDIENTE DE RESOLUCIÓN (Observaciones ítem 48): FA04 autoriza solo al Técnico URP;
+        Anexo A – RN3 agrega al Viabilizador. Se declara solo `TECNICO_URP` (coincidencia de
+        ambas fuentes). El CU marca FA04 como "No implementar hasta resolver".
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP]
+      x-pendiente-resolucion: 'Actor autorizado (FA04 vs. Anexo A – RN3), Observaciones ítem 48'
+      x-trazabilidad:
+        historias: [HU-PRE-26-10]
+        features: [CU-PRE-26-actualizacion-ot.feature]
+        reglas: [FA04, Anexo A – RN1, Anexo A – RN3]
+      responses:
+        '201':
+          description: Actualización de OT iniciada; campos habilitados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActualizacionOpinionTecnicaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: |
+            La opción "Actualización de OT" no está disponible (Anexo A – RN1; FA04 paso 4.4). El
+            mensaje indica la causa: no hay una OT favorable previa, no hay una etapa con OT que
+            actualizar, hay otra gestión de OT en curso o la ejecución del proyecto ya inició.
+            Código: `ACTUALIZACION_OT_NO_DISPONIBLE`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                codigo: ACTUALIZACION_OT_NO_DISPONIBLE
+                mensaje: No existe una Opinión Técnica previa para la etapa que se está gestionando.
+                timestamp: '2026-09-27T15:00:00Z'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    get:
+      tags: [OpinionTecnica]
+      operationId: obtenerOpinionTecnica
+      summary: Obtener la pantalla de Opinión Técnica del proyecto (Anexo A.1)
+      description: |
+        Devuelve encabezado, apartados (visor con enlace a su pantalla de origen, RN16),
+        comentarios DGICP, justificaciones de la Institución, documentos anexos, fechas,
+        conclusiones y visto bueno. Incluye `accionesDisponibles` y `camposEditables`,
+        calculados por el backend según rol del usuario y estado del proyecto
+        (RN02–RN06, RN10, RN 12, RN13, FA01).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP, VIABILIZADOR, TECNICO_PRE, COORDINADOR_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26-03, HU-PRE-26-04, HU-PRE-26-06, HU-PRE-26-07, HU-PRE-26-08]
+        features:
+          - CU-PRE-26-revisar-y-comentar.feature
+          - CU-PRE-26-enviar-comentarios.feature
+          - CU-PRE-26-ajustes-viabilizador.feature
+          - CU-PRE-26-emitir-ot-favorable.feature
+          - CU-PRE-26-visto-bueno-ot.feature
+        reglas: [RN01, RN02, RN03, RN04, RN05, RN06, RN10, RN 12, RN13, RN16]
+      responses:
+        '200':
+          description: Pantalla de Opinión Técnica.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpinionTecnicaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}/asignacion:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    post:
+      tags: [OpinionTecnica]
+      operationId: asignarOpinionTecnica
+      summary: Asignar la solicitud de Opinión Técnica a un Técnico PRE
+      description: |
+        El Coordinador PRE asigna el caso. El Sistema envía al Técnico PRE asignado el correo
+        del Anexo A2 b. El CU no describe pantalla ni validaciones de la asignación.
+      security:
+        - bearerAuth: []
+      x-roles: [COORDINADOR_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26-02]
+        features: [CU-PRE-26-asignar-caso.feature]
+        reglas: [RN07 b]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsignarOpinionTecnicaRequest'
+      responses:
+        '200':
+          description: Caso asignado y Técnico PRE notificado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsignacionOpinionTecnicaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: |
+            La gestión ya no está en revisión (se enviaron los comentarios, se emitió la OT o se
+            archivó). Código: `COMENTARIOS_DGICP_YA_ENVIADOS`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}/comentarios-dgicp:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    put:
+      tags: [OpinionTecnica]
+      operationId: guardarComentariosDgicp
+      summary: Guardar los comentarios DGICP (botón "Guardar")
+      description: |
+        FA02. Guarda "Comentarios DGICP" por apartado, "Comentarios DGICP a documentos anexos"
+        y "Comentarios DGICP a Elegibilidad". Solo Técnico PRE y Coordinador PRE (RN02, Anexo B.1).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_PRE, COORDINADOR_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26-03]
+        features: [CU-PRE-26-revisar-y-comentar.feature, CU-PRE-26-emitir-ot-favorable.feature]
+        reglas: [FA02, RN02, RN10, RN 12]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComentariosDgicpRequest'
+      responses:
+        '200':
+          description: Comentarios guardados. Devuelve la pantalla actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpinionTecnicaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/GestionNoRevisable'
+        '422':
+          $ref: '#/components/responses/SeccionElegibilidadNoDisponible'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}/envio-comentarios:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    post:
+      tags: [OpinionTecnica]
+      operationId: enviarComentariosDgicp
+      summary: Enviar los comentarios DGICP a la Institución (transición a "Observado")
+      description: |
+        FA03. En un solo paso el Sistema:
+        guarda los comentarios; habilita al Técnico URP la edición de CU-PRE-04 a CU-PRE-23 y
+        la "Justificación Institución"; habilita al Viabilizador CU-PRE-24 y CU-PRE-25; envía el
+        correo del Anexo A2 c al Técnico URP y al Viabilizador; cambia el estado a "Observado";
+        activa "Enviar ajustes" (RN06) e inicia el plazo de 5 días hábiles (RN08, RN09).
+        La ruta de retorno depende del destino de los comentarios (RN14).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_PRE, COORDINADOR_PRE]
+      x-transicion-estado:
+        desde: [VIABLE, ELEGIBLE]
+        hacia: OBSERVADO
+      x-trazabilidad:
+        historias: [HU-PRE-26-04]
+        features: [CU-PRE-26-enviar-comentarios.feature, CU-PRE-26-emitir-ot-favorable.feature]
+        reglas: [FA03, RN05, RN06, RN07 c, RN10, RN 12, RN14]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComentariosDgicpRequest'
+      responses:
+        '200':
+          description: Comentarios enviados; proyecto en estado "Observado".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvioComentariosDgicpResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: |
+            Conflicto de estado. Códigos posibles:
+            - `ESTADO_PROYECTO_NO_PERMITE_ENVIO_COMENTARIOS`: el proyecto no está en
+              "Proyecto viable" ni "Proyecto Elegible" (RN05).
+            - `OPINION_TECNICA_YA_EMITIDA`: ya se emitió la OT favorable (RN10).
+            - `COMENTARIOS_DGICP_YA_ENVIADOS`: los comentarios de esta gestión ya se enviaron.
+            - `SOLICITUD_OT_ARCHIVADA`: la gestión se archivó por vencimiento del plazo (RN09).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                estadoNoPermitido:
+                  value:
+                    codigo: ESTADO_PROYECTO_NO_PERMITE_ENVIO_COMENTARIOS
+                    mensaje: El proyecto debe estar en estado Proyecto viable o Proyecto Elegible para enviar comentarios.
+                    timestamp: '2026-09-27T15:00:00Z'
+                otYaEmitida:
+                  value:
+                    codigo: OPINION_TECNICA_YA_EMITIDA
+                    mensaje: La Opinión Técnica ya fue emitida; la acción está inhabilitada.
+                    timestamp: '2026-09-27T15:00:00Z'
+        '422':
+          description: |
+            Regla de negocio incumplida. Códigos posibles:
+            - `SECCION_ELEGIBILIDAD_NO_DISPONIBLE`: comentarios a Elegibilidad en una gestión posterior a
+              la primera (RN 12).
+            - `COMENTARIOS_DGICP_REQUERIDOS`: no hay ningún comentario DGICP que enviar ("Comentarios
+              DGICP": campos obligatorios, Anexo B.1).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                codigo: COMENTARIOS_DGICP_REQUERIDOS
+                mensaje: Debe registrar al menos un comentario DGICP para enviarlo a la institución.
+                timestamp: '2026-09-27T15:00:00Z'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}/justificaciones-institucion:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    put:
+      tags: [OpinionTecnica]
+      operationId: guardarJustificacionesInstitucion
+      summary: Guardar la "Justificación Institución" a los comentarios DGICP
+      description: |
+        FA02 / FA03.1. El Técnico URP responde los comentarios DGICP de los apartados y de los
+        documentos anexos, con el proyecto en estado "Observado" (RN03). El Viabilizador responde
+        los comentarios a la Elegibilidad antes de reemitirla (Anexo B.1 "Respuesta Institución";
+        RN15 de CU-PRE-25). Decisión sobre la contradicción RN03 vs. FA02/FA03.1/Anexo B.1 (ítem 8).
+        Un actor que envía la justificación de la sección del otro recibe 403.
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP, VIABILIZADOR]
+      x-trazabilidad:
+        historias: [HU-PRE-26-05, HU-PRE-26-06]
+        features:
+          - CU-PRE-26-enviar-ajustes-tecnico-urp.feature
+          - CU-PRE-26-ajustes-viabilizador.feature
+          - CU-PRE-26-emitir-ot-favorable.feature
+          - CU-PRE-26-control-plazo-observaciones.feature
+        reglas: [FA02, FA03.1, RN03, RN09, RN10]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JustificacionesInstitucionRequest'
+      responses:
+        '200':
+          description: Justificaciones guardadas. Devuelve la pantalla actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpinionTecnicaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: |
+            Conflicto de estado. Códigos posibles:
+            - `ESTADO_PROYECTO_NO_OBSERVADO`: la gestión no está observada o el actor ya no puede
+              responder (el proyecto no está "Observado" o la Elegibilidad ya se reemitió).
+            - `SOLICITUD_OT_ARCHIVADA`: venció el plazo de 5 días hábiles; la solicitud fue
+              archivada y debe tramitarse nuevamente (RN09).
+            - `OPINION_TECNICA_YA_EMITIDA`: ya se emitió la OT favorable (RN10).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                noObservado:
+                  value:
+                    codigo: ESTADO_PROYECTO_NO_OBSERVADO
+                    mensaje: Solo se puede registrar la Justificación Institución con el proyecto en estado Observado.
+                    timestamp: '2026-09-27T15:00:00Z'
+                archivada:
+                  value:
+                    codigo: SOLICITUD_OT_ARCHIVADA
+                    mensaje: El plazo de atención de comentarios caducó; debe gestionar nuevamente la Opinión Técnica.
+                    timestamp: '2026-09-27T15:00:00Z'
+                otYaEmitida:
+                  value:
+                    codigo: OPINION_TECNICA_YA_EMITIDA
+                    mensaje: La Opinión Técnica ya fue emitida; la acción está inhabilitada.
+                    timestamp: '2026-09-27T15:00:00Z'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}/conclusiones:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    put:
+      tags: [OpinionTecnica]
+      operationId: guardarConclusionesOpinionTecnica
+      summary: Guardar las "Conclusiones" de la Opinión Técnica
+      description: |
+        FA01 paso 1.1. Guardar las conclusiones habilita el "Visto bueno OT" (paso 1.2).
+        Campo obligatorio (Anexo B.1). Solo Técnico PRE y Coordinador PRE (RN02).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_PRE, COORDINADOR_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26-07]
+        features: [CU-PRE-26-emitir-ot-favorable.feature, CU-PRE-26-revisar-y-comentar.feature]
+        reglas: [FA01 1.1–1.2, RN02, RN10, Anexo B.1 Conclusiones]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConclusionesOpinionTecnicaRequest'
+      responses:
+        '200':
+          description: Conclusiones guardadas; "Visto bueno OT" habilitado. Devuelve la pantalla actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpinionTecnicaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/GestionNoRevisable'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}/visto-bueno:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    post:
+      tags: [OpinionTecnica]
+      operationId: darVistoBuenoOpinionTecnica
+      summary: Dar el "Visto bueno OT"
+      description: |
+        FA01 pasos 1.3–1.4. El Coordinador PRE da el visto bueno; el Sistema notifica al
+        Técnico PRE y habilita "OT favorable". Requiere "Conclusiones" guardadas.
+      security:
+        - bearerAuth: []
+      x-roles: [COORDINADOR_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26-08]
+        features: [CU-PRE-26-visto-bueno-ot.feature, CU-PRE-26-emitir-ot-favorable.feature]
+        reglas: [FA01 1.2–1.4]
+      responses:
+        '200':
+          description: Visto bueno registrado; "OT favorable" habilitado. Devuelve la pantalla actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpinionTecnicaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: |
+            "Visto bueno OT" no habilitado: no se han registrado y guardado las "Conclusiones"
+            (FA01 paso 1.2). Código: `CONCLUSIONES_NO_REGISTRADAS`. Además, los códigos de
+            `GestionNoRevisable` si la gestión ya no está en revisión.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                codigo: CONCLUSIONES_NO_REGISTRADAS
+                mensaje: Deben registrarse y guardarse las Conclusiones antes de dar el visto bueno.
+                timestamp: '2026-09-27T15:00:00Z'
+
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}/emision-favorable:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    post:
+      tags: [OpinionTecnica]
+      operationId: emitirOpinionTecnicaFavorable
+      summary: Emitir la Opinión Técnica Favorable (transición a "Proyecto con OT")
+      description: |
+        FA01 pasos 1.5–1.6. El Técnico PRE asignado carga la "Nota de OT" firmada por el Director
+        DGICP, registra el "N° de nota de OT" y emite. El Sistema cambia el estado a "Proyecto con OT", envía el correo del Anexo A2 e
+        a todos los actores, inhabilita "Enviar comentarios", "Enviar Ajustes" y "Guardar" (RN10)
+        y permite continuar con la Priorización (RN17, CU-PRE-26.5). Si la OT es para la etapa
+        de Ejecución, el proyecto queda disponible en Captura de Proyectos (RN11).
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_PRE]
+      x-transicion-estado:
+        desde: [VIABLE, ELEGIBLE]
+        hacia: PROYECTO_CON_OT
+      x-trazabilidad:
+        historias: [HU-PRE-26-07, HU-PRE-26-08]
+        features: [CU-PRE-26-emitir-ot-favorable.feature, CU-PRE-26-visto-bueno-ot.feature]
+        reglas: [FA01 1.5–1.6, RN07 e, RN10, RN11, RN17]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmitirOpinionTecnicaFavorableRequest'
+      responses:
+        '200':
+          description: Opinión Técnica Favorable emitida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmisionOpinionTecnicaFavorableResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: |
+            Faltan datos de la emisión. Códigos: `NOTA_OT_REQUERIDA` (archivo vacío) y
+            `NUMERO_NOTA_OT_REQUERIDO` (número en blanco o de más de 50 caracteres).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: |
+            Conflicto de estado. Códigos posibles:
+            - `VISTO_BUENO_OT_PENDIENTE`: el Coordinador PRE no ha dado el "Visto bueno OT" (FA01 paso 1.4).
+            - `OPINION_TECNICA_YA_EMITIDA`: la OT favorable ya fue emitida (RN10).
+            - Los demás códigos de `GestionNoRevisable` si la gestión ya no está en revisión.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                vistoBuenoPendiente:
+                  value:
+                    codigo: VISTO_BUENO_OT_PENDIENTE
+                    mensaje: El Coordinador PRE debe dar el Visto bueno OT antes de emitir la Opinión Técnica.
+                    timestamp: '2026-09-27T15:00:00Z'
+                otYaEmitida:
+                  value:
+                    codigo: OPINION_TECNICA_YA_EMITIDA
+                    mensaje: La Opinión Técnica ya fue emitida.
+                    timestamp: '2026-09-27T15:00:00Z'
+  /proyectos/{proyectoId}/opiniones-tecnicas/{opinionTecnicaId}/informe:
+    parameters:
+      - $ref: '#/components/parameters/ProyectoId'
+      - $ref: '#/components/parameters/OpinionTecnicaId'
+    get:
+      tags: [OpinionTecnica]
+      operationId: obtenerInformeOpinionTecnica
+      summary: Ver el Informe de una OT emitida (Anexo A.6)
+      description: |
+        "REPORTE DE OPINIÓN TÉCNICA" que se abre con "Ver Informe" del Histórico (Anexo A1.5). Los
+        datos de la gestión (etapas, fechas, N° de nota, conclusiones) son los de la emisión; los del
+        proyecto (CU-PRE-04 a CU-PRE-23) son los vigentes, porque el Sistema no guarda una copia al
+        emitir. "Tamaño", "Convenio" y "Costo del estudio" no tienen todavía un origen registrado y
+        llegan nulos.
+      security:
+        - bearerAuth: []
+      x-roles: [TECNICO_URP, VIABILIZADOR, TECNICO_PRE, COORDINADOR_PRE]
+      x-trazabilidad:
+        historias: [HU-PRE-26-03]
+        features: []
+        reglas: [Anexo A1.5, Anexo A.6, Anexo B.1]
+      responses:
+        '200':
+          description: Informe de la OT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformeOpinionTecnicaResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 'La gestión no es una OT emitida. Código: `OPINION_TECNICA_NO_EMITIDA`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProyectoId:
+      name: proyectoId
+      in: path
+      required: true
+      description: Identificador interno del Proyecto.
+      schema:
+        type: integer
+        format: int64
+    OpinionTecnicaId:
+      name: opinionTecnicaId
+      in: path
+      required: true
+      description: Identificador de la gestión de Opinión Técnica (una por solicitud).
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    BadRequest:
+      description: Solicitud mal formada o que no cumple el schema. Código `SOLICITUD_INVALIDA`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Token ausente, inválido o expirado. Código `NO_AUTENTICADO`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: El rol del usuario no está autorizado para la operación (`x-roles`). Código `ROL_NO_AUTORIZADO`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: El proyecto (`PROYECTO_NO_ENCONTRADO`), la gestión de OT (`OPINION_TECNICA_NO_ENCONTRADA`) o el Técnico PRE a asignar (`RECURSO_NO_ENCONTRADO`) no existe. Un proyecto fuera de la Unidad Ejecutora del actor responde 403 (RN01), igual que en CU-PRE-24 y CU-PRE-25.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    GestionNoRevisable:
+      description: |
+        La gestión no admite cambios de la DGICP. Códigos posibles:
+        - `OPINION_TECNICA_YA_EMITIDA`: la OT favorable ya fue emitida; "Guardar" está inhabilitado (RN10).
+        - `COMENTARIOS_DGICP_YA_ENVIADOS`: la gestión ya se envió a la institución y espera sus ajustes (FA03).
+        - `SOLICITUD_OT_ARCHIVADA`: venció el plazo de atención de observaciones (RN09).
+        - `ESTADO_PROYECTO_NO_PERMITE_ENVIO_COMENTARIOS`: el proyecto no está en "Proyecto viable" ni
+          "Proyecto Elegible" (RN05).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            codigo: OPINION_TECNICA_YA_EMITIDA
+            mensaje: La Opinión Técnica ya fue emitida; la acción está inhabilitada.
+            timestamp: '2026-09-27T15:00:00Z'
+    SeccionElegibilidadNoDisponible:
+      description: |
+        Se enviaron comentarios a Elegibilidad en una gestión de OT posterior a la primera;
+        la sección "Comentarios Elegibilidad" solo existe en la primera gestión (RN 12).
+        Código: `SECCION_ELEGIBILIDAD_NO_DISPONIBLE`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            codigo: SECCION_ELEGIBILIDAD_NO_DISPONIBLE
+            mensaje: La sección Comentarios Elegibilidad solo está disponible en la primera gestión de OT.
+            timestamp: '2026-09-27T15:00:00Z'
+            detalles:
+              - campo: comentarioDgicpElegibilidad
+                mensaje: No permitido en esta gestión.
+
+  schemas:
+
+    # ---------- Error estándar del proyecto ----------
+    Error:
+      type: object
+      description: Esquema único de error para todas las respuestas 4xx/5xx del proyecto.
+      required: [codigo, mensaje, timestamp]
+      properties:
+        codigo:
+          type: string
+          description: Código de error estable, en UPPER_SNAKE_CASE.
+          example: ROL_NO_AUTORIZADO
+        mensaje:
+          type: string
+          description: Mensaje legible para el usuario.
+        timestamp:
+          type: string
+          format: date-time
+        detalles:
+          type: array
+          description: Detalle opcional por campo.
+          items:
+            $ref: '#/components/schemas/ErrorDetalle'
+    ErrorDetalle:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+          description: Nombre (camelCase) de la propiedad afectada.
+        mensaje:
+          type: string
+
+    # ---------- Enums ----------
+    EstadoProyecto:
+      type: string
+      description: |
+        Estado del ciclo de vida del Proyecto. Mismo catálogo que CU-PRE-01 (se genera en el mismo
+        paquete de DTOs, así que debe coincidir valor por valor). El CU-PRE-26 usa VIABLE
+        ("Proyecto viable"), ELEGIBLE ("Proyecto elegible"), OBSERVADO y PROYECTO_CON_OT.
+      enum:
+      - EN_REGISTRO
+      - ENVIADO_DGICP_REGISTRO
+      - OBSERVADO_DGICP_REGISTRO
+      - CUP_ASIGNADO
+      - EN_FORMULACION
+      - PROYECTO_FORMULADO
+      - OBSERVADO
+      - EN_VIABILIDAD
+      - VIABLE
+      - EN_ELEGIBILIDAD
+      - ELEGIBLE
+      - EN_OT
+      - PROYECTO_CON_OT
+      - PRIORIZADO
+      - EN_EJECUCION
+      - FINALIZADO
+      - ARCHIVADO
+    TipoSolicitudOpinionTecnica:
+      type: string
+      description: Opciones del menú GESTIÓN › OT (Anexo A). Coincide con "Tipo de gestión" del Histórico.
+      enum: [OPINION_TECNICA, ACTUALIZACION_OT]
+    TipoFormularioOpinionTecnica:
+      type: string
+      description: |
+        ESTANDAR = campos del Anexo A.1; EMERGENCIA = campos del Anexo A.4 del CU-PRE-3.5,
+        para proyectos categorizados como "Proyecto de emergencia" en CU-PRE-01 (RN13).
+      enum: [ESTANDAR, EMERGENCIA]
+    TipoDocumentoAnexo:
+      type: string
+      description: Documentos visibles en la pantalla del Anexo A.1.
+      enum: [NOTA_SOLICITUD_OT, DOCUMENTO_PREINVERSION, OTROS_DOCUMENTOS_ANEXOS, NOTA_OT]
+    FiltroAprobacion:
+      type: string
+      description: Filtros del proceso de aprobación (RN14).
+      enum: [VIABILIDAD, ELEGIBILIDAD, OPINION_TECNICA]
+    ActorRetorno:
+      type: string
+      description: Actor al que vuelve el proyecto tras el envío de comentarios (RN14).
+      enum: [TECNICO_URP, VIABILIZADOR]
+
+    # ---------- Tipos de solicitud ----------
+    TiposSolicitudOpinionTecnicaResponse:
+      type: object
+      required: [tiposSolicitud]
+      properties:
+        tiposSolicitud:
+          type: array
+          items:
+            $ref: '#/components/schemas/TipoSolicitudDisponible'
+    TipoSolicitudDisponible:
+      type: object
+      required: [tipoSolicitud, habilitado]
+      properties:
+        tipoSolicitud:
+          $ref: '#/components/schemas/TipoSolicitudOpinionTecnica'
+        habilitado:
+          type: boolean
+
+    # ---------- Gestiones de OT del proyecto ----------
+    EstadoGestionOpinionTecnica:
+      type: string
+      description: |
+        EN_CURSO = solicitada y en revisión de la DGICP; OBSERVADA = el Técnico PRE envió
+        comentarios (FA03); FAVORABLE = OT emitida (FA01); ARCHIVADA = venció el plazo de
+        atención de observaciones (RN09).
+      enum: [EN_CURSO, OBSERVADA, FAVORABLE, ARCHIVADA]
+    OpinionesTecnicasProyectoResponse:
+      type: object
+      required: [opinionesTecnicas]
+      properties:
+        opinionesTecnicas:
+          type: array
+          description: De la más reciente a la más antigua.
+          items:
+            $ref: '#/components/schemas/ResumenOpinionTecnica'
+    ResumenOpinionTecnica:
+      type: object
+      required: [opinionTecnicaId, tipoSolicitud, estadoGestion]
+      properties:
+        opinionTecnicaId:
+          type: integer
+          format: int64
+        tipoSolicitud:
+          $ref: '#/components/schemas/TipoSolicitudOpinionTecnica'
+        estadoGestion:
+          $ref: '#/components/schemas/EstadoGestionOpinionTecnica'
+        fechaSolicitud:
+          type: string
+          format: date
+          nullable: true
+        etapaActual:
+          type: string
+          nullable: true
+        etapaFutura:
+          type: string
+          nullable: true
+        numeroNotaOt:
+          type: string
+          nullable: true
+        fechaEmisionOt:
+          type: string
+          format: date
+          nullable: true
+        inversionEstimada:
+          type: number
+          nullable: true
+          description: |
+            "Inversión estimada" del Histórico (Anexo A1.5): la de CU-PRE-17 a precios de mercado, tal
+            como estaba al emitir la OT favorable. Nula en las gestiones no emitidas.
+
+    # ---------- Solicitar OT ----------
+    SolicitarOpinionTecnicaRequest:
+      type: object
+      required: [notaSolicitudOt]
+      properties:
+        notaSolicitudOt:
+          type: string
+          format: binary
+          description: Archivo "Nota de solicitud de OT" (RN04).
+    SolicitudOpinionTecnicaResponse:
+      type: object
+      required: [opinionTecnicaId, proyectoId, tipoSolicitud, fechaSolicitud]
+      properties:
+        opinionTecnicaId:
+          type: integer
+          format: int64
+        proyectoId:
+          type: integer
+          format: int64
+        tipoSolicitud:
+          $ref: '#/components/schemas/TipoSolicitudOpinionTecnica'
+        fechaSolicitud:
+          type: string
+          format: date
+          description: Fecha del clic en "Solicitar OT"; asignada por el Sistema, no editable.
+
+    # ---------- Actualización de OT ----------
+    ActualizacionOpinionTecnicaResponse:
+      type: object
+      required: [opinionTecnicaId, tipoSolicitud, camposHabilitados]
+      properties:
+        opinionTecnicaId:
+          type: integer
+          format: int64
+        tipoSolicitud:
+          $ref: '#/components/schemas/TipoSolicitudOpinionTecnica'
+        camposHabilitados:
+          type: array
+          description: |
+            Identificadores de los campos habilitados según "Tipo de Iniciativa" (y etapa) y la
+            hoja "Campos a habilitar para Actualización de O.T." de CU-PRE-3.5 (no incluida).
+            Estructura provisional.
+          items:
+            type: string
+
+    # ---------- Pantalla OT (Anexo A.1) ----------
+    OpinionTecnicaResponse:
+      type: object
+      required:
+        - opinionTecnicaId
+        - proyectoId
+        - tipoSolicitud
+        - estadoGestion
+        - estadoProyecto
+        - tipoFormulario
+        - esPrimeraGestion
+        - encabezado
+        - apartados
+        - documentosAnexos
+        - vistoBuenoOt
+        - numeroDevoluciones
+        - accionesDisponibles
+        - camposEditables
+      properties:
+        opinionTecnicaId:
+          type: integer
+          format: int64
+        proyectoId:
+          type: integer
+          format: int64
+        tipoSolicitud:
+          $ref: '#/components/schemas/TipoSolicitudOpinionTecnica'
+        estadoGestion:
+          $ref: '#/components/schemas/EstadoGestionOpinionTecnica'
+        estadoProyecto:
+          $ref: '#/components/schemas/EstadoProyecto'
+        tipoFormulario:
+          $ref: '#/components/schemas/TipoFormularioOpinionTecnica'
+        esPrimeraGestion:
+          type: boolean
+          description: true si es la primera gestión de OT del proyecto (RN 12).
+        encabezado:
+          $ref: '#/components/schemas/EncabezadoProyectoOpinionTecnica'
+        apartados:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApartadoOpinionTecnica'
+        documentosAnexos:
+          $ref: '#/components/schemas/DocumentosAnexosOpinionTecnica'
+        comentariosElegibilidad:
+          allOf:
+            - $ref: '#/components/schemas/ComentariosElegibilidad'
+          nullable: true
+          description: Presente solo en la primera gestión de OT (RN 12).
+        notaOt:
+          allOf:
+            - $ref: '#/components/schemas/DocumentoAnexo'
+          nullable: true
+          description: Nota de OT firmada por el Director DGICP (FA01 paso 1.5).
+        fechaSolicitud:
+          type: string
+          format: date
+          nullable: true
+        fechaAjustes:
+          type: string
+          format: date
+          nullable: true
+          description: Última fecha de envío de ajustes del Técnico URP. Solo lectura.
+        fechaEnvioComentarios:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha de envío de comentarios DGICP (inicio del plazo, RN08/RN09).
+        fechaFinPlazoObservaciones:
+          type: string
+          format: date
+          nullable: true
+          description: Fin del plazo de 5 días hábiles (Anexo A2 c). Solo lectura.
+        fechaEmisionOt:
+          type: string
+          format: date
+          nullable: true
+          description: Solo lectura en este fragmento (ver pendiente ítem 14).
+        numeroNotaOt:
+          type: string
+          nullable: true
+          description: Lo registra el Técnico PRE al emitir la OT favorable (ítem 15).
+        numeroDevoluciones:
+          type: integer
+          description: Veces que la OT devolvió el proyecto con comentarios DGICP (RN15).
+        conclusiones:
+          type: string
+          nullable: true
+        vistoBuenoOt:
+          type: boolean
+        accionesDisponibles:
+          $ref: '#/components/schemas/AccionesOpinionTecnica'
+        camposEditables:
+          $ref: '#/components/schemas/CamposEditablesOpinionTecnica'
+
+    EncabezadoProyectoOpinionTecnica:
+      type: object
+      description: Campos no editables del encabezado (Anexo B.1).
+      required: [cup, nombreProyecto, unidadEjecutora]
+      properties:
+        cup:
+          type: string
+          description: Código Único de Proyecto (CU-PRE-01). Texto, igual que en el resto de contratos.
+        nombreProyecto:
+          type: string
+        unidadEjecutora:
+          type: string
+        etapaActual:
+          type: string
+          nullable: true
+          description: Valor del catálogo de etapas de CU-PRE-3.5.
+        etapaFutura:
+          type: string
+          nullable: true
+          description: Etapa siguiente según la Ruta de Preinversión (CU-PRE-3.5).
+
+    ApartadoOpinionTecnica:
+      type: object
+      description: Fila de la tabla APARTADOS / COMENTARIOS DGICP / JUSTIFICACIÓN INSTITUCIÓN.
+      required: [apartadoCodigo, nombre, seccion, pantallaOrigen]
+      properties:
+        apartadoCodigo:
+          type: string
+          description: Código del apartado (lista definitiva pendiente, Observaciones ítem 42).
+          example: '1.2'
+        nombre:
+          type: string
+          example: Problema Central
+        seccion:
+          type: string
+          description: Sección agrupadora (Identificación, Formulación, Evaluación, Programación).
+        contenido:
+          type: string
+          nullable: true
+          description: Información registrada en el apartado; solo visor, no editable.
+        pantallaOrigen:
+          $ref: '#/components/schemas/PantallaOrigen'
+        comentarioDgicp:
+          type: string
+          nullable: true
+        justificacionInstitucion:
+          type: string
+          nullable: true
+
+    PantallaOrigen:
+      type: object
+      description: Enlace del ícono de lápiz a la pantalla donde se registró el apartado (RN16).
+      required: [casoUso]
+      properties:
+        casoUso:
+          type: string
+          example: CU-PRE-04
+        ruta:
+          type: string
+          nullable: true
+          description: Ruta del cliente para navegar a la pantalla.
+
+    DocumentoAnexo:
+      type: object
+      required: [documentoAnexoId, tipoDocumento, nombreArchivo]
+      properties:
+        documentoAnexoId:
+          type: integer
+          format: int64
+        tipoDocumento:
+          $ref: '#/components/schemas/TipoDocumentoAnexo'
+        nombreArchivo:
+          type: string
+
+    DocumentosAnexosOpinionTecnica:
+      type: object
+      required: [documentos]
+      properties:
+        documentos:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentoAnexo'
+        comentarioDgicpDocumentosAnexos:
+          type: string
+          nullable: true
+        justificacionInstitucionDocumentosAnexos:
+          type: string
+          nullable: true
+
+    ComentariosElegibilidad:
+      type: object
+      properties:
+        comentarioDgicpElegibilidad:
+          type: string
+          nullable: true
+        justificacionInstitucionElegibilidad:
+          type: string
+          nullable: true
+
+    EstadoAccion:
+      type: object
+      description: |
+        `visible` depende del rol; `habilitada` depende del estado del proyecto y de las
+        precondiciones (RN04, RN05, RN06, RN10, FA01).
+      required: [visible, habilitada]
+      properties:
+        visible:
+          type: boolean
+        habilitada:
+          type: boolean
+
+    AccionesOpinionTecnica:
+      type: object
+      description: Estado de los botones de la pantalla del Anexo A.1 para el usuario autenticado.
+      required: [solicitarOt, guardar, enviarComentarios, enviarAjustes, vistoBuenoOt, otFavorable]
+      properties:
+        solicitarOt:
+          $ref: '#/components/schemas/EstadoAccion'
+        guardar:
+          $ref: '#/components/schemas/EstadoAccion'
+        enviarComentarios:
+          $ref: '#/components/schemas/EstadoAccion'
+        enviarAjustes:
+          $ref: '#/components/schemas/EstadoAccion'
+        vistoBuenoOt:
+          $ref: '#/components/schemas/EstadoAccion'
+        otFavorable:
+          $ref: '#/components/schemas/EstadoAccion'
+
+    CamposEditablesOpinionTecnica:
+      type: object
+      description: Campos habilitados para registro según rol y estado (RN02, RN03, RN 12).
+      required:
+        - comentarioDgicp
+        - comentarioDgicpDocumentosAnexos
+        - comentarioDgicpElegibilidad
+        - conclusiones
+        - justificacionInstitucion
+        - justificacionInstitucionElegibilidad
+      properties:
+        comentarioDgicp:
+          type: boolean
+        comentarioDgicpDocumentosAnexos:
+          type: boolean
+        comentarioDgicpElegibilidad:
+          type: boolean
+        conclusiones:
+          type: boolean
+        justificacionInstitucion:
+          type: boolean
+          description: Justificación de los apartados y documentos anexos (Técnico URP, RN03).
+        justificacionInstitucionElegibilidad:
+          type: boolean
+          description: Respuesta a los comentarios de Elegibilidad (Viabilizador, Anexo B.1).
+
+    # ---------- Asignación ----------
+    AsignarOpinionTecnicaRequest:
+      type: object
+      required: [tecnicoPreId]
+      properties:
+        tecnicoPreId:
+          type: integer
+          format: int64
+          description: Identificador del Usuario con rol Técnico PRE a asignar.
+    AsignacionOpinionTecnicaResponse:
+      type: object
+      required: [opinionTecnicaId, tecnicoPreId, fechaAsignacion]
+      properties:
+        opinionTecnicaId:
+          type: integer
+          format: int64
+        tecnicoPreId:
+          type: integer
+          format: int64
+        fechaAsignacion:
+          type: string
+          format: date
+          description: Usada en el correo del Anexo A2 b.
+
+    # ---------- Comentarios DGICP ----------
+    ComentarioApartadoRequest:
+      type: object
+      required: [apartadoCodigo, comentarioDgicp]
+      properties:
+        apartadoCodigo:
+          type: string
+        comentarioDgicp:
+          type: string
+    ComentariosDgicpRequest:
+      type: object
+      description: Usado por `guardarComentariosDgicp` y `enviarComentariosDgicp` (misma forma).
+      properties:
+        comentariosApartados:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComentarioApartadoRequest'
+        comentarioDgicpDocumentosAnexos:
+          type: string
+          nullable: true
+        comentarioDgicpElegibilidad:
+          type: string
+          nullable: true
+          description: Solo permitido en la primera gestión de OT (RN 12); opcional (Anexo B.1).
+    EnvioComentariosDgicpResponse:
+      type: object
+      required: [opinionTecnicaId, estadoProyecto, fechaEnvioComentarios, fechaFinPlazoObservaciones, rutaRetorno]
+      properties:
+        opinionTecnicaId:
+          type: integer
+          format: int64
+        estadoProyecto:
+          $ref: '#/components/schemas/EstadoProyecto'
+        fechaEnvioComentarios:
+          type: string
+          format: date
+        fechaFinPlazoObservaciones:
+          type: string
+          format: date
+          description: Fin del plazo de 5 días hábiles (Anexo A2 c).
+        rutaRetorno:
+          $ref: '#/components/schemas/RutaRetornoAprobacion'
+    RutaRetornoAprobacion:
+      type: object
+      description: Ruta de retorno según el destino de los comentarios (RN14).
+      required: [actorDestino, filtrosAprobacion]
+      properties:
+        actorDestino:
+          $ref: '#/components/schemas/ActorRetorno'
+        filtrosAprobacion:
+          type: array
+          items:
+            $ref: '#/components/schemas/FiltroAprobacion'
+
+    # ---------- Justificación Institución ----------
+    JustificacionApartadoRequest:
+      type: object
+      required: [apartadoCodigo, justificacionInstitucion]
+      properties:
+        apartadoCodigo:
+          type: string
+        justificacionInstitucion:
+          type: string
+    JustificacionesInstitucionRequest:
+      type: object
+      properties:
+        justificacionesApartados:
+          type: array
+          items:
+            $ref: '#/components/schemas/JustificacionApartadoRequest'
+        justificacionInstitucionDocumentosAnexos:
+          type: string
+          nullable: true
+        justificacionInstitucionElegibilidad:
+          type: string
+          nullable: true
+          description: 'Anexo B.1 lo llama "Respuesta Institución" (Observaciones ítem 29).'
+
+    # ---------- Conclusiones ----------
+    ConclusionesOpinionTecnicaRequest:
+      type: object
+      required: [conclusiones]
+      properties:
+        conclusiones:
+          type: string
+          minLength: 1
+          description: Campo obligatorio (Anexo B.1).
+
+    # ---------- Emisión OT favorable ----------
+    EmitirOpinionTecnicaFavorableRequest:
+      type: object
+      required: [notaOt, numeroNotaOt]
+      properties:
+        notaOt:
+          type: string
+          format: binary
+          description: Nota de OT firmada por el Director DGICP (FA01 paso 1.5).
+        numeroNotaOt:
+          type: string
+          description: |
+            "N° de nota de OT" (Anexo B.1, "Editable: Sí"), de hasta 50 caracteres; se muestra en el
+            Histórico (A1.5).
+    EmisionOpinionTecnicaFavorableResponse:
+      type: object
+      required: [opinionTecnicaId, estadoProyecto, fechaEmisionOt, disponibleEnCapturaProyectos]
+      properties:
+        opinionTecnicaId:
+          type: integer
+          format: int64
+        estadoProyecto:
+          $ref: '#/components/schemas/EstadoProyecto'
+        fechaEmisionOt:
+          type: string
+          format: date
+        disponibleEnCapturaProyectos:
+          type: boolean
+          description: true si la OT se emitió para la etapa de Ejecución (RN11).
+
+    # ---------- Informe OT (Anexo A.6) ----------
+    InformeOpinionTecnicaResponse:
+      type: object
+      required: [opinionTecnicaId, encabezado, productos, localizacion, indicadoresEvaluacion, opinionTecnica]
+      properties:
+        opinionTecnicaId:
+          type: integer
+          format: int64
+        encabezado:
+          $ref: '#/components/schemas/EncabezadoProyectoOpinionTecnica'
+        numeroNotaOt:
+          type: string
+          nullable: true
+        problemaCentral:
+          type: string
+          nullable: true
+          description: CU-PRE-04 "Identificación".
+        objetivoGeneral:
+          type: string
+          nullable: true
+          description: CU-PRE-04 "Identificación".
+        descripcionProyecto:
+          type: string
+          nullable: true
+          description: CU-PRE-11 "Descripción técnica".
+        productos:
+          type: array
+          description: Nombres de los productos (CU-PRE-23).
+          items:
+            type: string
+        tamano:
+          type: string
+          nullable: true
+          description: '"Capacidad de producción" de CU-PRE-11; sin origen registrado todavía.'
+        poblacionObjetivo:
+          type: integer
+          format: int64
+          nullable: true
+          description: N° de personas de la población objetivo (CU-PRE-07).
+        localizacion:
+          type: array
+          description: Localizaciones del proyecto (CU-PRE-12).
+          items:
+            $ref: '#/components/schemas/LocalizacionInformeOpinionTecnica'
+        inversionEstimada:
+          type: number
+          nullable: true
+          description: Inversión estimada a precios de mercado (CU-PRE-17).
+        resumenPresupuesto:
+          type: object
+          additionalProperties: true
+          description: Costo por producto y total (CU-PRE-17), con la estructura de la ficha de CU-PRE-24.
+        costoOperacion:
+          type: number
+          nullable: true
+        costoMantenimiento:
+          type: number
+          nullable: true
+        fuenteFinanciamiento:
+          type: object
+          additionalProperties: true
+          description: Fuentes de financiamiento y de recursos (CU-PRE-17).
+        convenio:
+          type: string
+          nullable: true
+          description: Visible en el ejemplo A.6 pero no documentado en el Anexo B.1 (ítem 20).
+        indicadoresEvaluacion:
+          type: array
+          description: VANS, TIRS y RB/C (CU-PRE-21).
+          items:
+            $ref: '#/components/schemas/IndicadorInformeOpinionTecnica'
+        fechaSolicitud:
+          type: string
+          format: date
+          nullable: true
+        fechaAjustes:
+          type: string
+          format: date
+          nullable: true
+        fechaEmisionOt:
+          type: string
+          format: date
+          nullable: true
+        costoEstudio:
+          type: number
+          nullable: true
+          description: '"Costo de la etapa" de CU-PRE-22.1; sin origen registrado todavía.'
+        opinionTecnica:
+          type: string
+          description: Texto "FAVORABLE" (Anexo B.1).
+        conclusiones:
+          type: string
+          nullable: true
+    LocalizacionInformeOpinionTecnica:
+      type: object
+      properties:
+        departamento:
+          type: string
+          nullable: true
+        municipio:
+          type: string
+          nullable: true
+        direccion:
+          type: string
+          nullable: true
+    IndicadorInformeOpinionTecnica:
+      type: object
+      required: [nombre]
+      properties:
+        nombre:
+          type: string
+        valor:
+          type: number
+          nullable: true

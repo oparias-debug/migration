@@ -45,7 +45,7 @@ export interface BeneficioRequest {
     'tipoBeneficio'?: TipoBeneficio;
     'nombreBeneficio'?: string;
     /**
-     * Código tomado de GET /catalogos/parametros-beneficio.
+     * Código del parámetro tomado de GET /catalogos/parametros-beneficio. Es una cadena en la solicitud; la respuesta `Beneficio.parametro` devuelve el objeto resumen del catálogo correspondiente.
      */
     'parametro'?: string;
     'tipoIngreso'?: TipoIngreso;
@@ -54,7 +54,7 @@ export interface BeneficioRequest {
      */
     'montoPeriodo1'?: number;
     /**
-     * Porcentaje. Solo modo Automático.
+     * Porcentaje expresado en puntos porcentuales; por ejemplo, 5 representa 5 %. Solo modo Automático.
      */
     'tasaCrecimientoProyectado'?: number;
     /**

@@ -280,7 +280,7 @@ components:
           type: string
         parametro:
           type: string
-          description: Código tomado de GET /catalogos/parametros-beneficio.
+          description: Código del parámetro tomado de GET /catalogos/parametros-beneficio. Es una cadena en la solicitud; la respuesta `Beneficio.parametro` devuelve el objeto resumen del catálogo correspondiente.
         tipoIngreso:
           $ref: '#/components/schemas/TipoIngreso'
         montoPeriodo1:
@@ -290,7 +290,7 @@ components:
         tasaCrecimientoProyectado:
           type: number
           format: double
-          description: Porcentaje. Solo modo Automático.
+          description: Porcentaje expresado en puntos porcentuales; por ejemplo, 5 representa 5 %. Solo modo Automático.
         montosPrecioMercadoPorPeriodo:
           type: array
           description: Solo modo Manual; uno por período (RN05).
@@ -317,6 +317,7 @@ components:
           nullable: true
         parametro:
           $ref: '../administracion/catalogo/CU-ADM-02-catalogos.openapi.yaml#/components/schemas/ParametroResumen'
+          description: Objeto resumen del parámetro seleccionado. La solicitud recibe únicamente su código como cadena.
         tipoIngreso:
           $ref: '#/components/schemas/TipoIngreso'
         montoPeriodo1:

@@ -1,0 +1,148 @@
+openapi: 3.0.3
+info:
+  title: SIIP - Preinversión - CU-PRE-23 Indicadores del Proyecto
+  version: 1.0.0
+  description: Contrato de CU-PRE-23. Los productos del proyecto son las filas de Descripción Técnica de CU-PRE-11.
+paths:
+  /proyectos/{idProyecto}/indicadores:
+    parameters:
+      - $ref: '#/components/parameters/IdProyecto'
+    get:
+      operationId: obtenerIndicadoresProyecto
+      tags: [PreinversionIndicadoresProyecto]
+      responses:
+        '200': { description: Indicadores del proyecto, content: { application/json: { schema: { $ref: '#/components/schemas/IndicadoresProyecto' } } } }
+        '403': { description: Sin autorización }
+        '404': { description: Proyecto no encontrado }
+  /proyectos/{idProyecto}/indicadores/resultado:
+    parameters:
+      - $ref: '#/components/parameters/IdProyecto'
+    post:
+      operationId: registrarIndicadorResultado
+      tags: [PreinversionIndicadoresProyecto]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/IndicadorResultadoRequest' } } }
+      responses:
+        '201': { description: Indicador registrado, content: { application/json: { schema: { $ref: '#/components/schemas/IndicadorResultado' } } } }
+        '400': { description: Datos inválidos }
+        '403': { description: Sin autorización }
+        '404': { description: Proyecto o indicador no encontrado }
+  /proyectos/{idProyecto}/indicadores/resultado/{idIndicador}:
+    parameters:
+      - $ref: '#/components/parameters/IdProyecto'
+      - $ref: '#/components/parameters/IdIndicador'
+    delete:
+      operationId: eliminarIndicadorResultado
+      tags: [PreinversionIndicadoresProyecto]
+      responses:
+        '204': { description: Indicador eliminado }
+        '403': { description: Sin autorización }
+        '404': { description: Indicador no encontrado }
+  /proyectos/{idProyecto}/indicadores/productos/{idProducto}/indicadores:
+    parameters:
+      - $ref: '#/components/parameters/IdProyecto'
+      - $ref: '#/components/parameters/IdProducto'
+    post:
+      operationId: registrarIndicadorProducto
+      tags: [PreinversionIndicadoresProyecto]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/IndicadorProductoRequest' } } }
+      responses:
+        '201': { description: Indicador registrado, content: { application/json: { schema: { $ref: '#/components/schemas/IndicadorProducto' } } } }
+        '400': { description: Datos inválidos }
+        '403': { description: Sin autorización }
+        '404': { description: Producto no encontrado }
+  /proyectos/{idProyecto}/indicadores/productos/{idProducto}/indicadores/{idIndicador}:
+    parameters:
+      - $ref: '#/components/parameters/IdProyecto'
+      - $ref: '#/components/parameters/IdProducto'
+      - $ref: '#/components/parameters/IdIndicador'
+    delete:
+      operationId: eliminarIndicadorProducto
+      tags: [PreinversionIndicadoresProyecto]
+      responses:
+        '204': { description: Indicador eliminado }
+        '403': { description: Sin autorización }
+        '404': { description: Indicador no encontrado }
+  /proyectos/{idProyecto}/indicadores/guardado:
+    parameters:
+      - $ref: '#/components/parameters/IdProyecto'
+    post:
+      operationId: guardarIndicadoresProyecto
+      tags: [PreinversionIndicadoresProyecto]
+      responses:
+        '200': { description: Indicadores guardados, content: { application/json: { schema: { $ref: '#/components/schemas/IndicadoresProyecto' } } } }
+        '400': { description: Indicadores incompletos }
+        '403': { description: Sin autorización }
+        '404': { description: Proyecto no encontrado }
+components:
+  parameters:
+    IdProyecto: { name: idProyecto, in: path, required: true, schema: { type: integer, format: int64 } }
+    IdProducto: { name: idProducto, in: path, required: true, schema: { type: integer, format: int64 }, description: Identificador de la fila Componente de CU-PRE-11. }
+    IdIndicador: { name: idIndicador, in: path, required: true, schema: { type: integer, format: int64 } }
+  schemas:
+    IndicadorResultadoRequest:
+      type: object
+      required: [nombreIndicador, metaGlobal]
+      properties:
+        nombreIndicador: { type: string, description: Código del catálogo C.2. }
+        metaGlobal: { type: number, format: double }
+    IndicadorResultado:
+      type: object
+      required: [idIndicador, nombreIndicador]
+      properties:
+        idIndicador: { type: integer, format: int64 }
+        codigo: { type: string, nullable: true }
+        nombreIndicador: { type: string }
+        descripcionIndicador: { type: string, nullable: true }
+        unidadMedida: { type: string, nullable: true }
+        metaGlobal: { type: number, format: double, nullable: true }
+    IndicadorProductoRequest:
+      type: object
+      required: [nombreIndicador, metaGlobal, metaEsAcumulativa]
+      properties:
+        nombreIndicador: { type: string, description: Código de indicador del catálogo C.1. }
+        metaGlobal: { type: number, format: double }
+        metaEsAcumulativa: { type: boolean }
+        metasPorPeriodo:
+          type: array
+          items: { type: number, format: double, nullable: true }
+    IndicadorProducto:
+      type: object
+      required: [idIndicador, nombreIndicador, metasPorPeriodo, total, advertenciaMetaProductoNoCubierta]
+      properties:
+        idIndicador: { type: integer, format: int64 }
+        codigo: { type: string, nullable: true }
+        nombreIndicador: { type: string }
+        descripcionIndicador: { type: string, nullable: true }
+        unidadMedida: { type: string, nullable: true }
+        esIndicadorPrincipal: { type: boolean, nullable: true }
+        metaGlobal: { type: number, format: double, nullable: true }
+        metaEsAcumulativa: { type: boolean, nullable: true }
+        metasPorPeriodo: { type: array, items: { type: number, format: double, nullable: true } }
+        total: { type: number, format: double }
+        advertenciaMetaProductoNoCubierta: { type: boolean }
+    ProductoIndicadores:
+      type: object
+      required: [idProducto, producto, cantidadProducto, indicadores]
+      properties:
+        idProducto: { type: integer, format: int64 }
+        producto: { type: string }
+        cantidadProducto: { type: number, format: double, nullable: true }
+        unidadMedida: { type: string, nullable: true }
+        pesoRelativoProducto:
+          type: number
+          format: double
+          nullable: true
+          description: Costo del producto entre el total de inversión de CU-PRE-20; nulo si el presupuesto aún no existe o no tiene total.
+        indicadores: { type: array, items: { $ref: '#/components/schemas/IndicadorProducto' } }
+    IndicadoresProyecto:
+      type: object
+      required: [idProyecto, indicadoresResultado, productos]
+      properties:
+        idProyecto: { type: integer, format: int64 }
+        objetivoGeneral: { type: string, nullable: true }
+        indicadoresResultado: { type: array, items: { $ref: '#/components/schemas/IndicadorResultado' } }
+        productos: { type: array, items: { $ref: '#/components/schemas/ProductoIndicadores' } }

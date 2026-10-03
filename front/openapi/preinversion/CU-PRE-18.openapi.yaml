@@ -31,15 +31,11 @@ info:
     calcularse: permanece como placeholder `nullable` documentado, sin
     fórmula confirmada a ese nivel de detalle.
 
-    A diferencia de CU-PRE-17 (donde RQ-C-03 resolvió la definición de
-    "Usuarios Internos" como "cualquier usuario del Ministerio de Hacienda,
-    independientemente de su rol"), la resolución nunca se propagó
-    formalmente a este CU. Mientras el negocio no lo confirme, el backend
-    usa como proxy [SUPUESTO] la misma convención ya aplicada en
-    `UsuarioDevSeeder`: un actor sin Institución asignada (Técnico PRE,
-    Coordinador PRE, Administrador...) califica como "interno"; un Técnico
-    URP, siempre adscrito a una Institución, no. Ver
-    `PresupuestoOmService.esUsuarioInterno`.
+    "Usuarios Internos" (RN09) — decisión de negocio DN-01
+    (docs/decisiones-negocio.md): califica como interno cualquier actor
+    cuyo rol no sea Técnico URP, sin importar su Institución ni su Unidad
+    Ejecutora. Es el mismo criterio para todo el sistema, implementado en
+    `ActorContexto.esUsuarioInterno`.
 
 paths:
 
@@ -58,9 +54,10 @@ paths:
         ninguno para NO_APLICA). Los totales "Precios Ajustados" dentro de
         cada tabla, y `totalInversionPrecioAjustado`, son `nullable` según
         si el actor autenticado califica como "Usuarios Internos" (RN09) —
-        mismo patrón de campo condicional ya usado en CU-PRE-17 para RN10;
-        ver `PresupuestoOmService.esUsuarioInterno` para el criterio
-        [SUPUESTO] aplicado mientras el negocio no confirme RN09 para este CU.
+        mismo patrón de campo condicional ya usado en CU-PRE-17 para RN10.
+        Criterio (DN-01): el servidor los puebla para cualquier rol distinto
+        de Técnico URP (en la práctica, el Técnico PRE) y los devuelve `null`
+        al Técnico URP.
       tags: [Preinversión - Operación y Mantenimiento]
       security: [{ bearerAuth: [] }]
       x-roles: [Técnico URP, Técnico PRE]

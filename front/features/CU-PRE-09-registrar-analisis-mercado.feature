@@ -37,7 +37,14 @@ Característica: Registrar el análisis de mercado
     Cuando el Técnico URP hace clic en el botón "Guardar"
     Entonces el sistema no permite guardar, ya que debe existir al menos una fila completamente diligenciada (RN04)
 
+  Escenario: Intentar guardar un producto que no pertenece al catálogo
+    Dado que el Técnico URP selecciona un producto que no pertenece al catálogo
+    Cuando el Técnico URP hace clic en el botón "Guardar"
+    Entonces el sistema no permite guardar, ya que los productos provienen del catálogo de productos e indicadores (RN07)
+
   Esquema del escenario: Intentar guardar con un campo obligatorio incompleto
+    # RN05 es solo visual: mientras exista una fila completa (RN04), el servidor guarda también la fila
+    # incompleta y el cliente sombrea el campo pendiente.
     Cuando el Técnico URP hace clic en "Guardar" sin haber completado el campo "<campo>"
     Entonces el sistema sombrea en rojo el borde del campo "<campo>" (RN05)
 

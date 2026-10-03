@@ -152,7 +152,7 @@ export interface FichaEmergencia {
     'descripcionProyecto'?: string | null;
     'productos'?: Array<ProductoSeleccionado>;
     /**
-     * Derivado automáticamente del distrito seleccionado.
+     * Derivado automáticamente del distrito seleccionado (catálogo Anexo C.5). Nulo si el distrito no está en el catálogo o si su nombre se repite en varios departamentos. 
      */
     'departamento'?: string | null;
     'distrito'?: string | null;
@@ -205,7 +205,7 @@ export interface FichaEmergenciaRequest {
      */
     'inversionEstimada'?: number | null;
     /**
-     * Referencia al archivo Excel de presupuesto cargado. El CU no detalla el mecanismo de carga (formato, límites, endpoint de subida); se deja como referencia de string a un archivo ya subido por un mecanismo no descrito aquí — ver contrato-CU-PRE-03.5.md. 
+     * Referencia al archivo Excel de presupuesto cargado. El CU no detalla el mecanismo de carga (formato, límites, endpoint de subida); se deja como referencia de string a un archivo ya subido por un mecanismo no descrito aquí — ver contrato-CU-PRE-03.5.md. Si no se envía (o va nulo), se conserva la referencia ya guardada. 
      */
     'archivoPresupuestoUrl'?: string | null;
     'componentesCosto'?: Array<ComponenteCosto>;
@@ -661,7 +661,7 @@ export const PreinversinSeleccinYRegistroDeEtapasApiAxiosParamCreator = function
             };
         },
         /**
-         * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados (nulos si aún no se ha completado el formulario). 
+         * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados. Si aún no se ha completado el formulario, los editables van nulos salvo `descripcionProyecto` e `inversionEstimada`, que se precargan desde CU-PRE-01 para que el Técnico URP los modifique o complete (Anexo B.1); `objetivoGeneral` va nulo porque CU-PRE-01 no guarda un objetivo. 
          * @summary Consultar la Ficha de proyectos de emergencia (Anexo A.4)
          * @param {number} idProyecto 
          * @param {*} [options] Override http request option.
@@ -939,7 +939,7 @@ export const PreinversinSeleccinYRegistroDeEtapasApiFp = function(configuration?
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados (nulos si aún no se ha completado el formulario). 
+         * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados. Si aún no se ha completado el formulario, los editables van nulos salvo `descripcionProyecto` e `inversionEstimada`, que se precargan desde CU-PRE-01 para que el Técnico URP los modifique o complete (Anexo B.1); `objetivoGeneral` va nulo porque CU-PRE-01 no guarda un objetivo. 
          * @summary Consultar la Ficha de proyectos de emergencia (Anexo A.4)
          * @param {number} idProyecto 
          * @param {*} [options] Override http request option.
@@ -1065,7 +1065,7 @@ export const PreinversinSeleccinYRegistroDeEtapasApiFactory = function (configur
             return localVarFp.modificarRutaPreinversion(requestParameters.idProyecto, requestParameters.modificarRutaPreinversionRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados (nulos si aún no se ha completado el formulario). 
+         * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados. Si aún no se ha completado el formulario, los editables van nulos salvo `descripcionProyecto` e `inversionEstimada`, que se precargan desde CU-PRE-01 para que el Técnico URP los modifique o complete (Anexo B.1); `objetivoGeneral` va nulo porque CU-PRE-01 no guarda un objetivo. 
          * @summary Consultar la Ficha de proyectos de emergencia (Anexo A.4)
          * @param {PreinversinSeleccinYRegistroDeEtapasApiObtenerFichaEmergenciaRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1167,7 +1167,7 @@ export interface PreinversinSeleccinYRegistroDeEtapasApiInterface {
     modificarRutaPreinversion(requestParameters: PreinversinSeleccinYRegistroDeEtapasApiModificarRutaPreinversionRequest, options?: RawAxiosRequestConfig): AxiosPromise<RutaPreinversion>;
 
     /**
-     * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados (nulos si aún no se ha completado el formulario). 
+     * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados. Si aún no se ha completado el formulario, los editables van nulos salvo `descripcionProyecto` e `inversionEstimada`, que se precargan desde CU-PRE-01 para que el Técnico URP los modifique o complete (Anexo B.1); `objetivoGeneral` va nulo porque CU-PRE-01 no guarda un objetivo. 
      * @summary Consultar la Ficha de proyectos de emergencia (Anexo A.4)
      * @param {PreinversinSeleccinYRegistroDeEtapasApiObtenerFichaEmergenciaRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -1355,7 +1355,7 @@ export class PreinversinSeleccinYRegistroDeEtapasApi extends BaseAPI implements 
     }
 
     /**
-     * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados (nulos si aún no se ha completado el formulario). 
+     * Solo aplica a proyectos categorizados como \"Proyecto de emergencia\" (CU-PRE-01). Devuelve los campos no editables precargados desde CU-PRE-01 junto con los campos editables ya guardados. Si aún no se ha completado el formulario, los editables van nulos salvo `descripcionProyecto` e `inversionEstimada`, que se precargan desde CU-PRE-01 para que el Técnico URP los modifique o complete (Anexo B.1); `objetivoGeneral` va nulo porque CU-PRE-01 no guarda un objetivo. 
      * @summary Consultar la Ficha de proyectos de emergencia (Anexo A.4)
      * @param {PreinversinSeleccinYRegistroDeEtapasApiObtenerFichaEmergenciaRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
