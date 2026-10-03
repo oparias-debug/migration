@@ -12,6 +12,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
 import sv.gob.mh.siip.bdd.support.SufijosPrueba;
+import sv.gob.mh.siip.exception.AccesoDenegadoException;
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.model.common.domain.*;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
@@ -51,6 +52,7 @@ public class Pre02Bandeja {
     private boolean hover;
     private SolicitudesActivasResponseDto resultado;
     private ConflictoEstadoException ultimaExcepcionDesarchivo;
+    private AccesoDenegadoException accesoDenegado;
 
     @Before("@CU-PRE-02")
     public void preparar() {
@@ -114,6 +116,7 @@ public class Pre02Bandeja {
         assertThat(dialogo).isNotNull();
         if (boton.equals("Aceptar")) {
             if (accion.equals("archivo")) bandeja.archivar(solicitud.getId());
+            else if (accion.equals("desarchivo")) bandeja.desarchivar(solicitud.getId());
             else mutaciones.asignar(solicitud.getId(), new AsignacionTecnicoPreRequestDto().idTecnicoAsignado(seleccionado));
         } else { assertThat(boton).isEqualTo("Cancelar"); }
         dialogo = null;
@@ -232,4 +235,39 @@ public class Pre02Bandeja {
     public void revision(String seccion) { assertThat(actual().getTecnicoAsignado().getId()).isEqualTo(actores.exigir().getId()); assertThat(actual().getProyecto().getEstado()).isEqualTo(EstadoProyecto.ENVIADO_DGICP_REGISTRO); }
     @Entonces("el sistema muestra la pantalla {string} del caso de uso CU-PRE-26")
     public void destinoOt(String nombre) { assertThat(pantalla).isEqualTo(nombre); }
+
+    // Escenarios de pantalla de RN11 (los agregó el front): el botón "Desarchivar" vive en las filas
+    // del reporte de archivadas, así que hacer clic en él presupone una solicitud archivada a mano.
+    @Cuando("el Coordinador PRE hace clic en el botón {string} de la fila de la solicitud")
+    public void abrirDesarchivo(String boton) {
+        assertThat(boton).isEqualTo("Desarchivar");
+        if (actual().getEstado() != EstadoSolicitud.ARCHIVADA) archivadaManualmente();
+        assertThat(bandeja.archivadas(null, 0, 200).getContenido()).extracting(SolicitudArchivadaItemDto::getIdSolicitud).contains(solicitud.getId());
+        accion = "desarchivo"; dialogo = "desarchivo";
+    }
+    @Entonces("el sistema muestra un aviso que advierte que la solicitud volverá con el estado que tenía antes de archivarse")
+    public void avisoDesarchivo() { assertThat(dialogo).isEqualTo("desarchivo"); assertThat(actual().getEstado()).isEqualTo(EstadoSolicitud.ARCHIVADA); assertThat(actual().getEstadoPrevioArchivo()).isEqualTo(EstadoSolicitud.REGISTRADA); }
+    @Entonces("el sistema desarchiva la solicitud")
+    public void desarchivada() { assertThat(dialogo).isNull(); vuelveAlEstadoPrevio(); }
+    @Entonces("el sistema informa que la solicitud volvió a las solicitudes activas")
+    public void informaActiva() { reaparece("Solicitudes Activas"); desapareceDelReporte("Reporte de solicitudes Preinversión archivadas"); }
+    @Cuando("hace clic en {string} en el aviso de confirmación")
+    public void cancelarAviso(String boton) { assertThat(boton).isEqualTo("Cancelar"); confirmar(boton); }
+    @Entonces("la solicitud permanece archivada")
+    public void sigueArchivada() { assertThat(actual().getEstado()).isEqualTo(EstadoSolicitud.ARCHIVADA); assertThat(bandeja.archivadas(null, 0, 200).getContenido()).extracting(SolicitudArchivadaItemDto::getIdSolicitud).contains(solicitud.getId()); }
+    @Entonces("el sistema no llama al servicio de desarchivo")
+    public void sinDesarchivo() { assertThat(dialogo).isNull(); assertThat(actual().getEstadoPrevioArchivo()).isEqualTo(EstadoSolicitud.REGISTRADA); assertThat(actual().getFechaArchivo()).isNotNull(); }
+    @Dado("que un Técnico PRE consulta el {string}")
+    public void tecnicoConsultaArchivadas(String reporte) {
+        archivadaManualmente(); autenticar(tecnico); accesoDenegado = null;
+        try { bandeja.archivadas(null, 0, 200); } catch (AccesoDenegadoException ex) { accesoDenegado = ex; }
+    }
+    @Entonces("el sistema no muestra el botón {string} en ninguna fila")
+    public void sinBotonDesarchivar(String boton) {
+        // RN11: solo el Coordinador PRE ve el reporte y puede desarchivar; para el Técnico PRE el back rechaza ambas cosas.
+        assertThat(accesoDenegado).isNotNull();
+        Long id = solicitud.getId();
+        assertThatThrownBy(() -> bandeja.desarchivar(id)).isInstanceOf(AccesoDenegadoException.class);
+        assertThat(actual().getEstado()).isEqualTo(EstadoSolicitud.ARCHIVADA);
+    }
 }

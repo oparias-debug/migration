@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -16,10 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.TaskService;
-import org.flowable.task.api.Task;
-import org.flowable.task.api.TaskQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -44,7 +39,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 class ProyectoDevSeederTest {
 
-    private static final String PROCESO = "proceso_ciclo_vida_proyecto_siip";
     private static final String CODIGO_SECTOR = "Desarrollo Social::Educación y cultura";
     private static final String CODIGO_EJE = "Infraestructura Educativa (Construcción y Mejoramiento)";
     private static final String NOMBRE_ASIGNADO = "Proyecto de prueba (Asignado a Técnico PRE)";
@@ -56,8 +50,6 @@ class ProyectoDevSeederTest {
     private SectorActividadRepository sectorActividadRepository;
     private EjeTematicoRepository ejeTematicoRepository;
     private UsuarioRepository usuarioRepository;
-    private RuntimeService runtimeService;
-    private TaskService taskService;
     private ProyectoDevSeeder seeder;
 
     private final Institucion institucion = Institucion.builder().id(1L).codigo("MH-DGICP").build();
@@ -75,11 +67,8 @@ class ProyectoDevSeederTest {
         sectorActividadRepository = mock(SectorActividadRepository.class);
         ejeTematicoRepository = mock(EjeTematicoRepository.class);
         usuarioRepository = mock(UsuarioRepository.class);
-        runtimeService = mock(RuntimeService.class);
-        taskService = mock(TaskService.class);
         seeder = new ProyectoDevSeeder(proyectoRepository, solicitudRepository, institucionRepository,
-                unidadEjecutoraRepository, sectorActividadRepository, ejeTematicoRepository, usuarioRepository,
-                runtimeService, taskService);
+                unidadEjecutoraRepository, sectorActividadRepository, ejeTematicoRepository, usuarioRepository);
 
         when(institucionRepository.findByCodigo("MH-DGICP")).thenReturn(Optional.of(institucion));
         when(institucionRepository.findByCodigo("MINED")).thenReturn(Optional.of(institucion2));
@@ -98,13 +87,6 @@ class ProyectoDevSeederTest {
             proyecto.setId(secuencia.incrementAndGet());
             return proyecto;
         });
-
-        TaskQuery consulta = mock(TaskQuery.class);
-        Task tarea = mock(Task.class);
-        when(tarea.getId()).thenReturn("tarea-en-elaboracion");
-        when(taskService.createTaskQuery()).thenReturn(consulta);
-        when(consulta.processInstanceBusinessKey(anyString())).thenReturn(consulta);
-        when(consulta.singleResult()).thenReturn(tarea);
     }
 
     @Test
@@ -133,11 +115,6 @@ class ProyectoDevSeederTest {
         assertThat(otraUnidad.getUnidadEjecutora()).isSameAs(unidadEjecutora2);
         assertThat(otraUnidad.getInstitucion()).isSameAs(institucion2);
         assertThat(proyectos.getAllValues().get(0).getUnidadEjecutora()).isSameAs(unidadEjecutora);
-
-        verify(runtimeService, times(5)).startProcessInstanceByKey(eq(PROCESO), anyString());
-        verify(runtimeService).startProcessInstanceByKey(PROCESO, "101");
-        verify(runtimeService).startProcessInstanceByKey(PROCESO, "105");
-        verify(taskService, times(3)).complete("tarea-en-elaboracion");
     }
 
     @Test
@@ -171,8 +148,6 @@ class ProyectoDevSeederTest {
 
         verify(proyectoRepository, never()).save(any());
         verify(solicitudRepository, never()).save(any());
-        verify(runtimeService, never()).startProcessInstanceByKey(anyString(), anyString());
-        verify(taskService, never()).complete(anyString());
         verify(usuarioRepository, never()).findByNombreUsuario(anyString());
     }
 

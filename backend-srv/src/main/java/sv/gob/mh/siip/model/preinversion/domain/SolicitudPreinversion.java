@@ -81,8 +81,8 @@ public class SolicitudPreinversion {
      * (Coordinador PRE), para poder restaurarlo exacto al desarchivar. Solo lo fija
      * {@code BandejaPreinversionService#archivar}, nunca el archivo automatico del scheduler
      * (RN-4 CU-PRE-01) — por eso una solicitud archivada automaticamente no puede desarchivarse:
-     * no hay estado previo que restaurar de forma segura, y ademas ese archivo ya cancelo la
-     * instancia de proceso Flowable y desactivo el proyecto.
+     * no hay estado previo que restaurar de forma segura, y ademas ese archivo ya desactivo el
+     * proyecto.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "ESTADO_PREVIO_ARCHIVO", length = 30)

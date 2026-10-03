@@ -208,7 +208,7 @@ paths:
     delete:
       operationId: desarchivarSolicitud
       summary: Desarchivar una solicitud (RN11, nueva — no proviene del documento original)
-      description: 'RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya canceló la instancia de proceso Flowable asociada y desactivó el proyecto, así que no existe un estado previo seguro al cual volver.
+      description: 'RN11: solo deshace un archivo manual (el hecho con este mismo recurso, `archivarSolicitud`), restaurando el estado exacto que la solicitud tenía antes de archivarse. Una solicitud archivada automáticamente por el sistema (RN-4 de CU-PRE-01, tras 3 meses + 5 días hábiles sin respuesta) no puede desarchivarse por este medio: ese archivo automático ya desactivó el proyecto, así que no existe un estado previo seguro al cual volver.
 
         '
       tags:

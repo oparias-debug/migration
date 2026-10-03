@@ -22,8 +22,6 @@ La imagen es la misma en todos los ambientes. Para cambiar un valor en un ambien
 | `DB_SCHEMA` | No | `public` | `public` | esquema dueño de las tablas | No |
 | `JPA_DDL_AUTO` | No | `validate` (`create-drop` en perfil `dev`) | — | `validate` | No |
 | `JPA_SHOW_SQL` | No | `false` (`true` en perfil `dev`) | — | `false` | No |
-| `FLOWABLE_DB_SCHEMA` | No | `flowable` | — | esquema de Flowable | No |
-| `FLOWABLE_DB_SCHEMA_UPDATE` | No | `false` (`drop-create` en perfil `dev`) | — | `false` | No |
 | `GATEWAY_URL` | No | `http://localhost:8080` | `http://localhost:8080` | URL pública de api-gateway | No |
 | `SECURITY_URL_KEYCLOAK` | No | `keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv` | — (ver nota) | host del Keycloak del ambiente | No |
 | `SECURITY_REALM` | No | `MHINTERNO` | — (ver nota) | realm de SIIP | No |
@@ -51,8 +49,8 @@ Notas:
 
 | Perfil | Uso | Esquema | Datos de prueba |
 |---|---|---|---|
-| `prod` (por defecto) | Ambientes de la entidad | Solo valida (`validate` / Flowable `false`) | No |
-| `dev` | Local y paquete del tester | Lo recrea en cada arranque (`create-drop` / `drop-create`) | Sí (`DevSeeder`) |
+| `prod` (por defecto) | Ambientes de la entidad | Solo valida (`validate`) | No |
+| `dev` | Local y paquete del tester | Lo recrea en cada arranque (`create-drop`) | Sí (`DevSeeder`) |
 | `test` | `mvn test` (H2 en memoria) | Lo recrea | No |
 
 **Nunca activar `dev` en la entidad**: borra los datos en cada reinicio y siembra datos
@@ -88,7 +86,7 @@ y `SECURITY_REALM` (para validar el JWT); el resto no:
 ## Pendientes
 
 - **DDL del esquema en la entidad.** No hay migraciones (Flyway/Liquibase). Con `validate`,
-  las tablas de negocio y las de Flowable tienen que existir antes de desplegar, creadas con
+  las tablas de negocio tienen que existir antes de desplegar, creadas con
   el usuario dueño del esquema. Falta definir cómo se entrega ese DDL al DBA.
 - **Sin Route.** El chart tiene `route.enabled: false`: backend-srv no se publica fuera del
   cluster y solo lo invoca api-gateway. Falta una `NetworkPolicy` para que tampoco lo llame otro

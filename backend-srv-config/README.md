@@ -54,8 +54,6 @@ una variable nueva, se agrega aquí (en `values.yaml` y, si depende del cluster,
 | `DB_SCHEMA` | ConfigMap / overlay | esquema dueño de las tablas | `hibernate.default_schema`. |
 | `JPA_DDL_AUTO` | ConfigMap | `validate` | La app no crea ni borra tablas. |
 | `JPA_SHOW_SQL` | ConfigMap | `false` | Log de SQL. |
-| `FLOWABLE_DB_SCHEMA` | ConfigMap / overlay | esquema de Flowable | Esquema propio del motor de procesos. |
-| `FLOWABLE_DB_SCHEMA_UPDATE` | ConfigMap | `false` | Flowable no crea ni actualiza sus tablas. |
 | `GATEWAY_URL` | ConfigMap / overlay | URL pública de api-gateway | Solo para los `servers` del OpenAPI (Swagger UI). |
 | `HTTP_PORT` | ConfigMap | `8080` | Puerto HTTP; debe coincidir con `containerPort`. |
 | `SPRING_PROFILES_ACTIVE` | ConfigMap | `prod` | **Nunca `dev`**: activa los datos de prueba y recrea el esquema. |
@@ -72,10 +70,10 @@ overlays generados por el scaffolder sigan aplicando.
 ## Crear o ajustar un ambiente
 
 1. Completar los valores marcados `<...>` del overlay del cluster (`DB_URL`, `DB_SCHEMA`,
-   `FLOWABLE_DB_SCHEMA`, `GATEWAY_URL`). Mientras quede un `<...>`, el pod no arranca o el
+   `GATEWAY_URL`). Mientras quede un `<...>`, el pod no arranca o el
    Swagger apunta mal: es intencional, para que el faltante sea evidente.
-2. Pedir al DBA los esquemas de negocio y de Flowable creados con el usuario dueño, y los
-   grants hacia el usuario `*_POOL` (ver "Pendientes").
+2. Pedir al DBA el esquema de negocio creado con el usuario dueño, y los grants hacia el
+   usuario `*_POOL` (ver "Pendientes").
 3. Cargar `DB_USER` y `DB_PASSWORD` en el Secret `backend-srv-secret` del namespace.
 4. Revisar el arranque: `oc logs deploy/backend-srv` y `/actuator/health/readiness`.
 
@@ -93,11 +91,9 @@ Igual que el código: por revisión en Gerrit sobre la rama del ambiente
 ## Pendientes / por confirmar
 
 - **Esquema de base de datos.** backend-srv no tiene migraciones (Flyway/Liquibase). Con
-  `JPA_DDL_AUTO=validate` y `FLOWABLE_DB_SCHEMA_UPDATE=false`, alguien tiene que crear las
+  `JPA_DDL_AUTO=validate`, alguien tiene que crear las
   tablas antes del primer despliegue, con el usuario dueño del esquema. Falta definir quién y
   cómo (scripts DDL entregados al DBA o una herramienta de migraciones).
-- **Flowable en Oracle.** Su esquema separado debe provisionarlo el DBA como otro
-  usuario/esquema, con grants cruzados hacia el `*_POOL`.
 - **Sin Route.** `route.enabled: false` por decisión de seguridad: backend-srv no se publica
   fuera del cluster y solo lo invoca api-gateway, por el Service (`ClusterIP`). Además valida el
   JWT por su cuenta (`SECURITY_URL_KEYCLOAK` y `SECURITY_REALM` de este ConfigMap).
@@ -108,5 +104,5 @@ Igual que el código: por revisión en Gerrit sobre la rama del ambiente
   falta una `NetworkPolicy` que solo admita su tráfico; el chart no trae plantilla y depende de
   dónde se despliegue api-gateway (namespace y labels).
 - **Recursos.** `limits.memory: 512Mi` y la `startupProbe` (~65 s) son los de la plantilla.
-  Spring Boot + Hibernate + Flowable puede superar ambos; validar en el primer despliegue.
+  Spring Boot + Hibernate puede superar ambos; validar en el primer despliegue.
 - **URLs `<...>`** de los overlays: confirmar con infra.

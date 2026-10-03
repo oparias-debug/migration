@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -129,6 +130,10 @@ public class Pre265Priorizacion {
     private static final String CODIGO_SUBCRITERIO = "SUB-";
     private static final String SUBCRITERIO_ESCALA = "1.1";
     private static final String NO_APLICA = "N/A";
+
+    // Inyeccion por campo, igual que Pre01RegistrarNuevoProyecto con el paso que comparte.
+    @Autowired
+    private PantallasFrontComun pantallasFront;
 
     private final InstitucionRepository instituciones;
     private final UnidadEjecutoraRepository unidades;
@@ -438,6 +443,11 @@ public class Pre265Priorizacion {
 
     @Entonces("muestra el botón {string}")
     public void muestraBoton(String boton) {
+        // Las features de pantalla (PantallaFront) comparten este texto y le dan efecto propio.
+        if (pantallasFront.hayActiva()) {
+            pantallasFront.muestraBoton(boton);
+            return;
+        }
         assertThat(boton).isEqualTo(BOTON_ESCALA);
         verEscala(subcriterioDesplegado);
         assertThat(error).isNull();

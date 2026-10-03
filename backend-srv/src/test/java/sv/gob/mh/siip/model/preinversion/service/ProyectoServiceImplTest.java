@@ -5,12 +5,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.TaskService;
-import org.flowable.engine.runtime.ProcessInstance;
-import org.flowable.engine.runtime.ProcessInstanceQuery;
-import org.flowable.task.api.Task;
-import org.flowable.task.api.TaskQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,10 +71,6 @@ class ProyectoServiceImplTest {
         private MedidaCatalogoRepository medidaCatalogoRepository;
         private ActorContexto actorContexto;
         private NotificacionService notificacionService;
-        private RuntimeService runtimeService;
-        private TaskService taskService;
-        private TaskQuery taskQuery;
-        private ProcessInstanceQuery processInstanceQuery;
         private ProyectoServiceImpl service;
 
         private UnidadEjecutora unidadEjecutora;
@@ -104,28 +94,16 @@ class ProyectoServiceImplTest {
                 medidaCatalogoRepository = mock(MedidaCatalogoRepository.class);
                 actorContexto = mock(ActorContexto.class);
                 notificacionService = mock(NotificacionService.class);
-                runtimeService = mock(RuntimeService.class);
-                taskService = mock(TaskService.class);
-                taskQuery = mock(TaskQuery.class);
-                processInstanceQuery = mock(ProcessInstanceQuery.class);
-                when(taskService.createTaskQuery()).thenReturn(taskQuery);
-                when(taskQuery.processInstanceBusinessKey(any())).thenReturn(taskQuery);
-                when(taskQuery.singleResult()).thenReturn(null);
-                when(runtimeService.createProcessInstanceQuery()).thenReturn(processInstanceQuery);
-                when(processInstanceQuery.processInstanceBusinessKey(any())).thenReturn(processInstanceQuery);
-                when(processInstanceQuery.singleResult()).thenReturn(null);
                 ProyectoMapper mapper = org.mapstruct.factory.Mappers.getMapper(ProyectoMapper.class);
 
-                ProyectoFlujoProceso flujoProceso = new ProyectoFlujoProceso(runtimeService, taskService);
                 ProyectoDatosRegistro datosRegistro = new ProyectoDatosRegistro(sectorActividadRepository,
                                 ejeTematicoRepository, ejePlanGobiernoRepository, planSectorialRegionalRepository,
                                 unidadEjecutoraRepository);
                 ProyectoTramiteCup tramiteCup = new ProyectoTramiteCup(proyectoRepository,
                                 new ProyectoSolicitudesCup(solicitudRepository, comentarioRepository),
-                                usuarioRepository, notificacionService, flujoProceso,
-                                new GeneradorCup(proyectoRepository));
+                                usuarioRepository, notificacionService, new GeneradorCup(proyectoRepository));
                 service = new ProyectoServiceImpl(proyectoRepository, actorContexto, datosRegistro,
-                                new ProyectoConsultas(proyectoRepository, mapper), tramiteCup, flujoProceso,
+                                new ProyectoConsultas(proyectoRepository, mapper), tramiteCup,
                                 new ProyectoEnsamblador(comentarioRepository, medidaCatalogoRepository, mapper));
 
                 Institucion institucion = Institucion.builder().id(1L).codigo("INS").nombre("Institucion").activo(true)
@@ -203,8 +181,6 @@ class ProyectoServiceImplTest {
 
                 assertThat(resultado.getEstado()).isEqualTo(EstadoProyectoDto.EN_REGISTRO);
                 assertThat(resultado.getUnidadEjecutora().getIdUnidadEjecutora()).isEqualTo(unidadEjecutora.getId());
-                verify(runtimeService).startProcessInstanceByKey("proceso_ciclo_vida_proyecto_siip",
-                                String.valueOf(resultado.getIdProyecto()));
         }
 
         @Test
@@ -384,27 +360,6 @@ class ProyectoServiceImplTest {
                 assertThat(resultado.getEstado()).isEqualTo(EstadoProyectoDto.ENVIADO_DGICP_REGISTRO);
                 verify(solicitudRepository).save(any(SolicitudPreinversion.class));
                 verify(notificacionService).notificarSolicitudCup(any(), any());
-                verify(taskService, never()).complete(any());
-        }
-
-        @Test
-        void solicitarCup_completaTareaFlowable_cuandoExisteInstanciaDeProceso() {
-                actorContextoDevuelveTecnicoUrp();
-                Proyecto entidad = proyectoEnRegistro();
-                when(proyectoRepository.findById(1L)).thenReturn(Optional.of(entidad));
-                when(proyectoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-                when(solicitudRepository.findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(1L,
-                                TipoSolicitud.CUP))
-                                .thenReturn(Optional.empty());
-                when(usuarioRepository.findByRolAndActivoTrue(RolUsuario.COORDINADOR_PRE)).thenReturn(List.of());
-                Task tarea = mock(Task.class);
-                when(tarea.getId()).thenReturn("tarea-1");
-                when(taskQuery.singleResult()).thenReturn(tarea);
-
-                service.solicitarCup(1L);
-
-                verify(taskQuery).processInstanceBusinessKey("1");
-                verify(taskService).complete("tarea-1");
         }
 
         @Test
@@ -657,28 +612,6 @@ class ProyectoServiceImplTest {
         }
 
         @Test
-        void emitirCup_cancelaProcesoFlowable_cuandoExisteInstanciaDeProceso() {
-                when(actorContexto.exigirRol(RolUsuario.TECNICO_PRE)).thenReturn(tecnicoPre);
-                Proyecto entidad = proyectoEnviadoDgicp();
-                when(proyectoRepository.findById(1L)).thenReturn(Optional.of(entidad));
-                when(proyectoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-                when(proyectoRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
-                when(solicitudRepository.findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(1L,
-                                TipoSolicitud.CUP))
-                                .thenReturn(Optional.of(SolicitudPreinversion.builder().id(1L)
-                                                .tecnicoAsignado(tecnicoPre).build()));
-                when(proyectoRepository.findFirstByCupIsNotNullOrderByCupDesc()).thenReturn(Optional.empty());
-                ProcessInstance instancia = mock(ProcessInstance.class);
-                when(instancia.getId()).thenReturn("instancia-1");
-                when(processInstanceQuery.singleResult()).thenReturn(instancia);
-
-                service.emitirCup(1L);
-
-                verify(processInstanceQuery).processInstanceBusinessKey("1");
-                verify(runtimeService).deleteProcessInstance(eq("instancia-1"), any());
-        }
-
-        @Test
         void obtener_lanzaAccesoDenegado_cuandoUnidadEjecutoraDistinta() {
                 UnidadEjecutora otraUnidadEjecutora = UnidadEjecutora.builder().id(99L)
                                 .institucion(unidadEjecutora.getInstitucion()).codigo("UE2").nombre("Otra UE")
@@ -830,25 +763,6 @@ class ProyectoServiceImplTest {
 
                 assertThat(entidad.getActivo()).isFalse();
                 verify(proyectoRepository).save(entidad);
-                verify(runtimeService, never()).deleteProcessInstance(any(), any());
-        }
-
-        @Test
-        void eliminar_cancelaProcesoFlowable_cuandoExisteInstanciaDeProceso() {
-                actorContextoDevuelveTecnicoUrp();
-                Proyecto entidad = proyectoEnRegistro();
-                when(proyectoRepository.findById(1L)).thenReturn(Optional.of(entidad));
-                when(solicitudRepository.findFirstByProyectoIdAndTipoSolicitudOrderByFechaSolicitudDesc(1L,
-                                TipoSolicitud.CUP))
-                                .thenReturn(Optional.empty());
-                ProcessInstance instancia = mock(ProcessInstance.class);
-                when(instancia.getId()).thenReturn("instancia-1");
-                when(processInstanceQuery.singleResult()).thenReturn(instancia);
-
-                service.eliminar(1L);
-
-                verify(processInstanceQuery).processInstanceBusinessKey("1");
-                verify(runtimeService).deleteProcessInstance(eq("instancia-1"), any());
         }
 
         @Test

@@ -309,7 +309,8 @@ public class Pre20FlujoBeneficios {
         consulta = service.obtenerBeneficios(proyecto.getId());
     }
 
-    private String crearTecnicoPre() {
+    /** Técnico PRE nuevo (usuario interno, RN09); también lo usa {@link Pre20RegistrarBeneficios}. */
+    String crearTecnicoPre() {
         String usuarioPre = "tecnico.pre.pre20." + SufijosPrueba.nuevo(8);
         usuarios.save(Usuario.builder().nombreUsuario(usuarioPre).nombreCompleto("Técnico PRE CU20")
                 .correo(usuarioPre + "@example.com").rol(RolUsuario.TECNICO_PRE).activo(true).build());
@@ -416,6 +417,21 @@ public class Pre20FlujoBeneficios {
         assertThat(consulta).containsEntry("fcTipoBien", 1D);
         assertThat(consulta).containsEntry("valorRescateAjustado", 100D);
         assertThat(tabla).isEqualTo("Beneficios del proyecto");
+    }
+
+    /** Proyecto sembrado por {@link #prepararEscenario()}; lo reutiliza {@link Pre20RegistrarBeneficios}. */
+    Proyecto proyecto() {
+        return proyecto;
+    }
+
+    /** Técnico URP de la Unidad Ejecutora del proyecto sembrado. */
+    String usuarioUrp() {
+        return usuarioUrp;
+    }
+
+    /** Código del Parámetro del catálogo sembrado (FC 1.10). */
+    String codigoParametro() {
+        return (String) solicitud.get("parametro");
     }
 
     private Map<String, Object> solicitudBase(String parametro) {

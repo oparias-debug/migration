@@ -839,7 +839,7 @@ public class Pre24Viabilidad {
     // =============================================================================================
     // Acciones del flujo
 
-    private void cargarDocumentoPreinversion() {
+    void cargarDocumentoPreinversion() {
         autenticar(tecnicoUrp);
         MockMultipartFile archivo = new MockMultipartFile("archivo", "preinversion.pdf", "application/pdf",
                 "%PDF-1.4 documento".getBytes(StandardCharsets.UTF_8));
@@ -847,22 +847,22 @@ public class Pre24Viabilidad {
                 archivo));
     }
 
-    private void solicitar() {
+    void solicitar() {
         autenticar(tecnicoUrp);
         transacciones.executeWithoutResult(estado -> service.solicitarViabilidad(proyecto.getId()));
     }
 
-    private void guardar(GuardarComentariosViabilidadRequestDto request) {
+    void guardar(GuardarComentariosViabilidadRequestDto request) {
         autenticar(viabilizador);
         enTransaccion(() -> service.guardarComentarios(proyecto.getId(), request));
     }
 
-    private void enviar() {
+    void enviar() {
         autenticar(viabilizador);
         enTransaccion(() -> service.enviarComentarios(proyecto.getId()));
     }
 
-    private EmitirViabilidadResponseDto emitir() {
+    EmitirViabilidadResponseDto emitir() {
         autenticar(viabilizador);
         return enTransaccion(() -> service.emitirViabilidad(proyecto.getId()));
     }
@@ -907,7 +907,7 @@ public class Pre24Viabilidad {
         }
     }
 
-    private FichaViabilidadResponseDto fichaComo(Usuario usuario) {
+    FichaViabilidadResponseDto fichaComo(Usuario usuario) {
         autenticar(usuario);
         return enTransaccion(() -> service.consultarFicha(proyecto.getId()));
     }
@@ -916,7 +916,7 @@ public class Pre24Viabilidad {
      * El servicio se construye a mano (para inyectarle el mock de notificaciones), así que no tiene el
      * proxy transaccional de Spring: cada operación corre aquí en su propia transacción, como en producción.
      */
-    private <T> T enTransaccion(Supplier<T> operacion) {
+    <T> T enTransaccion(Supplier<T> operacion) {
         return transacciones.execute(estado -> operacion.get());
     }
 
@@ -930,9 +930,29 @@ public class Pre24Viabilidad {
     }
 
     // =============================================================================================
-    // Datos
+    // Datos (los accesores los usa Pre24GestionarViabilidad)
 
-    private void sembrarFicha() {
+    ViabilidadService service() {
+        return service;
+    }
+
+    Proyecto proyecto() {
+        return proyecto;
+    }
+
+    Usuario tecnicoUrp() {
+        return tecnicoUrp;
+    }
+
+    Usuario viabilizador() {
+        return viabilizador;
+    }
+
+    NotificacionService notificaciones() {
+        return notificaciones;
+    }
+
+    void sembrarFicha() {
         if (identificaciones.findByProyectoId(proyecto.getId()).isPresent()) {
             return;
         }
@@ -993,6 +1013,23 @@ public class Pre24Viabilidad {
     }
 
     private Object valorDe(String campo) {
+        return valorDe(ficha, campo);
+    }
+
+    /**
+     * Verifica que {@code vista} muestre en {@code campo} el dato sembrado por {@link #sembrarFicha()};
+     * también lo usa {@link Pre24GestionarViabilidad}.
+     */
+    void verificarCampo(FichaViabilidadResponseDto vista, String campo) {
+        Object esperado = valorEsperado(campo);
+        if (esperado instanceof BigDecimal monto) {
+            assertThat((BigDecimal) valorDe(vista, campo)).as(campo).isEqualByComparingTo(monto);
+        } else {
+            assertThat(valorDe(vista, campo)).as(campo).isEqualTo(esperado);
+        }
+    }
+
+    private static Object valorDe(FichaViabilidadResponseDto ficha, String campo) {
         return switch (campo) {
             case "CUP" -> ficha.getCup();
             case "Nombre del proyecto" -> ficha.getNombreProyecto();
@@ -1050,15 +1087,15 @@ public class Pre24Viabilidad {
         return BOTON_SOLICITAR.equals(boton) ? tecnicoUrp : viabilizador;
     }
 
-    private RevisionViabilidad revisionActual() {
+    RevisionViabilidad revisionActual() {
         return revisiones.findFirstByProyectoIdOrderByNumeroDesc(proyecto.getId()).orElseThrow();
     }
 
-    private Proyecto proyectoActual() {
+    Proyecto proyectoActual() {
         return proyectos.findById(proyecto.getId()).orElseThrow();
     }
 
-    private static GuardarComentariosViabilidadRequestDto borrador(String objetivo, String productos,
+    static GuardarComentariosViabilidadRequestDto borrador(String objetivo, String productos,
             String observaciones) {
         GuardarComentariosViabilidadRequestDto request = new GuardarComentariosViabilidadRequestDto();
         if (objetivo != null) {
@@ -1079,7 +1116,7 @@ public class Pre24Viabilidad {
                 .activo(true).build();
     }
 
-    private static void autenticar(Usuario usuario) {
+    static void autenticar(Usuario usuario) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         AutenticacionDePrueba.autenticar(usuario.getNombreUsuario());
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));

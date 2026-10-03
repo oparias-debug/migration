@@ -7,8 +7,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.runtime.ProcessInstance;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,18 +39,15 @@ public class AlertaEliminacionAutomaticaScheduler {
     private final ProyectoRepository proyectoRepository;
     private final UsuarioRepository usuarioRepository;
     private final NotificacionService notificacionService;
-    private final RuntimeService runtimeService;
 
     public AlertaEliminacionAutomaticaScheduler(SolicitudPreinversionRepository solicitudRepository,
             ProyectoRepository proyectoRepository,
             UsuarioRepository usuarioRepository,
-            NotificacionService notificacionService,
-            RuntimeService runtimeService) {
+            NotificacionService notificacionService) {
         this.solicitudRepository = solicitudRepository;
         this.proyectoRepository = proyectoRepository;
         this.usuarioRepository = usuarioRepository;
         this.notificacionService = notificacionService;
-        this.runtimeService = runtimeService;
     }
 
     /**
@@ -97,21 +92,6 @@ public class AlertaEliminacionAutomaticaScheduler {
             solicitud.setEstado(EstadoSolicitud.ARCHIVADA);
             solicitud.setFechaArchivo(ahora);
             solicitudRepository.save(solicitud);
-
-            cancelarProceso(proyecto.getId(), "Proyecto archivado automaticamente por falta de respuesta (RN-4).");
-        }
-    }
-
-    /**
-     * Cancela la instancia de proceso Flowable del proyecto, si existe (puede no existir para datos
-     * creados fuera del flujo real, por ejemplo en pruebas).
-     */
-    private void cancelarProceso(Long idProyecto, String motivo) {
-        ProcessInstance instancia = runtimeService.createProcessInstanceQuery()
-                .processInstanceBusinessKey(String.valueOf(idProyecto))
-                .singleResult();
-        if (instancia != null) {
-            runtimeService.deleteProcessInstance(instancia.getId(), motivo);
         }
     }
 

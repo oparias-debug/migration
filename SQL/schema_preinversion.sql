@@ -356,8 +356,8 @@ COMMENT ON TABLE SOLICITUD_PREINVERSION IS 'Solicitud de CUP u Opinión Técnica
 -- ESTADO_PREVIO_ARCHIVO (RN11 CU-PRE-02, nueva): solo lo fija el archivo MANUAL (boton
 -- "Archivar", Coordinador PRE) para poder restaurar el estado exacto al desarchivar; el archivo
 -- AUTOMATICO del scheduler (RN-4 CU-PRE-01, tras 3 meses + 5 dias habiles sin respuesta) nunca lo
--- fija -- esas solicitudes no se pueden desarchivar (ya cancelaron su instancia de proceso
--- Flowable y desactivaron el proyecto). Null en toda solicitud no archivada o archivada
+-- fija -- esas solicitudes no se pueden desarchivar (ya desactivaron el proyecto). Null en
+-- toda solicitud no archivada o archivada
 -- automaticamente.
 
 CREATE SEQUENCE COMENTARIO_SOLICITUD_SEQ START WITH 1 INCREMENT BY 1 NOCACHE;

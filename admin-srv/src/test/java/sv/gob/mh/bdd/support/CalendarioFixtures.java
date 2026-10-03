@@ -113,12 +113,16 @@ public class CalendarioFixtures {
     }
 
     public void agregarExcepcion(String codigoCalendario, LocalDate fecha, TipoExcepcion tipo) {
+        agregarExcepcion(codigoCalendario, fecha, tipo, "Excepción de prueba BDD");
+    }
+
+    public void agregarExcepcion(String codigoCalendario, LocalDate fecha, TipoExcepcion tipo, String descripcion) {
         CalendarioEntity calendario = exigir(codigoCalendario);
         ExcepcionCalendarioEntity excepcion = new ExcepcionCalendarioEntity();
         excepcion.setCalendario(calendario);
         excepcion.setFecha(fecha);
         excepcion.setTipo(tipo);
-        excepcion.setDescripcion("Excepción de prueba BDD");
+        excepcion.setDescripcion(descripcion);
         List<ExcepcionCalendarioEntity> excepciones = new ArrayList<>(calendario.getExcepciones());
         excepciones.add(excepcion);
         calendario.reemplazarExcepciones(excepciones);

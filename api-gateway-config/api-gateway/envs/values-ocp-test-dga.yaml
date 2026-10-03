@@ -2,7 +2,7 @@
 # Derivado de admin-srv-config (Gen-ScaffolderEnvOverlays.js). Se aplica: helm -f values.yaml -f envs/values-ocp-test-dga.yaml
 # (ApplicationSet 05-cd-multicluster). Sobreescribe SOLO lo acoplado al cluster.
 # registry -> Quay 3t; Keycloak = el de admin-srv en este cluster; admin-srv en mh-tst-dgicp-siip:
-# CONFIRMAR con infra (P-06).
+# CONFIRMAR con infra (P-05).
 image:
   repository: "quay-quay-quay.apps.ocp-hub-3t.mh.gob.sv/mh-dgicp-siip2/api-gateway"
 configMap:

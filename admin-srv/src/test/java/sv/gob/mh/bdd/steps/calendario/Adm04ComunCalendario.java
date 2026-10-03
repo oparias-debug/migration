@@ -19,7 +19,8 @@ import sv.gob.mh.shared.enums.TipoPeriodo;
  * Steps de CU-ADM-04 (gestión de calendarios) cuyo texto es idéntico en varios .feature del caso de
  * uso (Cucumber exige una única definición por texto en el glue completo): el rol del actor, el rechazo
  * por falta de permisos, el Antecedentes común "existe un calendario ACTIVO con código..., fecha de
- * inicio... y fecha de fin...", y los rechazos de RN08/RN10/RN15/RN17 compartidos entre features.
+ * inicio... y fecha de fin...", los rechazos de RN08/RN10/RN15/RN17 compartidos entre features y el
+ * "hace clic en ..." de los botones de la ficha, que delega en la clase de steps de cada pantalla.
  */
 public class Adm04ComunCalendario {
 
@@ -30,10 +31,15 @@ public class Adm04ComunCalendario {
 
     private final CalendarioFixtures fixtures;
     private final ContextoCalendarioBdd contexto;
+    private final Adm04CalendarioVisual calendarioVisual;
+    private final Adm04EditarDefinicion editarDefinicion;
 
-    public Adm04ComunCalendario(CalendarioFixtures fixtures, ContextoCalendarioBdd contexto) {
+    public Adm04ComunCalendario(CalendarioFixtures fixtures, ContextoCalendarioBdd contexto,
+            Adm04CalendarioVisual calendarioVisual, Adm04EditarDefinicion editarDefinicion) {
         this.fixtures = fixtures;
         this.contexto = contexto;
+        this.calendarioVisual = calendarioVisual;
+        this.editarDefinicion = editarDefinicion;
     }
 
     /** Los escenarios usan códigos fijos ("CAL-2026") y no corren en una transacción revertida. */
@@ -95,6 +101,17 @@ public class Adm04ComunCalendario {
         assertThat(contexto.getUltimoCuerpo().path("estado").asText()).isEqualTo(estadoEsperado);
         assertThat(fixtures.estado(contexto.getCodigoCalendario()))
                 .contains(EstadoCalendario.valueOf(estadoEsperado));
+    }
+
+    // ---------- Botones de la ficha (calendario visual y edición de la definición) ----------
+
+    @Cuando("^hace clic en \"([^\"]*)\"$")
+    public void hace_clic_en(String boton) {
+        switch (boton) {
+            case "Marcar como no laboral" -> calendarioVisual.marcarComoNoLaboral();
+            case "Cancelar" -> editarDefinicion.cancelarEdicion();
+            default -> throw new IllegalArgumentException("Botón no soportado: " + boton);
+        }
     }
 
     // ---------- Rechazos y errores ----------

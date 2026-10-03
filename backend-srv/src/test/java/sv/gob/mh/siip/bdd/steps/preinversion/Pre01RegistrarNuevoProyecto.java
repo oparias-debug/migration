@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -82,6 +83,10 @@ public class Pre01RegistrarNuevoProyecto {
     private final EjeTematicoRepository ejeTematicoRepository;
     private final Validator validator;
     private final ContextoValidacionBdd contextoValidacion;
+
+    // Inyeccion por campo, igual que Pre35RegistrarFichaEmergencia con los pasos que comparte.
+    @Autowired
+    private PantallasFrontComun pantallasFront;
 
     private UnidadEjecutora unidadEjecutora;
     private Institucion institucion;
@@ -240,8 +245,12 @@ public class Pre01RegistrarNuevoProyecto {
 
     @Cuando("el Técnico URP hace clic en {string}")
     public void el_tecnico_urp_hace_clic_en(String opcion) {
-        // "Cancelar"/"Aceptar" de la ventana de confirmacion: sin efecto propio en el backend,
-        // mas alla de lo que ya se verifica en el paso final de cada escenario.
+        // Las features de pantalla (PantallaFront) comparten este texto y le dan efecto propio.
+        if (pantallasFront.hayActiva()) {
+            pantallasFront.tecnicoUrpHaceClic(opcion);
+        }
+        // Para el resto, "Cancelar"/"Aceptar" de la ventana de confirmacion: sin efecto propio en el
+        // backend, mas alla de lo que ya se verifica en el paso final de cada escenario.
     }
 
     @Entonces("el sistema regresa a la pantalla {string} sin guardar los datos")

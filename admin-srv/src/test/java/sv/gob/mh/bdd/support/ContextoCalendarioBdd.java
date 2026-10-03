@@ -91,6 +91,10 @@ public class ContextoCalendarioBdd {
         ejecutar(conCuerpo(MockMvcRequestBuilders.patch(ruta(uri), variables), cuerpo));
     }
 
+    public void delete(String uri, Object... variables) {
+        ejecutar(MockMvcRequestBuilders.delete(ruta(uri), variables));
+    }
+
     private static String ruta(String uri) {
         return CalendarioGestionController.BASE + uri;
     }

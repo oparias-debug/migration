@@ -92,7 +92,7 @@ public class FichaEmergenciaEnsamblador {
      * nacional" es su propio departamento, "{departamento} - Nivel departamental" lleva el nombre
      * delante y el resto se busca por nombre. Devuelve {@code null} si el distrito no está en el
      * catálogo o si su nombre se repite en varios departamentos (p. ej. "San Lorenzo"): la ficha
-     * guarda el distrito por nombre, no por código (ver P-38).
+     * guarda el distrito por nombre, no por código (no existe una entidad Distrito).
      */
     String derivarDepartamento(String distrito) {
         if (distrito == null || distrito.isBlank()) {

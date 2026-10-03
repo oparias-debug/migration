@@ -1,6 +1,8 @@
 package sv.gob.mh.siip.bdd.steps.preinversion;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
@@ -14,6 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class Pre11AvanzarLocalizacion {
 
+    // Las features de pantalla (PantallaFront) comparten "hace clic en {string}" y le dan efecto propio.
+    @Autowired
+    private PantallasFrontComun pantallasFront;
 
     @Dado("que el Técnico URP se encuentra en la pantalla {string} desc-tecnica")
     public void queElTécnicoURPSeEncuentraEnLaPantallaDescTecnica(String arg0) {
@@ -25,6 +30,10 @@ public class Pre11AvanzarLocalizacion {
 
     @Cuando("^hace clic en \"([^\"]*)\"$")
     public void haceClicEn(String nombreBoton) {
+        if (pantallasFront.hayActiva()) {
+            pantallasFront.haceClic(nombreBoton);
+            return;
+        }
         assertThat(nombreBoton)
                 .as("El sistema debe posicionar al usuario en la pantalla de destino")
                 .isEqualTo("Siguiente");

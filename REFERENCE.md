@@ -17,7 +17,6 @@ Para levantar el stack, ver [SETUP.md](./SETUP.md). Para los pasos de "cómo agr
 | Contratos OpenAPI y código generado | [docs/desarrollo.md § Contratos](./backend-srv/docs/desarrollo.md#contratos-openapi-api-first) | [docs/desarrollo.md § Cliente generado](./front/docs/desarrollo.md#cliente-generado-desde-openapi) |
 | Pruebas y cobertura | [docs/desarrollo.md § Pruebas](./backend-srv/docs/desarrollo.md#pruebas) | [docs/desarrollo.md § Pruebas](./front/docs/desarrollo.md#pruebas) |
 | `.feature` (Gherkin) | [§ BDD (Cucumber)](./backend-srv/docs/desarrollo.md#bdd-cucumber): suite automatizada | [§ Especificaciones Gherkin](./front/docs/desarrollo.md#especificaciones-gherkin-features): copias sin steps |
-| Motor de procesos (Flowable) | [docs/desarrollo.md § Flowable](./backend-srv/docs/desarrollo.md#motor-de-procesos-flowable) | — |
 | Análisis estático | [docs/desarrollo.md § SonarQube](./backend-srv/docs/desarrollo.md#análisis-estático-sonarqube) | [docs/desarrollo.md § SonarQube](./front/docs/desarrollo.md#análisis-estático-sonarqube) |
 | Variables de entorno y perfiles | [docs/configuracion.md](./backend-srv/docs/configuracion.md) | [README § Contenedor](./front/README.md#contenedor) |
 

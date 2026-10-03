@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -38,7 +37,6 @@ class ProyectoTramiteCupTest {
     private ProyectoSolicitudesCup solicitudes;
     private UsuarioRepository usuarioRepository;
     private NotificacionService notificacionService;
-    private ProyectoFlujoProceso flujoProceso;
     private GeneradorCup generadorCup;
     private ProyectoTramiteCup tramiteCup;
 
@@ -52,10 +50,9 @@ class ProyectoTramiteCupTest {
         solicitudes = mock(ProyectoSolicitudesCup.class);
         usuarioRepository = mock(UsuarioRepository.class);
         notificacionService = mock(NotificacionService.class);
-        flujoProceso = mock(ProyectoFlujoProceso.class);
         generadorCup = mock(GeneradorCup.class);
         tramiteCup = new ProyectoTramiteCup(proyectoRepository, solicitudes, usuarioRepository, notificacionService,
-                flujoProceso, generadorCup);
+                generadorCup);
 
         tecnicoUrp = Usuario.builder().id(100L).nombreUsuario("tecnico.urp").build();
         tecnicoPre = Usuario.builder().id(200L).build();
@@ -72,7 +69,7 @@ class ProyectoTramiteCupTest {
     }
 
     @Test
-    void solicitar_enviaADgicpRegistraSolicitudNotificaYAvanzaElProceso() {
+    void solicitar_enviaADgicpRegistraSolicitudYNotifica() {
         Proyecto entidad = proyecto(EstadoProyecto.EN_REGISTRO);
         List<Usuario> coordinadores = List.of(Usuario.builder().id(300L).build());
         when(usuarioRepository.findByRolAndActivoTrue(RolUsuario.COORDINADOR_PRE)).thenReturn(coordinadores);
@@ -80,11 +77,10 @@ class ProyectoTramiteCupTest {
         Proyecto resultado = tramiteCup.solicitar(entidad);
 
         assertThat(resultado.getEstado()).isEqualTo(EstadoProyecto.ENVIADO_DGICP_REGISTRO);
-        InOrder orden = inOrder(proyectoRepository, solicitudes, notificacionService, flujoProceso);
+        InOrder orden = inOrder(proyectoRepository, solicitudes, notificacionService);
         orden.verify(proyectoRepository).save(entidad);
         orden.verify(solicitudes).registrarSiNoVigente(entidad);
         orden.verify(notificacionService).notificarSolicitudCup(entidad, coordinadores);
-        orden.verify(flujoProceso).completarTareaEnElaboracion(1L);
     }
 
     @Test
@@ -134,7 +130,7 @@ class ProyectoTramiteCupTest {
     }
 
     @Test
-    void emitir_asignaCupApruebaCancelaProcesoYNotifica() {
+    void emitir_asignaCupApruebaYNotifica() {
         Proyecto entidad = proyecto(EstadoProyecto.ENVIADO_DGICP_REGISTRO);
         when(solicitudes.asignadaVigente(entidad, tecnicoPre)).thenReturn(solicitud);
         when(generadorCup.asignar(entidad)).thenReturn(entidad);
@@ -144,7 +140,6 @@ class ProyectoTramiteCupTest {
         assertThat(resultado.getEstado()).isEqualTo(EstadoProyecto.CUP_ASIGNADO);
         assertThat(resultado.getFechaCupAsignado()).isNotNull();
         verify(solicitudes).cambiarEstado(solicitud, EstadoSolicitud.APROBADA);
-        verify(flujoProceso).cancelar(eq(1L), anyString());
         verify(notificacionService).notificarEmisionCup(entidad, tecnicoUrp);
     }
 

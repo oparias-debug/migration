@@ -15,8 +15,8 @@ Route habilitada: el gateway es el único punto de entrada público. Los probes 
 
 ## Pendientes
 
-- Crear los repositorios Gerrit `api-gateway` y `api-gateway-config` y su ApplicationSet (P-06).
+- Crear los repositorios Gerrit `api-gateway` y `api-gateway-config` y su ApplicationSet (P-05).
 - El gateway vive en `dgicp-siip2`, con backend-srv, siipsafi-srv y frontend-ui; admin-srv está
   en `dgicp-siip`, otro namespace: confirmar con infra la URL y la NetworkPolicy entre ambos.
-- Cliente confidencial del gateway en el realm `MHINTERNO` (P-07).
-- NetworkPolicy de los servicios que admita solo al gateway (P-04).
+- Cliente confidencial del gateway en el realm `MHINTERNO` (P-06).
+- NetworkPolicy de los servicios que admita solo al gateway (P-03).

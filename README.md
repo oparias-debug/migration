@@ -9,7 +9,7 @@ Este README explica **qué es el sistema y cómo está armado**. El resto de la 
 | Documento | Para qué sirve |
 |---|---|
 | [SETUP.md](./SETUP.md) | Levantar el stack: requisitos, variables de entorno, comandos de build/despliegue, accesos una vez arriba. Empezá por acá si es tu primer día. |
-| [REFERENCE.md](./REFERENCE.md) | Referencia técnica: índice hacia la documentación de cada componente (`backend-srv/docs/`, `front/docs/`: OpenAPI, pruebas, BDD, Flowable), más lo que cruza componentes (contratos duplicados back↔front, `api-gateway`, SonarQube local). |
+| [REFERENCE.md](./REFERENCE.md) | Referencia técnica: índice hacia la documentación de cada componente (`backend-srv/docs/`, `front/docs/`: OpenAPI, pruebas, BDD), más lo que cruza componentes (contratos duplicados back↔front, `api-gateway`, SonarQube local). |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Cómo agregar una funcionalidad (CU) nueva a partir de un `.feature` + `.openapi.yaml`: pasos, convenciones, checklist de entrega. |
 | [GLOSSARY.md](./GLOSSARY.md) | Glosario de términos del dominio (roles, siglas, estados) usados en los `.feature`/`.openapi.yaml` de cada CU. |
 
@@ -24,11 +24,11 @@ El proyecto se compone de los siguientes microservicios. `backend-srv`, `api-gat
 | Módulo | Puerto | Descripción |
 |---|---|---|
 | `api-gateway` | 8080 | Spring Cloud Gateway (WebFlux). Enruta las peticiones externas hacia `backend-srv`, aplica seguridad OAuth2/OIDC contra Keycloak, `TokenRelay`, *Circuit Breaker* y *Retry*, y expone `/auth/login`/`/auth/refresh` (con sus propios DTOs `LoginRequest`/`TokenResponse`, package `sv.gob.mh.siip.api_gateway.dto`) contra el token endpoint de Keycloak. Expone Swagger UI agregado. |
-| `backend-srv` | 8081 (solo interno) | Backend único del sistema: catálogos (departamentos, municipios, distritos, sectores, etapas, componentes ambientales, tablas de rangos, catálogos generales), gestión de usuarios/roles/permisos/grupos/objetos protegidos, gestión de proyectos, procesos de preinversión y **motor de workflow (Flowable BPM)** para el registro/aprobación de proyectos. Incluye sus propios DTOs/enums/utilidades (`sv.gob.mh.siip.dto`, `.enums`, `.util`) — antes vivían en el módulo `siip-comun`, fusionado aquí porque ya era su único consumidor real. No tiene Spring Security propio: confía en que solo `api-gateway` lo invoque, por eso no publica su puerto al host. |
+| `backend-srv` | 8081 (solo interno) | Backend único del sistema: catálogos (departamentos, municipios, distritos, sectores, etapas, componentes ambientales, tablas de rangos, catálogos generales), gestión de usuarios/roles/permisos/grupos/objetos protegidos, gestión de proyectos, procesos de preinversión. Incluye sus propios DTOs/enums/utilidades (`sv.gob.mh.siip.dto`, `.enums`, `.util`) — antes vivían en el módulo `siip-comun`, fusionado aquí porque ya era su único consumidor real. No tiene Spring Security propio: confía en que solo `api-gateway` lo invoque, por eso no publica su puerto al host. |
 | `front` | 80 (interno 8080) | SPA en **React + Vite (TypeScript)**. Se sirve con **Apache HTTPD** sobre UBI 9 (`front/Dockerfile`, el mismo en local y en la entidad), que actúa como reverse-proxy same-origin de `/auth/**` y `/back/**` hacia `api-gateway` (evita tener que habilitar CORS). El `Dockerfile` solo empaqueta `dist/`: en la entidad lo compila el pipeline y en local el servicio `front-build` de `docker-compose.yml`. El login se autentica contra Keycloak a través de `api-gateway`. No es un proyecto Maven. |
 | `admin-srv` | 8080 (solo interno) | Servicio de administración (`dgicp-siip/admin-srv`). Hoy es **solo la plantilla del marco DINAFI**, la misma versión que `siipsafi-srv` (Spring Boot 3.5, sin lógica de negocio). A diferencia de `backend-srv`, valida el JWT por su cuenta, y trae autorización por permisos, auditoría y logger remoto. Se llega por `api-gateway` en `/admin/**`. |
 | `siipsafi-srv` | 8080 (solo interno) | Integración de SIIP con SAFI (`dgicp-siip2/siipsafi-srv`). También es **solo la plantilla DINAFI** (Spring Boot 3.5): valida el JWT, y trae autorización por permisos contra el `authorization-service` del MH, auditoría y logger remoto. Se llega por `api-gateway` en `/siipsafi/**`. |
-| `postgres` | 5432 | Base de datos PostgreSQL, con esquema de negocio (`public`) y esquema de Flowable (`flowable`). |
+| `postgres` | 5432 | Base de datos PostgreSQL, con el esquema de negocio (`public`). |
 | `keycloak` | 8085 | Proveedor de identidad (OIDC) para autenticación/autorización de usuarios y del propio API Gateway. |
 
 Todos los servicios comparten la red Docker `microred` y `backend-srv` espera a que `postgres` esté *healthy* antes de arrancar.
@@ -55,16 +55,11 @@ flowchart LR
 
 El navegador solo habla con `front` (un único origen); es su Apache HTTPD quien reenvía `/auth/**` y `/back/**` hacia `api-gateway` dentro de la red Docker. En desarrollo local (`npm run dev`), el servidor de Vite cumple ese mismo rol de proxy (ver [SETUP.md](./SETUP.md) para levantarlo).
 
-### Motor de procesos (Flowable)
+### Ciclo de vida del proyecto
 
-`backend-srv` incluye Flowable embebido. El proceso `Proceso_SIIF.bpmn20.xml` modela el ciclo de vida completo del proyecto (registro → CUP → formulación → viabilidad → elegibilidad → opinión técnica → cierre), pero **solo el tramo de registro y solicitud de CUP está conectado al código**:
+No hay motor de procesos. El ciclo de vida del proyecto (registro → CUP → formulación → viabilidad → elegibilidad → opinión técnica → cierre) vive en los estados de las entidades (`Proyecto.estado`, `SolicitudPreinversion.estado`), y cada servicio valida desde qué estado se puede avanzar. Las bandejas leen esos mismos estados.
 
-- Registrar el proyecto (CU-PRE-01) arranca una instancia del proceso; solicitar el CUP completa su primera tarea.
-- **Emitir el CUP (CU-PRE-01.5) cancela la instancia**, igual que eliminar o archivar automáticamente el proyecto.
-- Nada en el sistema lee las tareas de Flowable: las bandejas y el avance se basan en los estados de las entidades. El resto del BPMN es un diagrama de referencia; si Flowable pasa a ser el motor real de tareas es una decisión pendiente.
-- Usa su propio esquema (`flowable`), separado del de negocio.
-
-El detalle (qué clase hace cada llamada, tolerancia a proyectos sin instancia, verificación al arrancar) está en [backend-srv/docs/desarrollo.md § Motor de procesos](./backend-srv/docs/desarrollo.md#motor-de-procesos-flowable). Para inspeccionar procesos y tareas con la consola oficial de Flowable UI, ver [SETUP.md](./SETUP.md#herramienta-externa-flowable-ui-opcional).
+El diagrama del proceso se conserva como referencia de diseño en [`docs/casos-de-uso/1 - Preinversion/Proceso_SIIF.bpmn20.xml`](./docs/casos-de-uso/1%20-%20Preinversion/Proceso_SIIF.bpmn20.xml) (junto con el borrador por etapas). Hasta el 2026-10-02 el back embebía Flowable, pero solo para el tramo de registro y solicitud de CUP, y nada leía sus tareas. Se quitó porque la base de la entidad no admite su esquema propio.
 
 ## Base de datos: Postgres en local, Oracle en producción
 

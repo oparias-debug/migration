@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 // Usa ApplicationContextRunner en vez de @SpringBootTest para no disparar
-// autoconfiguraciones ajenas (JPA, Flowable, etc.) que exigirían un DataSource real.
+// autoconfiguraciones ajenas (JPA, etc.) que exigirían un DataSource real.
 class OpenApiConfigTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()

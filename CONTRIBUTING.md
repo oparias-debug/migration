@@ -2,7 +2,7 @@
 
 Esta guía es para quien recibe un `.feature` (Gherkin) y un `.openapi.yaml` y tiene que implementar el caso de uso (CU) correspondiente, o extender uno existente, siguiendo el patrón que ya usa `preinversion`/CU-PRE-01 de punta a punta.
 
-Para entender **por qué** el proyecto está armado así (microservicios, Flowable), ver **[README.md](./README.md)**. Para levantar el stack en tu máquina, ver **[SETUP.md](./SETUP.md)**. Para la mecánica de generación de código (OpenAPI → Java/TypeScript) y cómo están organizadas las pruebas, ver **[REFERENCE.md](./REFERENCE.md)**, que remite a la documentación de cada componente (`backend-srv/docs/`, `front/docs/`). Esta guía asume que ya tenés el stack levantado y se enfoca solo en **cómo agregar tu CU**.
+Para entender **por qué** el proyecto está armado así (microservicios), ver **[README.md](./README.md)**. Para levantar el stack en tu máquina, ver **[SETUP.md](./SETUP.md)**. Para la mecánica de generación de código (OpenAPI → Java/TypeScript) y cómo están organizadas las pruebas, ver **[REFERENCE.md](./REFERENCE.md)**, que remite a la documentación de cada componente (`backend-srv/docs/`, `front/docs/`). Esta guía asume que ya tenés el stack levantado y se enfoca solo en **cómo agregar tu CU**.
 
 Esta guía cubre las convenciones compartidas y la parte de `backend-srv`. Para la parte de `front`, ver **[front/CONTRIBUTING.md](./front/CONTRIBUTING.md)**.
 

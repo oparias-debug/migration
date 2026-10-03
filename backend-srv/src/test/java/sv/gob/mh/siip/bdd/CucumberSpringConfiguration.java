@@ -23,10 +23,8 @@ import io.cucumber.spring.CucumberContextConfiguration;
  * no puede resolver los placeholders y el contexto falla al arrancar. El
  * perfil "test" (src/test/resources/application-test.yml) se fusiona con
  * application.yml y las sobreescribe con valores fijos, incluyendo un H2
- * en memoria con el schema "flowable" precreado (Flowable falla si el
- * schema no existe al conectar). replace = NONE evita que
- * AutoConfigureTestDatabase sustituya ese datasource por uno genérico que
- * ignoraría el INIT del schema. {@link AutoConfigureMockMvc} permite a los steps
+ * en memoria. replace = NONE evita que AutoConfigureTestDatabase sustituya
+ * ese datasource por uno genérico. {@link AutoConfigureMockMvc} permite a los steps
  * que validan el contrato HTTP (p.ej. CU-PRE-15) invocar los controladores sin
  * levantar un servidor, en el mismo hilo y transacción del escenario.
  */

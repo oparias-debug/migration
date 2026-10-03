@@ -30,17 +30,15 @@ public class ProyectoTramiteCup {
     private final ProyectoSolicitudesCup solicitudes;
     private final UsuarioRepository usuarioRepository;
     private final NotificacionService notificacionService;
-    private final ProyectoFlujoProceso flujoProceso;
     private final GeneradorCup generadorCup;
 
     public ProyectoTramiteCup(ProyectoRepository proyectoRepository, ProyectoSolicitudesCup solicitudes,
             UsuarioRepository usuarioRepository, NotificacionService notificacionService,
-            ProyectoFlujoProceso flujoProceso, GeneradorCup generadorCup) {
+            GeneradorCup generadorCup) {
         this.proyectoRepository = proyectoRepository;
         this.solicitudes = solicitudes;
         this.usuarioRepository = usuarioRepository;
         this.notificacionService = notificacionService;
-        this.flujoProceso = flujoProceso;
         this.generadorCup = generadorCup;
     }
 
@@ -61,8 +59,6 @@ public class ProyectoTramiteCup {
 
         List<Usuario> coordinadoresPre = usuarioRepository.findByRolAndActivoTrue(RolUsuario.COORDINADOR_PRE);
         notificacionService.notificarSolicitudCup(guardado, coordinadoresPre);
-
-        flujoProceso.completarTareaEnElaboracion(guardado.getId());
         return guardado;
     }
 
@@ -98,7 +94,7 @@ public class ProyectoTramiteCup {
         return guardado;
     }
 
-    /** Asigna el CUP, aprueba la solicitud, cierra el proceso Flowable y notifica al Técnico URP. */
+    /** Asigna el CUP, aprueba la solicitud y notifica al Técnico URP. */
     public Proyecto emitir(Proyecto entidad, Usuario actor) {
         SolicitudPreinversion solicitud = solicitudes.asignadaVigente(entidad, actor);
 
@@ -108,16 +104,6 @@ public class ProyectoTramiteCup {
         Proyecto guardado = proyectoRepository.save(conCup);
 
         solicitudes.cambiarEstado(solicitud, EstadoSolicitud.APROBADA);
-
-        // La unica transicion de Flowable que el codigo realmente empuja es
-        // UT_EnElaboracion -> UT_RevisionCUP (completarTareaEnElaboracion, en solicitar); nada
-        // completa UT_RevisionCUP ni ningun nodo posterior, y nada en el back/front consulta tareas
-        // Flowable por rol. Sin esto, la tarea UT_RevisionCUP quedaria abierta en Flowable para
-        // siempre por cada CUP emitido. El resto del ciclo de vida ya se rastrea de forma completa
-        // en Proyecto.estado/SolicitudPreinversion.estado, asi que se cancela la instancia en vez
-        // de intentar seguir empujandola por un proceso que nadie lee.
-        flujoProceso.cancelar(guardado.getId(), "CUP emitido (CU-PRE-01.5); el resto del ciclo de vida se rastrea por "
-                + "Proyecto.estado, no por Flowable.");
 
         notificacionService.notificarEmisionCup(guardado, tecnicoUrpRegistrante(guardado));
         return guardado;

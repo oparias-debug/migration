@@ -44,9 +44,3 @@ springdoc:
 
 # URL pública de api-gateway: solo se usa como "servers" del OpenAPI (Swagger UI).
 gateway.url: ${GATEWAY_URL:http://localhost:8080}
-
-flowable:
-  databaseSchema: ${FLOWABLE_DB_SCHEMA:flowable}
-  # false: Flowable exige que sus tablas ya existan y en la versión correcta. Debe ir de la
-  # mano con spring.jpa.hibernate.ddl-auto (ver application-dev.yml).
-  database-schema-update: ${FLOWABLE_DB_SCHEMA_UPDATE:false}

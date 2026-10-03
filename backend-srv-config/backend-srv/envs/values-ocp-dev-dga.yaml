@@ -14,5 +14,4 @@ configMap:
     DB_URL: "jdbc:oracle:thin:@<host-bd-dev>:1521/<sid-dev>"
     # Propias de backend-srv (no las genera el scaffolder). CONFIRMAR con el DBA / infra.
     DB_SCHEMA: "<esquema-siip2-dev>"
-    FLOWABLE_DB_SCHEMA: "<esquema-flowable-dev>"
     GATEWAY_URL: "<url-publica-api-gateway-dev>"

@@ -150,12 +150,6 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.flowable/flowable-spring-boot-starter-process -->
-		<dependency>
-			<groupId>org.flowable</groupId>
-			<artifactId>flowable-spring-boot-starter-process</artifactId>
-			<version>7.1.0</version>
-		</dependency>
 
 		<!-- BDD (Gherkin) con Cucumber -->
 		<dependency>
@@ -540,6 +534,16 @@
 								${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-22.1.openapi.yaml</inputSpec>
 							<apiPackage>sv.gob.mh.siip.model.preinversion.programacion.api</apiPackage>
 							<modelPackage>sv.gob.mh.siip.model.preinversion.programacion.dto</modelPackage>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-preinversion-cu23-api</id>
+						<phase>generate-sources</phase>
+						<goals><goal>generate</goal></goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/openapi/preinversion/CU-PRE-23.openapi.yaml</inputSpec>
+							<apiPackage>sv.gob.mh.siip.model.preinversion.indicadores.api</apiPackage>
+							<modelPackage>sv.gob.mh.siip.model.preinversion.indicadores.dto</modelPackage>
 						</configuration>
 					</execution>
 					<execution>

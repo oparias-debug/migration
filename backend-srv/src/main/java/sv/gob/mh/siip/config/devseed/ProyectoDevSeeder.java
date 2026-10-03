@@ -3,9 +3,6 @@ package sv.gob.mh.siip.config.devseed;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.TaskService;
-import org.flowable.task.api.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -31,11 +28,10 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 
 /**
  * Proyectos de ejemplo para probar CU-PRE-01/CU-PRE-01.5/CU-PRE-02 sin tener que registrar uno a
- * mano: uno en "En Elaboración" (recién registrado, tarea Flowable UT_EnElaboracion pendiente),
+ * mano: uno en "En Elaboración" (recién registrado),
  * otro en "Enviado a DGICP (Registro)" sin asignar, otro igual pero ya asignado al Técnico PRE de
  * prueba, otro con el CUP ya emitido (CUP_ASIGNADO), y uno más en la segunda Unidad Ejecutora de
- * prueba (para verificar el acotamiento por UE de CU-PRE-01 RN1). Arranca y avanza el proceso
- * Flowable igual que {@code ProyectoServiceImpl.registrar}/{@code solicitarCup}, sin pasar por
+ * prueba (para verificar el acotamiento por UE de CU-PRE-01 RN1). No pasa por
  * {@code ActorContexto} (no hay actor autenticado durante el arranque).
  */
 @Component
@@ -43,7 +39,6 @@ import sv.gob.mh.siip.model.programacion.repository.SectorActividadRepository;
 @Order(30)
 public class ProyectoDevSeeder implements DevSeeder {
 
-    private static final String PROCESS_DEFINITION_KEY = "proceso_ciclo_vida_proyecto_siip";
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
     private static final double MONTO_ESTIMADO_INVERSION = 100000.0;
 
@@ -54,14 +49,11 @@ public class ProyectoDevSeeder implements DevSeeder {
     private final SectorActividadRepository sectorActividadRepository;
     private final EjeTematicoRepository ejeTematicoRepository;
     private final UsuarioRepository usuarioRepository;
-    private final RuntimeService runtimeService;
-    private final TaskService taskService;
 
     public ProyectoDevSeeder(ProyectoRepository proyectoRepository,
             SolicitudPreinversionRepository solicitudRepository, InstitucionRepository institucionRepository,
             UnidadEjecutoraRepository unidadEjecutoraRepository, SectorActividadRepository sectorActividadRepository,
-            EjeTematicoRepository ejeTematicoRepository, UsuarioRepository usuarioRepository,
-            RuntimeService runtimeService, TaskService taskService) {
+            EjeTematicoRepository ejeTematicoRepository, UsuarioRepository usuarioRepository) {
         this.proyectoRepository = proyectoRepository;
         this.solicitudRepository = solicitudRepository;
         this.institucionRepository = institucionRepository;
@@ -69,8 +61,6 @@ public class ProyectoDevSeeder implements DevSeeder {
         this.sectorActividadRepository = sectorActividadRepository;
         this.ejeTematicoRepository = ejeTematicoRepository;
         this.usuarioRepository = usuarioRepository;
-        this.runtimeService = runtimeService;
-        this.taskService = taskService;
     }
 
     @Override
@@ -136,12 +126,6 @@ public class ProyectoDevSeeder implements DevSeeder {
                 .tecnicoAsignado(tecnicoPre)
                 .fechaAsignacion(LocalDateTime.now(ZONA_EL_SALVADOR))
                 .build());
-
-        runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, String.valueOf(proyecto.getId()));
-        Task tareaEnElaboracion = taskService.createTaskQuery()
-                .processInstanceBusinessKey(String.valueOf(proyecto.getId()))
-                .singleResult();
-        taskService.complete(tareaEnElaboracion.getId());
     }
 
     /**
@@ -149,11 +133,7 @@ public class ProyectoDevSeeder implements DevSeeder {
      * pasos manuales pantallas que dependen de un CUP ya asignado (p.ej. Formulación/CU-PRE-03)
      * sin tener que pasar a mano por "Solicitar CUP" → asignación → "Emitir CUP". Replica en la
      * base los mismos cambios que {@code ProyectoServiceImpl.emitirCup()} hace en Proyecto/
-     * SolicitudPreinversion. Igual que ese método (y que el resto de la app hoy: es el único lugar
-     * para el código que llama a {@code taskService.complete}, y solo para UT_EnElaboracion),
-     * NO completa la tarea Flowable "UT_RevisionCUP" — queda pendiente en Flowable aunque el
-     * proyecto ya esté en CUP_ASIGNADO en la base de datos; no es una inconsistencia introducida
-     * acá, es el mismo estado en el que emitirCup() deja las cosas en producción.
+     * SolicitudPreinversion.
      */
     private void crearProyectoConCupAsignado(String nombre, UnidadEjecutora unidadEjecutora, Institucion institucion,
             SectorActividad sector, EjeTematico ejeTematico) {
@@ -177,12 +157,6 @@ public class ProyectoDevSeeder implements DevSeeder {
                 .tecnicoAsignado(tecnicoPre)
                 .fechaAsignacion(LocalDateTime.now(ZONA_EL_SALVADOR))
                 .build());
-
-        runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, String.valueOf(proyecto.getId()));
-        Task tareaEnElaboracion = taskService.createTaskQuery()
-                .processInstanceBusinessKey(String.valueOf(proyecto.getId()))
-                .singleResult();
-        taskService.complete(tareaEnElaboracion.getId());
     }
 
 
@@ -191,9 +165,7 @@ public class ProyectoDevSeeder implements DevSeeder {
         if (!proyectoRepository.findByNombreContainingIgnoreCase(nombre).isEmpty()) {
             return;
         }
-        Proyecto proyecto = nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico);
-        proyecto = proyectoRepository.save(proyecto);
-        runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, String.valueOf(proyecto.getId()));
+        proyectoRepository.save(nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico));
     }
 
     private void crearProyectoEnviadoDgicpRegistro(String nombre, UnidadEjecutora unidadEjecutora,
@@ -211,12 +183,6 @@ public class ProyectoDevSeeder implements DevSeeder {
                 .estado(EstadoSolicitud.REGISTRADA)
                 .fechaSolicitud(LocalDateTime.now(ZONA_EL_SALVADOR))
                 .build());
-
-        runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, String.valueOf(proyecto.getId()));
-        Task tareaEnElaboracion = taskService.createTaskQuery()
-                .processInstanceBusinessKey(String.valueOf(proyecto.getId()))
-                .singleResult();
-        taskService.complete(tareaEnElaboracion.getId());
     }
 
     private static Proyecto nuevoProyectoBase(String nombre, UnidadEjecutora unidadEjecutora, Institucion institucion,

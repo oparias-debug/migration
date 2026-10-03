@@ -23,7 +23,7 @@ fullnameOverride: "api-gateway"
 containerPort: 8080
 
 # Con Route: api-gateway es el único punto de entrada público de SIIP (front y Swagger UI).
-# backend-srv, admin-srv y siipsafi-srv no tienen Route y solo los invoca el gateway (P-04).
+# backend-srv, admin-srv y siipsafi-srv no tienen Route y solo los invoca el gateway (P-03).
 # Host por defecto de OpenShift: api-gateway-<namespace>.apps.<dominio del cluster>.
 route:
   enabled: true
@@ -241,7 +241,7 @@ configMap:
     # Servicios a los que enruta (Service, puerto 80). backend-srv y siipsafi-srv viven en el
     # mismo namespace que el gateway (mh-<env>-dgicp-siip2); admin-srv en el de dgicp-siip, por
     # eso va con <service>.<namespace>.svc. CONFIRMAR con infra la NetworkPolicy que admita ese
-    # tráfico entre namespaces (P-04).
+    # tráfico entre namespaces (P-03).
     BACKEND_SRV_URL: "http://backend-srv"
     ADMIN_SRV_URL: "http://admin-srv.mh-dev-dgicp-siip.svc"
     SIIPSAFI_SRV_URL: "http://siipsafi-srv"
@@ -250,7 +250,7 @@ configMap:
     KEYCLOAK_INTERNAL_URL: "https://keycloak-mh-dev.apps.gcp-op-desa.cloud.mh.gob.sv"
     KEYCLOAK_REALM: "MHINTERNO"
     # Cliente confidencial del gateway en el realm. CONFIRMAR con infra: en local es
-    # api-gateway (keycloak/realm-export.json); en MHINTERNO aún no existe (P-07).
+    # api-gateway (keycloak/realm-export.json); en MHINTERNO aún no existe (P-06).
     KEYCLOAK_CLIENT_ID: "<cliente-api-gateway>"
 
 # Verificacion post-despliegue. La lee el CICLO (task karate-verify), no la aplicacion.
@@ -266,10 +266,10 @@ verificacion:
   # CORS, asi que sale correcto por construccion. NO se deduce a ojo: hacerlo fallo en 4
   # de 8 servicios ya existentes, que viven en namespaces distintos, y una URL equivocada
   # deja la verificacion colgada 900 s antes de rendirse.
-  # Vacía hasta que exista el despliegue (P-06): apuntar a una URL que no responde cuelga la
+  # Vacía hasta que exista el despliegue (P-05): apuntar a una URL que no responde cuelga la
   # verificación 900 s. Con el namespace mh-dev-dgicp-siip2, el host de la Route es:
   #   "https://api-gateway-mh-dev-dgicp-siip2.apps.gcp-op-desa.cloud.mh.gob.sv"
-  # Desde entonces, la verificación de backend-srv, admin-srv y siipsafi-srv pasa por aquí (P-04).
+  # Desde entonces, la verificación de backend-srv, admin-srv y siipsafi-srv pasa por aquí (P-03).
   baseUrl: ""
   # Emisor del token: el authentication-service del marco, que hace de fachada del
   # Keycloak del ambiente. Mismo host que el resto de URLs del marco de este fichero.

@@ -10,9 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.runtime.ProcessInstance;
-import org.flowable.engine.runtime.ProcessInstanceQuery;
 import org.junit.jupiter.api.Test;
 
 import sv.gob.mh.siip.model.common.domain.Institucion;
@@ -31,17 +28,9 @@ class AlertaEliminacionAutomaticaSchedulerTest {
     private final ProyectoRepository proyectoRepository = mock(ProyectoRepository.class);
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final NotificacionService notificacionService = mock(NotificacionService.class);
-    private final RuntimeService runtimeService = mock(RuntimeService.class);
-    private final ProcessInstanceQuery processInstanceQuery = mock(ProcessInstanceQuery.class);
 
     private final AlertaEliminacionAutomaticaScheduler scheduler = new AlertaEliminacionAutomaticaScheduler(
-            solicitudRepository, proyectoRepository, usuarioRepository, notificacionService, runtimeService);
-
-    {
-        when(runtimeService.createProcessInstanceQuery()).thenReturn(processInstanceQuery);
-        when(processInstanceQuery.processInstanceBusinessKey(any())).thenReturn(processInstanceQuery);
-        when(processInstanceQuery.singleResult()).thenReturn(null);
-    }
+            solicitudRepository, proyectoRepository, usuarioRepository, notificacionService);
 
     private Proyecto proyecto() {
         Institucion institucion = Institucion.builder().id(1L).codigo("INS").nombre("Institucion").activo(true)
@@ -85,26 +74,6 @@ class AlertaEliminacionAutomaticaSchedulerTest {
         verify(proyectoRepository).save(org.mockito.ArgumentMatchers.argThat(p -> !p.getActivo()));
         verify(solicitudRepository).save(org.mockito.ArgumentMatchers
                 .argThat(s -> s.getEstado() == EstadoSolicitud.ARCHIVADA));
-        verify(runtimeService, never()).deleteProcessInstance(any(), any());
-    }
-
-    @Test
-    void ejecutar_cancelaProcesoFlowable_cuandoExisteInstanciaDeProceso() {
-        SolicitudPreinversion solicitud = SolicitudPreinversion.builder().id(1L).proyecto(proyecto())
-                .tipoSolicitud(TipoSolicitud.CUP).estado(EstadoSolicitud.REGISTRADA)
-                .fechaAlertaEliminacion(LocalDateTime.now().minusDays(14)).build();
-        when(solicitudRepository.findByTipoSolicitudAndEstadoAndFechaAlertaEliminacionIsNullAndFechaSolicitudBefore(
-                any(), any(), any())).thenReturn(List.of());
-        when(solicitudRepository.findByTipoSolicitudAndEstadoAndFechaAlertaEliminacionIsNotNull(any(), any()))
-                .thenReturn(List.of(solicitud));
-        ProcessInstance instancia = mock(ProcessInstance.class);
-        when(instancia.getId()).thenReturn("instancia-1");
-        when(processInstanceQuery.singleResult()).thenReturn(instancia);
-
-        scheduler.ejecutar();
-
-        verify(processInstanceQuery).processInstanceBusinessKey("1");
-        verify(runtimeService).deleteProcessInstance(org.mockito.ArgumentMatchers.eq("instancia-1"), any());
     }
 
     @Test

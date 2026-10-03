@@ -1,6 +1,7 @@
 package sv.gob.mh.siip.model.preinversion.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -14,4 +15,7 @@ public interface ProductoIndicadorCatalogoRepository extends JpaRepository<Produ
     boolean existsByCodigoIndicador(String codigoIndicador);
 
     List<ProductoIndicadorCatalogo> findByCodigoProductoIn(List<String> codigosProducto);
+
+    Optional<ProductoIndicadorCatalogo> findByCodigoProductoAndCodigoIndicador(String codigoProducto,
+            String codigoIndicador);
 }

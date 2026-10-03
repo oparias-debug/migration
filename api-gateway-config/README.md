@@ -5,7 +5,7 @@ repositorio `-config` de la plantilla DINAFI: ArgoCD lo despliega y la rama es e
 Se derivó de `admin-srv-config` (mismos templates, `admin-srv` → `api-gateway`); lo propio del
 gateway está en `values.yaml` y en `envs/`.
 
-> Todavía no existe el repositorio Gerrit `dgicp-siip2/api-gateway-config` (P-06). Mientras
+> Todavía no existe el repositorio Gerrit `dgicp-siip2/api-gateway-config` (P-05). Mientras
 > tanto este directorio vive solo en el monorepo `siip`.
 
 ## Estructura
@@ -58,12 +58,12 @@ gateway los expone sin token (solo `health`, sin detalles).
 
 ## Pendientes / por confirmar
 
-- **Proyecto del gateway (P-06).** `dgicp-siip2`, según la decisión de separar backend, front y
+- **Proyecto del gateway (P-05).** `dgicp-siip2`, según la decisión de separar backend, front y
   api-gateway en repos Gerrit de ese proyecto. Si infra lo ubica en otro, cambian las tres URLs.
-- **Cliente del gateway en MHINTERNO (P-07).** En local es `api-gateway`
+- **Cliente del gateway en MHINTERNO (P-06).** En local es `api-gateway`
   (`keycloak/realm-export.json`). El gateway también registra el cliente `swagger-ui` para el
   login de Swagger UI: hay que pedir ambos o decidir cuál se usa.
-- **Tráfico entre namespaces (P-04).** La NetworkPolicy de admin-srv debe admitir los pods de
+- **Tráfico entre namespaces (P-03).** La NetworkPolicy de admin-srv debe admitir los pods de
   este gateway, que está en otro namespace (`dgicp-siip2`).
 - **Dominio de los clusters `ocp-*`.** Los overlays toman el Keycloak que usa admin-srv en cada
   cluster; los de admin-srv también dicen "CONFIRMAR con infra".

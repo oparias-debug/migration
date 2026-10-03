@@ -11,7 +11,7 @@ Está en [`docs/`](docs/index.md) y se publica como TechDocs en la ficha del com
 Developer Hub:
 
 - [Arquitectura](docs/architecture.md)
-- [Desarrollo](docs/desarrollo.md): contratos OpenAPI, pruebas, Flowable y SonarQube.
+- [Desarrollo](docs/desarrollo.md): contratos OpenAPI, pruebas y SonarQube.
 - [Configuración y ambientes](docs/configuracion.md): variables de entorno, perfiles y cómo
   se configura cada ambiente.
 
@@ -25,8 +25,8 @@ que despliega ArgoCD): ConfigMap `backend-srv-cmp` para lo no sensible y Secret
 
 ## Arranque rápido (local)
 
-Requisitos: JDK 21 y una base de datos PostgreSQL con dos esquemas: el de negocio (`public`) y
-`flowable`. Con las variables mínimas:
+Requisitos: JDK 21 y una base de datos PostgreSQL con el esquema de negocio (`public`). Con las
+variables mínimas:
 
 ```bash
 export DB_URL="jdbc:postgresql://localhost:5432/preinversiondb"

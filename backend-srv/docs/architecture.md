@@ -9,7 +9,6 @@ subcarpetas por dominio de todos modos:
 ```
 sv.gob.mh.siip
 ├── SiipApplication.java        # @SpringBootApplication, @EnableJpaAuditing, @EnableScheduling
-├── bpm/listeners/               # Listeners de Flowable (BPM)
 ├── config/                      # Beans, OpenAPI (springdoc), manejo global de errores, seed de datos dev
 ├── controller/                  # Controladores REST (uno por caso de uso / recurso)
 ├── exception/                   # Excepciones de dominio
@@ -43,15 +42,13 @@ paquetes, por la razón explicada al inicio de esta página:
 | `layer-api` | `controller/` + clases `api`/`dto` generadas por dominio (`model/<dominio>/`) |
 | `layer-application` | `model/<dominio>/service/` |
 | `layer-domain` | `model/<dominio>/domain/`, `model/<dominio>/enums/` |
-| `layer-infrastructure` | `model/<dominio>/repository/`, `config/`, `bpm/listeners/` |
+| `layer-infrastructure` | `model/<dominio>/repository/`, `config/` |
 | `layer-shared` | `exception/`, `model/common/`, `security/` |
 
-## Motor de procesos (Flowable)
+## Ciclo de vida del proyecto
 
-`backend-srv` incluye Flowable embebido (`processes/Proceso_SIIF.bpmn20.xml`), con
-su propio esquema de base de datos (`flowable`, separado del esquema de
-negocio `public`). Qué tramo del proceso está conectado al código está en
-[Desarrollo § Motor de procesos](desarrollo.md#motor-de-procesos-flowable).
+No hay motor de procesos: el ciclo de vida se modela con los estados de las entidades. Ver
+[Desarrollo § Ciclo de vida del proyecto](desarrollo.md#ciclo-de-vida-del-proyecto).
 
 ## Auditoría
 

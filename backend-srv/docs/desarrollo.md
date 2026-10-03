@@ -1,6 +1,6 @@
 # Desarrollo
 
-Cómo se trabaja en el código de `backend-srv`: contratos OpenAPI, pruebas, motor de procesos y
+Cómo se trabaja en el código de `backend-srv`: contratos OpenAPI, pruebas, ciclo de vida del proyecto y
 análisis estático. Para las variables de entorno y los perfiles, ver
 [Configuración y ambientes](configuracion.md).
 
@@ -104,32 +104,18 @@ src/test/java/sv/gob/mh/siip/bdd/
   duplicado o ambiguo en `steps/`: un solo conflicto hace que Cucumber deje de registrar el
   resto de los pasos.
 
-## Motor de procesos (Flowable)
+## Ciclo de vida del proyecto
 
-Flowable corre embebido. `src/main/resources/processes/Proceso_SIIF.bpmn20.xml` modela el
-ciclo de vida completo del proyecto (registro → CUP → formulación → viabilidad →
-elegibilidad → opinión técnica → cierre), pero **solo el tramo de registro y solicitud de CUP
-está conectado al código**. Todos los accesos pasan por `ProyectoFlujoProceso`:
+No hay motor de procesos. El avance del proyecto (registro → CUP → formulación → viabilidad →
+elegibilidad → opinión técnica → cierre) se guarda en `Proyecto.estado` y
+`SolicitudPreinversion.estado`. Cada servicio valida desde qué estados admite su operación y
+responde 409 (`ConflictoEstadoException`) si el proyecto no está en uno de ellos. Las bandejas
+leen esos mismos estados.
 
-| Momento | Qué hace | Dónde |
-|---|---|---|
-| Registrar proyecto (CU-PRE-01) | Arranca una instancia (`businessKey` = id del proyecto) | `iniciar` |
-| Solicitar CUP (CU-PRE-01) | Completa la tarea "en elaboración" | `completarTareaEnElaboracion` |
-| Emitir CUP (CU-PRE-01.5) | Cancela la instancia | `cancelar` |
-| Eliminar o archivar automáticamente | Cancela la instancia | `cancelar` (también `AlertaEliminacionAutomaticaScheduler`) |
-
-Nada en el sistema lee las tareas de Flowable ni sus `candidateGroups`: las bandejas y el
-avance del proyecto se basan en los estados de las entidades (`Proyecto.estado`,
-`SolicitudPreinversion.estado`). Por eso el proceso se cancela al emitir el CUP en vez de
-avanzar por nodos que nadie consulta. El resto del BPMN es un diagrama de referencia; si
-Flowable pasa a ser el motor real de tareas es una decisión pendiente.
-
-Las llamadas toleran que el proyecto no tenga instancia (datos creados fuera del flujo, como
-en las pruebas). Al arrancar, `FlowableStartupLogger` registra cuántas definiciones de proceso
-y tareas activas hay, para verificar que el motor cargó.
-
-Flowable usa su propio esquema (`FLOWABLE_DB_SCHEMA`, por defecto `flowable`), separado del de
-negocio.
+El diagrama BPMN del proceso (`Proceso_SIIF.bpmn20.xml`) se conserva como referencia de diseño en
+la documentación de casos de uso del proyecto, no en este repositorio. Hasta el 2026-10-02
+`backend-srv` embebía Flowable, pero solo para el tramo de registro y solicitud de CUP, y nada
+leía sus tareas. Se quitó porque la base de la entidad no admite su esquema propio.
 
 ## Auditoría
 

@@ -10,7 +10,6 @@ Cómo levantar el stack completo o un módulo puntual. Para entender qué es cad
 - [Base de datos: Postgres en local, Oracle en producción](#base-de-datos-postgres-en-local-oracle-en-producción)
 - [Configuración por ambiente en la entidad (backend-srv-config)](#configuración-por-ambiente-en-la-entidad-backend-srv-config)
 - [Compilación y despliegue](#compilación-y-despliegue)
-- [Herramienta externa: Flowable UI (opcional)](#herramienta-externa-flowable-ui-opcional)
 - [Accesos una vez levantado el stack](#accesos-una-vez-levantado-el-stack)
 
 ## Primer día: levantar todo en 10 minutos
@@ -87,17 +86,16 @@ DB_SCHEMA=<esquema_dueño_de_las_tablas>
 
 Prerrequisitos operativos (no son cambios de código):
 - Oracle debe ser **12c o superior** (la entidad `Proyecto` usa `GenerationType.IDENTITY`, soportado desde esa versión).
-- El esquema `flowable` (separado del esquema de negocio, ver [Motor de procesos](./README.md#motor-de-procesos-flowable)) debe provisionarlo el DBA como un segundo usuario/esquema Oracle con los grants cruzados correspondientes hacia el usuario de la app — en Postgres esto lo hace automáticamente `postgresql/init.sql`, pero ese mecanismo no aplica a Oracle.
 
 ### Configuración de esquema por perfil
 
-| Perfil | Dónde se usa | `JPA_DDL_AUTO` | `FLOWABLE_DB_SCHEMA_UPDATE` | Datos de prueba |
-|---|---|---|---|---|
-| `dev` (`application-dev.yml`) | local: `docker-compose.yml`, `dist-tester` | `create-drop` | `drop-create` | Sí (`DevSeeder`) |
-| `test` (`src/test/resources/application-test.yml`) | `mvn test` (H2 en memoria) | `create-drop` | `drop-create` | No (cada prueba arma lo suyo) |
-| `prod` (por defecto, `application.yml`) | ambientes de la entidad | `validate` | `false` | No |
+| Perfil | Dónde se usa | `JPA_DDL_AUTO` | Datos de prueba |
+|---|---|---|---|
+| `dev` (`application-dev.yml`) | local: `docker-compose.yml`, `dist-tester` | `create-drop` | Sí (`DevSeeder`) |
+| `test` (`src/test/resources/application-test.yml`) | `mvn test` (H2 en memoria) | `create-drop` | No (cada prueba arma lo suyo) |
+| `prod` (por defecto, `application.yml`) | ambientes de la entidad | `validate` | No |
 
-Los dos valores se pueden sobreescribir con esas variables de entorno, pero el valor por defecto de `application.yml` es a propósito el seguro: si a un ambiente compartido le falta la variable, la app **no** crea ni borra tablas; si el esquema no existe, el arranque falla y se ve.
+El valor se puede sobreescribir con esa variable de entorno, pero el valor por defecto de `application.yml` es a propósito el seguro: si a un ambiente compartido le falta la variable, la app **no** crea ni borra tablas; si el esquema no existe, el arranque falla y se ve.
 
 > **Estado actual — sin herramienta de migraciones.** En local (`dev`) agregar una columna o tabla nueva a una entidad JPA no requiere ningún paso extra: el esquema se recrea solo al levantar `backend-srv`. En la entidad eso no alcanza: con `validate`, cada cambio de entidad necesita que el esquema de Oracle ya lo tenga. Falta decidir cómo se entrega ese DDL (scripts para el DBA o Flyway/Liquibase) — está anotado en los pendientes de `backend-srv-config/README.md`.
 
@@ -158,16 +156,6 @@ El servidor de Vite (`http://localhost:5173`) proxya `/auth/**` y `/back/**` hac
 
 `npm run build` compila con TypeScript y genera el bundle de producción en `front/dist/` (lo que empaqueta el `Dockerfile`). Para la estructura de carpetas del front, ver [front/docs/architecture.md](./front/docs/architecture.md).
 
-### Herramienta externa: Flowable UI (opcional)
-
-Para inspeccionar procesos/tareas con la consola oficial de Flowable:
-
-```
-docker run -p 8090:8080 flowable/flowable-ui
-```
-
-> Nota: el puerto interno del contenedor sigue siendo 8080 (el mismo que `api-gateway`), por eso se remapea al host como 8090 con `-p 8090:8080` — así puede levantarse junto con el resto del stack sin conflicto. La consola queda accesible en http://localhost:8090.
-
 ## Accesos una vez levantado el stack
 
 | Servicio | URL |
@@ -177,4 +165,3 @@ docker run -p 8090:8080 flowable/flowable-ui
 | Keycloak | http://localhost:8085 |
 | PostgreSQL | localhost:5432 |
 | SonarQube | http://localhost:9000 |
-| Flowable UI (opcional, ver arriba) | http://localhost:8090 |

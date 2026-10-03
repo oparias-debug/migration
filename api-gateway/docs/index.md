@@ -6,7 +6,7 @@ token para que cada servicio haga su propia autorización.
 
 | Componente | Repositorio Gerrit | Configuración |
 |---|---|---|
-| api-gateway | `dgicp-siip2/api-gateway` (por crear, P-06) | `dgicp-siip2/api-gateway-config` |
+| api-gateway | `dgicp-siip2/api-gateway` (por crear, P-05) | `dgicp-siip2/api-gateway-config` |
 
 ## Contenido
 

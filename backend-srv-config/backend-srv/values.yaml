@@ -259,12 +259,6 @@ configMap:
     JPA_DDL_AUTO: "validate"
     JPA_SHOW_SQL: "false"
 
-    # --- Motor de procesos (Flowable) ---
-    # Esquema propio de Flowable, separado del de negocio. CONFIRMAR con el DBA.
-    FLOWABLE_DB_SCHEMA: "<esquema-flowable-dev>"
-    # false: Flowable exige sus tablas ya creadas (mismo criterio que JPA_DDL_AUTO).
-    FLOWABLE_DB_SCHEMA_UPDATE: "false"
-
     # --- Integración ---
     # URL pública de api-gateway; solo alimenta los "servers" del OpenAPI (Swagger UI).
     # CONFIRMAR cuando exista el despliegue de api-gateway en el cluster.

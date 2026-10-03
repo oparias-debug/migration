@@ -1,3 +1,40 @@
+# Scripts
+
+| Script | Para qué sirve |
+|---|---|
+| [run-tests.ps1](run-tests.ps1) | Corre las pruebas de backend-srv, api-gateway y front en un solo comando. |
+| [comparar-contratos.ps1](comparar-contratos.ps1) | Dice si las copias de contratos y `.feature` de front coinciden con las de backend-srv y admin-srv. |
+| [publish-images.ps1](publish-images.ps1) | Publica las imágenes del tester (ver abajo). |
+
+## Comparar contratos y features entre servicios y front
+
+front guarda copias de los `.openapi.yaml` (`front/openapi/`) y de los `.feature`
+(`front/features/`), cuyos originales viven en `backend-srv` o `admin-srv`. El script empareja
+cada copia con su original por nombre de archivo y la clasifica:
+
+| Estado | Qué significa |
+|---|---|
+| `IGUAL` | Misma versión en el servicio y en front. |
+| `DISTINTO` | El contenido difiere: definir cuál es la buena, copiarla y, si es un `.yaml`, correr `npm run generate:api` en front. |
+| `SOLO-FRONT` | Front lo tiene y ningún servicio: se renombró, se borró o es propio del front. |
+| `SOLO-SERVICIO` | El servicio lo tiene y front no. Suele ser normal: por defecto solo se cuenta. |
+| `DUPLICADO` | backend-srv y admin-srv tienen un archivo con el mismo nombre. |
+
+Las diferencias de fin de línea y de espacios al final de las líneas se ignoran. Termina con
+código 1 si hay algún `DISTINTO` o `DUPLICADO`, así que sirve también como chequeo antes de un
+commit.
+
+```powershell
+# Resumen, sin los archivos iguales
+.\scripts\comparar-contratos.ps1 -SoloDiferencias
+
+# Solo los contratos, con el diff de cada uno ("-" es el servicio, "+" es front)
+.\scripts\comparar-contratos.ps1 -Tipo Contratos -SoloDiferencias -Diff
+
+# Listar también lo que front no tiene
+.\scripts\comparar-contratos.ps1 -Tipo Features -IncluirSoloServicio
+```
+
 # Publicar / actualizar las imágenes del tester
 
 Esto es para vos (quien mantiene el ambiente), no para el tester — su instructivo está en

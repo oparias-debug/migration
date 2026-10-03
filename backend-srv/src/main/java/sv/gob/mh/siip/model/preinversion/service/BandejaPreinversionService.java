@@ -98,8 +98,8 @@ public class BandejaPreinversionService {
     /**
      * RN11 (nueva): solo deshace un archivo manual (botón "Archivar"). Una solicitud archivada
      * automáticamente por el scheduler (RN-4 CU-PRE-01) no tiene {@code estadoPrevioArchivo}
-     * guardado — ese archivo ya canceló la instancia de proceso Flowable y desactivó el proyecto,
-     * así que no hay un estado seguro al cual volver.
+     * guardado — ese archivo ya desactivó el proyecto, así que no hay un estado seguro al cual
+     * volver.
      */
     public SolicitudActivaItemDto desarchivar(Long id) {
         actores.exigirRol(RolUsuario.COORDINADOR_PRE);

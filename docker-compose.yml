@@ -186,7 +186,6 @@ services:
       - "5432:5432"
     volumes:
       - siip_pgdata:/var/lib/postgresql/data
-      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"] # Comando para verificar la salud
       interval: 5s       # Cada cuánto se ejecuta el test
