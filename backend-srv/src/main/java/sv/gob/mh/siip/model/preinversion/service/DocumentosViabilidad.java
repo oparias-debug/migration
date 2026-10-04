@@ -75,7 +75,7 @@ public class DocumentosViabilidad {
             repositorio.findFirstByProyectoIdAndTipoDocumento(proyecto.getId(), tipoDocumento)
                     .ifPresent(this::eliminar);
         }
-        Path ruta = Path.of(directorioBase, "viabilidad", String.valueOf(proyecto.getId()),
+        var ruta = Path.of(directorioBase, "viabilidad", String.valueOf(proyecto.getId()),
                 tipoDocumento.name().toLowerCase(Locale.ROOT) + "-" + UUID.randomUUID()
                         + sufijoExtension(nombreOriginal));
         guardarBytes(ruta, archivo);

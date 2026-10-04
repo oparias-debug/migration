@@ -38,7 +38,7 @@ public class UsuarioDevSeeder implements DevSeeder {
                         .activo(true)
                         .build()));
 
-        UnidadEjecutora unidadEjecutora = unidadEjecutoraRepository.findByCodigo("URP-01")
+        var unidadEjecutora = unidadEjecutoraRepository.findByCodigo("URP-01")
                 .orElseGet(() -> unidadEjecutoraRepository.save(UnidadEjecutora.builder()
                         .institucion(institucion)
                         .codigo("URP-01")
@@ -57,7 +57,7 @@ public class UsuarioDevSeeder implements DevSeeder {
                         .activo(true)
                         .build()));
 
-        UnidadEjecutora unidadEjecutora2 = unidadEjecutoraRepository.findByCodigo("URP-02")
+        var unidadEjecutora2 = unidadEjecutoraRepository.findByCodigo("URP-02")
                 .orElseGet(() -> unidadEjecutoraRepository.save(UnidadEjecutora.builder()
                         .institucion(institucion2)
                         .codigo("URP-02")

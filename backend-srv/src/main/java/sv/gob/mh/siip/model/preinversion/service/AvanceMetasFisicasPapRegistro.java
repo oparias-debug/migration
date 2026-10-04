@@ -58,7 +58,7 @@ final class AvanceMetasFisicasPapRegistro {
                 .orElseGet(() -> progRepository.save(
                         ProgCuatrimestralMetaFisica.builder().etapaMetaFisica(etapaMeta).anio(anio).build()));
 
-        BigDecimal avanceCuatrimestre = BigDecimal.valueOf(etapaRequest.getAvanceCuatrimestre());
+        var avanceCuatrimestre = BigDecimal.valueOf(etapaRequest.getAvanceCuatrimestre());
         BigDecimal ejecutadoPrevioDelAnio = periodo == Cuatrimestre.CUATRIMESTRE_I
                 ? BigDecimal.ZERO
                 : calculos.ejecutadoEnAnioHastaPeriodo(etapaMeta.getId(), anio,

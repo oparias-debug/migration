@@ -75,7 +75,7 @@ public class PresupuestoInversionService {
 
     public MacroactividadDto registrar(Long id, Integer producto, MacroactividadRequestDto req) {
         actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarEditable(id);
+        var proyecto = buscarEditable(id);
         PresupuestoInversionMacroactividades.validar(req);
         PresupuestoProyecto p = obtenerOCrear(proyecto);
         MacroactividadDto registrada = macroactividades.registrar(p, producto, req);
@@ -85,7 +85,7 @@ public class PresupuestoInversionService {
 
     public PresupuestoDto guardar(Long id) {
         actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscar(id);
+        var proyecto = buscar(id);
         PresupuestoProyecto p = obtenerOCrear(proyecto);
         macroactividades.exigirPorProducto(p, ensamblador.contarProductos(id));
         return conCostoEjecucion(id, ensamblador.dto(proyecto, p));
@@ -120,7 +120,7 @@ public class PresupuestoInversionService {
      * esta bloqueada (CU-PRE-24 RN04).
      */
     private Proyecto buscarEditable(Long id) {
-        Proyecto proyecto = buscar(id);
+        var proyecto = buscar(id);
         EdicionFormulacion.exigirEditable(proyecto);
         return proyecto;
     }

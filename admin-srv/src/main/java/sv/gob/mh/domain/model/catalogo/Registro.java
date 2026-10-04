@@ -7,21 +7,20 @@ import java.util.List;
 import java.util.Map;
 
 import sv.gob.mh.shared.enums.EstadoVigencia;
-import sv.gob.mh.shared.exception.ErrorCatalogoException;
 
 /**
- * Registro de un {@link Catalogo}: el valor de su campo KEY ({@code clave}) y los del resto de
- * campos. Los valores se guardan como texto (el contrato los declara {@code additionalProperties:
- * true}, sin escenario de CU-ADM-01 que dependa de conservar el tipo original).
+ * Registro de un {@link Catalogo}: el valor de su campo KEY ({@code clave}), los del resto de
+ * campos en versión STRING (RN-11), su registro padre si el catálogo tiene padre (RN-05), su
+ * estado y su vigencia.
  */
 public class Registro {
 
     private final Long id;
     private final Catalogo catalogo;
     private final String clave;
-    private final RegistroPadre registroPadre;
+    private RegistroPadre registroPadre;
     private EstadoVigencia estado;
-    private final LocalDate fechaDesde;
+    private LocalDate fechaDesde;
     private LocalDate fechaHasta;
     private final Map<String, String> valores;
 
@@ -39,51 +38,85 @@ public class Registro {
     }
 
     /**
-     * HU-ADM-01-09: {@code valores} ya validados con {@link Catalogo#valoresCompletos}; la clave
-     * es el valor de su campo KEY. La unicidad de la clave la verifica quien lo crea.
+     * SF-07: {@code valores} ya validados con {@link Catalogo#valoresParaRegistroNuevo}; la clave
+     * es el valor de su campo KEY. Sin fechas queda ACTIVE (RN-15); con TO DATE hoy o pasada,
+     * INACTIVE (RN-16). La unicidad de la clave la verifica quien lo crea.
      */
     public static Registro nuevo(Catalogo catalogo, Map<String, String> valores, RegistroPadre registroPadre,
             LocalDate fechaDesde, LocalDate fechaHasta) {
-        return new Registro(null, catalogo, clave(catalogo, valores), registroPadre,
-                new Periodo(Vigencia.estadoInicial(null, fechaHasta), fechaDesde, fechaHasta), valores);
+        Vigencia.validarRango(fechaDesde, fechaHasta);
+        EstadoVigencia estado = Vigencia.vencido(fechaHasta) ? EstadoVigencia.INACTIVE : EstadoVigencia.ACTIVE;
+        return new Registro(null, catalogo, valores.get(catalogo.campoKey().getNombre()), registroPadre,
+                new Periodo(estado, fechaDesde, fechaHasta), valores);
     }
 
-    /** Valor del campo KEY dentro de {@code valores}. */
-    public static String clave(Catalogo catalogo, Map<String, String> valores) {
-        return valores.get(catalogo.campoKey().getNombre());
-    }
-
-    /** Reglas 11 y E7: un registro nunca se elimina, se ofrece inactivarlo. */
-    public static ErrorCatalogoException eliminacionNoPermitida() {
-        return ErrorCatalogoException.eliminacionNoPermitida(
-                "Un registro de catálogo no puede eliminarse, solo inactivarse.", "inactivarRegistro");
-    }
-
-    /** HU-ADM-01-12: actualiza campos no KEY (Regla 16); se validan los campos antes de aplicar cambios. */
+    /**
+     * SF-08 (RN-18): actualiza campos no KEY. Se valida toda la solicitud antes de aplicar cambios:
+     * campos definidos (E-21), sin el KEY (E-19) y valores válidos (E-14).
+     */
     public void actualizarValores(List<ValorCampo> nuevos) {
-        for (int i = 0; i < nuevos.size(); i++) {
-            String nombreCampo = nuevos.get(i).campo();
-            if (catalogo.exigirCampo(nombreCampo, "values").isEsKey()) {
-                throw ErrorCatalogoException.reglaNegocio("CAMPO_KEY_INMUTABLE",
-                        "El campo KEY de un registro no puede actualizarse.", "values[" + i + "].field", nombreCampo);
-            }
+        nuevos.forEach(valor -> catalogo.exigirCampo(valor.campo()));
+        if (nuevos.stream().anyMatch(valor -> catalogo.exigirCampo(valor.campo()).isEsKey())) {
+            throw ErroresCatalogo.campoKeyInmutable();
         }
+        nuevos.forEach(valor -> catalogo.validarValor(catalogo.exigirCampo(valor.campo()), valor.valor()));
         nuevos.forEach(valor -> valores.put(valor.campo(), valor.valor()));
     }
 
-    /** HU-ADM-01-13: ACTIVE → INACTIVE (Reglas 9, 14). */
+    /**
+     * S-04 (modelo de dominio v4.0): al asignar un padre nuevo a su catálogo, el registro se enlaza
+     * al registro padre indicado, ya validado por quien lo invoca; {@code null} lo deja sin padre.
+     */
+    public void asignarRegistroPadre(RegistroPadre nuevoPadre) {
+        registroPadre = nuevoPadre;
+    }
+
+    /**
+     * SF-09: ACTIVE → INACTIVE. Con una TO DATE actual o pasada la conserva (RN-12b); si no, la
+     * TO DATE pasa a ser la fecha actual (RN-12a). La cascada a los registros hijos (RN-14) la
+     * aplica quien lo invoca.
+     */
     public void inactivar(LocalDate toDate) {
-        fechaHasta = Vigencia.fechaInactivacion(toDate);
+        LocalDate fecha = Vigencia.fechaInactivacion(toDate);
+        Vigencia.validarRango(fechaDesde, fecha);
+        fechaHasta = fecha;
         estado = EstadoVigencia.INACTIVE;
     }
 
-    /** Regla 12: un registro de un catálogo INACTIVE es INACTIVE, cualquiera sea su propio estado. */
-    public EstadoVigencia estadoEfectivo() {
-        return catalogo.estadoEfectivo() == EstadoVigencia.INACTIVE ? EstadoVigencia.INACTIVE
-                : Vigencia.estadoEfectivo(estado, fechaHasta);
+    /** Nueva TO DATE sin cambiar el estado (E-09 si queda antes de la FROM DATE). */
+    public void cambiarFechaHasta(LocalDate hasta) {
+        Vigencia.validarRango(fechaDesde, hasta);
+        fechaHasta = hasta;
     }
 
-    /** Este registro como padre de un registro de un catálogo hijo (Regla 23). */
+    /** RN-14, SF-14: inactivado porque se inactivó su registro padre, o porque venció. */
+    public void inactivarEnCascada(LocalDate fecha) {
+        fechaHasta = Vigencia.fechaHastaEnCascada(fechaHasta, fecha);
+        estado = EstadoVigencia.INACTIVE;
+    }
+
+    /**
+     * SF-09 paso 4: INACTIVE → ACTIVE con la TO DATE indicada, vacía o futura (E-16, S-02). Que
+     * el catálogo y el registro padre estén activos (E-20) lo verifica quien lo invoca; los
+     * registros hijos conservan su estado (S-03).
+     */
+    public void reactivar(LocalDate hasta) {
+        Vigencia.validarFechaReactivacion(hasta);
+        Vigencia.validarRango(fechaDesde, hasta);
+        fechaHasta = hasta;
+        estado = EstadoVigencia.ACTIVE;
+    }
+
+    /** RN-06: un registro de un catálogo INACTIVE es INACTIVE, cualquiera sea su propio estado. */
+    public EstadoVigencia estadoEfectivo() {
+        return catalogo.estaActivo() ? Vigencia.estadoEfectivo(estado, fechaHasta) : EstadoVigencia.INACTIVE;
+    }
+
+    public boolean estaActivo() {
+        return estadoEfectivo() == EstadoVigencia.ACTIVE;
+    }
+
+    /** Este registro como padre de un registro de su catálogo hijo (RN-05). */
     public RegistroPadre comoPadre() {
         return new RegistroPadre(id, clave, catalogo.getCodigo());
     }

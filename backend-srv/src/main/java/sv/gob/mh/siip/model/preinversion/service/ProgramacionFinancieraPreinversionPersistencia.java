@@ -44,10 +44,10 @@ final class ProgramacionFinancieraPreinversionPersistencia {
             etapas.save(etapa);
         }
         for (FilaProgramacionEtapaRequestDto fila : filas) {
-            TipoEtapaPreinversion tipo = TipoEtapaPreinversion.valueOf(fila.getEtapa().name());
+            var tipo = TipoEtapaPreinversion.valueOf(fila.getEtapa().name());
             BigDecimal total = BigDecimal.ZERO;
             List<Double> montos = fila.getProgramacionPorPeriodo();
-            for (int indice = 0; indice < montos.size(); indice++) {
+            for (var indice = 0; indice < montos.size(); indice++) {
                 BigDecimal monto = ProgramacionFinancieraPreinversionMontos.monetario(montos.get(indice));
                 total = total.add(monto);
                 detalles.save(ProgramacionFinPreinversionDetalle.builder().proyecto(proyecto).etapa(tipo)

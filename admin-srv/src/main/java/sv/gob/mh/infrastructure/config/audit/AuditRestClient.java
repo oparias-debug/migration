@@ -42,7 +42,7 @@ public class AuditRestClient {
 
     public void sendAuditEvent(AuditEvent auditEvent) {
         try {
-            String jsonPayload = objectMapper.writeValueAsString(auditEvent);
+            var jsonPayload = objectMapper.writeValueAsString(auditEvent);
             
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(auditServiceUrl))

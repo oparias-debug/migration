@@ -1,13 +1,18 @@
 package sv.gob.mh.infrastructure.persistence.repository.catalogo;
 
+import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Repository;
 
+import sv.gob.mh.domain.model.catalogo.Catalogo;
 import sv.gob.mh.domain.model.catalogo.Registro;
 import sv.gob.mh.domain.repository.catalogo.RegistroRepository;
 import sv.gob.mh.infrastructure.persistence.entity.catalogo.RegistroEntity;
+import sv.gob.mh.shared.enums.EstadoVigencia;
 
 /** Adaptador JPA de {@link RegistroRepository}. */
 @Repository
@@ -33,8 +38,13 @@ public class RegistroRepositoryImpl implements RegistroRepository {
 
     @Override
     public List<Registro> listarHijos(Long idRegistroPadre) {
+        return CatalogoPersistenceMapper.aModelos(jpa.findByRegistroPadre_IdOrderByIdAsc(idRegistroPadre));
+    }
+
+    @Override
+    public List<Registro> listarActivosVencidos(LocalDate fecha) {
         return CatalogoPersistenceMapper.aModelos(
-                jpa.findByRegistroPadre_IdOrderByCatalogo_CodigoAscIdAsc(idRegistroPadre));
+                jpa.findByEstadoAndFechaHastaLessThanEqualOrderByIdAsc(EstadoVigencia.ACTIVE, fecha));
     }
 
     @Override
@@ -60,5 +70,29 @@ public class RegistroRepositoryImpl implements RegistroRepository {
         entidad.setFechaHasta(registro.getFechaHasta());
         entidad.reemplazarValores(registro.getValores());
         return CatalogoPersistenceMapper.aModelo(jpa.saveAndFlush(entidad));
+    }
+
+    @Override
+    public void inactivarPorCatalogo(Catalogo catalogo, LocalDate fecha) {
+        jpa.actualizarEstadoPorCatalogo(catalogo.getId(), EstadoVigencia.INACTIVE);
+        jpa.acotarFechaHastaPorCatalogo(catalogo.getId(), fecha);
+    }
+
+    /** Por niveles: los hijos de los inactivados en el nivel anterior, hasta que no quedan. */
+    @Override
+    public void inactivarDescendientes(Registro registro, LocalDate fecha) {
+        Set<Long> visitados = new HashSet<>(Set.of(registro.getId()));
+        List<Long> nivel = jpa.findIdsHijos(List.of(registro.getId()));
+        while (!nivel.isEmpty()) {
+            jpa.actualizarEstado(nivel, EstadoVigencia.INACTIVE);
+            jpa.acotarFechaHasta(nivel, fecha);
+            visitados.addAll(nivel);
+            nivel = jpa.findIdsHijos(nivel).stream().filter(id -> !visitados.contains(id)).toList();
+        }
+    }
+
+    @Override
+    public void quitarRegistrosPadre(Catalogo catalogo) {
+        jpa.quitarRegistrosPadre(catalogo.getId());
     }
 }

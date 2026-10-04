@@ -5,7 +5,6 @@ import java.util.List;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaMetaFisicaPap;
 import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
-import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaMetaFisicaPapRepository;
 import sv.gob.mh.siip.model.preinversion.repository.FuenteFinanciamientoEtapaPapRepository;
@@ -44,7 +43,7 @@ final class ProgramacionFinancieraPapEliminacion {
 
     void desactivarEstudio(String cup, Integer anio) {
         actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         plazo.verificarPeriodoAbierto(proyecto.getUnidadEjecutora().getId(), anio);
 
         fuentes.eliminarDelEstudio(proyecto.getId(), anio);
@@ -55,7 +54,7 @@ final class ProgramacionFinancieraPapEliminacion {
 
     void eliminarEtapaProgramacion(String cup, NombreEtapaDto etapaDto, Integer anio) {
         actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         EtapaPreinversion etapa = consultas.buscarEtapa(proyecto.getId(), etapaDto,
                 "El estudio o la etapa no existen.");
 
@@ -67,7 +66,7 @@ final class ProgramacionFinancieraPapEliminacion {
 
     void eliminarFuenteFinanciamiento(String cup, NombreEtapaDto etapaDto, Long idFuente, Integer anio) {
         actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         EtapaPreinversion etapa = consultas.buscarEtapa(proyecto.getId(), etapaDto, MENSAJE_FUENTE_NO_EXISTE);
 
         fuentes.eliminarFuenteDeEtapa(idFuente, etapa.getId(), anio);

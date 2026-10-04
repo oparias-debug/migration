@@ -47,7 +47,7 @@ public class AlternativaSolucionServiceImpl implements AlternativaSolucionServic
     @Transactional(readOnly = true)
     public RegistroAlternativasDto obtener(Long idProyecto) {
         Usuario actor = actorContexto.exigir();
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
 
         if (proyecto.getFechaUltimoGuardadoAlternativasSolucion() == null
@@ -64,7 +64,7 @@ public class AlternativaSolucionServiceImpl implements AlternativaSolucionServic
     @Override
     public RegistroAlternativasDto guardar(Long idProyecto, RegistroAlternativasRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
@@ -80,7 +80,7 @@ public class AlternativaSolucionServiceImpl implements AlternativaSolucionServic
     @Override
     public RegistroAlternativasDto avanzarAAnalisisInteresados(Long idProyecto) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
 
         List<AlternativaSolucion> alternativas = alternativaSolucionRepository
@@ -120,7 +120,7 @@ public class AlternativaSolucionServiceImpl implements AlternativaSolucionServic
 
         List<AlternativaSolucionRequestDto> valores = filas == null ? List.of() : filas;
         List<AlternativaSolucion> nuevas = new ArrayList<>();
-        int orden = 0;
+        var orden = 0;
         for (AlternativaSolucionRequestDto fila : valores) {
             nuevas.add(AlternativaSolucion.builder()
                     .proyecto(proyecto)

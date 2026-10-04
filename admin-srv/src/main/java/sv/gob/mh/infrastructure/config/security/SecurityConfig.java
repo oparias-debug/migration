@@ -43,7 +43,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
-        AuthenticationEntryPoint entryPoint = authenticationEntryPoint(objectMapper);
+        var entryPoint = authenticationEntryPoint(objectMapper);
         return http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             // Sin CSRF a propósito: la API es stateless (sin sesión ni cookies de autenticación) y solo
@@ -74,18 +74,18 @@ public class SecurityConfig {
                 new CatalogosAuthenticationEntryPoint(objectMapper));
         porRuta.put(PathPatternRequestMatcher.withDefaults().matcher(RUTAS_CALENDARIOS),
                 new CatalogosAuthenticationEntryPoint(objectMapper));
-        DelegatingAuthenticationEntryPoint entryPoint = new DelegatingAuthenticationEntryPoint(porRuta);
+        var entryPoint = new DelegatingAuthenticationEntryPoint(porRuta);
         entryPoint.setDefaultEntryPoint(new BearerTokenAuthenticationEntryPoint());
         return entryPoint;
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+        var config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         config.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
         config.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }

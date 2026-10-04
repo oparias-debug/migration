@@ -3,6 +3,7 @@ package sv.gob.mh.siip.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+
 import sv.gob.mh.siip.model.preinversion.indicadores.api.PreinversionIndicadoresProyectoApi;
 import sv.gob.mh.siip.model.preinversion.indicadores.dto.IndicadorProductoDto;
 import sv.gob.mh.siip.model.preinversion.indicadores.dto.IndicadorProductoRequestDto;
@@ -40,7 +41,8 @@ public class IndicadoresProyectoController implements PreinversionIndicadoresPro
     @Override
     public ResponseEntity<IndicadorProductoDto> registrarIndicadorProducto(Long idProyecto, Long idProducto,
             IndicadorProductoRequestDto request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.registrarProducto(idProyecto, idProducto, request));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.registrarProducto(idProyecto, idProducto, request));
     }
 
     @Override

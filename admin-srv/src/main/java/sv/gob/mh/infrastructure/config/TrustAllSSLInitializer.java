@@ -54,7 +54,7 @@ public class TrustAllSSLInitializer {
         TrustManager[] trustManagers = { new CompositeTrustManager(defaultTm) };
 
         try {
-            SSLContext sslContext = SSLContext.getInstance("TLS");
+            var sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, trustManagers, new SecureRandom());
             SSLContext.setDefault(sslContext);
 
@@ -70,7 +70,7 @@ public class TrustAllSSLInitializer {
 
     private static X509TrustManager findDefaultTrustManager() {
         try {
-            TrustManagerFactory tmf =
+            var tmf =
                 TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init((KeyStore) null);
 

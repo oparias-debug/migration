@@ -29,11 +29,11 @@ final class ViabilidadRespuestas {
      * {@link FichaViabilidadEnsamblador}.
      */
     static FichaViabilidadResponseDto ficha(ViabilidadContexto contexto, List<DocumentoViabilidad> documentos) {
-        Proyecto proyecto = contexto.proyecto();
+        var proyecto = contexto.proyecto();
         List<DocumentoViabilidadDto> documentosDto = documentos.stream()
                 .map(ViabilidadRespuestas::documento)
                 .toList();
-        FichaViabilidadResponseDto ficha = new FichaViabilidadResponseDto(proyecto.getId(), proyecto.getCup(),
+        var ficha = new FichaViabilidadResponseDto(proyecto.getId(), proyecto.getCup(),
                 proyecto.getNombre(), proyecto.getEstado().getEtiquetaUi(), documentosDto,
                 comentarios(contexto.ultima()), contexto.acciones());
         ficha.setObservacionesGeneralesJustificacion(contexto.observacionesGenerales());

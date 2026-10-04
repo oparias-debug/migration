@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sv.gob.mh.domain.model.catalogo.Catalogo;
 import sv.gob.mh.domain.repository.catalogo.CatalogoRepository;
 
-/** HU-ADM-01-02. Error: CATALOGO_INEXISTENTE (R21, E1). */
+/** HU-ADM-01-03 (SF-02, RN-22): definición completa del catálogo. Error: E-10. */
 @Service
 public class ConsultarCatalogoQuery {
 

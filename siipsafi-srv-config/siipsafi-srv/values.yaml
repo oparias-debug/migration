@@ -193,8 +193,8 @@ startupProbe:
     path: /actuator/health/liveness
     port: http
   initialDelaySeconds: 5
-  periodSeconds: 5
-  failureThreshold: 12
+  periodSeconds: 10
+  failureThreshold: 30
   timeoutSeconds: 3
 
 

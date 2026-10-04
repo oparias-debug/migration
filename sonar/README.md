@@ -37,7 +37,7 @@ wsl -d docker-desktop sysctl -w vm.max_map_count=262144
 ## 2. Actualizar el Sonar local con las reglas de la entidad
 
 ```powershell
-docker compose up sonarqube-init
+docker compose up sonarqube-init -d
 ```
 
 Espera a que Sonar esté `UP` y después, por cada lenguaje del JSON:

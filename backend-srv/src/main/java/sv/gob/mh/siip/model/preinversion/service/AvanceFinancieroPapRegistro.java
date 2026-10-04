@@ -62,7 +62,7 @@ final class AvanceFinancieroPapRegistro {
                 .orElseGet(() -> progRepository.save(
                         ProgCuatrimestralFinanciera.builder().fuente(fuente).anio(anio).build()));
 
-        BigDecimal montoEjecutado = BigDecimal.valueOf(fila.getMontoEjecutadoCuatrimestre());
+        var montoEjecutado = BigDecimal.valueOf(fila.getMontoEjecutadoCuatrimestre());
         BigDecimal ejecutadoAnualProgramado = programacion.totalProgramadoAnio();
         BigDecimal ejecutadoPrevioDelAnio = periodo == Cuatrimestre.CUATRIMESTRE_I
                 ? BigDecimal.ZERO

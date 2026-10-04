@@ -71,7 +71,7 @@ public class LocalizacionServiceImpl implements LocalizacionService {
     public LocalizacionDto obtenerLocalizacion(Long idProyecto) {
         List<Localizacion> entidades = localizacionRepository.findAllByProyectoId(idProyecto);
 
-        LocalizacionDto dto = new LocalizacionDto();
+        var dto = new LocalizacionDto();
         dto.setIdProyecto(idProyecto);
 
         List<FilaLocalizacionRequestDto> filas = (entidades == null || entidades.isEmpty()) ?
@@ -103,10 +103,10 @@ public class LocalizacionServiceImpl implements LocalizacionService {
         List<FilaLocalizacionRequestDto> filasRequest = localizacionRequestDto.getFilas();
         if (filasRequest != null) {
             for (FilaLocalizacionRequestDto filaDto : filasRequest) {
-                Localizacion entidad = localizacionMapper.toEntity(idProyecto, filaDto);
+                var entidad = localizacionMapper.toEntity(idProyecto, filaDto);
 
                 if (filaDto.getDistrito() != null) {
-                    Municipio muni = buscarMunicipio(filaDto.getDistrito());
+                    var muni = buscarMunicipio(filaDto.getDistrito());
                     entidad.setMunicipio(muni);
 
                     // Extraemos y seteamos el departamento que ya trae el municipio por su relación @ManyToOne
@@ -119,7 +119,7 @@ public class LocalizacionServiceImpl implements LocalizacionService {
             }
         }
 
-        LocalizacionDto responseDto = new LocalizacionDto();
+        var responseDto = new LocalizacionDto();
         responseDto.setIdProyecto(idProyecto);
         responseDto.setFilas(filasRequest != null ? filasRequest : new ArrayList<>());
 
@@ -134,7 +134,7 @@ public class LocalizacionServiceImpl implements LocalizacionService {
     public LocalizacionDto autocompletarLocalizacionDesdeAreaInfluencia(Long idProyecto) {
         // 1. Validación de seguridad y roles (Técnico URP)
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
@@ -155,7 +155,7 @@ public class LocalizacionServiceImpl implements LocalizacionService {
     }
 
     private FilaLocalizacionRequestDto construirFilaAutocompletada(AreaInfluenciaFilaDto area) {
-        Municipio municipio = buscarMunicipio(area.getDistrito());
+        var municipio = buscarMunicipio(area.getDistrito());
 
         return new FilaLocalizacionRequestDto()
                 .departamento(municipio.getDepartamento().getNombre())

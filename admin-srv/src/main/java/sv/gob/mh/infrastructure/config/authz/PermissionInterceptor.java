@@ -30,7 +30,7 @@ public class PermissionInterceptor {
         String operation = permission.operation();
         String path = permission.path();
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = (authentication != null) ? authentication.getName() : "anonymous";
 
         boolean hasPermission = authorizationService.hasGranularPermission(operation, path);

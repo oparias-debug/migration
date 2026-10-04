@@ -15,9 +15,10 @@ public interface CatalogoJpaRepository extends JpaRepository<CatalogoEntity, Lon
 
     boolean existsByCodigo(String codigo);
 
-    boolean existsByNombreIgnoreCase(String nombre);
-
     List<CatalogoEntity> findAllByOrderByCodigoAsc();
 
-    List<CatalogoEntity> findByCatalogoPadre_CodigoOrderByCodigoAsc(String codigoPadre);
+    List<CatalogoEntity> findByNombreIgnoreCaseOrderByCodigoAsc(String nombre);
+
+    /** RN-05: a lo sumo un hijo; si datos anteriores tuvieran varios, el primero por código. */
+    Optional<CatalogoEntity> findFirstByCatalogoPadre_CodigoOrderByCodigoAsc(String codigoPadre);
 }

@@ -72,11 +72,11 @@ public class OpinionTecnicaRevision {
     public EnvioComentariosDgicp enviarComentarios(OpinionTecnicaContexto contexto,
             ComentariosDgicpRequestDto request) {
         contexto.exigirRevisable();
-        ComentariosDgicpOpinionTecnica.Registrados registrados = comentarios.registrar(contexto.gestion(),
+        var registrados = comentarios.registrar(contexto.gestion(),
                 contexto.esEmergencia(), request);
         registrados.exigirAlguno();
 
-        LocalDateTime ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
+        var ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
         LocalDate finPlazo = DiasHabilesOpinionTecnica.sumar(ahora.toLocalDate(), DiasHabilesOpinionTecnica.PLAZO);
         OpinionTecnica gestion = contexto.gestion();
         gestion.setResultado(ResultadoOpinionTecnica.OBSERVADO);
@@ -84,7 +84,7 @@ public class OpinionTecnicaRevision {
         gestion.getPlazoComentarios().iniciar(finPlazo);
         contexto.asumirResponsable();
         opinionesTecnicas.save(gestion);
-        Proyecto proyecto = contexto.proyecto();
+        var proyecto = contexto.proyecto();
         proyecto.setEstado(EstadoProyecto.OBSERVADO);
         proyectos.save(proyecto);
         bandeja.observar(gestion);

@@ -44,20 +44,20 @@ final class ProgramacionFinancieraPapEstudio {
     EstudioProgramacionPAPDto agregarEstudio(AgregarEstudioRequestDto request) {
         actorContexto.exigirRol(RolUsuario.TECNICO_URP);
         plazo.verificarPeriodoAbierto(request.getIdUnidadEjecutora(), request.getAnio());
-        Proyecto proyecto = consultas.buscarProyecto(request.getCup());
+        var proyecto = consultas.buscarProyecto(request.getCup());
         return estudioAssembler.construirEstudioDto(proyecto, request.getAnio());
     }
 
     EstudioProgramacionPAPDto obtenerProgramacionEstudio(String cup, Integer anio) {
         ProgramacionPapSoporte.exigirRolConsultaFinanciera(actorContexto);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         return estudioAssembler.construirEstudioDto(proyecto, anio);
     }
 
     EstudioProgramacionPAPDto guardarProgramacionEstudio(String cup, Integer anio,
             GuardarProgramacionEstudioRequestDto request) {
         actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         plazo.verificarPeriodoAbierto(proyecto.getUnidadEjecutora().getId(), anio);
         registro.guardar(proyecto.getId(), anio, request.getEtapas());
         return estudioAssembler.construirEstudioDto(proyecto, anio);

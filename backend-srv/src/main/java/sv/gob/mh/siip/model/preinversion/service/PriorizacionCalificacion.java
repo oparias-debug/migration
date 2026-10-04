@@ -100,7 +100,7 @@ public class PriorizacionCalificacion {
         PriorizacionProyecto priorizacion = contexto.priorizacion() != null ? contexto.priorizacion()
                 : priorizaciones.save(PriorizacionProyecto.builder().proyecto(contexto.proyecto())
                         .opinionTecnica(contexto.opinionTecnica()).build());
-        MatrizPriorizacion.Matriz actual = matriz.cargar(priorizacion);
+        var actual = matriz.cargar(priorizacion);
         List<CalificacionSubcriterioRequestDto> recibidas = request.getCalificaciones();
         ValidacionCalificacionPriorizacion.exigirDelTramo(tramo, actual, recibidas);
         List<SubcriterioPriorizacion> delTramo = actual.subcriterios(tramo);

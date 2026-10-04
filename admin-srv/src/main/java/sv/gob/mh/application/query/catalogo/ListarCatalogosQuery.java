@@ -8,7 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import sv.gob.mh.domain.model.catalogo.Catalogo;
 import sv.gob.mh.domain.repository.catalogo.CatalogoRepository;
 
-/** HU-ADM-01-03: todos los catálogos, incluidos los INACTIVE (Regla 20). */
+/**
+ * HU-ADM-01-04 (SF-03, RN-09): sin criterios, todos los catálogos, incluidos los INACTIVE; con
+ * código y/o nombre, los que coinciden. Una lista vacía significa que no existe (no es error).
+ */
 @Service
 public class ListarCatalogosQuery {
 
@@ -19,7 +22,8 @@ public class ListarCatalogosQuery {
     }
 
     @Transactional(readOnly = true)
-    public List<Catalogo> ejecutar() {
-        return catalogoRepository.listarPorCodigo();
+    public List<Catalogo> ejecutar(String codigo, String nombre) {
+        return codigo == null && nombre == null ? catalogoRepository.listarPorCodigo()
+                : catalogoRepository.buscar(codigo, nombre);
     }
 }

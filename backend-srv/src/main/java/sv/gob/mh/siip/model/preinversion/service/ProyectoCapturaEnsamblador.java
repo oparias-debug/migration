@@ -55,13 +55,13 @@ public class ProyectoCapturaEnsamblador {
                 .map((Proyecto entidad) -> toItemDto(entidad, etapaActualPorProyecto.get(entidad.getId())))
                 .toList();
 
-        PaginacionMetadataDto paginacion = new PaginacionMetadataDto();
+        var paginacion = new PaginacionMetadataDto();
         paginacion.setPagina(paginaEntidades.getNumber());
         paginacion.setTamanio(paginaEntidades.getSize());
         paginacion.setTotalElementos(paginaEntidades.getTotalElements());
         paginacion.setTotalPaginas(paginaEntidades.getTotalPages());
 
-        ProyectosCapturaResponseDto response = new ProyectosCapturaResponseDto();
+        var response = new ProyectosCapturaResponseDto();
         response.setContenido(contenido);
         response.setPaginacion(paginacion);
 
@@ -75,14 +75,14 @@ public class ProyectoCapturaEnsamblador {
      * @return DTO transformado.
      */
     private static ProyectoCapturaItemDto toItemDto(Proyecto entidad, NombreEtapaDto etapaActual) {
-        ProyectoCapturaItemDto dto = new ProyectoCapturaItemDto();
+        var dto = new ProyectoCapturaItemDto();
         dto.setIdProyecto(entidad.getId());
         dto.setCup(entidad.getCup());
         dto.setNombreProyecto(entidad.getNombre());
         dto.setEtapaActual(etapaActual);
 
         if (entidad.getUnidadEjecutora() != null) {
-            UnidadEjecutoraResumenDto ueDto = new UnidadEjecutoraResumenDto();
+            var ueDto = new UnidadEjecutoraResumenDto();
             ueDto.setIdUnidadEjecutora(entidad.getUnidadEjecutora().getId());
             ueDto.setNombre(entidad.getUnidadEjecutora().getNombre());
             dto.setUnidadEjecutora(ueDto);

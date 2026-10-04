@@ -1,30 +1,33 @@
 package sv.gob.mh.api.controller.catalogo;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import sv.gob.mh.api.dto.catalogo.CatalogChildResponseDto;
-import sv.gob.mh.api.dto.catalogo.CatalogCreateRequestDto;
-import sv.gob.mh.api.dto.catalogo.CatalogDescriptorsUpdateRequestDto;
-import sv.gob.mh.api.dto.catalogo.CatalogExistenceResponseDto;
-import sv.gob.mh.api.dto.catalogo.CatalogFieldsUpdateRequestDto;
-import sv.gob.mh.api.dto.catalogo.CatalogRecordCreateRequestDto;
-import sv.gob.mh.api.dto.catalogo.CatalogRecordFieldValuesResponseDto;
-import sv.gob.mh.api.dto.catalogo.CatalogRecordResponseDto;
-import sv.gob.mh.api.dto.catalogo.CatalogRecordUpdateRequestDto;
-import sv.gob.mh.api.dto.catalogo.CatalogResponseDto;
-import sv.gob.mh.api.dto.catalogo.CatalogSummaryResponseDto;
-import sv.gob.mh.api.dto.catalogo.InactivationRequestDto;
+import sv.gob.mh.api.dto.catalogo.CambioEstadoDto;
+import sv.gob.mh.api.dto.catalogo.CampoDefinicionDto;
+import sv.gob.mh.api.dto.catalogo.CatalogRecordsResultDto;
+import sv.gob.mh.api.dto.catalogo.CatalogoCreacionDto;
+import sv.gob.mh.api.dto.catalogo.CatalogoDescriptoresDto;
+import sv.gob.mh.api.dto.catalogo.CatalogoDto;
+import sv.gob.mh.api.dto.catalogo.CatalogoResumenDto;
+import sv.gob.mh.api.dto.catalogo.ChildCatalogResultDto;
+import sv.gob.mh.api.dto.catalogo.ChildRecordsResultDto;
+import sv.gob.mh.api.dto.catalogo.KeySearchResultDto;
+import sv.gob.mh.api.dto.catalogo.RegistroCreacionDto;
+import sv.gob.mh.api.dto.catalogo.RegistroDto;
 
 /**
- * CU-ADM-01 (Administración de Catálogos), tag AdministracionCatalogos. Las rutas las declara la
- * interfaz generada del contrato; aquí se montan bajo {@value #BASE}. Cada operación exige un
- * token (401 NO_AUTENTICADO) con un rol de administración de catálogos (403 SIN_PERMISOS); los
- * errores los traduce {@code CatalogosManejadorErrores}.
+ * CU-ADM-01 (Administración de Catálogos), tags {@code catalogos} y {@code registros}. Las rutas las
+ * declaran las interfaces generadas del contrato; aquí se montan bajo {@value #BASE}. Toda
+ * operación exige un token (401, filtro de seguridad). Las consultas (GET) quedan abiertas a
+ * cualquier usuario autenticado y a los Sistemas Consumidores (RN-25, S-08); las demás exigen el
+ * rol {@code ADMINISTRADOR_DE_CATALOGOS} (403, E-25). Los errores los traduce
+ * {@code CatalogosManejadorErrores}.
  *
  * <p>Las operaciones las atienden {@link EscrituraCatalogos}, {@link EscrituraRegistros} y
  * {@link LecturaCatalogos}, que traducen el contrato a los handlers y queries (CQRS de la
@@ -32,16 +35,12 @@ import sv.gob.mh.api.dto.catalogo.InactivationRequestDto;
  */
 @RestController
 @RequestMapping(CatalogosAdministracionController.BASE)
-@PreAuthorize(CatalogosAdministracionController.ADMINISTRA_CATALOGOS)
-public class CatalogosAdministracionController implements AdministracionCatalogosApi {
+public class CatalogosAdministracionController implements CatalogosApi, RegistrosApi {
 
     public static final String BASE = "/api/v1";
 
-    /**
-     * x-roles del contrato: ADMINISTRADOR_DEL_SISTEMA, que en Keycloak es el rol de realm
-     * ADMINISTRADOR. Se admite también ADMINISTRADOR_DE_CATALOGOS, el rol que usa el menú del front.
-     */
-    public static final String ADMINISTRA_CATALOGOS = "hasAnyRole('ADMINISTRADOR', 'ADMINISTRADOR_DE_CATALOGOS')";
+    /** Rol de las operaciones de mantenimiento (RN-25, S-08). */
+    public static final String ADMINISTRA_CATALOGOS = "hasRole('ADMINISTRADOR_DE_CATALOGOS')";
 
     private final EscrituraCatalogos catalogos;
     private final EscrituraRegistros registros;
@@ -57,92 +56,93 @@ public class CatalogosAdministracionController implements AdministracionCatalogo
     // ---------- Catálogos ----------
 
     @Override
-    public ResponseEntity<CatalogResponseDto> crearCatalogo(CatalogCreateRequestDto catalogCreateRequestDto) {
-        return catalogos.crear(catalogCreateRequestDto);
+    public ResponseEntity<List<CatalogoResumenDto>> buscarListarCatalogos(String codigo, String nombre) {
+        return lectura.buscarListarCatalogos(codigo, nombre);
     }
 
     @Override
-    public ResponseEntity<List<CatalogSummaryResponseDto>> listarCatalogos() {
-        return lectura.listarCatalogos();
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<CatalogoDto> crearCatalogo(CatalogoCreacionDto catalogoCreacionDto) {
+        return catalogos.crear(catalogoCreacionDto);
     }
 
     @Override
-    public ResponseEntity<CatalogExistenceResponseDto> verificarExistenciaCatalogo(String name) {
-        return lectura.verificarExistencia(name);
+    public ResponseEntity<CatalogoDto> consultarCatalogo(String codigo) {
+        return lectura.consultarCatalogo(codigo);
     }
 
     @Override
-    public ResponseEntity<CatalogResponseDto> consultarCatalogoPorCodigo(String code) {
-        return lectura.consultarCatalogo(code);
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<CatalogoDto> actualizarDescriptores(String codigo,
+            CatalogoDescriptoresDto catalogoDescriptoresDto) {
+        return catalogos.actualizarDescriptores(codigo, catalogoDescriptoresDto);
     }
 
     @Override
-    public ResponseEntity<CatalogResponseDto> actualizarDescriptoresCatalogo(String code,
-            CatalogDescriptorsUpdateRequestDto catalogDescriptorsUpdateRequestDto) {
-        return catalogos.actualizarDescriptores(code, catalogDescriptorsUpdateRequestDto);
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<Void> eliminarCatalogo(String codigo) {
+        return catalogos.eliminar(codigo);
     }
 
     @Override
-    public ResponseEntity<Void> eliminarCatalogo(String code) {
-        return catalogos.eliminar(code);
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<CatalogoDto> actualizarCampos(String codigo, List<CampoDefinicionDto> campoDefinicionDto) {
+        return catalogos.actualizarCampos(codigo, campoDefinicionDto);
     }
 
     @Override
-    public ResponseEntity<CatalogResponseDto> actualizarCamposCatalogo(String code,
-            CatalogFieldsUpdateRequestDto catalogFieldsUpdateRequestDto) {
-        return catalogos.actualizarCampos(code, catalogFieldsUpdateRequestDto);
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<CatalogoDto> cambiarEstadoCatalogo(String codigo, CambioEstadoDto cambioEstadoDto) {
+        return catalogos.cambiarEstado(codigo, cambioEstadoDto);
     }
 
     @Override
-    public ResponseEntity<CatalogResponseDto> inactivarCatalogo(String code,
-            InactivationRequestDto inactivationRequestDto) {
-        return catalogos.inactivar(code, inactivationRequestDto);
-    }
-
-    @Override
-    public ResponseEntity<List<CatalogChildResponseDto>> consultarCatalogosHijos(String code) {
-        return lectura.consultarCatalogosHijos(code);
+    public ResponseEntity<ChildCatalogResultDto> consultarCatalogoHijo(String codigo) {
+        return lectura.consultarCatalogoHijo(codigo);
     }
 
     // ---------- Registros ----------
 
     @Override
-    public ResponseEntity<CatalogRecordResponseDto> crearRegistro(String code,
-            CatalogRecordCreateRequestDto catalogRecordCreateRequestDto) {
-        return registros.crear(code, catalogRecordCreateRequestDto);
+    public ResponseEntity<CatalogRecordsResultDto> listarRegistros(String codigo, List<String> campos) {
+        return lectura.listarRegistros(codigo, campos);
     }
 
     @Override
-    public ResponseEntity<List<CatalogRecordFieldValuesResponseDto>> buscarListaRegistros(String code,
-            List<String> fields) {
-        return lectura.buscarRegistros(code, fields);
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<RegistroDto> crearRegistro(String codigo, RegistroCreacionDto registroCreacionDto) {
+        return registros.crear(codigo, registroCreacionDto);
     }
 
     @Override
-    public ResponseEntity<CatalogRecordFieldValuesResponseDto> buscarRegistroPorClave(String code, String keyValue,
-            List<String> fields) {
-        return lectura.buscarRegistroPorClave(code, keyValue, fields);
+    public ResponseEntity<KeySearchResultDto> buscarRegistroPorLlave(String codigo, String llave,
+            List<String> campos) {
+        return lectura.buscarRegistroPorLlave(codigo, llave, campos);
     }
 
     @Override
-    public ResponseEntity<CatalogRecordResponseDto> actualizarRegistro(String code, String keyValue,
-            CatalogRecordUpdateRequestDto catalogRecordUpdateRequestDto) {
-        return registros.actualizar(code, keyValue, catalogRecordUpdateRequestDto);
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<RegistroDto> actualizarRegistro(String codigo, String llave,
+            Map<String, String> requestBody) {
+        return registros.actualizar(codigo, llave, requestBody);
     }
 
     @Override
-    public ResponseEntity<Void> eliminarRegistro(String code, String keyValue) {
-        return registros.eliminar(code, keyValue);
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<Void> eliminarRegistro(String codigo, String llave) {
+        return registros.eliminar(codigo, llave);
     }
 
     @Override
-    public ResponseEntity<CatalogRecordResponseDto> inactivarRegistro(String code, String keyValue,
-            InactivationRequestDto inactivationRequestDto) {
-        return registros.inactivar(code, keyValue, inactivationRequestDto);
+    @PreAuthorize(ADMINISTRA_CATALOGOS)
+    public ResponseEntity<RegistroDto> cambiarEstadoRegistro(String codigo, String llave,
+            CambioEstadoDto cambioEstadoDto) {
+        return registros.cambiarEstado(codigo, llave, cambioEstadoDto);
     }
 
     @Override
-    public ResponseEntity<List<CatalogRecordResponseDto>> consultarRegistrosHijos(String code, String keyValue) {
-        return lectura.consultarRegistrosHijos(code, keyValue);
+    public ResponseEntity<ChildRecordsResultDto> buscarRegistrosHijos(String codigo, String llave,
+            List<String> campos) {
+        return lectura.buscarRegistrosHijos(codigo, llave, campos);
     }
 }

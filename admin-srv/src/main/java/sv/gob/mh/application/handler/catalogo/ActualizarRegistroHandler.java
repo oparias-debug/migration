@@ -8,7 +8,9 @@ import sv.gob.mh.domain.model.catalogo.Registro;
 import sv.gob.mh.domain.repository.catalogo.CatalogoRepository;
 import sv.gob.mh.domain.repository.catalogo.RegistroRepository;
 
-/** HU-ADM-01-12. Errores: CATALOGO_INEXISTENTE, REGISTRO_INEXISTENTE, CAMPO_INEXISTENTE y CAMPO_KEY_INMUTABLE (E4). */
+/**
+ * HU-ADM-01-10 (SF-08). Errores: E-10, E-22, E-21, E-19 (RN-18) y E-14.
+ */
 @Service
 public class ActualizarRegistroHandler {
 
@@ -23,7 +25,7 @@ public class ActualizarRegistroHandler {
     @Transactional
     public Registro handle(ActualizarRegistroCommand command) {
         catalogoRepository.obtenerPorCodigo(command.codigoCatalogo());
-        Registro registro = registroRepository.obtenerPorClave(command.codigoCatalogo(), command.clave());
+        var registro = registroRepository.obtenerPorClave(command.codigoCatalogo(), command.clave());
         registro.actualizarValores(command.valores());
         return registroRepository.guardar(registro);
     }

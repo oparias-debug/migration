@@ -57,7 +57,7 @@ public class RemoteLogger extends Logger {
         
         // Thread pool para envío asíncrono de logs
         this.executorService = Executors.newFixedThreadPool(HILOS_ENVIO, (Runnable r) -> {
-            Thread t = new Thread(r);
+            var t = new Thread(r);
             t.setName("remote-logger-" + name);
             t.setDaemon(true);
             return t;

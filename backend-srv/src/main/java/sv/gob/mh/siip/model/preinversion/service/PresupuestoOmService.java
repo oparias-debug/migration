@@ -83,14 +83,14 @@ public class PresupuestoOmService {
     }
 
     public Map<String, Object> obtener(Long idProyecto) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
         exigirAlcanceUnidadEjecutora(usuario, proyecto(idProyecto));
         return respuesta(idProyecto, ActorContexto.esUsuarioInterno(usuario));
     }
 
     public Map<String, Object> configurar(Long idProyecto, Map<String, Object> r) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto p = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var p = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, p);
         EdicionFormulacion.exigirEditable(p);
         String tipoCosto = (String) r.get("tipoCosto");
@@ -128,8 +128,8 @@ public class PresupuestoOmService {
     }
 
     public ActividadOm registrarActividad(Long idProyecto, String tipoCostoTabla, Map<String, Object> r) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
         String n = (String) r.get("nombreActividad");
@@ -175,7 +175,7 @@ public class PresupuestoOmService {
     }
 
     public void eliminarActividad(Long idProyecto, String tipoCostoTabla, Long idActividad) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
         exigirAlcanceUnidadEjecutora(usuario, proyecto(idProyecto));
         ActividadOm a = actividades.findByIdAndProyectoId(idActividad, idProyecto)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Actividad no encontrada"));
@@ -186,8 +186,8 @@ public class PresupuestoOmService {
     }
 
     public Map<String, Object> guardar(Long idProyecto) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
         return respuesta(idProyecto, ActorContexto.esUsuarioInterno(usuario));
     }
@@ -215,8 +215,8 @@ public class PresupuestoOmService {
         respuesta.put("vidaUtil", configuracion.getVidaUtil());
         respuesta.put("tasaCrecimientoCostos", configuracion.getTasaCrecimientoCostos());
 
-        CostosPorTipo operacion = costosPorTipo(idProyecto, TIPO_COSTO_OPERACION, configuracion);
-        CostosPorTipo mantenimiento = costosPorTipo(idProyecto, TIPO_COSTO_MANTENIMIENTO, configuracion);
+        var operacion = costosPorTipo(idProyecto, TIPO_COSTO_OPERACION, configuracion);
+        var mantenimiento = costosPorTipo(idProyecto, TIPO_COSTO_MANTENIMIENTO, configuracion);
         if (incluyeOperacion(tipoCosto)) {
             respuesta.put("costosOperacion", tabla(operacion, incluirAjustado));
         }
@@ -236,7 +236,7 @@ public class PresupuestoOmService {
 
     private static Map<String, Object> tabla(CostosPorTipo costos, boolean incluirAjustado) {
         List<Map<String, Object>> actividadesDto = new ArrayList<>();
-        for (int i = 0; i < costos.actividades().size(); i++) {
+        for (var i = 0; i < costos.actividades().size(); i++) {
             ActividadOm actividad = costos.actividades().get(i);
             List<Map<String, Object>> insumosDto = actividad.getInsumos().stream()
                     .map((InsumoActividad insumo) -> insumoDto(insumo, incluirAjustado)).toList();
@@ -289,7 +289,7 @@ public class PresupuestoOmService {
     private static List<Double> sumarPeriodos(List<Double> primero, List<Double> segundo) {
         int cantidad = Math.max(primero.size(), segundo.size());
         List<Double> resultado = new ArrayList<>();
-        for (int i = 0; i < cantidad; i++) {
+        for (var i = 0; i < cantidad; i++) {
             double valor = (i < primero.size() ? primero.get(i) : 0D) + (i < segundo.size() ? segundo.get(i) : 0D);
             resultado.add(r(valor));
         }
@@ -316,7 +316,7 @@ public class PresupuestoOmService {
                     ? 0D : (configuracion.getTasaCrecimientoCostos() / PORCENTAJE_TOTAL);
             mercado.set(0, r(baseMercado));
             ajustado.set(0, r(baseAjustado));
-            for (int i = 1; i < vidaUtil; i++) {
+            for (var i = 1; i < vidaUtil; i++) {
                 double factor = Math.pow(1 + tasa, i);
                 mercado.set(i, r(baseMercado * factor));
                 ajustado.set(i, r(baseAjustado * factor));
@@ -340,7 +340,7 @@ public class PresupuestoOmService {
 
     private static List<Double> ceros(int n) {
         List<Double> x = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
+        for (var i = 0; i < n; i++) {
             x.add(0D);
         }
         return x;

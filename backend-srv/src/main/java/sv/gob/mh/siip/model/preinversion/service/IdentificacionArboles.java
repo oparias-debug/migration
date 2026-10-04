@@ -56,7 +56,7 @@ public class IdentificacionArboles {
      * @return nombre original y fecha de carga del archivo
      */
     public ArchivoAdjuntoResumenDto cargar(Long idProyecto, MultipartFile archivo, TipoArbol tipo) {
-        Proyecto proyecto = acceso.proyectoEditable(idProyecto);
+        var proyecto = acceso.proyectoEditable(idProyecto);
         archivos.validarFormatoPdf(archivo);
 
         Identificacion entidad = identificacionRepository.findByProyectoId(proyecto.getId())

@@ -31,12 +31,12 @@ final class CsvSeed {
     }
 
     static List<Map<String, String>> leer(String archivo) {
-        ClassPathResource recurso = new ClassPathResource(CARPETA + archivo);
-        try (BufferedReader lector = new BufferedReader(
+        var recurso = new ClassPathResource(CARPETA + archivo);
+        try (var lector = new BufferedReader(
                 new InputStreamReader(recurso.getInputStream(), StandardCharsets.UTF_8))) {
             List<Map<String, String>> filas = new ArrayList<>();
             String[] encabezado = null;
-            int numeroLinea = 0;
+            var numeroLinea = 0;
             String linea;
             while ((linea = lector.readLine()) != null) {
                 numeroLinea++;
@@ -65,7 +65,7 @@ final class CsvSeed {
                     archivo, numeroLinea, encabezado.length, celdas.length));
         }
         Map<String, String> fila = new LinkedHashMap<>();
-        for (int i = 0; i < celdas.length; i++) {
+        for (var i = 0; i < celdas.length; i++) {
             String valor = celdas[i].strip();
             fila.put(encabezado[i].strip(), valor.isEmpty() ? null : valor);
         }

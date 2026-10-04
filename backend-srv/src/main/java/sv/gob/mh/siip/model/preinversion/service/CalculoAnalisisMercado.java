@@ -60,7 +60,7 @@ final class CalculoAnalisisMercado {
         }
         double factor = 1.0 + (tasa / ValidacionAnalisisMercado.PORCENTAJE_TOTAL);
         double suma = 0;
-        for (int n = 0; n <= anios; n++) {
+        for (var n = 0; n <= anios; n++) {
             suma += base * Math.pow(factor, n);
         }
         return suma / (anios + 1);

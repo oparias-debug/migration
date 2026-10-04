@@ -14,9 +14,9 @@ final class ActorAutenticado {
     }
 
     static String nombreUsuario() {
-        Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        var autenticacion = SecurityContextHolder.getContext().getAuthentication();
         if (autenticacion != null && autenticacion.getPrincipal() instanceof Jwt jwt) {
-            String preferredUsername = jwt.getClaimAsString("preferred_username");
+            var preferredUsername = jwt.getClaimAsString("preferred_username");
             return preferredUsername != null && !preferredUsername.isBlank() ? preferredUsername : jwt.getSubject();
         }
         return autenticacion != null ? autenticacion.getName() : null;

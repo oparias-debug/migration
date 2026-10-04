@@ -64,7 +64,7 @@ public class DescripcionTecnicaFilas {
         FilaDescripcionTecnicaDto fila = descripcionTecnicaMapper.toFilaDto(comp);
 
         if (fila.getComponente() == null) {
-            TipoCostoResumenDto tipoCosto = new TipoCostoResumenDto();
+            var tipoCosto = new TipoCostoResumenDto();
             tipoCosto.setCodigo(CODIGO_TIPO_COSTO_POR_DEFECTO);
             tipoCosto.setNombre(comp.getNombre());
             fila.setComponente(tipoCosto);
@@ -92,7 +92,7 @@ public class DescripcionTecnicaFilas {
     public List<Componente> toComponentes(Collection<FilaDescripcionTecnicaRequestDto> filas, Proyecto proyecto) {
         return filas.stream()
                 .map((FilaDescripcionTecnicaRequestDto filaDto) -> {
-                    Componente comp = descripcionTecnicaMapper.toComponenteEntity(filaDto);
+                    var comp = descripcionTecnicaMapper.toComponenteEntity(filaDto);
                     comp.setProyecto(proyecto);
                     // Asegura el mapeo explicito de la propiedad 'componente' (String) del RequestDto
                     // al campo obligatorio 'nombre' (NotBlank) de la Entidad

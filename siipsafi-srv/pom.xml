@@ -238,7 +238,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.11</version>
+                <version>0.8.14</version>
                 <executions>
                     <execution>
                         <goals>
@@ -258,6 +258,20 @@
     </build>
 
     <profiles>
+        <!-- VS Code / Eclipse (m2e) compilan en target-ide/ en vez de target/: asi mvn clean no choca con
+             archivos que el IDE tiene abiertos. Solo se activa dentro del IDE (m2e define m2e.version). -->
+        <profile>
+            <id>ide</id>
+            <activation>
+                <property>
+                    <name>m2e.version</name>
+                </property>
+            </activation>
+            <build>
+                <directory>target-ide</directory>
+            </build>
+        </profile>
+
         <!-- Perfil: Pruebas de integración (Karate) contra servicio desplegado -->
         <profile>
             <id>integration-tests</id>

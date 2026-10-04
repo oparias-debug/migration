@@ -114,7 +114,7 @@ public class ComentariosDgicpOpinionTecnica {
      * @return la sección "Comentarios Elegibilidad" de la primera gestión (RN 12)
      */
     static ComentariosElegibilidadDto seccionElegibilidad(ComentarioOpinionTecnica comentario) {
-        ComentariosElegibilidadDto dto = new ComentariosElegibilidadDto();
+        var dto = new ComentariosElegibilidadDto();
         if (comentario != null) {
             dto.setComentarioDgicpElegibilidad(comentario.getComentario());
             dto.setJustificacionInstitucionElegibilidad(comentario.getJustificacionInstitucion());

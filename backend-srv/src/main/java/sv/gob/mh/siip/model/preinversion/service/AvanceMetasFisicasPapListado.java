@@ -48,7 +48,7 @@ final class AvanceMetasFisicasPapListado {
         // Mismo criterio que listar(): el Técnico URP solo puede generar el reporte de su propia unidad
         // ejecutora; el parámetro recibido solo se respeta para el Técnico PRE.
         Long unidadFiltro = AvancePapSoporte.unidadEjecutoraEfectiva(actor, idUnidadEjecutora);
-        Cuatrimestre periodoEfectivo = Cuatrimestre.valueOf(periodo.name());
+        var periodoEfectivo = Cuatrimestre.valueOf(periodo.name());
         List<EstudioFilaAvanceMetasDto> filas = listadoAssembler.filasDeUnidad(unidadFiltro, anio, periodoEfectivo);
 
         byte[] contenido = "PDF".equalsIgnoreCase(formato)

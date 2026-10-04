@@ -41,7 +41,7 @@ final class ProyectoReglas {
      * del Técnico URP que lo registra.
      */
     static Proyecto nuevoEnRegistro(Usuario actor) {
-        Proyecto entidad = new Proyecto();
+        var entidad = new Proyecto();
         entidad.setUnidadEjecutora(actor.getUnidadEjecutora());
         entidad.setInstitucion(actor.getInstitucion());
         entidad.setEstado(EstadoProyecto.EN_REGISTRO);

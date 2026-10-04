@@ -70,7 +70,7 @@ final class RegistroFechasEtapas {
                 .toList();
         List<ErrorDetalleDto> detalles = new ArrayList<>();
 
-        for (int i = 0; i < conFechas.size(); i++) {
+        for (var i = 0; i < conFechas.size(); i++) {
             EtapaPreinversion actual = conFechas.get(i);
             if (actual.getFechaInicio().isAfter(actual.getFechaFin())) {
                 detalles.add(new ErrorDetalleDto().campo(actual.getTipoEtapa().name())

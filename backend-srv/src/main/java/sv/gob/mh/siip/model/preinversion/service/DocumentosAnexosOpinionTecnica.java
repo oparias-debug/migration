@@ -48,7 +48,7 @@ public class DocumentosAnexosOpinionTecnica {
         Stream<DocumentoAnexoDto> deViabilidad = documentosViabilidad.listar(idProyecto).stream()
                 .map(DocumentosAnexosOpinionTecnica::documento);
         List<DocumentoAnexoDto> documentos = new ArrayList<>(Stream.concat(notaSolicitud, deViabilidad).toList());
-        DocumentosAnexosOpinionTecnicaDto dto = new DocumentosAnexosOpinionTecnicaDto(documentos);
+        var dto = new DocumentosAnexosOpinionTecnicaDto(documentos);
         if (comentario != null) {
             dto.setComentarioDgicpDocumentosAnexos(comentario.getComentario());
             dto.setJustificacionInstitucionDocumentosAnexos(comentario.getJustificacionInstitucion());

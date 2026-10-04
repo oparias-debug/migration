@@ -60,7 +60,7 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
     public AnalisisAmbientalDto obtenerAnalisisAmbiental(Long idProyecto) {
 
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
 
         // 1. Buscamos la cabecera (AnalisisAmbiental) única para el proyecto
@@ -71,7 +71,7 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
                         "El análisis ambiental no existe para el proyecto seleccionado"));
 
         // 2. Mapeamos la cabecera al DTO principal
-        AnalisisAmbientalDto dto = new AnalisisAmbientalDto();
+        var dto = new AnalisisAmbientalDto();
         dto.setIdProyecto(idProyecto);
         dto.setTieneImpactosAmbientales(analisis.getTieneImpactosAmbientales());
 
@@ -105,7 +105,7 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
     public AnalisisAmbientalDto guardarAnalisisAmbiental(Long idProyecto, AnalisisAmbientalRequestDto requestDto) {
 
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
@@ -114,8 +114,8 @@ public class AnalisisAmbientalServiceImpl implements AnalisisAmbientalService {
                 .stream()
                 .findFirst()
                 .orElseGet(() -> {
-                    AnalisisAmbiental nuevo = new AnalisisAmbiental();
-                    Proyecto proyectoProxy  = proyectoRepository.getReferenceById(idProyecto);
+                    var nuevo = new AnalisisAmbiental();
+                    var proyectoProxy  = proyectoRepository.getReferenceById(idProyecto);
                     nuevo.setProyecto(proyectoProxy );
                     return nuevo;
                 });

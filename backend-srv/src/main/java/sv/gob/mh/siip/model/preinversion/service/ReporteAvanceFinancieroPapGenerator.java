@@ -82,7 +82,7 @@ final class ReporteAvanceFinancieroPapGenerator {
     static byte[] generarExcel(Encabezado encabezado, List<EstudioFilaAvancePAPDto> filas) {
         String titulo = tituloPrincipal(encabezado) + " - Institución Ejecutora: "
                 + ReportePapGeneratorSupport.valorODefectoTexto(encabezado.institucionEjecutora());
-        double[] totales = new double[VALORES.size()];
+        var totales = new double[VALORES.size()];
         return ReportePapGeneratorSupport.generarExcel("Avance Financiero PAP", titulo, ENCABEZADOS, filas,
                 (Row row, EstudioFilaAvancePAPDto fila) -> escribirFilaExcel(row, fila, totales),
                 (XSSFSheet hoja, int numeroFila) -> escribirFilasFinalesExcel(hoja, numeroFila, totales, encabezado),
@@ -98,8 +98,8 @@ final class ReporteAvanceFinancieroPapGenerator {
         FuenteFinanciamientoDto fuenteFinanciamiento = fila.getFuenteFinanciamiento();
         row.createCell(COL_FUENTE_FINANCIAMIENTO)
                 .setCellValue(fuenteFinanciamiento != null ? fuenteFinanciamiento.getValue() : "");
-        for (int i = 0; i < VALORES.size(); i++) {
-            double valor = VALORES.get(i).applyAsDouble(fila);
+        for (var i = 0; i < VALORES.size(); i++) {
+            var valor = VALORES.get(i).applyAsDouble(fila);
             ReportePapGeneratorSupport.escribirMonto(row.createCell(PRIMERA_COLUMNA_VALOR + i), valor);
             totales[i] += valor;
         }
@@ -112,7 +112,7 @@ final class ReporteAvanceFinancieroPapGenerator {
             Encabezado encabezado) {
         Row totalRow = hoja.createRow(numeroFila);
         totalRow.createCell(COL_NOMBRE_PROYECTO).setCellValue("TOTAL");
-        for (int i = 0; i < totales.length; i++) {
+        for (var i = 0; i < totales.length; i++) {
             if (ES_MONTO[i]) {
                 totalRow.createCell(PRIMERA_COLUMNA_VALOR + i).setCellValue(totales[i]);
             }
@@ -131,8 +131,8 @@ final class ReporteAvanceFinancieroPapGenerator {
                 + "   Año: " + encabezado.anio() + "   Cuatrimestre: "
                 + encabezado.periodo().name().replace("CUATRIMESTRE_", "");
         List<String> lineasFinales = new ArrayList<>();
-        StringBuilder total = new StringBuilder("TOTAL");
-        for (int i = 0; i < VALORES.size(); i++) {
+        var total = new StringBuilder("TOTAL");
+        for (var i = 0; i < VALORES.size(); i++) {
             double suma = filas.stream().mapToDouble(VALORES.get(i)).sum();
             total.append(ES_MONTO[i] ? String.format(Locale.ROOT, " | %.2f", suma) : " | ");
         }
@@ -149,12 +149,12 @@ final class ReporteAvanceFinancieroPapGenerator {
     private static String formatearLineaPdf(EstudioFilaAvancePAPDto fila) {
         NombreEtapaDto etapa = fila.getEtapa();
         FuenteFinanciamientoDto fuenteFinanciamiento = fila.getFuenteFinanciamiento();
-        StringBuilder linea = new StringBuilder(String.format(Locale.ROOT, "%s | %s | %s | %s",
+        var linea = new StringBuilder(String.format(Locale.ROOT, "%s | %s | %s | %s",
                 fila.getCup(), fila.getNombreProyecto(),
                 Optional.ofNullable(etapa).map(NombreEtapaDto::getValue).orElse(""),
                 fuenteFinanciamiento != null ? fuenteFinanciamiento.getValue() : ""));
-        for (int i = 0; i < VALORES.size(); i++) {
-            double valor = VALORES.get(i).applyAsDouble(fila);
+        for (var i = 0; i < VALORES.size(); i++) {
+            var valor = VALORES.get(i).applyAsDouble(fila);
             linea.append(String.format(Locale.ROOT, ES_MONTO[i] ? " | %.2f" : " | %.2f%%", valor));
         }
         linea.append(" | ").append(textoEnUnaLinea(fila.getObservaciones()));

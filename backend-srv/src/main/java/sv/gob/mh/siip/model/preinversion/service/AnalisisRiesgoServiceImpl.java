@@ -62,7 +62,7 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
     @Transactional(readOnly = true)
     public AnalisisRiesgoDto obtenerAnalisisRiesgo(Long idProyecto) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
 
         AnalisisRiesgo analisis = analisisRiesgoRepository.findByProyectoId(idProyecto)
@@ -85,7 +85,7 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
     @Transactional
     public AnalisisRiesgoDto guardarAnalisisRiesgo(Long idProyecto, AnalisisRiesgoRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
@@ -97,7 +97,7 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
         analisis.setTieneRiesgosDesastres(request.getTieneRiesgosDesastres());
         analisis.getFilas().clear();
 
-        double costoTotalAcumulado = 0.0;
+        var costoTotalAcumulado = 0.0;
 
         if (request.getFilas() != null && Boolean.TRUE.equals(request.getTieneRiesgosDesastres())) {
             for (FilaRiesgoRequestDto dtoReq : request.getFilas()) {
@@ -140,7 +140,7 @@ public class AnalisisRiesgoServiceImpl implements AnalisisRiesgoService {
     @Transactional
     public AnalisisRiesgoDto avanzarAAnalisisLegal(Long idProyecto) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
 
         AnalisisRiesgo analisis = analisisRiesgoRepository.findByProyectoId(idProyecto)

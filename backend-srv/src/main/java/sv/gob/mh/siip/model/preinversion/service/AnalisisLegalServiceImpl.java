@@ -55,14 +55,14 @@ public class AnalisisLegalServiceImpl implements AnalisisLegalService {
     @Transactional(readOnly = true)
     public AnalisisLegalDto obtenerAnalisisLegal(Long idProyecto) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
 
-        AnalisisLegal analisisLegal = analisisLegalRepository.findByProyectoId(idProyecto)
+        var analisisLegal = analisisLegalRepository.findByProyectoId(idProyecto)
                 .orElse(null);
 
         if (analisisLegal == null) {
-            AnalisisLegalDto dto = new AnalisisLegalDto();
+            var dto = new AnalisisLegalDto();
             dto.setIdProyecto(idProyecto);
             dto.setRequiereAnalisisLegal(null);
             dto.setFilas(new ArrayList<>());
@@ -82,12 +82,12 @@ public class AnalisisLegalServiceImpl implements AnalisisLegalService {
     @Transactional
     public AnalisisLegalDto guardarAnalisisLegal(Long idProyecto, AnalisisLegalRequestDto analisisLegalRequestDto) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
         // Usamos directamente el objeto 'proyecto' obtenido por buscarProyecto sin consultarlo otra vez
-        AnalisisLegal analisisLegal = analisisLegalRepository.findByProyectoId(idProyecto)
+        var analisisLegal = analisisLegalRepository.findByProyectoId(idProyecto)
                 .orElseGet(() -> AnalisisLegal.builder()
                         .proyecto(proyecto)
                         .filas(new ArrayList<>())
@@ -128,7 +128,7 @@ public class AnalisisLegalServiceImpl implements AnalisisLegalService {
     private static AnalisisLegalDto mapToDto(AnalisisLegal entity) {
         List<FilaAnalisisLegalRequestDto> filasDto = entity.getFilas().stream()
                 .map((AnalsisGestionesLegalesRequeridas fila) -> {
-                    FilaAnalisisLegalRequestDto dto = new FilaAnalisisLegalRequestDto();
+                    var dto = new FilaAnalisisLegalRequestDto();
                     dto.setAnalisisGestionLegalRequerida(fila.getAnalisisGestionLegalRequerida());
                     dto.setEntregable(fila.getEntregable());
                     dto.setCostoEntregable(fila.getCostoEntregable());
@@ -140,7 +140,7 @@ public class AnalisisLegalServiceImpl implements AnalisisLegalService {
                 .mapToDouble(f -> f.getCostoEntregable() != null ? f.getCostoEntregable() : 0.0)
                 .sum();
 
-        AnalisisLegalDto dto = new AnalisisLegalDto();
+        var dto = new AnalisisLegalDto();
         dto.setIdProyecto(entity.getProyecto().getId());
         dto.setRequiereAnalisisLegal(entity.getRequiereAnalisisLegal());
         dto.setFilas(filasDto);

@@ -113,7 +113,7 @@ public class AuditEntityListener implements PreInsertEventListener, PreUpdateEve
     private void auditar(String userId, String action, Object entity,
                          Object oldEntity, Object newEntity) {
         try {
-            AuditEvent auditEvent = new AuditEvent(userId, action, getEntityResourceName(entity),
+            var auditEvent = new AuditEvent(userId, action, getEntityResourceName(entity),
                     serviceName, entitySerializer.serialize(oldEntity),
                     entitySerializer.serialize(newEntity), LocalDateTime.now(ZONA_EL_SALVADOR));
             auditService.sendAuditEvent(auditEvent);

@@ -101,7 +101,7 @@ public class IdentificacionEnsamblador {
     private static void reemplazarObjetivosEspecificos(Identificacion entidad, List<String> nuevosObjetivos) {
         entidad.getObjetivosEspecificos().clear();
         List<String> valores = nuevosObjetivos == null ? List.of() : nuevosObjetivos;
-        int orden = 0;
+        var orden = 0;
         for (String descripcion : valores) {
             entidad.getObjetivosEspecificos().add(ObjetivoEspecifico.builder()
                     .identificacion(entidad)

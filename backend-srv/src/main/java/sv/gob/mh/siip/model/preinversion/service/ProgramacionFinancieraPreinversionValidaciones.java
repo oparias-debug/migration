@@ -78,7 +78,7 @@ final class ProgramacionFinancieraPreinversionValidaciones {
         if (fila == null || fila.getEtapa() == null) {
             throw validacion("La etapa es obligatoria.");
         }
-        TipoEtapaPreinversion etapa = TipoEtapaPreinversion.valueOf(fila.getEtapa().name());
+        var etapa = TipoEtapaPreinversion.valueOf(fila.getEtapa().name());
         if (!permitidas.contains(etapa)) {
             throw validacion("La etapa no pertenece a la ruta de preinversión del proyecto.");
         }
@@ -91,7 +91,7 @@ final class ProgramacionFinancieraPreinversionValidaciones {
         if (montos == null || montos.size() != periodos) {
             throw validacion("La programación debe contener exactamente los períodos configurados.");
         }
-        boolean tieneMonto = false;
+        var tieneMonto = false;
         for (Double monto : montos) {
             validarMonto(monto);
             tieneMonto |= monto > 0D;

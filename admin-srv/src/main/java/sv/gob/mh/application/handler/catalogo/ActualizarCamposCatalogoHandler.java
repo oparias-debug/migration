@@ -5,13 +5,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import sv.gob.mh.application.command.catalogo.ActualizarCamposCatalogoCommand;
 import sv.gob.mh.domain.model.catalogo.Catalogo;
+import sv.gob.mh.domain.model.catalogo.ErroresCatalogo;
 import sv.gob.mh.domain.repository.catalogo.CatalogoRepository;
 import sv.gob.mh.domain.repository.catalogo.RegistroRepository;
-import sv.gob.mh.shared.exception.ErrorCatalogoException;
 
 /**
- * HU-ADM-01-06. Errores: CATALOGO_INEXISTENTE, CATALOGO_CON_REGISTROS (R19, E5) y los de
- * {@link Catalogo#validarCampos}.
+ * HU-ADM-01-02 (SF-04 paso 5). Errores: E-10, E-12 (RN-21) y los de {@link Catalogo#validarCampos}.
  */
 @Service
 public class ActualizarCamposCatalogoHandler {
@@ -27,17 +26,11 @@ public class ActualizarCamposCatalogoHandler {
 
     @Transactional
     public Catalogo handle(ActualizarCamposCatalogoCommand command) {
-        Catalogo catalogo = sinRegistros(catalogoRepository.obtenerPorCodigo(command.codigo()));
+        var catalogo = catalogoRepository.obtenerPorCodigo(command.codigo());
+        if (registroRepository.existeEnCatalogo(catalogo.getCodigo())) {
+            throw ErroresCatalogo.catalogoConRegistros();
+        }
         catalogo.definirCampos(command.campos());
         return catalogoRepository.guardar(catalogo);
-    }
-
-    /** Los campos de un catálogo con registros ya no cambian. */
-    private Catalogo sinRegistros(Catalogo catalogo) {
-        if (registroRepository.existeEnCatalogo(catalogo.getCodigo())) {
-            throw ErrorCatalogoException.conflicto("CATALOGO_CON_REGISTROS",
-                    "No se pueden modificar los campos, el catálogo ya contiene registros.");
-        }
-        return catalogo;
     }
 }

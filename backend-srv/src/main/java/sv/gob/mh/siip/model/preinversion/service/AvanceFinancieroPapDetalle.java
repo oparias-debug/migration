@@ -1,7 +1,6 @@
 package sv.gob.mh.siip.model.preinversion.service;
 
 import sv.gob.mh.siip.model.administracion.repository.CalendarioEventoRepository;
-import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.AvanceEstudioDto;
 import sv.gob.mh.siip.model.preinversion.dto.CuatrimestreDto;
 import sv.gob.mh.siip.model.preinversion.dto.GuardarAvanceEstudioRequestDto;
@@ -33,7 +32,7 @@ final class AvanceFinancieroPapDetalle {
         this.actorContexto = actorContexto;
         this.consultas = new AvancePapConsultas(proyectoRepository, etapaPreinversionRepository,
                 calendarioEventoRepository);
-        AvanceFinancieroPapCalculos calculos = new AvanceFinancieroPapCalculos(fuenteRepository, progRepository,
+        var calculos = new AvanceFinancieroPapCalculos(fuenteRepository, progRepository,
                 avanceRepository);
         this.detalleAssembler = new AvanceFinancieroPapDetalleAssembler(consultas, calculos);
         this.registro = new AvanceFinancieroPapRegistro(consultas, calculos, fuenteRepository, progRepository,
@@ -42,15 +41,15 @@ final class AvanceFinancieroPapDetalle {
 
     AvanceEstudioDto obtenerAvanceEstudio(String cup, Integer anio, CuatrimestreDto periodo) {
         AvancePapSoporte.exigirRolConsulta(actorContexto);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         return detalleAssembler.construirEstudioDto(proyecto, anio, Cuatrimestre.valueOf(periodo.name()));
     }
 
     AvanceEstudioDto guardarAvanceEstudio(String cup, Integer anio, CuatrimestreDto periodoDto,
             GuardarAvanceEstudioRequestDto request) {
         AvancePapSoporte.exigirTecnicoUrp(actorContexto);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
-        Cuatrimestre periodo = Cuatrimestre.valueOf(periodoDto.name());
+        var proyecto = consultas.buscarEstudio(cup);
+        var periodo = Cuatrimestre.valueOf(periodoDto.name());
         consultas.verificarPeriodoAbierto(anio, periodo);
         registro.guardar(proyecto.getId(), request.getEtapas(), anio, periodo);
         return detalleAssembler.construirEstudioDto(proyecto, anio, periodo);

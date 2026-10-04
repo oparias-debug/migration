@@ -75,7 +75,7 @@ public class Calendario {
             throw periodoDuplicado();
         }
         exigirRecurrenciaEnmarcada(recurrencia);
-        Periodo periodo = new Periodo(null, codigoPeriodo, nombrePeriodo, tipo, recurrencia);
+        var periodo = new Periodo(null, codigoPeriodo, nombrePeriodo, tipo, recurrencia);
         periodos.add(periodo);
         return periodo;
     }
@@ -83,7 +83,7 @@ public class Calendario {
     /** CU-ADM-04-04 (RN10): una excepción por fecha, dentro del rango del calendario. */
     public Excepcion registrarExcepcion(LocalDate fecha, TipoExcepcion tipo, String descripcionExcepcion) {
         exigirFechaDeExcepcion(fecha, null);
-        Excepcion excepcion = new Excepcion(null, fecha, tipo, descripcionExcepcion);
+        var excepcion = new Excepcion(null, fecha, tipo, descripcionExcepcion);
         excepciones.add(excepcion);
         return excepcion;
     }
@@ -120,7 +120,7 @@ public class Calendario {
                 : periodos.stream().filter(p -> item.id().equals(p.getId())).findFirst()
                         .orElseThrow(() -> ErrorCalendarioException.noEncontrado(PERIODO_INEXISTENTE,
                                 "No existe ningún período con el id indicado dentro de ese calendario."));
-        Periodo editado = periodo;
+        var editado = periodo;
         if (periodos.stream().anyMatch(otro -> otro != editado && otro.getCodigo().equals(item.codigo()))) {
             throw periodoDuplicado();
         }
@@ -223,7 +223,7 @@ public class Calendario {
     }
 
     public Periodo exigirPeriodoLaboral(String codigoPeriodo) {
-        Periodo periodo = exigirPeriodo(codigoPeriodo);
+        var periodo = exigirPeriodo(codigoPeriodo);
         if (!periodo.esLaboral()) {
             throw ErrorCalendarioException.noEncontrado(PERIODO_INEXISTENTE,
                     "No existe ningún período LABORAL con el código indicado dentro de ese calendario.");

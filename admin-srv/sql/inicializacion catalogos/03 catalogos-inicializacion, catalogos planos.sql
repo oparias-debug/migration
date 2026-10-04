@@ -67,24 +67,22 @@ INSERT INTO tmp_campo_requerido (catalog_code, field_name) VALUES
     ('PLAN_SECTORIAL', 'codigo'),
     ('PLAN_SECTORIAL', 'nombre'),
     ('PLAN_SECTORIAL', 'sector_asociado'),
-    ('SECTOR_MACROSECTOR', 'codigo'),
-    ('SECTOR_MACROSECTOR', 'nombre'),
+    ('MACROSECTOR', 'codigo'),
+    ('MACROSECTOR', 'nombre'),
     ('EJE_TEMATICO', 'codigo'),
     ('EJE_TEMATICO', 'nombre'),
     ('TIPO_EJECUTORA', 'codigo'),
     ('TIPO_EJECUTORA', 'nombre'),
     ('INSTITUCION', 'codigo'),
     ('INSTITUCION', 'nombre'),
-    ('UNIDAD_EJECUTORA', 'codigo'),
-    ('UNIDAD_EJECUTORA', 'nombre'),
     ('ESTADO_PROYECTO', 'codigo'),
     ('ESTADO_PROYECTO', 'nombre'),
     ('INTERESADO_TIPO', 'codigo'),
     ('INTERESADO_TIPO', 'nombre'),
-    ('UBICACION_GEOGRAFICA', 'codigo'),
-    ('UBICACION_GEOGRAFICA', 'nombre'),
-    ('UNIDAD_MEDIDA', 'codigo'),
-    ('UNIDAD_MEDIDA', 'nombre'),
+    ('REGION', 'codigo'),
+    ('REGION', 'nombre'),
+    ('TIPO_UNIDAD_MEDIDA', 'codigo'),
+    ('TIPO_UNIDAD_MEDIDA', 'nombre'),
     ('COMPONENTE_PROYECTO', 'codigo'),
     ('COMPONENTE_PROYECTO', 'nombre'),
     ('PROPIETARIO_TERRENO', 'codigo'),
@@ -136,10 +134,10 @@ INSERT INTO tmp_campo_requerido (catalog_code, field_name) VALUES
     ('UNIDAD_EJECUTORA_EVALUACION_FINANCIERA', 'item_sigla'),
     ('UNIDAD_EJECUTORA_EVALUACION_FINANCIERA', 'clasificacion_institucional'),
     ('UNIDAD_EJECUTORA_EVALUACION_FINANCIERA', 'referencia_cruzada'),
-    ('PRODUCTO_INDICADOR', 'codigo'),
-    ('PRODUCTO_INDICADOR', 'nombre'),
-    ('RESULTADO_INDICADOR', 'codigo'),
-    ('RESULTADO_INDICADOR', 'nombre'),
+    ('PRODUCTO', 'codigo'),
+    ('PRODUCTO', 'nombre'),
+    ('RESULTADO', 'codigo'),
+    ('RESULTADO', 'nombre'),
     ('ODS_ONU', 'codigo'),
     ('ODS_ONU', 'nombre'),
     ('ODS_ONU', 'numero_ods'),
@@ -152,8 +150,8 @@ INSERT INTO tmp_campo_requerido (catalog_code, field_name) VALUES
     ('MEJORA_CALIDAD_VIDA', 'codigo'),
     ('MEJORA_CALIDAD_VIDA', 'nombre'),
     ('MEJORA_CALIDAD_VIDA', 'numero'),
-    ('CRITERIO_ELEGIBILIDAD', 'codigo'),
-    ('CRITERIO_ELEGIBILIDAD', 'nombre'),
+    ('DIMENSION_ELEGIBILIDAD', 'codigo'),
+    ('DIMENSION_ELEGIBILIDAD', 'nombre'),
     ('CRITERIO_PRIORIZACION', 'codigo'),
     ('CRITERIO_PRIORIZACION', 'nombre'),
     ('RANGO_PRIORIZACION', 'codigo'),
@@ -176,8 +174,8 @@ INSERT INTO tmp_campo_requerido (catalog_code, field_name) VALUES
     ('RUTA_PREINVERSION', 'segun_complejidad'),
     ('ETAPA_PROYECTO', 'codigo'),
     ('ETAPA_PROYECTO', 'nombre'),
-    ('ANEXO_F_HABILITACION_CAMPOS', 'codigo'),
-    ('ANEXO_F_HABILITACION_CAMPOS', 'nombre'),
+    ('HABILITACION_CAMPOS', 'codigo'),
+    ('HABILITACION_CAMPOS', 'nombre'),
     ('ENTREGABLE_ETAPA', 'codigo'),
     ('ENTREGABLE_ETAPA', 'nombre'),
     ('ESTADO_ESTUDIO_PREINVERSION', 'codigo'),
@@ -537,39 +535,39 @@ FROM (VALUES
 JOIN tmp_catalog_field t ON t.catalog_code = 'PLAN_SECTORIAL' AND t.field_name = v.field_name;
 
 -- =====================================================================
--- Catálogo SECTOR_MACROSECTOR — Catálogo de Sectores y Macrosectores
+-- Catálogo MACROSECTOR — Catálogo de Sectores y MACROSECTORes
 -- Registros de nivel 1: 3   Campos: codigo, nombre
 -- =====================================================================
--- [SECTOR_MACROSECTOR] Desarrollo Social
+-- [MACROSECTOR] Desarrollo Social
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'SECTOR_MACROSECTOR';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'MACROSECTOR';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Desarrollo Social'),
     ('nombre', 'Desarrollo Social')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'SECTOR_MACROSECTOR' AND t.field_name = v.field_name;
--- [SECTOR_MACROSECTOR] Desarrollo Económico
+JOIN tmp_catalog_field t ON t.catalog_code = 'MACROSECTOR' AND t.field_name = v.field_name;
+-- [MACROSECTOR] Desarrollo Económico
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'SECTOR_MACROSECTOR';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'MACROSECTOR';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Desarrollo Económico'),
     ('nombre', 'Desarrollo Económico')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'SECTOR_MACROSECTOR' AND t.field_name = v.field_name;
--- [SECTOR_MACROSECTOR] Seguridad Pública y Justicia
+JOIN tmp_catalog_field t ON t.catalog_code = 'MACROSECTOR' AND t.field_name = v.field_name;
+-- [MACROSECTOR] Seguridad Pública y Justicia
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'SECTOR_MACROSECTOR';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'MACROSECTOR';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Seguridad Pública y Justicia'),
     ('nombre', 'Seguridad Pública y Justicia')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'SECTOR_MACROSECTOR' AND t.field_name = v.field_name;
+JOIN tmp_catalog_field t ON t.catalog_code = 'MACROSECTOR' AND t.field_name = v.field_name;
 
 -- =====================================================================
 -- Catálogo EJE_TEMATICO — Catálogo de Ejes Temáticos
@@ -2892,84 +2890,84 @@ FROM (VALUES
 JOIN tmp_catalog_field t ON t.catalog_code = 'INTERESADO_TIPO' AND t.field_name = v.field_name;
 
 -- =====================================================================
--- Catálogo UBICACION_GEOGRAFICA — Catálogo de ubicaciones geográficas (Región > Departamento > Distrito)
+-- Catálogo REGION — Catálogo de ubicaciones geográficas (Región > Departamento > Distrito)
 -- Registros de nivel 1: 4   Campos: codigo, nombre
 -- =====================================================================
--- [UBICACION_GEOGRAFICA] Occidental
+-- [REGION] Occidental
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'UBICACION_GEOGRAFICA';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'REGION';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Occidental'),
     ('nombre', 'Occidental')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'UBICACION_GEOGRAFICA' AND t.field_name = v.field_name;
--- [UBICACION_GEOGRAFICA] Central
+JOIN tmp_catalog_field t ON t.catalog_code = 'REGION' AND t.field_name = v.field_name;
+-- [REGION] Central
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'UBICACION_GEOGRAFICA';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'REGION';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Central'),
     ('nombre', 'Central')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'UBICACION_GEOGRAFICA' AND t.field_name = v.field_name;
--- [UBICACION_GEOGRAFICA] Oriental
+JOIN tmp_catalog_field t ON t.catalog_code = 'REGION' AND t.field_name = v.field_name;
+-- [REGION] Oriental
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'UBICACION_GEOGRAFICA';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'REGION';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Oriental'),
     ('nombre', 'Oriental')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'UBICACION_GEOGRAFICA' AND t.field_name = v.field_name;
--- [UBICACION_GEOGRAFICA] Nivel nacional
+JOIN tmp_catalog_field t ON t.catalog_code = 'REGION' AND t.field_name = v.field_name;
+-- [REGION] Nivel nacional
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'UBICACION_GEOGRAFICA';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'REGION';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Nivel nacional'),
     ('nombre', 'Nivel nacional')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'UBICACION_GEOGRAFICA' AND t.field_name = v.field_name;
+JOIN tmp_catalog_field t ON t.catalog_code = 'REGION' AND t.field_name = v.field_name;
 
 -- =====================================================================
--- Catálogo UNIDAD_MEDIDA — Catálogo de unidades de medida (Tipo > Categoría > Unidad)
+-- Catálogo TIPO_UNIDAD_MEDIDA — Catálogo de unidades de medida (Tipo > Categoría > Unidad)
 -- Registros de nivel 1: 3   Campos: codigo, nombre
 -- =====================================================================
--- [UNIDAD_MEDIDA] Bien
+-- [TIPO_UNIDAD_MEDIDA] Bien
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'UNIDAD_MEDIDA';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'TIPO_UNIDAD_MEDIDA';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Bien'),
     ('nombre', 'Bien')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'UNIDAD_MEDIDA' AND t.field_name = v.field_name;
--- [UNIDAD_MEDIDA] Servicio
+JOIN tmp_catalog_field t ON t.catalog_code = 'TIPO_UNIDAD_MEDIDA' AND t.field_name = v.field_name;
+-- [TIPO_UNIDAD_MEDIDA] Servicio
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'UNIDAD_MEDIDA';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'TIPO_UNIDAD_MEDIDA';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Servicio'),
     ('nombre', 'Servicio')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'UNIDAD_MEDIDA' AND t.field_name = v.field_name;
--- [UNIDAD_MEDIDA] Mixta
+JOIN tmp_catalog_field t ON t.catalog_code = 'TIPO_UNIDAD_MEDIDA' AND t.field_name = v.field_name;
+-- [TIPO_UNIDAD_MEDIDA] Mixta
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'UNIDAD_MEDIDA';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'TIPO_UNIDAD_MEDIDA';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'Mixta'),
     ('nombre', 'Mixta')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'UNIDAD_MEDIDA' AND t.field_name = v.field_name;
+JOIN tmp_catalog_field t ON t.catalog_code = 'TIPO_UNIDAD_MEDIDA' AND t.field_name = v.field_name;
 
 -- =====================================================================
 -- Catálogo COMPONENTE_PROYECTO — Catálogo de componentes del proyecto
@@ -11889,34 +11887,34 @@ FROM (VALUES
 JOIN tmp_catalog_field t ON t.catalog_code = 'UNIDAD_EJECUTORA_EVALUACION_FINANCIERA' AND t.field_name = v.field_name;
 
 -- =====================================================================
--- Catálogo PRODUCTO_INDICADOR — Catálogo de Productos e Indicadores (Producto > Indicador de Producto)
+-- Catálogo PRODUCTO — Catálogo de Productos e Indicadores (Producto > Indicador de Producto)
 -- Registros de nivel 1: 1   Campos: codigo, nombre
 -- =====================================================================
--- [PRODUCTO_INDICADOR] 2201021
+-- [PRODUCTO] 2201021
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'PRODUCTO_INDICADOR';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'PRODUCTO';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', '2201021'),
     ('nombre', 'Infraestructura educativa construida')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'PRODUCTO_INDICADOR' AND t.field_name = v.field_name;
+JOIN tmp_catalog_field t ON t.catalog_code = 'PRODUCTO' AND t.field_name = v.field_name;
 
 -- =====================================================================
--- Catálogo RESULTADO_INDICADOR — Catálogo de Resultados (Indicadores de Resultado)
+-- Catálogo RESULTADO — Catálogo de Resultados (Indicadores de Resultado)
 -- Registros de nivel 1: 1   Campos: codigo, nombre
 -- =====================================================================
--- [RESULTADO_INDICADOR] R2200000
+-- [RESULTADO] R2200000
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'RESULTADO_INDICADOR';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'RESULTADO';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'R2200000'),
     ('nombre', 'Mejoras en diversos temas')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'RESULTADO_INDICADOR' AND t.field_name = v.field_name;
+JOIN tmp_catalog_field t ON t.catalog_code = 'RESULTADO' AND t.field_name = v.field_name;
 
 -- =====================================================================
 -- Catálogo ODS_ONU — Catálogo ¿A cuáles ODS contribuye? (Objetivos de Desarrollo Sostenible)
@@ -12313,69 +12311,69 @@ FROM (VALUES
 JOIN tmp_catalog_field t ON t.catalog_code = 'MEJORA_CALIDAD_VIDA' AND t.field_name = v.field_name;
 
 -- =====================================================================
--- Catálogo CRITERIO_ELEGIBILIDAD — Tabla de Dimensiones, Criterios y Ponderación de Elegibilidad
+-- Catálogo DIMENSION_ELEGIBILIDAD — Tabla de Dimensiones, Criterios y Ponderación de Elegibilidad
 -- Registros de nivel 1: 6   Campos: codigo, nombre
 -- =====================================================================
--- [CRITERIO_ELEGIBILIDAD] DIM1
+-- [DIMENSION_ELEGIBILIDAD] DIM1
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'CRITERIO_ELEGIBILIDAD';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'DIMENSION_ELEGIBILIDAD';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'DIM1'),
     ('nombre', '1. Alineación estratégica')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'CRITERIO_ELEGIBILIDAD' AND t.field_name = v.field_name;
--- [CRITERIO_ELEGIBILIDAD] DIM2
+JOIN tmp_catalog_field t ON t.catalog_code = 'DIMENSION_ELEGIBILIDAD' AND t.field_name = v.field_name;
+-- [DIMENSION_ELEGIBILIDAD] DIM2
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'CRITERIO_ELEGIBILIDAD';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'DIMENSION_ELEGIBILIDAD';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'DIM2'),
     ('nombre', '2. Aspectos Sociales')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'CRITERIO_ELEGIBILIDAD' AND t.field_name = v.field_name;
--- [CRITERIO_ELEGIBILIDAD] DIM3
+JOIN tmp_catalog_field t ON t.catalog_code = 'DIMENSION_ELEGIBILIDAD' AND t.field_name = v.field_name;
+-- [DIMENSION_ELEGIBILIDAD] DIM3
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'CRITERIO_ELEGIBILIDAD';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'DIMENSION_ELEGIBILIDAD';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'DIM3'),
     ('nombre', '3. Rentabilidad social')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'CRITERIO_ELEGIBILIDAD' AND t.field_name = v.field_name;
--- [CRITERIO_ELEGIBILIDAD] DIM4
+JOIN tmp_catalog_field t ON t.catalog_code = 'DIMENSION_ELEGIBILIDAD' AND t.field_name = v.field_name;
+-- [DIMENSION_ELEGIBILIDAD] DIM4
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'CRITERIO_ELEGIBILIDAD';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'DIMENSION_ELEGIBILIDAD';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'DIM4'),
     ('nombre', '4. Aspectos Medioambientales')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'CRITERIO_ELEGIBILIDAD' AND t.field_name = v.field_name;
--- [CRITERIO_ELEGIBILIDAD] DIM5
+JOIN tmp_catalog_field t ON t.catalog_code = 'DIMENSION_ELEGIBILIDAD' AND t.field_name = v.field_name;
+-- [DIMENSION_ELEGIBILIDAD] DIM5
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'CRITERIO_ELEGIBILIDAD';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'DIMENSION_ELEGIBILIDAD';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'DIM5'),
     ('nombre', '5. Sostenibilidad fiscal')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'CRITERIO_ELEGIBILIDAD' AND t.field_name = v.field_name;
--- [CRITERIO_ELEGIBILIDAD] DIM6
+JOIN tmp_catalog_field t ON t.catalog_code = 'DIMENSION_ELEGIBILIDAD' AND t.field_name = v.field_name;
+-- [DIMENSION_ELEGIBILIDAD] DIM6
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'CRITERIO_ELEGIBILIDAD';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'DIMENSION_ELEGIBILIDAD';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'DIM6'),
     ('nombre', '6. Madurez del Proyecto')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'CRITERIO_ELEGIBILIDAD' AND t.field_name = v.field_name;
+JOIN tmp_catalog_field t ON t.catalog_code = 'DIMENSION_ELEGIBILIDAD' AND t.field_name = v.field_name;
 
 -- =====================================================================
 -- Catálogo CRITERIO_PRIORIZACION — Criterios y Subcriterios de Priorización (versión coincidente con el PDF, Anexo A.1)
@@ -12854,59 +12852,59 @@ FROM (VALUES
 JOIN tmp_catalog_field t ON t.catalog_code = 'ETAPA_PROYECTO' AND t.field_name = v.field_name;
 
 -- =====================================================================
--- Catálogo ANEXO_F_HABILITACION_CAMPOS — Contenido de Iniciativas de Proyecto (habilitación de campos por etapa e iniciativa)
+-- Catálogo HABILITACION_CAMPOS — Contenido de Iniciativas de Proyecto (habilitación de campos por etapa e iniciativa)
 -- Registros de nivel 1: 5   Campos: codigo, nombre
 -- =====================================================================
--- [ANEXO_F_HABILITACION_CAMPOS] G1
+-- [HABILITACION_CAMPOS] G1
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'ANEXO_F_HABILITACION_CAMPOS';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'HABILITACION_CAMPOS';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'G1'),
     ('nombre', '1. Identificación del proyecto')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'ANEXO_F_HABILITACION_CAMPOS' AND t.field_name = v.field_name;
--- [ANEXO_F_HABILITACION_CAMPOS] G2
+JOIN tmp_catalog_field t ON t.catalog_code = 'HABILITACION_CAMPOS' AND t.field_name = v.field_name;
+-- [HABILITACION_CAMPOS] G2
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'ANEXO_F_HABILITACION_CAMPOS';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'HABILITACION_CAMPOS';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'G2'),
     ('nombre', '2. Formulación del proyecto')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'ANEXO_F_HABILITACION_CAMPOS' AND t.field_name = v.field_name;
--- [ANEXO_F_HABILITACION_CAMPOS] G3
+JOIN tmp_catalog_field t ON t.catalog_code = 'HABILITACION_CAMPOS' AND t.field_name = v.field_name;
+-- [HABILITACION_CAMPOS] G3
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'ANEXO_F_HABILITACION_CAMPOS';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'HABILITACION_CAMPOS';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'G3'),
     ('nombre', '3. Evaluación')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'ANEXO_F_HABILITACION_CAMPOS' AND t.field_name = v.field_name;
--- [ANEXO_F_HABILITACION_CAMPOS] G4
+JOIN tmp_catalog_field t ON t.catalog_code = 'HABILITACION_CAMPOS' AND t.field_name = v.field_name;
+-- [HABILITACION_CAMPOS] G4
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'ANEXO_F_HABILITACION_CAMPOS';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'HABILITACION_CAMPOS';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'G4'),
     ('nombre', '4. Programación')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'ANEXO_F_HABILITACION_CAMPOS' AND t.field_name = v.field_name;
--- [ANEXO_F_HABILITACION_CAMPOS] G5
+JOIN tmp_catalog_field t ON t.catalog_code = 'HABILITACION_CAMPOS' AND t.field_name = v.field_name;
+-- [HABILITACION_CAMPOS] G5
 INSERT INTO catalog_record (catalog_id, parent_record_id, active, from_date, to_date)
-SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'ANEXO_F_HABILITACION_CAMPOS';
+SELECT c.id, NULL, 'ACTIVE', DATE '2000-01-01', DATE '2999-12-31' FROM catalog c WHERE c.code = 'HABILITACION_CAMPOS';
 INSERT INTO catalog_record_value (record_id, field_id, valor)
 SELECT (SELECT MAX(r.id) FROM catalog_record r WHERE r.catalog_id = t.catalog_id), t.field_id, v.valor
 FROM (VALUES
     ('codigo', 'G5'),
     ('nombre', '5. Documentos anexos')
 ) AS v (field_name, valor)
-JOIN tmp_catalog_field t ON t.catalog_code = 'ANEXO_F_HABILITACION_CAMPOS' AND t.field_name = v.field_name;
+JOIN tmp_catalog_field t ON t.catalog_code = 'HABILITACION_CAMPOS' AND t.field_name = v.field_name;
 
 -- =====================================================================
 -- Catálogo ENTREGABLE_ETAPA — Catálogo "Entregable"

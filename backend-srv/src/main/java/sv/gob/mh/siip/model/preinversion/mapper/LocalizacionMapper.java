@@ -56,7 +56,7 @@ public interface LocalizacionMapper {
         if (entity.getLatitud() == null || entity.getLongitud() == null) {
             return null;
         }
-        CoordenadasDto dto = new CoordenadasDto();
+        var dto = new CoordenadasDto();
         dto.setLatitud(entity.getLatitud().doubleValue());
         dto.setLongitud(entity.getLongitud().doubleValue());
         return dto;

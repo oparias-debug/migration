@@ -11,7 +11,6 @@ import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.EstudioProgramacionMetasDto;
 import sv.gob.mh.siip.model.preinversion.dto.EtapaMetaFisicaDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
-import sv.gob.mh.siip.model.preinversion.enums.Entregable;
 import sv.gob.mh.siip.model.preinversion.repository.EtapaMetaFisicaPapRepository;
 import sv.gob.mh.siip.model.preinversion.repository.ProgCuatrimestralMetaFisicaRepository;
 
@@ -54,7 +53,7 @@ final class ProgramacionMetasFisicasPapEstudioAssembler {
         BigDecimal total = m1.add(m2).add(m3);
         BigDecimal aniosPosteriores = ProgramacionMetasFisicasPapCalculos.CIEN.subtract(ejecutadoAnterior)
                 .subtract(total);
-        Entregable entregable = etapaMetaOpt.map(EtapaMetaFisicaPap::getEntregable).orElse(null);
+        var entregable = etapaMetaOpt.map(EtapaMetaFisicaPap::getEntregable).orElse(null);
         boolean esArrastreEtapa = etapaMetaOpt.map(etapaMeta -> calculos.esArrastreEtapa(etapaMeta, anio))
                 .orElse(false);
 

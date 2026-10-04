@@ -34,7 +34,7 @@ public class SeleccionEtapasProyectos {
      *         emergencia.
      */
     public Proyecto buscarDeEmergencia(Long idProyecto) {
-        Proyecto proyecto = buscar(idProyecto);
+        var proyecto = buscar(idProyecto);
         if (!Boolean.TRUE.equals(proyecto.getEsProyectoEmergencia())) {
             throw new RecursoNoEncontradoException(PREFIJO_PROYECTO + idProyecto
                     + " no existe o no está categorizado como de emergencia.");

@@ -4,7 +4,6 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
@@ -67,7 +66,7 @@ public class ActorContexto {
 
     /** Exige un actor autenticado con alguno de los roles permitidos (403 si su rol no califica). */
     public Usuario exigirRol(Set<RolUsuario> rolesPermitidos) {
-        Usuario usuario = exigir();
+        var usuario = exigir();
         if (rolesPermitidos.contains(usuario.getRol())) {
             return usuario;
         }
@@ -85,11 +84,11 @@ public class ActorContexto {
     }
 
     private static String nombreUsuarioDelToken() {
-        Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        var autenticacion = SecurityContextHolder.getContext().getAuthentication();
         if (autenticacion == null || !(autenticacion.getPrincipal() instanceof Jwt jwt)) {
             return null;
         }
-        String preferredUsername = jwt.getClaimAsString(CLAIM_USUARIO);
+        var preferredUsername = jwt.getClaimAsString(CLAIM_USUARIO);
         return preferredUsername != null && !preferredUsername.isBlank() ? preferredUsername : jwt.getSubject();
     }
 

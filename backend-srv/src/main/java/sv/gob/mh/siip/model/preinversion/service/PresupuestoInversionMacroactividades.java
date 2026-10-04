@@ -78,7 +78,7 @@ public class PresupuestoInversionMacroactividades {
      * @param totalProductos cantidad de productos del proyecto
      */
     public void exigirPorProducto(PresupuestoProyecto p, int totalProductos) {
-        for (int i = 1; i <= totalProductos; i++) {
+        for (var i = 1; i <= totalProductos; i++) {
             if (macros.countByPresupuestoIdAndNumeroProducto(p.getId(), i) == 0) {
                 throw PresupuestoInversionValidaciones.invalido("macroactividades");
             }
@@ -123,7 +123,7 @@ public class PresupuestoInversionMacroactividades {
                 .max()
                 .orElse(0);
         List<Double> r = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
+        for (var i = 0; i < n; i++) {
             double s = 0;
             for (MacroactividadInsumoRequestDto x : xs) {
                 if (x.getCostosPorPeriodo() != null && i < x.getCostosPorPeriodo().size()

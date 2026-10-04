@@ -88,10 +88,10 @@ public class SeleccionEtapasRegistro {
      * @throws ConflictoEstadoException si alguna etapa no forma parte de la ruta del proyecto
      */
     public List<EtapaDto> actualizar(Long idProyecto, ActualizarEtapasRequestDto request) {
-        Proyecto proyecto = proyectos.buscar(idProyecto);
+        var proyecto = proyectos.buscar(idProyecto);
         List<EtapaPreinversion> etapasDeLaRuta = etapasConIniciales(proyecto);
 
-        RegistroFechasEtapas registro = new RegistroFechasEtapas();
+        var registro = new RegistroFechasEtapas();
         List<EtapaPreinversion> etapasTocadas = new ArrayList<>();
         for (EtapaRegistroRequestDto item : request.getEtapas()) {
             EtapaPreinversion etapa = etapaDeLaRuta(etapasDeLaRuta, item);
@@ -199,7 +199,7 @@ public class SeleccionEtapasRegistro {
 
     private static EtapaPreinversion etapaDeLaRuta(List<EtapaPreinversion> etapasDeLaRuta,
             EtapaRegistroRequestDto item) {
-        TipoEtapaPreinversion tipoEtapa = TipoEtapaPreinversion.valueOf(item.getNombreEtapa().name());
+        var tipoEtapa = TipoEtapaPreinversion.valueOf(item.getNombreEtapa().name());
         return etapasDeLaRuta.stream()
                 .filter((EtapaPreinversion etapa) -> etapa.getTipoEtapa() == tipoEtapa)
                 .findFirst()

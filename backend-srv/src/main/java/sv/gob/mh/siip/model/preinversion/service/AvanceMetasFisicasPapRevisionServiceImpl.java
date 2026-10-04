@@ -42,7 +42,7 @@ public class AvanceMetasFisicasPapRevisionServiceImpl implements AvanceMetasFisi
     @Override
     public RevisionAvancePAPDto registrarObservacionesAvanceDgicp(RegistrarObservacionesAvanceDgicpRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_PRE, RolUsuario.COORDINADOR_PRE);
-        Cuatrimestre periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
+        var periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
         RevisionAvancePap revision = obtenerORevision(request.getIdUnidadEjecutora(), request.getAnio(), periodo);
         revision.setObservacionesDgicp(request.getObservacionesDgicp());
         return AvanceMetasFisicasPapRevisionMapper.construirRevisionDto(revisionRepository.save(revision), actor);
@@ -51,7 +51,7 @@ public class AvanceMetasFisicasPapRevisionServiceImpl implements AvanceMetasFisi
     @Override
     public RevisionAvancePAPDto enviarObservacionesAvanceDgicp(EnviarObservacionesAvanceDgicpRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_PRE, RolUsuario.COORDINADOR_PRE);
-        Cuatrimestre periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
+        var periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
         RevisionAvancePap revision = obtenerORevision(request.getIdUnidadEjecutora(), request.getAnio(), periodo);
         revision.setFechaObservaciones(AvancePapSoporte.ahora());
         revision.setEstado(EstadoRevisionAvancePap.OBSERVADO);
@@ -68,7 +68,7 @@ public class AvanceMetasFisicasPapRevisionServiceImpl implements AvanceMetasFisi
     public RevisionAvancePAPDto registrarRespuestaInstitucionAvance(
             RegistrarRespuestaInstitucionAvanceRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Cuatrimestre periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
+        var periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
         RevisionAvancePap revision = obtenerORevision(request.getIdUnidadEjecutora(), request.getAnio(), periodo);
         revision.setRespuestaInstitucion(request.getRespuestaInstitucion());
         return AvanceMetasFisicasPapRevisionMapper.construirRevisionDto(revisionRepository.save(revision), actor);
@@ -77,7 +77,7 @@ public class AvanceMetasFisicasPapRevisionServiceImpl implements AvanceMetasFisi
     @Override
     public RevisionAvancePAPDto enviarRespuestaInstitucionAvance(EnviarObservacionesAvanceDgicpRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Cuatrimestre periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
+        var periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
         RevisionAvancePap revision = obtenerORevision(request.getIdUnidadEjecutora(), request.getAnio(), periodo);
         revision.setFechaRespuesta(AvancePapSoporte.ahora());
         RevisionAvancePap guardada = revisionRepository.save(revision);
@@ -90,7 +90,7 @@ public class AvanceMetasFisicasPapRevisionServiceImpl implements AvanceMetasFisi
     @Override
     public RevisionAvancePAPDto finalizarRevisionAvance(FinalizarRevisionAvanceRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_PRE, RolUsuario.COORDINADOR_PRE);
-        Cuatrimestre periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
+        var periodo = Cuatrimestre.valueOf(request.getPeriodo().name());
         RevisionAvancePap revision = obtenerORevision(request.getIdUnidadEjecutora(), request.getAnio(), periodo);
         if (request.getComentarioReporteFinancieroDgicp() != null) {
             revision.setComentarioReporteFinancieroDgicp(request.getComentarioReporteFinancieroDgicp());

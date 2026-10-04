@@ -73,7 +73,7 @@ public class ElegibilidadEmision {
      */
     public void emitir(ElegibilidadContexto contexto) {
         contexto.exigirHabilitada();
-        Proyecto proyecto = contexto.proyecto();
+        var proyecto = contexto.proyecto();
         boolean reemision = contexto.esReemision();
         if (reemision && filtros.tieneComentariosElegibilidadSinResponder(proyecto.getId())) {
             throw new ReglaNegocioException(COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER,

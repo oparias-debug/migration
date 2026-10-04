@@ -41,7 +41,7 @@ final class ProgramacionFinancieraPreinversionAssembler {
         for (EtapaPreinversion etapa : etapas) {
             List<Double> montos = montosPorPeriodo(porEtapa.getOrDefault(etapa.getTipoEtapa(), List.of()), periodos);
             BigDecimal total = BigDecimal.ZERO;
-            for (int i = 0; i < periodos; i++) {
+            for (var i = 0; i < periodos; i++) {
                 BigDecimal monto = ProgramacionFinancieraPreinversionMontos.monetario(montos.get(i));
                 totales.set(i, totales.get(i).add(monto));
                 total = total.add(monto);

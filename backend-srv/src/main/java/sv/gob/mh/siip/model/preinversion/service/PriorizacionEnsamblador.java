@@ -42,13 +42,13 @@ public class PriorizacionEnsamblador {
      * @return la priorización para el actor del contexto
      */
     public PriorizacionResponseDto pantalla(PriorizacionContexto contexto) {
-        MatrizPriorizacion.Matriz actual = matriz.cargar(contexto.priorizacion());
+        var actual = matriz.cargar(contexto.priorizacion());
         CalculoPriorizacion.Resultado calculo = actual.calcular();
         List<CriterioPriorizacionDto> criterios = new ArrayList<>();
         for (CriterioPriorizacion criterio : actual.criterios()) {
             criterios.add(criterio(criterio, actual, calculo));
         }
-        PriorizacionResponseDto dto = new PriorizacionResponseDto(contexto.proyecto().getId(), criterios,
+        var dto = new PriorizacionResponseDto(contexto.proyecto().getId(), criterios,
                 tramo(contexto, TramoPriorizacion.PRE), tramo(contexto, TramoPriorizacion.SYMP),
                 contexto.criteriosCalificables(), contexto.acciones());
         if (contexto.priorizacion() != null && contexto.priorizacion().estaCompleta()) {
@@ -62,7 +62,7 @@ public class PriorizacionEnsamblador {
         List<SubcriterioPriorizacionDto> subcriterios = new ArrayList<>();
         for (SubcriterioPriorizacion subcriterio : criterio.getSubcriterios()) {
             CalculoPriorizacion.SubcriterioCalculado calculado = calculo.subcriterio(subcriterio.getNumero());
-            SubcriterioPriorizacionDto dto = new SubcriterioPriorizacionDto(subcriterio.getNumero(),
+            var dto = new SubcriterioPriorizacionDto(subcriterio.getNumero(),
                     subcriterio.getNombre(), subcriterio.getPonderacionSubcriterio());
             dto.setDescripcionRequerimientoInformacion(subcriterio.getDescripcionRequerimiento());
             dto.setPonderacionSubcriterioAplicada(calculado.ponderacionAplicada());
@@ -71,7 +71,7 @@ public class PriorizacionEnsamblador {
             dto.setPuntaje(numero(calculado.puntaje()));
             subcriterios.add(dto);
         }
-        CriterioPriorizacionDto dto = new CriterioPriorizacionDto(criterio.getNumeroCriterio(),
+        var dto = new CriterioPriorizacionDto(criterio.getNumeroCriterio(),
                 criterio.getNombreCriterio(), criterio.getPonderacionCriterio(), subcriterios);
         dto.setPonderacionCriterioAplicada(calculo.criterio(criterio.getNumeroCriterio()).ponderacionAplicada());
         return dto;
@@ -82,12 +82,12 @@ public class PriorizacionEnsamblador {
             CalculoPriorizacion.Resultado calculo) {
         List<PuntajeCriterioDto> puntajes = new ArrayList<>();
         for (CriterioPriorizacion criterio : criterios) {
-            PuntajeCriterioDto puntaje = new PuntajeCriterioDto(criterio.getNumeroCriterio(),
+            var puntaje = new PuntajeCriterioDto(criterio.getNumeroCriterio(),
                     criterio.getNombreCriterio());
             puntaje.setPuntaje(numero(calculo.criterio(criterio.getNumeroCriterio()).puntaje()));
             puntajes.add(puntaje);
         }
-        InterpretacionPriorizacion.Interpretacion rango = interpretacion.interpretar(calculo.prioridad());
+        var rango = interpretacion.interpretar(calculo.prioridad());
         return new ResultadoPriorizacionDto(puntajes, calculo.prioridad().doubleValue(),
                 rango == null ? null : CategoriaPriorizacionDto.valueOf(rango.categoria().name()),
                 rango == null ? null : rango.implicacion(), true);

@@ -33,7 +33,7 @@ public class PermissionsAllowedInterceptor {
         }
         boolean requireAll = permissionsAllowed.requireAll();
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = (authentication != null) ? authentication.getName() : "anonymous";
 
         boolean hasAccess;

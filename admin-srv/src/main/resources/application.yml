@@ -40,6 +40,11 @@ spring:
       hibernate:
         format_sql: false
         dialect: org.hibernate.dialect.OracleDialect
+        # LocalDate/LocalDateTime se envían al driver tal cual (JDBC 4.2), sin pasar por
+        # java.sql.Date: así una fecha anterior a 1582 (p.ej. FECHA{1000-01-01:...} de un campo de
+        # catálogo, CU-ADM-01) no se corre de día por el cambio de calendario juliano/gregoriano.
+        type:
+          java_time_use_direct_jdbc: true
   
 
 # Service Configuration

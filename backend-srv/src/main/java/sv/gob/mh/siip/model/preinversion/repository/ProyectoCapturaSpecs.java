@@ -168,7 +168,7 @@ public final class ProyectoCapturaSpecs {
             return null;
         }
         try {
-            IniciativaInversion enumValue = IniciativaInversion.valueOf(iniciativaValue);
+            var enumValue = IniciativaInversion.valueOf(iniciativaValue);
             return cb.equal(root.get(FIELD_INICIATIVA), enumValue);
         } catch (IllegalArgumentException ex) {
             // Si el String no coincide con ningún Enum válido, fuerza resultado vacío seguro
@@ -200,7 +200,7 @@ public final class ProyectoCapturaSpecs {
             return null;
         }
         try {
-            EstadoProyecto enumValue = EstadoProyecto.valueOf(estadoValue);
+            var enumValue = EstadoProyecto.valueOf(estadoValue);
             return cb.equal(root.get(FIELD_ESTADO), enumValue);
         } catch (IllegalArgumentException ex) {
             // Si el String no coincide con ningún Enum válido, fuerza resultado vacío seguro

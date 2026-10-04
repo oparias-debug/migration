@@ -5,7 +5,7 @@ import java.util.List;
 
 import sv.gob.mh.domain.model.catalogo.ValorCampo;
 
-/** HU-ADM-01-09: crear un registro; {@code clavePadre} es el KEY del registro padre (Regla 23). */
+/** HU-ADM-01-09: crear un registro; {@code clavePadre} es el KEY del registro padre (RN-05). */
 public record CrearRegistroCommand(String codigoCatalogo, List<ValorCampo> valores, String clavePadre,
         LocalDate fechaDesde, LocalDate fechaHasta) {
 

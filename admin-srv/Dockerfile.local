@@ -6,4 +6,11 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 COPY target/app.jar app.jar
+
+# No correr como root (eclipse-temurin arranca como root por defecto; la revisión de
+# seguridad del pipeline lo marca como GAP). 185 es el UID del usuario estándar de las
+# imágenes Java de Red Hat UBI, el mismo que usa el Dockerfile de la entidad; aquí no
+# existe con nombre, pero Docker acepta el UID numérico. Solo puede leer app.jar y
+# escribir en /tmp: si la app llegara a escribir en /app, agregar antes `RUN chown 185 /app`.
+USER 185
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -43,7 +43,7 @@ public class CatalogoElegibilidadServiceImpl implements CatalogoElegibilidadServ
     public List<EntradaCatalogoEspecificarDto> listarCatalogoEspecificarElegibilidad(
             TipoCatalogoEspecificarDto tipo) {
         actorContexto.exigirRol(RolUsuario.VIABILIZADOR);
-        TipoCatalogoEspecificar tipoDominio = TipoCatalogoEspecificar.valueOf(tipo.name());
+        var tipoDominio = TipoCatalogoEspecificar.valueOf(tipo.name());
         return entradaCatalogoEspecificarRepository.findByTipoOrderByCodigoAsc(tipoDominio).stream()
                 .map(mapper::toResumen).toList();
     }

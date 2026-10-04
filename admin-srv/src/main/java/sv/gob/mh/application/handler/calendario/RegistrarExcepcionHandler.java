@@ -24,10 +24,10 @@ public class RegistrarExcepcionHandler {
 
     @Transactional
     public Resultado handle(RegistrarExcepcionCommand command) {
-        Calendario calendario = calendarioRepository.obtenerPorCodigo(command.codigoCalendario());
+        var calendario = calendarioRepository.obtenerPorCodigo(command.codigoCalendario());
         calendario.registrarExcepcion(command.fecha(), command.tipo(), command.descripcion());
-        Calendario guardado = calendarioRepository.guardar(calendario);
-        Excepcion excepcion = guardado.getExcepciones().stream()
+        var guardado = calendarioRepository.guardar(calendario);
+        var excepcion = guardado.getExcepciones().stream()
                 .filter(e -> e.getFecha().equals(command.fecha()))
                 .findFirst()
                 .orElseThrow();

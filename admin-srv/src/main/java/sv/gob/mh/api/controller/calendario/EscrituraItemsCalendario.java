@@ -35,7 +35,7 @@ public class EscrituraItemsCalendario {
     }
 
     public ResponseEntity<PeriodoLaboralDto> agregarPeriodoLaboral(String codigoCalendario, PeriodoInputDto request) {
-        AgregarPeriodoHandler.Resultado resultado = agregarPeriodo.handle(
+        var resultado = agregarPeriodo.handle(
                 aCommand(codigoCalendario, TipoPeriodo.LABORAL, request));
         return ResponseEntity.status(HttpStatus.CREATED).body(CalendarItemApiMapper
                 .aPeriodoLaboralDto(resultado.periodo(), resultado.calendario().getEstado()));
@@ -43,7 +43,7 @@ public class EscrituraItemsCalendario {
 
     public ResponseEntity<PeriodoNoLaboralDto> agregarPeriodoNoLaboral(String codigoCalendario,
             PeriodoInputDto request) {
-        AgregarPeriodoHandler.Resultado resultado = agregarPeriodo.handle(
+        var resultado = agregarPeriodo.handle(
                 aCommand(codigoCalendario, TipoPeriodo.NO_LABORAL, request));
         return ResponseEntity.status(HttpStatus.CREATED).body(CalendarItemApiMapper
                 .aPeriodoNoLaboralDto(resultado.periodo(), resultado.calendario().getEstado()));
@@ -51,7 +51,7 @@ public class EscrituraItemsCalendario {
 
     public ResponseEntity<ExcepcionDto> registrarExcepcion(String codigoCalendario,
             RegistrarExcepcionRequestDto request) {
-        RegistrarExcepcionHandler.Resultado resultado = registrarExcepcion.handle(new RegistrarExcepcionCommand(
+        var resultado = registrarExcepcion.handle(new RegistrarExcepcionCommand(
                 codigoCalendario, request.getFecha(), DefinicionCalendarioApiMapper.aTipoExcepcion(request.getTipo()),
                 request.getDescripcion()));
         return ResponseEntity.status(HttpStatus.CREATED).body(CalendarItemApiMapper

@@ -45,7 +45,7 @@ public class MatrizInteresadosServiceImpl implements MatrizInteresadosService {
     @Transactional(readOnly = true)
     public MatrizInteresadosDto obtener(Long idProyecto) {
         Usuario actor = actorContexto.exigir();
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
 
         List<Interesado> interesados = interesadoRepository.findByProyectoIdOrderByOrdenAsc(idProyecto);
@@ -55,7 +55,7 @@ public class MatrizInteresadosServiceImpl implements MatrizInteresadosService {
     @Override
     public MatrizInteresadosDto guardar(Long idProyecto, MatrizInteresadosRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
@@ -82,7 +82,7 @@ public class MatrizInteresadosServiceImpl implements MatrizInteresadosService {
 
         List<InteresadoRequestDto> valores = filas == null ? List.of() : filas;
         List<Interesado> nuevos = new ArrayList<>();
-        int orden = 0;
+        var orden = 0;
         for (InteresadoRequestDto fila : valores) {
             nuevos.add(Interesado.builder()
                     .proyecto(proyecto)

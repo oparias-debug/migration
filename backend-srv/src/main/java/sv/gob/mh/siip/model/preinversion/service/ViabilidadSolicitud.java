@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import sv.gob.mh.siip.exception.ReglaNegocioException;
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.common.repository.UsuarioRepository;
-import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.domain.RevisionViabilidad;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoRevisionViabilidad;
@@ -65,7 +64,7 @@ public class ViabilidadSolicitud {
             throw new ReglaNegocioException(DOCUMENTO_PREINVERSION_REQUERIDO,
                     "Debe cargar el Documento de Preinversión antes de solicitar Viabilidad.");
         }
-        Proyecto proyecto = contexto.proyecto();
+        var proyecto = contexto.proyecto();
         if (filtros.tieneComentariosProyectoSinResponder(proyecto.getId())) {
             throw new ReglaNegocioException(COMENTARIOS_OPINION_TECNICA_SIN_RESPONDER,
                     MENSAJE_COMENTARIOS_OT_SIN_RESPONDER);

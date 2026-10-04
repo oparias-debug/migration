@@ -39,6 +39,18 @@
 		<mockito.version>5.18.0</mockito.version>
 		<cucumber.version>7.22.1</cucumber.version>
 		<openapi-generator.version>7.25.0</openapi-generator.version>
+
+		<!-- Karate version for integration and smoke tests -->
+		<karate.version>1.5.2</karate.version>
+		<!-- Destino de las pruebas Karate. Vacias a proposito: las pasa por -D quien
+		     invoca los perfiles integration-tests / smoke-tests / stress-tests (en el
+		     ciclo, la task karate-verify). Vacias, karate-config.js falla con un
+		     mensaje claro en vez de apuntar a un sitio inventado. -->
+		<base.url></base.url>
+		<oauth2.token.url></oauth2.token.url>
+		<oauth2.client.id></oauth2.client.id>
+		<oauth2.client.secret></oauth2.client.secret>
+		<stress.threads></stress.threads>
 	</properties>
 	<dependencies>
 		<!-- Antes heredada del pom.xml raíz del reactor; ver nota de "POM aplanado" arriba. -->
@@ -175,10 +187,31 @@
 			<artifactId>junit-platform-suite</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Karate Framework for Integration and Smoke Tests (plantilla de la entidad) -->
+		<dependency>
+			<groupId>io.karatelabs</groupId>
+			<artifactId>karate-junit5</artifactId>
+			<version>${karate.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<!-- Nombre fijo: el Dockerfile copia target/app.jar -->
 		<finalName>app</finalName>
+		<!-- src/test/pruebas (features/datos de Karate, plantilla de la entidad) va al
+		     classpath de test junto a src/test/resources; los runners .java de Karate
+		     viven en src/test/java/sv/gob/mh/pruebas. -->
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+			</testResource>
+			<testResource>
+				<directory>src/test/pruebas</directory>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</testResource>
+		</testResources>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -196,6 +229,12 @@
 				<configuration>
 					<argLine>@{argLine} -XX:+EnableDynamicAgentLoading
 						-Djdk.attach.allowAttachSelf=true</argLine>
+					<!-- Excluir runners de Karate del test default (unit tests): necesitan un
+					     servicio desplegado y -Dbase.url; corren solo con los perfiles
+					     integration-tests / smoke-tests / stress-tests. -->
+					<excludes>
+						<exclude>**/pruebas/**</exclude>
+					</excludes>
 				</configuration>
 			</plugin>
 			<!-- Antes heredado del pom.xml raíz del reactor; ver nota de "POM aplanado"
@@ -743,9 +782,9 @@
 						<version>3.5.3</version>
 						<configuration>
 							<includes>
-								<include>**/IntegrationTestRunner.java</include>
-								<include>**/HealthRunner.java</include>
-								<include>**/SecurityRunner.java</include>
+								<include>**/IntegrationTest.java</include>
+								<include>**/HealthTest.java</include>
+								<include>**/SecurityTest.java</include>
 							</includes>
 							<excludes combine.self="override" />
 							<systemPropertyVariables>
@@ -777,7 +816,7 @@
 						<version>3.5.3</version>
 						<configuration>
 							<includes>
-								<include>**/SmokeTestRunner.java</include>
+								<include>**/SmokeTest.java</include>
 							</includes>
 							<excludes combine.self="override" />
 							<systemPropertyVariables>
@@ -809,7 +848,7 @@
 						<version>3.5.3</version>
 						<configuration>
 							<includes>
-								<include>**/StressTestRunner.java</include>
+								<include>**/StressTest.java</include>
 							</includes>
 							<excludes combine.self="override" />
 							<systemPropertyVariables>

@@ -56,7 +56,7 @@ public class ViabilidadCierre {
      */
     public void devolver(ViabilidadContexto contexto) {
         RevisionViabilidad revision = contexto.exigirRevisionEnCurso();
-        Proyecto proyecto = contexto.proyecto();
+        var proyecto = contexto.proyecto();
 
         // RN10: la revisión devuelta conserva sus comentarios; la próxima solicitud abre otra.
         cerrarRevision(revision, EstadoRevisionViabilidad.DEVUELTA, contexto.actor());
@@ -82,7 +82,7 @@ public class ViabilidadCierre {
                     "Debe registrar y guardar las Observaciones Generales/Justificación de la Viabilidad "
                             + "antes de emitirla.");
         }
-        Proyecto proyecto = contexto.proyecto();
+        var proyecto = contexto.proyecto();
 
         // RN03: Elegibilidad solo se gestiona la primera vez; después se salta a la OT, salvo que la OT
         // haya comentado también los criterios de elegibilidad (RN14 de CU-PRE-26).

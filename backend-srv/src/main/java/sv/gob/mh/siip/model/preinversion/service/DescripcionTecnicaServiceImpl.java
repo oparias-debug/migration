@@ -118,7 +118,7 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
 
     /** Crea la cabecera volátil (no persistida) con la descripción autocompletada según RN03. */
     private DescripcionTecnica crearDescripcionAutocompletada(Proyecto proyecto, Long idProyecto) {
-        DescripcionTecnica nueva = new DescripcionTecnica();
+        var nueva = new DescripcionTecnica();
         nueva.setProyecto(proyecto);
         nueva.setDescripcion(resolverDescripcionAutocompletada(proyecto, idProyecto));
         return nueva;
@@ -161,7 +161,7 @@ public class DescripcionTecnicaServiceImpl implements DescripcionTecnicaService 
                     return existente;
                 })
                 .orElseGet(() -> {
-                    DescripcionTecnica nueva = descripcionTecnicaMapper.toEntity(requestDto);
+                    var nueva = descripcionTecnicaMapper.toEntity(requestDto);
                     nueva.setProyecto(proyecto);
                     nueva.setDescripcion(
                             requestDto.getDescripcionProyecto() != null

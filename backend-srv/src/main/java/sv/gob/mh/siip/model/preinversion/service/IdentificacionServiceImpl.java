@@ -45,7 +45,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
     @Transactional(readOnly = true)
     public IdentificacionDto obtener(Long idProyecto) {
         Usuario actor = acceso.exigirActor();
-        Proyecto proyecto = acceso.proyectoVisible(actor, idProyecto);
+        var proyecto = acceso.proyectoVisible(actor, idProyecto);
 
         Optional<Identificacion> entidad = identificacionRepository.findByProyectoId(idProyecto);
         exigirGuardadoPrevio(actor, entidad.isPresent(), idProyecto);
@@ -62,7 +62,7 @@ public class IdentificacionServiceImpl implements IdentificacionService {
 
     @Override
     public IdentificacionDto guardar(Long idProyecto, IdentificacionRequestDto request) {
-        Proyecto proyecto = acceso.proyectoEditable(idProyecto);
+        var proyecto = acceso.proyectoEditable(idProyecto);
 
         Identificacion entidad = identificacionRepository.findByProyectoId(proyecto.getId())
                 .orElseGet(() -> Identificacion.builder().proyecto(proyecto).build());

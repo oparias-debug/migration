@@ -70,7 +70,7 @@ final class ValidacionAnalisisMercado {
     static void exigirProductosDelCatalogo(List<FilaAnalisisMercadoRequestDto> filas,
             Map<String, ProductoIndicadorCatalogo> catalogo) {
         List<ErrorDetalleDto> ajenos = new ArrayList<>();
-        for (int i = 0; i < filas.size(); i++) {
+        for (var i = 0; i < filas.size(); i++) {
             String codigo = codigoProducto(filas.get(i));
             if (codigo != null && !catalogo.containsKey(codigo)) {
                 ajenos.add(detalle(FILAS + i + "].producto",
@@ -89,7 +89,7 @@ final class ValidacionAnalisisMercado {
      */
     static void exigirRangos(List<FilaAnalisisMercadoRequestDto> filas) {
         List<ErrorDetalleDto> fueraDeRango = new ArrayList<>();
-        for (int i = 0; i < filas.size(); i++) {
+        for (var i = 0; i < filas.size(); i++) {
             validarRangos(filas.get(i), FILAS + i + "].", fueraDeRango);
         }
         exigirSinErrores(fueraDeRango, CODIGO_VALOR_FUERA_DE_RANGO, "Hay valores fuera del rango permitido.");
@@ -103,7 +103,7 @@ final class ValidacionAnalisisMercado {
     static void exigirProductosSinRepetir(List<FilaAnalisisMercadoRequestDto> filas) {
         Map<String, Integer> primeraFila = new HashMap<>();
         List<ErrorDetalleDto> repetidos = new ArrayList<>();
-        for (int i = 0; i < filas.size(); i++) {
+        for (var i = 0; i < filas.size(); i++) {
             String codigo = codigoProducto(filas.get(i));
             if (codigo != null && primeraFila.putIfAbsent(codigo, i) != null) {
                 repetidos.add(detalle(FILAS + i + "].producto",

@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import sv.gob.mh.domain.model.catalogo.CampoDefinicion;
 import sv.gob.mh.domain.model.catalogo.Catalogo;
+import sv.gob.mh.domain.model.catalogo.DefinicionTipo;
 import sv.gob.mh.domain.model.catalogo.Periodo;
 import sv.gob.mh.domain.model.catalogo.Registro;
 import sv.gob.mh.domain.model.catalogo.RegistroPadre;
@@ -26,17 +27,23 @@ final class CatalogoPersistenceMapper {
 
     static Catalogo aModelo(CatalogoEntity entidad) {
         List<CampoDefinicion> campos = entidad.getCampos().stream()
-                .map(campo -> new CampoDefinicion(campo.getId(), campo.getNombre(), campo.getTipo(), campo.isEsKey(),
-                        campo.getPosicion()))
+                .map(campo -> new CampoDefinicion(campo.getId(), campo.getNombre(), campo.isEsKey(),
+                        campo.getPosicion(), definicion(campo)))
                 .toList();
         return new Catalogo(entidad.getId(), entidad.getCodigo(), entidad.getNombre(), entidad.getCatalogoPadreCodigo(),
+                entidad.getCatalogoHijoCodigo(),
                 new Periodo(entidad.getEstado(), entidad.getFechaDesde(), entidad.getFechaHasta()), campos);
+    }
+
+    private static DefinicionTipo definicion(CampoDefinicionEntity campo) {
+        return new DefinicionTipo(campo.getTipo(), campo.getValorMinimo(), campo.getValorMaximo(),
+                campo.getLongitudMaxima(), campo.getFechaMinima(), campo.getFechaMaxima(), campo.getValoresEnum());
     }
 
     /**
      * Copia el modelo sobre la entidad. Los campos se sincronizan por id: los que conservan su id
-     * se actualizan (y conservan su lista ENUM), los nuevos se agregan y el resto se elimina
-     * (orphanRemoval). {@code padre} es la entidad del catálogo padre del modelo, o {@code null}.
+     * se actualizan, los nuevos se agregan y el resto se elimina (orphanRemoval). {@code padre} es
+     * la entidad del catálogo padre del modelo, o {@code null}.
      */
     static void copiar(Catalogo modelo, CatalogoEntity entidad, CatalogoEntity padre) {
         entidad.setCodigo(modelo.getCodigo());
@@ -53,11 +60,18 @@ final class CatalogoPersistenceMapper {
             CampoDefinicionEntity destino = campo.getId() != null && existentes.containsKey(campo.getId())
                     ? existentes.get(campo.getId())
                     : new CampoDefinicionEntity();
+            DefinicionTipo definicion = campo.getDefinicion();
             destino.setCatalogo(entidad);
             destino.setNombre(campo.getNombre());
-            destino.setTipo(campo.getTipo());
+            destino.setTipo(definicion.tipo());
             destino.setEsKey(campo.isEsKey());
             destino.setPosicion(campo.getPosicion());
+            destino.setValorMinimo(definicion.minimo());
+            destino.setValorMaximo(definicion.maximo());
+            destino.setLongitudMaxima(definicion.longitudMaxima());
+            destino.setFechaMinima(definicion.fechaMinima());
+            destino.setFechaMaxima(definicion.fechaMaxima());
+            destino.reemplazarValoresEnum(definicion.valoresEnum());
             nuevos.add(destino);
         }
         entidad.reemplazarCampos(nuevos);

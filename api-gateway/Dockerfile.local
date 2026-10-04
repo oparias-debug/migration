@@ -14,4 +14,11 @@ COPY wait-for-keycloak.sh wait-for-keycloak.sh
 RUN apt-get update && apt-get install -y curl \
     && chmod +x wait-for-keycloak.sh && apt-get clean
 
+# No correr como root (eclipse-temurin arranca como root por defecto; la revisión de
+# seguridad del pipeline lo marca como GAP). 185 es el UID del usuario estándar de las
+# imágenes Java de Red Hat UBI, el mismo que usa el Dockerfile de la entidad; aquí no
+# existe con nombre, pero Docker acepta el UID numérico. Va después del apt-get, que sí
+# necesita root; chmod +x deja wait-for-keycloak.sh ejecutable para cualquier usuario.
+USER 185
+
 ENTRYPOINT ["./wait-for-keycloak.sh"]

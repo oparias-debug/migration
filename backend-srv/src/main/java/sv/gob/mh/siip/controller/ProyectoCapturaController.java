@@ -54,7 +54,7 @@ public class ProyectoCapturaController implements PreinversinCapturaDeProyectosA
             Integer pagina,
             Integer tamanio) {
 
-        ProyectoCapturaFiltro filtro = new ProyectoCapturaFiltro(
+        var filtro = new ProyectoCapturaFiltro(
                 busqueda,
                 cup,
                 nombreProyecto,

@@ -157,7 +157,7 @@ public class OpinionTecnicaSolicitud {
             throw ComentariosDgicpOpinionTecnica.invalido("tecnicoPreId", "Seleccione un Técnico PRE válido.");
         }
         Usuario tecnico = destinatarios.tecnicoPreActivo(idTecnicoPre);
-        LocalDateTime ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
+        var ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
         gestion.setTecnicoResponsable(tecnico);
         gestion.setFechaAsignacion(ahora);
         opinionesTecnicas.save(gestion);
@@ -168,7 +168,7 @@ public class OpinionTecnicaSolicitud {
 
     private OpinionTecnica abrir(Usuario actor, Proyecto proyecto, TipoSolicitudOpinionTecnica tipo,
             EtapasOpinionTecnica.Etapas gestionadas) {
-        LocalDateTime ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
+        var ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
         // RN 12: una gestión archivada por vencimiento del plazo (RN09) no cuenta; la siguiente vuelve a
         // mostrar "Comentarios Elegibilidad".
         boolean primera = !opinionesTecnicas.existsByProyectoIdAndFechaArchivoIsNull(proyecto.getId());

@@ -69,8 +69,8 @@ public class AuthorizationService {
      * @return true si tiene permiso, false en caso contrario
      */
     public boolean hasGranularPermission(String operation, String path) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        boolean permitido = false;
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        var permitido = false;
         if (authentication != null && authentication.isAuthenticated()) {
             permitido = consultarServicio(authentication, operation, path);
         }
@@ -114,7 +114,7 @@ public class AuthorizationService {
                 .map((String rol) -> rol.replace("/", ""))
                 .filter((String rol) -> !rol.isBlank())
                 .collect(Collectors.joining(","));
-        boolean permitido = false;
+        var permitido = false;
         try {
             HttpResponse<String> response = httpClient.send(peticion(token, groupIds, operation, path),
                     HttpResponse.BodyHandlers.ofString());
@@ -148,7 +148,7 @@ public class AuthorizationService {
     private boolean evaluarRespuesta(String cuerpo, String username, String groupIds)
             throws JsonProcessingException {
         JsonNode responseJson = objectMapper.readTree(cuerpo);
-        boolean hasPermission = responseJson.get("hasPermission").asBoolean();
+        var hasPermission = responseJson.get("hasPermission").asBoolean();
         String conditions = responseJson.has("conditions") ? responseJson.get("conditions").asText() : "";
         boolean conCondiciones = hasPermission && !conditions.isEmpty() && !"null".equals(conditions);
         return conCondiciones ? evaluateAdditionalConditions(conditions, username, groupIds) : hasPermission;
@@ -217,11 +217,11 @@ public class AuthorizationService {
     }
 
     private boolean dentroDeLaFranja(String[] timeParts, String timeRestriction) {
-        boolean dentro = false;
+        var dentro = false;
         try {
-            LocalTime startTime = LocalTime.parse(timeParts[0].trim(), FORMATO_HORA);
-            LocalTime endTime = LocalTime.parse(timeParts[1].trim(), FORMATO_HORA);
-            LocalTime currentTime = LocalTime.now(ZONA_EL_SALVADOR);
+            var startTime = LocalTime.parse(timeParts[0].trim(), FORMATO_HORA);
+            var endTime = LocalTime.parse(timeParts[1].trim(), FORMATO_HORA);
+            var currentTime = LocalTime.now(ZONA_EL_SALVADOR);
             if (startTime.isBefore(endTime)) {
                 dentro = !currentTime.isBefore(startTime) && !currentTime.isAfter(endTime);
             } else {

@@ -26,7 +26,7 @@ final class ProgramacionMetasFisicasPapListadoAssembler {
     EstudioFilaMetasFisicasDto construirFilaListaDto(EtapaMetaFisicaPap etapaMeta, Integer anio,
             String comentariosReporteDgicp) {
         EtapaPreinversion etapa = etapaMeta.getEtapaPreinversion();
-        Proyecto proyecto = etapa.getProyecto();
+        var proyecto = etapa.getProyecto();
         BigDecimal ejecutadoAnterior = calculos.ejecutadoAniosAnteriores(etapaMeta.getId(), anio);
         BigDecimal total = calculos.totalDelAnio(etapaMeta.getId(), anio);
         BigDecimal aniosPosteriores = ProgramacionMetasFisicasPapCalculos.CIEN.subtract(ejecutadoAnterior)

@@ -55,7 +55,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
     @Transactional(readOnly = true)
     public AnalisisPoblacionDto obtener(Long idProyecto) {
         Usuario actor = actorContexto.exigir();
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
 
         AnalisisPoblacion entidad = analisisPoblacionRepository.findByProyectoId(idProyecto).orElse(null);
@@ -65,7 +65,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
     @Override
     public AnalisisPoblacionDto guardar(Long idProyecto, AnalisisPoblacionRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
@@ -145,7 +145,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
             pendientes.add(detalle(fila + ".ubicaciones", "Debe registrar al menos una ubicación."));
             return;
         }
-        for (int i = 0; i < celdas.size(); i++) {
+        for (var i = 0; i < celdas.size(); i++) {
             CeldaUbicacionRequestDto celda = celdas.get(i);
             String prefijo = fila + ".ubicaciones[" + i + "].";
             String ubicacion = celda.getUbicacion();
@@ -173,7 +173,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
 
     private static void agregarNegativos(String fila, List<CeldaUbicacionRequestDto> celdas,
             List<ErrorDetalleDto> negativos) {
-        for (int i = 0; i < celdas.size(); i++) {
+        for (var i = 0; i < celdas.size(); i++) {
             Integer numero = celdas.get(i).getNumeroPersonas();
             if (numero != null && numero < 0) {
                 negativos.add(detalle(fila + ".ubicaciones[" + i + "].numeroPersonas", "No puede ser negativo."));
@@ -208,7 +208,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
     private static void exigirNoExcede(List<CeldaUbicacionRequestDto> menor, List<CeldaUbicacionRequestDto> mayor,
             String codigo, String mensaje) {
         int tamanio = Math.max(menor.size(), mayor.size());
-        for (int i = 0; i < tamanio; i++) {
+        for (var i = 0; i < tamanio; i++) {
             Integer numeroMenor = numeroPersonasEn(menor, i);
             Integer numeroMayor = numeroPersonasEn(mayor, i);
             if (numeroMenor != null && numeroMayor != null && numeroMayor > numeroMenor) {
@@ -275,7 +275,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
     private static FilaPoblacionDto construirFilaObjetivo(List<CeldaUbicacionPoblacion> objetivo,
             List<CeldaUbicacionPoblacion> afectada, String descripcion) {
         List<CeldaUbicacionDto> ubicaciones = new ArrayList<>();
-        for (int i = 0; i < objetivo.size(); i++) {
+        for (var i = 0; i < objetivo.size(); i++) {
             CeldaUbicacionPoblacion celdaObjetivo = objetivo.get(i);
             Integer numeroAfectada = i < afectada.size() ? afectada.get(i).getNumeroPersonas() : null;
             ubicaciones.add(new CeldaUbicacionDto().ubicacion(celdaObjetivo.getUbicacion())
@@ -299,7 +299,7 @@ public class AnalisisPoblacionServiceImpl implements AnalisisPoblacionService {
             List<CeldaUbicacionPoblacion> objetivo) {
         int tamanio = Math.max(afectada.size(), objetivo.size());
         List<CeldaUbicacionDto> ubicaciones = new ArrayList<>();
-        for (int i = 0; i < tamanio; i++) {
+        for (var i = 0; i < tamanio; i++) {
             Integer numeroAfectada = i < afectada.size() ? afectada.get(i).getNumeroPersonas() : null;
             Integer numeroObjetivo = i < objetivo.size() ? objetivo.get(i).getNumeroPersonas() : null;
             Double porcentajeObjetivo = calcularPorcentaje(numeroObjetivo, numeroAfectada);

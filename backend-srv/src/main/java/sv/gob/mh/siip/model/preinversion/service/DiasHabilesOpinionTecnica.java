@@ -30,7 +30,7 @@ final class DiasHabilesOpinionTecnica {
      */
     static LocalDate sumar(LocalDate desde, int dias) {
         LocalDate cursor = desde;
-        int contados = 0;
+        var contados = 0;
         while (contados < dias) {
             cursor = cursor.plusDays(1);
             if (esHabil(cursor)) {

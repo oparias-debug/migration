@@ -44,3 +44,14 @@ springdoc:
 
 # URL pública de api-gateway: solo se usa como "servers" del OpenAPI (Swagger UI).
 gateway.url: ${GATEWAY_URL:http://localhost:8080}
+
+# Auditoría de la entidad (sv.gob.mh.infrastructure.config.audit, ver docs/audit-logging.md):
+# INSERT/UPDATE/DELETE de las entidades @Auditable van a auditoria-service. service.name es
+# el "application" del evento, por el que se filtra en auditoria-ui. AUDIT_SERVICE_URL y
+# LOG_SERVICE_URL las pone el ConfigMap de backend-srv-config; los defaults son los de desa.
+service.name: dgicp-siip2-backend-srv
+audit.service.url: ${AUDIT_SERVICE_URL:https://auditoria-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/audit}
+remote.logger:
+  enabled: ${REMOTE_LOGGER_ENABLED:true}
+  url: ${LOG_SERVICE_URL:https://auditoria-service-mh-dev-dinafi-usi-frmk.apps.gcp-op-desa.cloud.mh.gob.sv/api/v1/logs}
+  level: WARNING

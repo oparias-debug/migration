@@ -67,7 +67,7 @@ public class AlertaEliminacionAutomaticaScheduler {
                         TipoSolicitud.CUP, EstadoSolicitud.REGISTRADA, limite);
 
         for (SolicitudPreinversion solicitud : candidatas) {
-            Proyecto proyecto = solicitud.getProyecto();
+            var proyecto = solicitud.getProyecto();
             Usuario tecnicoUrp = usuarioRepository.findByNombreUsuario(proyecto.getUsuarioCreacion()).orElse(null);
             notificacionService.notificarAlertaEliminacion(proyecto, tecnicoUrp);
             solicitud.setFechaAlertaEliminacion(LocalDateTime.now(ZONA_EL_SALVADOR));
@@ -80,12 +80,12 @@ public class AlertaEliminacionAutomaticaScheduler {
                 .findByTipoSolicitudAndEstadoAndFechaAlertaEliminacionIsNotNull(TipoSolicitud.CUP,
                         EstadoSolicitud.REGISTRADA);
 
-        LocalDateTime ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
+        var ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
         for (SolicitudPreinversion solicitud : alertadas) {
             if (diasHabilesEntre(solicitud.getFechaAlertaEliminacion(), ahora) < DIAS_HABILES_PARA_ARCHIVAR) {
                 continue;
             }
-            Proyecto proyecto = solicitud.getProyecto();
+            var proyecto = solicitud.getProyecto();
             proyecto.setActivo(false);
             proyectoRepository.save(proyecto);
 

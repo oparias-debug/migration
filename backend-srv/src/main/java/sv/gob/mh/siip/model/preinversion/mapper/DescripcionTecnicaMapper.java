@@ -61,7 +61,7 @@ public interface DescripcionTecnicaMapper {
         if (componente == null) {
             return null;
         }
-        TipoCostoResumenDto dto = new TipoCostoResumenDto();
+        var dto = new TipoCostoResumenDto();
         dto.setCodigo((componente.getId() != null) ? String.valueOf(componente.getId()) : null);
         dto.setNombre(componente.getNombre());
         return dto;

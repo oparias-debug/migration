@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test;
 
 import sv.gob.mh.domain.model.catalogo.CampoDefinicion;
 import sv.gob.mh.domain.model.catalogo.Catalogo;
+import sv.gob.mh.domain.model.catalogo.DefinicionTipo;
 import sv.gob.mh.domain.model.catalogo.Periodo;
 import sv.gob.mh.infrastructure.persistence.entity.catalogo.CampoDefinicionEntity;
 import sv.gob.mh.infrastructure.persistence.entity.catalogo.CatalogoEntity;
 import sv.gob.mh.infrastructure.persistence.entity.catalogo.RegistroEntity;
 import sv.gob.mh.shared.enums.EstadoVigencia;
-import sv.gob.mh.shared.enums.TipoCampo;
 
 /** Sincronización del modelo de catálogo con sus entidades JPA. */
 class CatalogoPersistenceMapperTest {
@@ -29,9 +29,10 @@ class CatalogoPersistenceMapperTest {
         existente.setId(10L);
         existente.setNombre("codigo");
         entidad.agregarCampo(existente);
-        Catalogo modelo = new Catalogo(1L, "PAISES", "Países", null, new Periodo(EstadoVigencia.ACTIVE, null, null),
-                List.of(new CampoDefinicion(10L, "codigo", TipoCampo.STRING, true, 1),
-                        new CampoDefinicion(99L, "nombre", TipoCampo.STRING, false, 2)));
+        Catalogo modelo = new Catalogo(1L, "PAISES", "Países", null, null, new Periodo(EstadoVigencia.ACTIVE, null, null),
+                List.of(new CampoDefinicion(10L, "codigo", true, 1, DefinicionTipo.texto(3)),
+                        new CampoDefinicion(99L, "nombre", false, 2,
+                                DefinicionTipo.enumerado(List.of("A", "B")))));
 
         CatalogoPersistenceMapper.copiar(modelo, entidad, null);
 
@@ -40,18 +41,22 @@ class CatalogoPersistenceMapperTest {
         assertThat(entidad.getCampos().get(1).getId()).isNull();
         assertThat(entidad.getCampos().get(1).getNombre()).isEqualTo("nombre");
         assertThat(entidad.getCampos().get(1).getCatalogo()).isSameAs(entidad);
+        assertThat(entidad.getCampos().get(0).getLongitudMaxima()).isEqualTo(3);
+        assertThat(entidad.getCampos().get(1).getValoresEnum()).containsExactly("A", "B");
+        assertThat(CatalogoPersistenceMapper.aModelo(entidad).buscarCampo("nombre").orElseThrow().getDefinicion())
+                .isEqualTo(DefinicionTipo.enumerado(List.of("A", "B")));
     }
 
     @Test
-    @DisplayName("Regla 15: el padre se enlaza por su entidad (id) y el modelo lo recibe por código")
+    @DisplayName("RN-05: el padre se enlaza por su entidad (id) y el modelo lo recibe por código")
     void enlazaElCatalogoPadrePorId() {
         CatalogoEntity padre = new CatalogoEntity();
         padre.setId(5L);
         padre.setCodigo("REGION");
         CatalogoEntity entidad = new CatalogoEntity();
-        Catalogo modelo = new Catalogo(null, "DEPARTAMENTO", "Departamento", "REGION",
+        Catalogo modelo = new Catalogo(null, "DEPARTAMENTO", "Departamento", "REGION", null,
                 new Periodo(EstadoVigencia.ACTIVE, null, null),
-                List.of(new CampoDefinicion(null, "codigo", TipoCampo.STRING, true, 1)));
+                List.of(new CampoDefinicion(null, "codigo", true, 1, DefinicionTipo.texto(3))));
 
         CatalogoPersistenceMapper.copiar(modelo, entidad, padre);
 

@@ -185,12 +185,12 @@ public class Pre12ConsultarLocalizacion {
     private void crearDistrito() {
         Departamento departamento = departamentoRepository.findAll().stream().findFirst().orElseGet(() ->
                 departamentoRepository.save(Departamento.builder()
-                        .codigo("D" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre("Departamento BDD PRE08")
+                        .codigo("D" + SufijosPrueba.nuevo(8)).nombre("Departamento BDD PRE08")
                         .region("Region BDD PRE08").build()));
         if (municipioRepository.findAllByOrderByNombreAsc().stream()
                 .noneMatch(municipio -> DISTRITO.equals(municipio.getNombre()))) {
             municipioRepository.save(Municipio.builder()
-                    .codigo("M" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre(DISTRITO)
+                    .codigo("M" + SufijosPrueba.nuevo(8)).nombre(DISTRITO)
                     .departamento(departamento).build());
         }
     }

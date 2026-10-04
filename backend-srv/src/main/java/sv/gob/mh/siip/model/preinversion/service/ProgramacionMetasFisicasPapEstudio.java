@@ -41,14 +41,14 @@ final class ProgramacionMetasFisicasPapEstudio {
 
     EstudioProgramacionMetasDto obtenerProgramacionMetasEstudio(String cup, Integer anio) {
         ProgramacionPapSoporte.exigirRolConsultaMetas(actorContexto);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         return estudioAssembler.construirEstudioDto(proyecto, anio);
     }
 
     EstudioProgramacionMetasDto guardarProgramacionMetasEstudio(String cup, Integer anio,
             GuardarProgramacionMetasEstudioRequestDto request) {
         actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         plazo.verificarPeriodoAbierto(proyecto.getUnidadEjecutora().getId(), anio);
 
         registro.guardar(proyecto.getId(), anio, request.getEtapas());

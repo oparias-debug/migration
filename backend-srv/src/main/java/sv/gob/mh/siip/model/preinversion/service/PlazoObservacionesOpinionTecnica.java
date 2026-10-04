@@ -115,7 +115,7 @@ public class PlazoObservacionesOpinionTecnica {
     private void advertirSiCorresponde(OpinionTecnica gestion, long transcurridos) {
         PlazoComentariosOpinionTecnica plazo = gestion.getPlazoComentarios();
         if (transcurridos >= DiasHabilesOpinionTecnica.ALERTA && !plazo.alertaEnviada()) {
-            Proyecto proyecto = gestion.getProyecto();
+            var proyecto = gestion.getProyecto();
             notificaciones.notificarAlertaPlazoObservaciones(proyecto,
                     destinatarios.institucionYViabilizadores(proyecto), plazo.getFechaFin());
             plazo.registrarAlerta(LocalDateTime.now(ZONA_EL_SALVADOR));

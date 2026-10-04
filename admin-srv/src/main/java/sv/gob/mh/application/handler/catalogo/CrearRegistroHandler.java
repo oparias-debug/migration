@@ -7,15 +7,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import sv.gob.mh.application.command.catalogo.CrearRegistroCommand;
 import sv.gob.mh.domain.model.catalogo.Catalogo;
+import sv.gob.mh.domain.model.catalogo.ErroresCatalogo;
 import sv.gob.mh.domain.model.catalogo.Registro;
 import sv.gob.mh.domain.model.catalogo.RegistroPadre;
 import sv.gob.mh.domain.repository.catalogo.CatalogoRepository;
 import sv.gob.mh.domain.repository.catalogo.RegistroRepository;
-import sv.gob.mh.shared.exception.ErrorCatalogoException;
 
 /**
- * HU-ADM-01-09. Errores: CATALOGO_INEXISTENTE, CAMPO_INEXISTENTE, VALOR_CAMPO_FALTANTE,
- * REGISTRO_PADRE_REQUERIDO, REGISTRO_PADRE_INEXISTENTE y CLAVE_REGISTRO_DUPLICADA.
+ * HU-ADM-01-09 (SF-07). Errores: E-10, E-13 (RN-14), E-21, E-14, E-09, E-18 (RN-05) y E-17 (S-06).
  */
 @Service
 public class CrearRegistroHandler {
@@ -30,27 +29,26 @@ public class CrearRegistroHandler {
 
     @Transactional
     public Registro handle(CrearRegistroCommand command) {
-        Catalogo catalogo = catalogoRepository.obtenerPorCodigo(command.codigoCatalogo());
-        Map<String, String> valores = catalogo.valoresCompletos(command.valores());
-        RegistroPadre registroPadre = registroPadre(catalogo, command.clavePadre());
-        exigirClaveNueva(command.codigoCatalogo(), Registro.clave(catalogo, valores));
-        return registroRepository.guardar(
-                Registro.nuevo(catalogo, valores, registroPadre, command.fechaDesde(), command.fechaHasta()));
+        var catalogo = catalogoRepository.obtenerPorCodigo(command.codigoCatalogo());
+        if (!catalogo.estaActivo()) {
+            throw ErroresCatalogo.catalogoInactivo();
+        }
+        Map<String, String> valores = catalogo.valoresParaRegistroNuevo(command.valores());
+        var registro = Registro.nuevo(catalogo, valores, registroPadre(catalogo, command.clavePadre()),
+                command.fechaDesde(), command.fechaHasta());
+        if (registroRepository.existeClave(catalogo.getCodigo(), registro.getClave())) {
+            throw ErroresCatalogo.claveDuplicada(registro.getClave());
+        }
+        return registroRepository.guardar(registro);
     }
 
-    /** Reglas 8 y 23: el registro padre, si el catálogo lo lleva, debe existir en el catálogo padre. */
+    /** RN-05: si el catálogo tiene padre, el registro padre debe existir y estar activo en el catálogo padre. */
     private RegistroPadre registroPadre(Catalogo catalogo, String clavePadre) {
         return catalogo.catalogoDelRegistroPadre(clavePadre)
                 .map(codigoPadre -> registroRepository.buscarPorClave(codigoPadre, clavePadre)
+                        .filter(Registro::estaActivo)
                         .map(Registro::comoPadre)
-                        .orElseThrow(() -> Catalogo.registroPadreInexistente(clavePadre)))
+                        .orElseThrow(() -> ErroresCatalogo.registroPadreInvalido(clavePadre, codigoPadre)))
                 .orElse(null);
-    }
-
-    private void exigirClaveNueva(String codigoCatalogo, String clave) {
-        if (registroRepository.existeClave(codigoCatalogo, clave)) {
-            throw ErrorCatalogoException.reglaNegocio("CLAVE_REGISTRO_DUPLICADA",
-                    "Ya existe un registro con el valor KEY indicado en el catálogo.", "values", clave);
-        }
     }
 }

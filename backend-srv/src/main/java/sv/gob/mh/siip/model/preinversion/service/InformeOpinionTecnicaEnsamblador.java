@@ -55,10 +55,10 @@ public class InformeOpinionTecnicaEnsamblador {
                     "El informe solo está disponible para una Opinión Técnica emitida.");
         }
         Long idProyecto = contexto.proyecto().getId();
-        FichaViabilidadResponseDto datos = new FichaViabilidadResponseDto();
+        var datos = new FichaViabilidadResponseDto();
         ficha.completarCamposDeConsulta(datos, idProyecto);
 
-        InformeOpinionTecnicaResponseDto dto = new InformeOpinionTecnicaResponseDto(gestion.getId(),
+        var dto = new InformeOpinionTecnicaResponseDto(gestion.getId(),
                 OpinionTecnicaEnsamblador.encabezado(contexto.proyecto(), gestion), datos.getProductos(),
                 localizacion(idProyecto), indicadores(datos.getIndicadoresEvaluacion()), FAVORABLE);
         dto.setNumeroNotaOt(gestion.getNumeroNotaOt());

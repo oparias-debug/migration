@@ -62,7 +62,7 @@ final class ElegibilidadRespuestas {
         List<OpcionCatalogoDto> seleccionadas = calificacion.getCodigosOpcion().stream()
                 .map(codigo -> new OpcionCatalogoDto(codigo, opciones.getOrDefault(codigo, codigo)))
                 .toList();
-        RespuestaCriterioElegibilidadDto dto = new RespuestaCriterioElegibilidadDto(calificacion.getCriterio().getId(),
+        var dto = new RespuestaCriterioElegibilidadDto(calificacion.getCriterio().getId(),
                 calificacion.getAplica(), new ArrayList<>(seleccionadas));
         dto.setEspecificarTexto(calificacion.getEspecificarTexto());
         return dto;
@@ -72,7 +72,7 @@ final class ElegibilidadRespuestas {
             CriteriosVigentesElegibilidad vigentes,
             CalificacionCriterioElegibilidad calificacion) {
         boolean deCatalogo = CriteriosVigentesElegibilidad.esDeCatalogo(criterio);
-        CriterioElegibilidadDto dto = new CriterioElegibilidadDto(criterio.getId(), criterio.getCriterio(),
+        var dto = new CriterioElegibilidadDto(criterio.getId(), criterio.getCriterio(),
                 criterio.getPregunta() == null ? criterio.getCriterio() : criterio.getPregunta(),
                 deCatalogo ? TipoEspecificarDto.LISTADO_CATALOGO : TipoEspecificarDto.TEXTO_LIBRE,
                 deCatalogo && Boolean.TRUE.equals(criterio.getPermiteSeleccionMultiple()));

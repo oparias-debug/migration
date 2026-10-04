@@ -48,8 +48,8 @@ public class ProgramacionFinancieraPreinversionService {
     }
 
     public ProgramacionFinancieraPreinversionDto obtener(Long idProyecto) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
+        var proyecto = proyecto(idProyecto);
         if (usuario.getRol() == RolUsuario.TECNICO_URP) {
             ProgramacionFinancieraPreinversionValidaciones.exigirAlcanceUnidadEjecutora(usuario, proyecto);
         }
@@ -58,8 +58,8 @@ public class ProgramacionFinancieraPreinversionService {
 
     public ProgramacionFinancieraPreinversionDto configurarPeriodos(Long idProyecto,
             ConfigurarPeriodosProgramacionPreinversionRequestDto request) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var proyecto = proyecto(idProyecto);
         ProgramacionFinancieraPreinversionValidaciones.exigirAlcanceUnidadEjecutora(usuario, proyecto);
         int periodos = ProgramacionFinancieraPreinversionValidaciones.periodosValidos(
                 request == null ? null : request.getPeriodosAProgramar());
@@ -75,8 +75,8 @@ public class ProgramacionFinancieraPreinversionService {
 
     public ProgramacionFinancieraPreinversionDto guardar(Long idProyecto,
             ProgramacionFinancieraPreinversionRequestDto request) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var proyecto = proyecto(idProyecto);
         ProgramacionFinancieraPreinversionValidaciones.exigirAlcanceUnidadEjecutora(usuario, proyecto);
         int periodos = periodosConfigurados(idProyecto);
         List<EtapaPreinversion> etapasProgramables = etapasProgramables(proyecto);

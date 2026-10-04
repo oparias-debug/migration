@@ -32,7 +32,7 @@ final class AvanceMetasFisicasPapDetalle {
         this.actorContexto = actorContexto;
         this.consultas = new AvancePapConsultas(proyectoRepository, etapaPreinversionRepository,
                 calendarioEventoRepository);
-        AvanceMetasFisicasPapCalculos calculos = new AvanceMetasFisicasPapCalculos(progRepository, avanceRepository);
+        var calculos = new AvanceMetasFisicasPapCalculos(progRepository, avanceRepository);
         this.detalleAssembler = new AvanceMetasFisicasPapDetalleAssembler(consultas, etapaMetaRepository, calculos);
         this.registro = new AvanceMetasFisicasPapRegistro(consultas, calculos, etapaMetaRepository, progRepository,
                 avanceRepository);
@@ -40,15 +40,15 @@ final class AvanceMetasFisicasPapDetalle {
 
     AvanceMetasEstudioDto obtenerAvanceMetasEstudio(String cup, Integer anio, CuatrimestreDto periodo) {
         AvancePapSoporte.exigirRolConsulta(actorContexto);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
+        var proyecto = consultas.buscarEstudio(cup);
         return detalleAssembler.construirEstudioDto(proyecto, anio, Cuatrimestre.valueOf(periodo.name()));
     }
 
     AvanceMetasEstudioDto guardarAvanceMetasEstudio(String cup, Integer anio, CuatrimestreDto periodoDto,
             GuardarAvanceMetasEstudioRequestDto request) {
         AvancePapSoporte.exigirTecnicoUrp(actorContexto);
-        Proyecto proyecto = consultas.buscarEstudio(cup);
-        Cuatrimestre periodo = Cuatrimestre.valueOf(periodoDto.name());
+        var proyecto = consultas.buscarEstudio(cup);
+        var periodo = Cuatrimestre.valueOf(periodoDto.name());
         consultas.verificarPeriodoAbierto(anio, periodo);
         registro.guardar(proyecto.getId(), request.getEtapas(), anio, periodo);
         return detalleAssembler.construirEstudioDto(proyecto, anio, periodo);

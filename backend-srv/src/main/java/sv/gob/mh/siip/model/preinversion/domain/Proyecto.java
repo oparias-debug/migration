@@ -38,6 +38,9 @@ import java.util.List;
  * CU-PRE-01 (Registro y Solicitud de CUP), CU-PRE-01.5 (Revision y Emision de CUP),
  * CU-PRE-02 (Bandeja de Preinversion), CU-PRE-03 (Captura de Proyectos).
  */
+// Auditoría de la entidad (docs/audit-logging.md); nombre completo porque extiende
+// common.domain.Auditable (columnas de creación/modificación), que se llama igual.
+@sv.gob.mh.infrastructure.config.audit.Auditable
 @Entity
 @Table(name = "PROYECTO")
 @Getter

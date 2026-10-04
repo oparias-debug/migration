@@ -75,7 +75,7 @@ public class ExternalConfigSource implements EnvironmentPostProcessor {
 
         if (!externalProperties.isEmpty()) {
             // 6. Inyectar con alta prioridad (addFirst = sobreescribe application.yml)
-            MapPropertySource propertySource = new MapPropertySource(PROPERTY_SOURCE_NAME, externalProperties);
+            var propertySource = new MapPropertySource(PROPERTY_SOURCE_NAME, externalProperties);
             environment.getPropertySources().addFirst(propertySource);
             LOGGER.log(Level.INFO, "Configuración externa cargada desde {0} ({1} propiedades)",
                     new Object[] { fullUrl, externalProperties.size() });
@@ -90,7 +90,7 @@ public class ExternalConfigSource implements EnvironmentPostProcessor {
      */
     private Map<String, Object> fetchExternalConfiguration(String url) {
         try {
-            HttpClient httpClient = HttpClient.newBuilder()
+            var httpClient = HttpClient.newBuilder()
                     .connectTimeout(TIEMPO_CONEXION)
                     .build();
 

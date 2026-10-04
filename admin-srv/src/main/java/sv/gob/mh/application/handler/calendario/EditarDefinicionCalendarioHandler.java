@@ -23,7 +23,7 @@ public class EditarDefinicionCalendarioHandler {
 
     @Transactional
     public Calendario handle(EditarDefinicionCalendarioCommand command) {
-        Calendario calendario = calendarioRepository.obtenerPorCodigo(command.codigoCalendario());
+        var calendario = calendarioRepository.obtenerPorCodigo(command.codigoCalendario());
         calendario.editarDefinicion(command.items());
         return calendarioRepository.guardar(calendario);
     }

@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
+import sv.gob.mh.siip.bdd.support.SufijosPrueba;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
 import sv.gob.mh.siip.model.common.domain.Usuario;
@@ -76,7 +76,7 @@ class ProgramacionFinancieraPreinversionHttpIntegrationTest {
 
     @BeforeEach
     void prepararDatos() {
-        String sufijo = UUID.randomUUID().toString().substring(0, 8);
+        String sufijo = SufijosPrueba.nuevo(8);
         Institucion institucion = instituciones.save(ProyectoFixtures.nuevaInstitucion("MH-221-" + sufijo,
                 "Institución HTTP CU-PRE-22.1"));
         UnidadEjecutora unidadPropietaria = unidades.save(ProyectoFixtures.nuevaUnidadEjecutora("UE221-" + sufijo,

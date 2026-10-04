@@ -69,9 +69,9 @@
       { "regla": "java:S923",  "nota": "Functions should not be defined with a variable number of arguments" },
       { "regla": "java:S2972", "nota": "Inner classes should not have too many lines of code" },
       { "regla": "java:S5867", "nota": "Unicode-aware versions of character classes should be preferred" },
-      { "regla": "java:S2301", "nota": "Public methods should not contain selector arguments" }
-      
-      
+      { "regla": "java:S2301", "nota": "Public methods should not contain selector arguments" },
+      { "regla": "java:S6212", "nota": "Local-Variable Type Inference should be used" }
+            
     ]
   },
   "perfiles_adicionales": [

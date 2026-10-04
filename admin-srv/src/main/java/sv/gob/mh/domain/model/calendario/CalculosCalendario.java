@@ -36,9 +36,9 @@ public final class CalculosCalendario {
      * calendario. Un período LABORAL excluye los días que también caen en algún período NO_LABORAL.
      */
     public static int duracionDias(Calendario calendario, String codigoPeriodo) {
-        Periodo periodo = calendario.exigirPeriodo(codigoPeriodo);
+        var periodo = calendario.exigirPeriodo(codigoPeriodo);
         RangoFechas rango = calendario.rangoDe(periodo);
-        int total = 0;
+        var total = 0;
         for (LocalDate fecha = rango.desde(); !fecha.isAfter(rango.hasta()); fecha = fecha.plusDays(1)) {
             boolean excluidaPorNoLaboral = periodo.esLaboral()
                     && calendario.enAlgunPeriodo(TipoPeriodo.NO_LABORAL, fecha);
@@ -51,7 +51,7 @@ public final class CalculosCalendario {
 
     /** CU-ADM-04-08 (RN05): días desde {@code fecha} hasta el fin del período LABORAL. */
     public static int diasRestantes(Calendario calendario, String codigoPeriodo, LocalDate fecha) {
-        Periodo periodo = calendario.exigirPeriodoLaboral(codigoPeriodo);
+        var periodo = calendario.exigirPeriodoLaboral(codigoPeriodo);
         if (!periodo.incluye(fecha)) {
             throw ErrorCalendarioException.inconsistenciaFecha("FECHA_FUERA_DE_PERIODO",
                     "La fecha dada no está dentro del período LABORAL indicado.");
@@ -69,7 +69,7 @@ public final class CalculosCalendario {
             throw ErrorCalendarioException.inconsistenciaFecha("FECHAS_FUERA_DE_RANGO",
                     "La fecha inicial o la fecha final no están dentro del rango del calendario.");
         }
-        int diasLaborales = 0;
+        var diasLaborales = 0;
         for (LocalDate fecha = fechaInicio; !fecha.isAfter(fechaFin); fecha = fecha.plusDays(1)) {
             if (calendario.esDiaLaboral(fecha)) {
                 diasLaborales++;
@@ -81,8 +81,8 @@ public final class CalculosCalendario {
     /** CU-ADM-04-10 (RN07): la fecha que resulta de avanzar {@code diasHabiles} días LABORALES desde {@code fecha}. */
     public static LocalDate fechaLaboralResultante(Calendario calendario, LocalDate fecha, int diasHabiles) {
         LocalDate resultante = fecha;
-        int contados = 0;
-        int explorados = 0;
+        var contados = 0;
+        var explorados = 0;
         while (contados < diasHabiles) {
             resultante = resultante.plusDays(1);
             explorados++;

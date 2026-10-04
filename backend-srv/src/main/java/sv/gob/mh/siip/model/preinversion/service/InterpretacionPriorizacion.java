@@ -41,8 +41,8 @@ public class InterpretacionPriorizacion {
      */
     public Interpretacion interpretar(BigDecimal puntaje) {
         List<RangoInterpretacionPriorizacion> ordenados = rangos.findAllByOrderByPuntajeMinimoAsc();
-        int indice = 0;
-        for (int i = 0; i < ordenados.size(); i++) {
+        var indice = 0;
+        for (var i = 0; i < ordenados.size(); i++) {
             if (BigDecimal.valueOf(ordenados.get(i).getPuntajeMinimo()).compareTo(puntaje) <= 0) {
                 indice = i;
             }

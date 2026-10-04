@@ -1,9 +1,14 @@
 package sv.gob.mh.siip.model.preinversion.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,14 +17,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import sv.gob.mh.siip.model.preinversion.enums.TipoIndicadorProyecto;
 
 /** Indicador de resultado o de producto registrado para un proyecto en CU-PRE-23. */
 @Entity
@@ -42,9 +46,9 @@ public class IndicadorProyecto {
     @JoinColumn(name = "ID_PROYECTO", nullable = false)
     private Proyecto proyecto;
 
-    /** RESULTADO o PRODUCTO. */
+    @Enumerated(EnumType.STRING)
     @Column(name = "TIPO", nullable = false, length = 20)
-    private String tipo;
+    private TipoIndicadorProyecto tipo;
 
     /** Fila de Descripción Técnica (CU-PRE-11) cuando el tipo es PRODUCTO. */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -73,7 +77,8 @@ public class IndicadorProyecto {
     private Boolean esIndicadorPrincipal;
 
     @ElementCollection
-    @CollectionTable(name = "INDICADOR_PROYECTO_META_PERIODO", joinColumns = @JoinColumn(name = "ID_INDICADOR_PROYECTO"))
+    @CollectionTable(name = "INDICADOR_PROYECTO_META_PERIODO",
+            joinColumns = @JoinColumn(name = "ID_INDICADOR_PROYECTO"))
     @Column(name = "META")
     @Builder.Default
     private List<Double> metasPorPeriodo = new ArrayList<>();

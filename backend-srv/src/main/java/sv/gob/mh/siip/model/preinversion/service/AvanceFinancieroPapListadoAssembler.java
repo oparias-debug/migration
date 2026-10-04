@@ -7,10 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import sv.gob.mh.siip.model.preinversion.domain.AvanceFinancieroCuatrimestral;
-import sv.gob.mh.siip.model.preinversion.domain.EtapaPreinversion;
 import sv.gob.mh.siip.model.preinversion.domain.FuenteFinanciamientoEtapaPap;
 import sv.gob.mh.siip.model.preinversion.domain.ProgCuatrimestralFinanciera;
-import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.AvanceFinancieroPAPResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.EstudioFilaAvancePAPDto;
 import sv.gob.mh.siip.model.preinversion.dto.NombreEtapaDto;
@@ -59,8 +57,8 @@ final class AvanceFinancieroPapListadoAssembler {
 
     private EstudioFilaAvancePAPDto construirFilaListaDto(FuenteFinanciamientoEtapaPap fuente, Integer anio,
             Cuatrimestre periodo) {
-        EtapaPreinversion etapa = fuente.getEtapaPreinversion();
-        Proyecto proyecto = etapa.getProyecto();
+        var etapa = fuente.getEtapaPreinversion();
+        var proyecto = etapa.getProyecto();
         ProgCuatrimestralFinanciera prog = calculos.programacionDelAnio(fuente.getId(), anio);
         BigDecimal programadoDelPeriodo = AvanceFinancieroPapCalculos.montoProgramadoCuatrimestre(prog, periodo);
         BigDecimal programadoAnual = AvanceFinancieroPapCalculos.montoProgramadoAnual(prog);

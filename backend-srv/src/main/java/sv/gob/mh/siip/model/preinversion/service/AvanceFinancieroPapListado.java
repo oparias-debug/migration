@@ -45,7 +45,7 @@ final class AvanceFinancieroPapListado {
 
     Resource generarReporte(Long idUnidadEjecutora, Integer anio, CuatrimestreDto periodo, String formato) {
         Usuario actor = AvancePapSoporte.exigirRolConsulta(actorContexto);
-        Cuatrimestre periodoEfectivo = Cuatrimestre.valueOf(periodo.name());
+        var periodoEfectivo = Cuatrimestre.valueOf(periodo.name());
         return reporte.generar(actor, idUnidadEjecutora, anio, periodoEfectivo,
                 listadoAssembler.filasActivasEnAnio(idUnidadEjecutora, anio, periodoEfectivo), formato);
     }

@@ -62,13 +62,13 @@ final class ReportePapGeneratorSupport {
 
     static <T> byte[] generarExcel(String nombreHoja, String titulo, String[] encabezados, List<T> filas,
             BiConsumer<Row, T> escritorFila, ObjIntConsumer<XSSFSheet> filaFinal, String mensajeError) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
+        try (var workbook = new XSSFWorkbook(); ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
             XSSFSheet hoja = workbook.createSheet(nombreHoja);
             Row filaTitulo = hoja.createRow(0);
             filaTitulo.createCell(0).setCellValue(titulo);
 
             Row encabezado = hoja.createRow(FILA_ENCABEZADOS);
-            for (int i = 0; i < encabezados.length; i++) {
+            for (var i = 0; i < encabezados.length; i++) {
                 encabezado.createCell(i).setCellValue(encabezados[i]);
             }
 
@@ -82,7 +82,7 @@ final class ReportePapGeneratorSupport {
                 filaFinal.accept(hoja, numeroFila);
             }
 
-            for (int i = 0; i < encabezados.length; i++) {
+            for (var i = 0; i < encabezados.length; i++) {
                 hoja.autoSizeColumn(i);
             }
 
@@ -111,13 +111,13 @@ final class ReportePapGeneratorSupport {
 
     private static byte[] generarPdfLineas(String tituloPrincipal, String subtitulo, List<String> filas,
             String mensajeError) {
-        try (PDDocument documento = new PDDocument(); ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
+        try (var documento = new PDDocument(); ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
             PDType1Font fuenteNegrita = PDType1Font.HELVETICA_BOLD;
             PDType1Font fuenteNormal = PDType1Font.HELVETICA;
 
-            PDPage pagina = new PDPage(PDRectangle.A4);
+            var pagina = new PDPage(PDRectangle.A4);
             documento.addPage(pagina);
-            PDPageContentStream contenido = new PDPageContentStream(documento, pagina);
+            var contenido = new PDPageContentStream(documento, pagina);
             float y = Y_INICIAL_PAGINA;
             contenido.beginText();
             contenido.setFont(fuenteNegrita, TAMANIO_FUENTE_TITULO);

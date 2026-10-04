@@ -8,6 +8,7 @@ import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
 import sv.gob.mh.siip.bdd.support.ContextoProyectoBdd;
+import sv.gob.mh.siip.bdd.support.SufijosPrueba;
 import sv.gob.mh.siip.model.common.domain.Departamento;
 import sv.gob.mh.siip.model.common.domain.Municipio;
 import sv.gob.mh.siip.model.common.repository.DepartamentoRepository;
@@ -212,7 +213,7 @@ public class Pre08RegistrarAreaInfluencia {
     private void crearDistrito() {
         Departamento departamento = departamentoRepository.findAll().stream().findFirst().orElseGet(() ->
                 departamentoRepository.save(Departamento.builder()
-                        .codigo("D" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre("Departamento BDD PRE08")
+                        .codigo("D" + SufijosPrueba.nuevo(8)).nombre("Departamento BDD PRE08")
                         .region("Region BDD PRE08").build()));
         crearDistritoEn(DISTRITO, departamento);
     }
@@ -223,7 +224,7 @@ public class Pre08RegistrarAreaInfluencia {
                 .filter(d -> DEPARTAMENTO_OTRO.equals(d.getNombre()))
                 .findFirst()
                 .orElseGet(() -> departamentoRepository.save(Departamento.builder()
-                        .codigo("E" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre(DEPARTAMENTO_OTRO)
+                        .codigo("E" + SufijosPrueba.nuevo(8)).nombre(DEPARTAMENTO_OTRO)
                         .region(REGION_OTRA).build()));
         crearDistritoEn(DISTRITO_OTRO, departamento);
     }
@@ -231,7 +232,7 @@ public class Pre08RegistrarAreaInfluencia {
     private void crearDistritoEn(String nombre, Departamento departamento) {
         if (municipioRepository.findByNombreIgnoreCase(nombre).isEmpty()) {
             municipioRepository.save(Municipio.builder()
-                    .codigo("M" + String.valueOf(System.nanoTime()).substring(0, 8)).nombre(nombre)
+                    .codigo("M" + SufijosPrueba.nuevo(8)).nombre(nombre)
                     .departamento(departamento).build());
         }
     }

@@ -26,7 +26,7 @@ public class MedidaCatalogoServiceImpl implements MedidaCatalogoService {
     @Override
     public List<MedidaCatalogoDto> listar(TipoMedidaCatalogoDto tipo) {
         actorContexto.exigir();
-        TipoMedidaCatalogo tipoDominio = TipoMedidaCatalogo.valueOf(tipo.name());
+        var tipoDominio = TipoMedidaCatalogo.valueOf(tipo.name());
         return medidaCatalogoRepository.findByTipoOrderByCodigo(tipoDominio).stream()
                 .map(m -> new MedidaCatalogoDto().codigo(m.getCodigo()).descripcion(m.getDescripcion()))
                 .toList();

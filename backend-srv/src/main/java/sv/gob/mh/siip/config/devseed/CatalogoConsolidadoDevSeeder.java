@@ -171,7 +171,7 @@ public class CatalogoConsolidadoDevSeeder implements DevSeeder {
             if (!codigoSubcriterio.equals(fila.get("codigo_subcriterio"))) {
                 continue;
             }
-            ValorCalificacion valor = ValorCalificacion.valueOf(fila.get("valor"));
+            var valor = ValorCalificacion.valueOf(fila.get("valor"));
             if (escalaCalificacionSubcriterioRepository.findByCodigoSubcriterioAndValor(codigoSubcriterio, valor)
                     .isEmpty()) {
                 escalaCalificacionSubcriterioRepository.save(EscalaCalificacionSubcriterio.builder()
@@ -200,7 +200,7 @@ public class CatalogoConsolidadoDevSeeder implements DevSeeder {
 
     private void sembrarEntradasEspecificar() {
         for (Map<String, String> fila : CsvSeed.leer(CSV_ENTRADAS_ESPECIFICAR)) {
-            TipoCatalogoEspecificar tipo = TipoCatalogoEspecificar.valueOf(fila.get("tipo"));
+            var tipo = TipoCatalogoEspecificar.valueOf(fila.get("tipo"));
             String codigo = fila.get(COLUMNA_CODIGO);
             if (entradaCatalogoEspecificarRepository.findByTipoAndCodigo(tipo, codigo).isEmpty()) {
                 entradaCatalogoEspecificarRepository.save(EntradaCatalogoEspecificar.builder().tipo(tipo)

@@ -22,7 +22,7 @@ final class ProgramacionFinancieraPapListadoAssembler {
     }
 
     EstudioFilaListaPAPDto construirFilaListaDto(FuenteFinanciamientoEtapaPap fuente, Integer anio) {
-        EtapaPreinversion etapa = fuente.getEtapaPreinversion();
+        var etapa = fuente.getEtapaPreinversion();
         Proyecto proyecto = etapa.getProyecto();
         ProgramacionFinancieraPapMontos montos = calculos.montos(fuente.getId(), anio);
 

@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import sv.gob.mh.siip.model.common.enums.RolUsuario;
 import sv.gob.mh.siip.model.preinversion.domain.OpinionTecnica;
-import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.dto.ActualizacionOpinionTecnicaResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.AsignacionOpinionTecnicaResponseDto;
 import sv.gob.mh.siip.model.preinversion.dto.AsignarOpinionTecnicaRequestDto;
@@ -48,7 +47,7 @@ public class SolicitudOpinionTecnicaServiceImpl implements SolicitudOpinionTecni
     @Override
     @Transactional(readOnly = true)
     public TiposSolicitudOpinionTecnicaResponseDto consultarTiposSolicitud(Long idProyecto) {
-        Proyecto proyecto = acceso.proyectoParaSolicitud(idProyecto).proyecto();
+        var proyecto = acceso.proyectoParaSolicitud(idProyecto).proyecto();
         return new TiposSolicitudOpinionTecnicaResponseDto(List.of(
                 new TipoSolicitudDisponibleDto(TipoSolicitudOpinionTecnicaDto.OPINION_TECNICA,
                         solicitud.opinionTecnicaHabilitada(proyecto)),

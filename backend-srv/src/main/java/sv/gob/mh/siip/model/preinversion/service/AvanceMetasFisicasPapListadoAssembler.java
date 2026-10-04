@@ -55,9 +55,9 @@ final class AvanceMetasFisicasPapListadoAssembler {
 
     private EstudioFilaAvanceMetasDto construirFilaListaDto(EtapaMetaFisicaPap etapaMeta, Integer anio,
             Cuatrimestre periodo) {
-        EtapaPreinversion etapa = etapaMeta.getEtapaPreinversion();
-        Proyecto proyecto = etapa.getProyecto();
-        AvanceMetasFisicasPapCalculos.Datos datos = calculos.calcularDatos(etapaMeta, anio, periodo);
+        var etapa = etapaMeta.getEtapaPreinversion();
+        var proyecto = etapa.getProyecto();
+        var datos = calculos.calcularDatos(etapaMeta, anio, periodo);
         ProgCuatrimestralMetaFisica prog = calculos.programacionDelAnio(etapaMeta.getId(), anio);
         AvanceCuatriMetaFisica avanceDelPeriodo = calculos.avanceDelPeriodo(prog, periodo);
 

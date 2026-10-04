@@ -7,11 +7,11 @@ import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import sv.gob.mh.siip.bdd.support.ProyectoFixtures;
+import sv.gob.mh.siip.bdd.support.SufijosPrueba;
 import sv.gob.mh.siip.exception.ValidacionNegocioException;
 import sv.gob.mh.siip.model.common.domain.Institucion;
 import sv.gob.mh.siip.model.common.domain.UnidadEjecutora;
@@ -78,7 +78,7 @@ public class Pre23IndicadoresProyecto {
 
     @Before("@CU-PRE-23")
     public void prepararEscenario() {
-        sufijo = UUID.randomUUID().toString().substring(0, 8);
+        sufijo = SufijosPrueba.nuevo(8);
         Institucion institucion = instituciones.save(ProyectoFixtures.nuevaInstitucion("MH-CU23-" + sufijo,
                 "Ministerio de Hacienda CU-PRE-23"));
         UnidadEjecutora unidad = unidades.save(ProyectoFixtures.nuevaUnidadEjecutora("UE23-" + sufijo,

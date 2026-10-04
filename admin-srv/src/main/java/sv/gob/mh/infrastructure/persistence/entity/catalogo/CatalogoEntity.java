@@ -39,7 +39,7 @@ public class CatalogoEntity {
     @Column(name = "NOMBRE", nullable = false, length = 300)
     private String nombre;
 
-    /** Catálogo padre (Regla 15), enlazado por su id; {@code null} si no tiene. */
+    /** Catálogo padre (RN-05), enlazado por su id; {@code null} si no tiene. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_CATALOGO_PADRE")
     private CatalogoEntity catalogoPadre;
@@ -53,6 +53,14 @@ public class CatalogoEntity {
 
     @Column(name = "FECHA_HASTA")
     private LocalDate fechaHasta;
+
+    /**
+     * Catálogos hijos (RN-05: a lo sumo uno), lado inverso de {@link #catalogoPadre}; solo lectura,
+     * para que el catálogo padre conozca a su hijo.
+     */
+    @OneToMany(mappedBy = "catalogoPadre")
+    @OrderBy("codigo ASC")
+    private List<CatalogoEntity> hijos = new ArrayList<>();
 
     @OneToMany(mappedBy = "catalogo", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
@@ -117,6 +125,11 @@ public class CatalogoEntity {
 
     public void setFechaHasta(LocalDate fechaHasta) {
         this.fechaHasta = fechaHasta;
+    }
+
+    /** Código del catálogo hijo (RN-05), o {@code null} si no tiene. */
+    public String getCatalogoHijoCodigo() {
+        return hijos.isEmpty() ? null : hijos.get(0).getCodigo();
     }
 
     /** @return los campos, sin permitir modificarlos por fuera de la entidad */

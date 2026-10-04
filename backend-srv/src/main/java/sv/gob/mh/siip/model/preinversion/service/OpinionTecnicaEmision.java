@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import sv.gob.mh.siip.exception.ConflictoEstadoException;
 import sv.gob.mh.siip.model.preinversion.domain.OpinionTecnica;
-import sv.gob.mh.siip.model.preinversion.domain.Proyecto;
 import sv.gob.mh.siip.model.preinversion.enums.EstadoProyecto;
 import sv.gob.mh.siip.model.preinversion.enums.ResultadoOpinionTecnica;
 import sv.gob.mh.siip.model.preinversion.repository.OpinionTecnicaRepository;
@@ -93,7 +92,7 @@ public class OpinionTecnicaEmision {
         }
         nota.registrar(gestion, notaOt, numeroNotaOt, contexto.actor());
 
-        Proyecto proyecto = contexto.proyecto();
+        var proyecto = contexto.proyecto();
         gestion.setResultado(ResultadoOpinionTecnica.FAVORABLE);
         gestion.setFechaEmision(LocalDateTime.now(ZONA_EL_SALVADOR));
         // CU-PRE-11 (RN03) autocompleta con las observaciones de la OT más reciente.

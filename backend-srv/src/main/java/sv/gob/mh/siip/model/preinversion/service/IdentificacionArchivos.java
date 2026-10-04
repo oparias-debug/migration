@@ -55,7 +55,7 @@ public class IdentificacionArchivos {
      * @return la ruta en disco donde quedó guardado
      */
     public String guardar(Long idProyecto, String archivoEnDisco, MultipartFile archivo) {
-        Path ruta = Path.of(directorioBase, "identificacion", String.valueOf(idProyecto), archivoEnDisco);
+        var ruta = Path.of(directorioBase, "identificacion", String.valueOf(idProyecto), archivoEnDisco);
         try {
             Files.createDirectories(ruta.getParent());
             archivo.transferTo(ruta);

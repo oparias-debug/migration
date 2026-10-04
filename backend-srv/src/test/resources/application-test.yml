@@ -10,3 +10,8 @@ spring:
   security.oauth2.resourceserver.jwt.issuer-uri: http://localhost:0/mock-oidc
 
 gateway.url: http://localhost:8080
+
+# Las pruebas no envían auditoría ni logs remotos a auditoria-service: puerto 0 falla al
+# instante (el envío es asíncrono y un fallo solo queda en el log local).
+audit.service.url: http://localhost:0/api/v1/audit
+remote.logger.enabled: false

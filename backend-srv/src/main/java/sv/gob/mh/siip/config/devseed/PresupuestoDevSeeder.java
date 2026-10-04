@@ -83,7 +83,7 @@ public class PresupuestoDevSeeder implements DevSeeder {
                 .orElseThrow(() -> new IllegalStateException(
                         "Falta el seed del eje temático 'Infraestructura Educativa' (CatalogoProyectoDevSeeder)."));
 
-        Proyecto proyecto = Proyecto.builder()
+        var proyecto = Proyecto.builder()
                 .nombre(NOMBRE_PROYECTO)
                 .iniciativaInversion(IniciativaInversion.PROYECTO)
                 .unidadEjecutora(unidadEjecutora)

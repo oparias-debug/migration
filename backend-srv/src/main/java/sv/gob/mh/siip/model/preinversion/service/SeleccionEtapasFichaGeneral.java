@@ -39,7 +39,7 @@ public class SeleccionEtapasFichaGeneral {
      * @throws RecursoNoEncontradoException si el proyecto o la Unidad Ejecutora indicada no existen.
      */
     public FichaInformacionGeneralDto seleccionarCoEjecutor(Long idProyecto, SeleccionCoEjecutorRequestDto request) {
-        Proyecto proyecto = proyectos.buscar(idProyecto);
+        var proyecto = proyectos.buscar(idProyecto);
         UnidadEjecutora coEjecutor = unidadEjecutoraRepository.findById(request.getIdUnidadEjecutoraCoEjecutora())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La Unidad Ejecutora " + request.getIdUnidadEjecutoraCoEjecutora() + " no existe."));

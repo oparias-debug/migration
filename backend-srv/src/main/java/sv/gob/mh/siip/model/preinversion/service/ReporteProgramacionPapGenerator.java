@@ -34,13 +34,13 @@ final class ReporteProgramacionPapGenerator {
     static byte[] generarExcel(Long idUnidadEjecutora, Integer anio, List<EstudioFilaListaPAPDto> filas) {
         String titulo = "PROGRAMACIÓN FINANCIERA DE LA PREINVERSIÓN PÚBLICA - Unidad Ejecutora "
                 + idUnidadEjecutora + " - Año " + anio;
-        double[] totales = new double[ENCABEZADOS.length - PRIMERA_COLUMNA_MONTO];
+        var totales = new double[ENCABEZADOS.length - PRIMERA_COLUMNA_MONTO];
         return ReportePapGeneratorSupport.generarExcel("Programacion Financiera PAP", titulo, ENCABEZADOS, filas,
                 (Row row, EstudioFilaListaPAPDto fila) -> escribirFilaExcel(row, fila, totales),
                 (XSSFSheet hoja, int numeroFila) -> {
                     Row totalRow = hoja.createRow(numeroFila);
                     totalRow.createCell(COL_NOMBRE_PROYECTO).setCellValue("TOTAL");
-                    for (int i = 0; i < totales.length; i++) {
+                    for (var i = 0; i < totales.length; i++) {
                         totalRow.createCell(PRIMERA_COLUMNA_MONTO + i).setCellValue(totales[i]);
                     }
                 },
@@ -57,7 +57,7 @@ final class ReporteProgramacionPapGenerator {
         row.createCell(COL_FUENTE_FINANCIAMIENTO)
                 .setCellValue(fuenteFinanciamiento != null ? fuenteFinanciamiento.getValue() : "");
         Double[] montos = montos(fila);
-        for (int i = 0; i < montos.length; i++) {
+        for (var i = 0; i < montos.length; i++) {
             ReportePapGeneratorSupport.escribirMonto(row.createCell(PRIMERA_COLUMNA_MONTO + i), montos[i]);
             totales[i] += ReportePapGeneratorSupport.valorODefecto(montos[i]);
         }
@@ -74,7 +74,7 @@ final class ReporteProgramacionPapGenerator {
     private static String formatearLineaPdf(EstudioFilaListaPAPDto fila) {
         NombreEtapaDto etapa = fila.getEtapa();
         FuenteFinanciamientoDto fuenteFinanciamiento = fila.getFuenteFinanciamiento();
-        StringBuilder linea = new StringBuilder(String.format(Locale.ROOT, "%s | %s | %s | %s",
+        var linea = new StringBuilder(String.format(Locale.ROOT, "%s | %s | %s | %s",
                 fila.getCup(), fila.getNombreProyecto(),
                 Optional.ofNullable(etapa).map(NombreEtapaDto::getValue).orElse(""),
                 fuenteFinanciamiento != null ? fuenteFinanciamiento.getValue() : ""));

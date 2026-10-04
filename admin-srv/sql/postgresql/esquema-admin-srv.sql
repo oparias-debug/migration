@@ -3,7 +3,8 @@
 -- Fecha: 2026-09-30
 -- Descripción: esquema de admin-srv para la base PostgreSQL local del docker-compose del monorepo.
 --   Equivale, en dialecto PostgreSQL, a los scripts Oracle V001 (CU-ADM-01, catálogos), V002
---   (CU-ADM-04, calendarios) y V003 (padre del catálogo por id). Lo ejecuta
+--   (CU-ADM-04, calendarios), V003 (padre del catálogo por id) y V004 (restricciones de tipo de
+--   los campos). Lo ejecuta
 --   postgresql/init-catalogos.sh al crear la base; admin-srv corre en local con ddl-auto: validate,
 --   así que cualquier cambio en las entidades debe reflejarse aquí y en los scripts Oracle.
 
@@ -36,6 +37,11 @@ CREATE TABLE campo_definicion (
     tipo                VARCHAR(20)  NOT NULL,
     es_key              BOOLEAN      NOT NULL,
     posicion            INTEGER,
+    valor_minimo        NUMERIC(38, 10),
+    valor_maximo        NUMERIC(38, 10),
+    longitud_maxima     INTEGER,
+    fecha_minima        DATE,
+    fecha_maxima        DATE,
     CONSTRAINT pk_campo_definicion PRIMARY KEY (id_campo_definicion),
     CONSTRAINT fk_campo_definicion_catalogo FOREIGN KEY (id_catalogo) REFERENCES catalogo (id_catalogo),
     CONSTRAINT ck_campo_definicion_tipo CHECK (tipo IN ('NUMBER', 'STRING', 'DATE', 'ENUM'))
@@ -46,7 +52,7 @@ CREATE INDEX idx_campo_definicion_catalogo ON campo_definicion (id_catalogo);
 CREATE TABLE campo_definicion_valor_enum (
     id_campo_definicion BIGINT       NOT NULL,
     orden               INTEGER      NOT NULL,
-    valor               VARCHAR(200),
+    valor               VARCHAR(255),
     CONSTRAINT pk_campo_definicion_valor_enum PRIMARY KEY (id_campo_definicion, orden),
     CONSTRAINT fk_campo_valor_enum_campo FOREIGN KEY (id_campo_definicion)
         REFERENCES campo_definicion (id_campo_definicion)
@@ -55,7 +61,7 @@ CREATE TABLE campo_definicion_valor_enum (
 CREATE TABLE registro_catalogo (
     id_registro       BIGINT       NOT NULL,
     id_catalogo       BIGINT       NOT NULL,
-    clave             VARCHAR(200) NOT NULL,
+    clave             VARCHAR(255) NOT NULL,
     id_registro_padre BIGINT,
     estado            VARCHAR(20)  NOT NULL,
     fecha_desde       DATE,
@@ -72,7 +78,7 @@ CREATE INDEX idx_registro_catalogo_padre ON registro_catalogo (id_registro_padre
 CREATE TABLE registro_valor (
     id_registro  BIGINT        NOT NULL,
     nombre_campo VARCHAR(255)  NOT NULL,
-    valor        VARCHAR(1000),
+    valor        VARCHAR(4000),
     CONSTRAINT pk_registro_valor PRIMARY KEY (id_registro, nombre_campo),
     CONSTRAINT fk_registro_valor_registro FOREIGN KEY (id_registro) REFERENCES registro_catalogo (id_registro)
 );

@@ -43,7 +43,7 @@ public class IdentificacionAcceso {
      * @throws AccesoDenegadoException si el proyecto no está dentro de las credenciales del actor
      */
     public Proyecto proyectoVisible(Usuario actor, Long idProyecto) {
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(actor, proyecto);
         return proyecto;
     }
@@ -68,7 +68,7 @@ public class IdentificacionAcceso {
      */
     public Proyecto proyectoEditable(Long idProyecto) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = proyectoVisible(actor, idProyecto);
+        var proyecto = proyectoVisible(actor, idProyecto);
         EdicionFormulacion.exigirEditable(proyecto);
         return proyecto;
     }

@@ -43,7 +43,7 @@ final class AvanceMetasFisicasPapDetalleAssembler {
 
     private EtapaAvanceMetasDto construirEtapaDto(EtapaPreinversion etapa, Integer anio, Cuatrimestre periodo) {
         EtapaMetaFisicaPap etapaMeta = etapaMetaRepository.findByEtapaPreinversionId(etapa.getId()).orElse(null);
-        AvanceMetasFisicasPapCalculos.Datos datos = calculos.calcularDatos(etapaMeta, anio, periodo);
+        var datos = calculos.calcularDatos(etapaMeta, anio, periodo);
 
         return new EtapaAvanceMetasDto(NombreEtapaDto.valueOf(etapa.getTipoEtapa().name()),
                 datos.ejecutadoDelPeriodo().doubleValue())

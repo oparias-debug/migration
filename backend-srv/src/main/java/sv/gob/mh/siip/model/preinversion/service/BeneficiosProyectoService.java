@@ -62,8 +62,8 @@ public class BeneficiosProyectoService {
     }
 
     public Map<String, Object> obtenerBeneficios(Long idProyecto) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP, RolUsuario.TECNICO_PRE);
+        var proyecto = proyecto(idProyecto);
         if (usuario.getRol() != RolUsuario.TECNICO_PRE) {
             exigirAlcanceUnidadEjecutora(usuario, proyecto);
         }
@@ -71,8 +71,8 @@ public class BeneficiosProyectoService {
     }
 
     public Map<String, Object> registrarBeneficio(Long idProyecto, Map<String, Object> request) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
         String parametro = texto(request, "parametro");
@@ -117,8 +117,8 @@ public class BeneficiosProyectoService {
     }
 
     public void eliminarBeneficio(Long idProyecto, Long idBeneficio) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
         beneficios.delete(beneficios.findByIdAndProyectoId(idBeneficio, idProyecto)
@@ -126,8 +126,8 @@ public class BeneficiosProyectoService {
     }
 
     public Map<String, Object> guardarConfiguracion(Long idProyecto, Map<String, Object> request) {
-        Usuario usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = proyecto(idProyecto);
+        var usuario = actor.exigirRol(RolUsuario.TECNICO_URP);
+        var proyecto = proyecto(idProyecto);
         exigirAlcanceUnidadEjecutora(usuario, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
         String tipoBien = texto(request, "tipoBien");
@@ -192,7 +192,7 @@ public class BeneficiosProyectoService {
     private static void acumularTotales(Map<String, Object> detalleCalculo, List<Double> mercado,
             List<Double> ajustado) {
         List<?> periodos = (List<?>) detalleCalculo.get("montosPorPeriodo");
-        for (int i = 0; i < periodos.size(); i++) {
+        for (var i = 0; i < periodos.size(); i++) {
             Map<?, ?> periodo = (Map<?, ?>) periodos.get(i);
             mercado.set(i, redondear(mercado.get(i) + (Double) periodo.get("montoPrecioMercado")));
             ajustado.set(i, redondear(ajustado.get(i) + (Double) periodo.get("montoPrecioAjustado")));
@@ -223,7 +223,7 @@ public class BeneficiosProyectoService {
         if (anterior == null) {
             anterior = 0D;
         }
-        for (int i = 0; i < periodos; i++) {
+        for (var i = 0; i < periodos; i++) {
             Double montoManual = i < beneficio.getMontosPrecioMercadoPorPeriodo().size()
                     ? beneficio.getMontosPrecioMercadoPorPeriodo().get(i)
                     : null;
@@ -277,7 +277,7 @@ public class BeneficiosProyectoService {
     }
 
     private Map<String, Object> parametroRespuesta(String codigo, Double factorCorreccion) {
-        Parametro parametro = parametros.findByCodigo(codigo).orElse(null);
+        var parametro = parametros.findByCodigo(codigo).orElse(null);
         Map<String, Object> respuesta = new LinkedHashMap<>();
         respuesta.put("codigo", codigo);
         respuesta.put("nombre", parametro == null ? codigo : parametro.getNombre());
@@ -309,7 +309,7 @@ public class BeneficiosProyectoService {
 
     private static List<Double> ceros(int cantidad) {
         List<Double> resultado = new ArrayList<>();
-        for (int i = 0; i < cantidad; i++) {
+        for (var i = 0; i < cantidad; i++) {
             resultado.add(0D);
         }
         return resultado;

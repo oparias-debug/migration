@@ -52,7 +52,7 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
     @Transactional(readOnly = true)
     public AnalisisMercadoDto obtener(Long idProyecto) {
         Usuario actor = actorContexto.exigir();
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         ViabilidadAcceso.exigirAlcanceUnidadEjecutora(actor, proyecto);
         AnalisisMercado analisis = analisisMercadoRepository.findByProyectoId(idProyecto).orElse(null);
         return CalculoAnalisisMercado.respuesta(proyecto.getId(), analisis == null ? List.of() : analisis.getFilas());
@@ -61,7 +61,7 @@ public class AnalisisMercadoServiceImpl implements AnalisisMercadoService {
     @Override
     public AnalisisMercadoDto guardar(Long idProyecto, AnalisisMercadoRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         ViabilidadAcceso.exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 

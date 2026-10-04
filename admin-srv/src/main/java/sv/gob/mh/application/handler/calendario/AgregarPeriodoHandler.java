@@ -27,9 +27,9 @@ public class AgregarPeriodoHandler {
 
     @Transactional
     public Resultado handle(AgregarPeriodoCommand command) {
-        Calendario calendario = calendarioRepository.obtenerPorCodigo(command.codigoCalendario());
+        var calendario = calendarioRepository.obtenerPorCodigo(command.codigoCalendario());
         calendario.agregarPeriodo(command.codigo(), command.nombre(), command.tipo(), command.recurrencia());
-        Calendario guardado = calendarioRepository.guardar(calendario);
+        var guardado = calendarioRepository.guardar(calendario);
         return new Resultado(guardado, guardado.exigirPeriodo(command.codigo()));
     }
 }

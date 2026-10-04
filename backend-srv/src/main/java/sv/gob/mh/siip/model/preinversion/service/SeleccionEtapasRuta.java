@@ -66,7 +66,7 @@ public class SeleccionEtapasRuta {
 
     /** Calcula, sin persistir, las etapas sugeridas (solo para iniciativa PROYECTO, RN07/RN08). */
     public RutaPreinversionSugeridaDto generar(Long idProyecto, CriteriosCalificacionDto criterios) {
-        Proyecto proyecto = proyectos.buscar(idProyecto);
+        var proyecto = proyectos.buscar(idProyecto);
         exigirQueNoSeaDeEmergencia(proyecto);
         exigirIniciativaProyecto(proyecto);
         return new RutaPreinversionSugeridaDto()
@@ -81,7 +81,7 @@ public class SeleccionEtapasRuta {
      * {@link SeleccionEtapasRegistro#reemplazarSeleccion}).
      */
     public RutaPreinversionDto aceptar(Long idProyecto, CriteriosCalificacionDto criterios) {
-        Proyecto proyecto = proyectos.buscar(idProyecto);
+        var proyecto = proyectos.buscar(idProyecto);
         exigirQueNoSeaDeEmergencia(proyecto);
         boolean esProyecto = proyecto.getIniciativaInversion() == IniciativaInversion.PROYECTO;
 
@@ -108,7 +108,7 @@ public class SeleccionEtapasRuta {
      * {@link SeleccionEtapasRegistro#reemplazarSeleccion}).
      */
     public RutaPreinversionDto modificar(Long idProyecto, ModificarRutaPreinversionRequestDto request) {
-        Proyecto proyecto = proyectos.buscar(idProyecto);
+        var proyecto = proyectos.buscar(idProyecto);
         exigirQueNoSeaDeEmergencia(proyecto);
         exigirIniciativaProyecto(proyecto);
         validarModificacion(request);

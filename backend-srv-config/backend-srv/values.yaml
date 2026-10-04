@@ -8,11 +8,11 @@ replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: "quay-registry-quay-quay-enterprise.apps.gcp-op-desa.cloud.mh.gob.sv/mh-dgicp-siip2/backend-srv"
+  repository: "quay-quay-quay.apps.ocp-hub-3t.mh.gob.sv/mh-dgicp-siip2/backend-srv"
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "04.10.26-Id80c8e"
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets:
@@ -23,8 +23,6 @@ fullnameOverride: "backend-srv"
 
 containerPort: 8080
 
-# Sin Route: backend-srv no se publica fuera del cluster. Solo lo invoca api-gateway, por el Service
-# (ClusterIP). Decisión de seguridad del equipo: no habilitarla en ningún ambiente.
 route:
   enabled: false
   name: backend-srv 
@@ -196,8 +194,8 @@ startupProbe:
     path: /actuator/health/liveness
     port: http
   initialDelaySeconds: 5
-  periodSeconds: 5
-  failureThreshold: 12
+  periodSeconds: 10
+  failureThreshold: 30
   timeoutSeconds: 3
 
 

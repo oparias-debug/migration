@@ -57,7 +57,7 @@ public class CatalogoEtapasDevSeeder implements DevSeeder {
     private void sembrarUbicaciones() {
         Map<String, Departamento> departamentos = new HashMap<>();
         for (Map<String, String> fila : CsvSeed.leer(CSV_UBICACIONES_GEOGRAFICAS)) {
-            Departamento departamento = departamentos.computeIfAbsent(fila.get("codigo_departamento"),
+            var departamento = departamentos.computeIfAbsent(fila.get("codigo_departamento"),
                     (String codigo) -> departamentoRepository.findByCodigo(codigo)
                             .orElseGet(() -> departamentoRepository.save(Departamento.builder()
                                     .codigo(codigo)

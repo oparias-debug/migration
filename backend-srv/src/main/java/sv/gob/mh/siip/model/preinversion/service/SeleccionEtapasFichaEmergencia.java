@@ -57,7 +57,7 @@ public class SeleccionEtapasFichaEmergencia {
      * Ficha del proyecto de emergencia indicado (vacía si aún no se registró).
      */
     public FichaEmergenciaDto obtener(Long idProyecto) {
-        Proyecto proyecto = proyectos.buscarDeEmergencia(idProyecto);
+        var proyecto = proyectos.buscarDeEmergencia(idProyecto);
         FichaEmergencia ficha = fichaEmergenciaRepository.findByProyectoId(idProyecto).orElse(null);
         return ensamblador.construir(proyecto, ficha);
     }
@@ -72,7 +72,7 @@ public class SeleccionEtapasFichaEmergencia {
      * Inversión estimada (Anexo B.1, código {@code TOTAL_COMPONENTES_DISTINTO_INVERSION}).
      */
     public FichaEmergenciaDto registrar(Long idProyecto, FichaEmergenciaRequestDto request) {
-        Proyecto proyecto = proyectos.buscarDeEmergencia(idProyecto);
+        var proyecto = proyectos.buscarDeEmergencia(idProyecto);
         exigirEstadoRegistrable(proyecto);
         validarObligatorios(request);
         validarTotalComponentes(request);

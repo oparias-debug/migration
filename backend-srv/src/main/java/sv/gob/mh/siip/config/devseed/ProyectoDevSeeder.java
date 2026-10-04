@@ -114,7 +114,7 @@ public class ProyectoDevSeeder implements DevSeeder {
         Usuario tecnicoPre = usuarioRepository.findByNombreUsuario("tecnico.pre").orElseThrow(
                 () -> new IllegalStateException("Falta el seed de Usuario tecnico.pre (UsuarioDevSeeder)."));
 
-        Proyecto proyecto = nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico);
+        var proyecto = nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico);
         proyecto.setEstado(EstadoProyecto.ENVIADO_DGICP_REGISTRO);
         proyecto = proyectoRepository.save(proyecto);
 
@@ -143,7 +143,7 @@ public class ProyectoDevSeeder implements DevSeeder {
         Usuario tecnicoPre = usuarioRepository.findByNombreUsuario("tecnico.pre").orElseThrow(
                 () -> new IllegalStateException("Falta el seed de Usuario tecnico.pre (UsuarioDevSeeder)."));
 
-        Proyecto proyecto = nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico);
+        var proyecto = nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico);
         proyecto.setEstado(EstadoProyecto.CUP_ASIGNADO);
         proyecto.setCup(CupDevSeed.siguiente(proyectoRepository));
         proyecto.setFechaCupAsignado(LocalDateTime.now(ZONA_EL_SALVADOR));
@@ -173,7 +173,7 @@ public class ProyectoDevSeeder implements DevSeeder {
         if (!proyectoRepository.findByNombreContainingIgnoreCase(nombre).isEmpty()) {
             return;
         }
-        Proyecto proyecto = nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico);
+        var proyecto = nuevoProyectoBase(nombre, unidadEjecutora, institucion, sector, ejeTematico);
         proyecto.setEstado(EstadoProyecto.ENVIADO_DGICP_REGISTRO);
         proyecto = proyectoRepository.save(proyecto);
 

@@ -64,7 +64,7 @@ final class ProgramacionFinancieraPapValidaciones {
     /** RN-B.b: no se permite registrar una etapa posterior sin haber programado una etapa anterior de la Ruta. */
     private static void validarRutaCompleta(List<EtapaPreinversion> etapasProgramables,
             Set<TipoEtapaPreinversion> conProgramacion) {
-        boolean etapaFaltante = false;
+        var etapaFaltante = false;
         for (EtapaPreinversion etapa : etapasProgramables) {
             if (!conProgramacion.contains(etapa.getTipoEtapa())) {
                 etapaFaltante = true;

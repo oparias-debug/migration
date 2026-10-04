@@ -19,7 +19,7 @@ public class CambiarEstadoCalendarioHandler {
 
     @Transactional
     public Calendario handle(CambiarEstadoCalendarioCommand command) {
-        Calendario calendario = calendarioRepository.obtenerPorCodigo(command.codigoCalendario());
+        var calendario = calendarioRepository.obtenerPorCodigo(command.codigoCalendario());
         calendario.cambiarEstado(command.estado());
         return calendarioRepository.guardar(calendario);
     }

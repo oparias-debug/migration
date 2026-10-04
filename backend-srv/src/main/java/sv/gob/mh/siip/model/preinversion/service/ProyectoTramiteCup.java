@@ -124,7 +124,7 @@ public class ProyectoTramiteCup {
      * hacer flush) — ver Javadoc de {@link GeneradorCup}.
      */
     private Proyecto asignarCupConReintentos(Proyecto entidad) {
-        for (int intento = 1; intento <= INTENTOS_MAXIMOS_CUP; intento++) {
+        for (var intento = 1; intento <= INTENTOS_MAXIMOS_CUP; intento++) {
             try {
                 return generadorCup.asignar(entidad);
             } catch (DataIntegrityViolationException choqueDeConcurrencia) {

@@ -80,7 +80,7 @@ public class CatalogoProyectoDevSeeder implements DevSeeder {
         for (Map<String, String> fila : CsvSeed.leer(CSV_SECTORES)) {
             String nombreMacrosector = fila.get("macrosector");
             String nombreSector = fila.get("sector");
-            MacroSector macrosector = macrosectores.computeIfAbsent(nombreMacrosector,
+            var macrosector = macrosectores.computeIfAbsent(nombreMacrosector,
                     (String nombre) -> macroSectorRepository.findByCodigo(nombre)
                             .orElseGet(() -> macroSectorRepository.save(
                                     MacroSector.builder().codigo(nombre).nombre(nombre).build())));
@@ -125,7 +125,7 @@ public class CatalogoProyectoDevSeeder implements DevSeeder {
     private void sembrarMedidas() {
         Map<TipoMedidaCatalogo, List<MedidaCatalogo>> existentesPorTipo = new EnumMap<>(TipoMedidaCatalogo.class);
         for (Map<String, String> fila : CsvSeed.leer(CSV_MEDIDAS)) {
-            TipoMedidaCatalogo tipo = TipoMedidaCatalogo.valueOf(fila.get("tipo"));
+            var tipo = TipoMedidaCatalogo.valueOf(fila.get("tipo"));
             String codigo = fila.get(COLUMNA_CODIGO);
             List<MedidaCatalogo> existentes = existentesPorTipo.computeIfAbsent(tipo,
                     medidaCatalogoRepository::findByTipoOrderByCodigo);

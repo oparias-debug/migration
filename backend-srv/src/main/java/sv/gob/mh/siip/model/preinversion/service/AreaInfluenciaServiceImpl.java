@@ -67,7 +67,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
     @Transactional(readOnly = true)
     public AreaInfluenciaDto obtener(Long idProyecto) {
         Usuario actor = actorContexto.exigir();
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         ViabilidadAcceso.exigirAlcanceUnidadEjecutora(actor, proyecto);
         return construirDto(proyecto, areaInfluenciaRepository.findByProyectoIdOrderByIdAsc(idProyecto));
     }
@@ -79,7 +79,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
     @Override
     public AreaInfluenciaDto guardar(Long idProyecto, AreaInfluenciaRequestDto request) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         ViabilidadAcceso.exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
@@ -102,7 +102,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
     @Override
     public AreaInfluenciaDto autocompletarDesdePoblacionObjetivo(Long idProyecto) {
         Usuario actor = actorContexto.exigirRol(RolUsuario.TECNICO_URP);
-        Proyecto proyecto = buscarProyecto(idProyecto);
+        var proyecto = buscarProyecto(idProyecto);
         ViabilidadAcceso.exigirAlcanceUnidadEjecutora(actor, proyecto);
         EdicionFormulacion.exigirEditable(proyecto);
 
@@ -122,7 +122,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
         AreaInfluenciaFilaDto fila = new AreaInfluenciaFilaDto().ubicacionEspecifica(ubicacion);
         List<Municipio> candidatos = candidatos(ubicacion);
         if (candidatos.size() == 1) {
-            Municipio municipio = candidatos.get(0);
+            var municipio = candidatos.get(0);
             fila.region(municipio.getDepartamento().getRegion())
                     .departamento(municipio.getDepartamento().getNombre())
                     .distrito(municipio.getNombre());
@@ -134,7 +134,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
     private List<AreaInfluencia> validarFilas(Proyecto proyecto, List<AreaInfluenciaFilaRequestDto> filas) {
         List<ErrorDetalleDto> invalidas = new ArrayList<>();
         List<AreaInfluencia> nuevas = new ArrayList<>();
-        for (int i = 0; i < filas.size(); i++) {
+        for (var i = 0; i < filas.size(); i++) {
             AreaInfluenciaFilaRequestDto fila = filas.get(i);
             String campo = "filas[" + i + "].distrito";
             String distrito = fila.getDistrito() == null ? "" : fila.getDistrito().strip();
@@ -147,7 +147,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
                 invalidas.add(detalle(campo, "El nombre " + distrito + " corresponde a varios distritos ("
                         + departamentos(candidatos) + "); identifíquelo por su código."));
             } else {
-                Municipio municipio = candidatos.get(0);
+                var municipio = candidatos.get(0);
                 nuevas.add(AreaInfluencia.builder()
                         .proyecto(proyecto)
                         .departamento(municipio.getDepartamento())
@@ -168,7 +168,7 @@ public class AreaInfluenciaServiceImpl implements AreaInfluenciaService {
     private static void exigirSinDuplicados(List<AreaInfluencia> filas) {
         Set<String> vistas = new HashSet<>();
         List<ErrorDetalleDto> duplicadas = new ArrayList<>();
-        for (int i = 0; i < filas.size(); i++) {
+        for (var i = 0; i < filas.size(); i++) {
             AreaInfluencia fila = filas.get(i);
             String descripcion = fila.getDescripcion() == null ? "" : fila.getDescripcion().toLowerCase(Locale.ROOT);
             if (!vistas.add(fila.getMunicipio().getCodigo() + "|" + descripcion)) {

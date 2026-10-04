@@ -32,7 +32,7 @@ public class AnalisisLegalMapper {
         }
 
         List<FilaAnalisisLegalRequestDto> filasDto = new ArrayList<>();
-        double totalCosto = 0.0;
+        var totalCosto = 0.0;
         if (entity.getFilas() != null) {
             filasDto = entity.getFilas().stream()
                     .map(this::toFilaDto)
@@ -43,7 +43,7 @@ public class AnalisisLegalMapper {
                     .sum();
         }
 
-        AnalisisLegalDto dto = new AnalisisLegalDto();
+        var dto = new AnalisisLegalDto();
         dto.setIdProyecto((entity.getProyecto() != null) ? entity.getProyecto().getId() : null);
         dto.setRequiereAnalisisLegal(entity.getRequiereAnalisisLegal());
         dto.setFilas(filasDto);
@@ -64,7 +64,7 @@ public class AnalisisLegalMapper {
             return null;
         }
 
-        FilaAnalisisLegalRequestDto dto = new FilaAnalisisLegalRequestDto();
+        var dto = new FilaAnalisisLegalRequestDto();
         dto.setAnalisisGestionLegalRequerida(entidadDetalle.getAnalisisGestionLegalRequerida());
         dto.setEntregable(entidadDetalle.getEntregable());
         dto.setCostoEntregable(entidadDetalle.getCostoEntregable());

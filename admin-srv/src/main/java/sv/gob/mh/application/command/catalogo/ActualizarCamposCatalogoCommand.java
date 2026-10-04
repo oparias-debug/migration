@@ -4,7 +4,7 @@ import java.util.List;
 
 import sv.gob.mh.domain.model.catalogo.NuevoCampo;
 
-/** HU-ADM-01-06: reemplazar la lista completa de campos de un catálogo. */
+/** HU-ADM-01-02: reemplazar la lista completa de campos de un catálogo (SF-04 paso 5). */
 public record ActualizarCamposCatalogoCommand(String codigo, List<NuevoCampo> campos) {
 
     public ActualizarCamposCatalogoCommand {

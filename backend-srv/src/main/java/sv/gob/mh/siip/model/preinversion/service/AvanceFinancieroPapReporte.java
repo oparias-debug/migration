@@ -32,7 +32,7 @@ final class AvanceFinancieroPapReporte {
 
     Resource generar(Usuario actor, Long idUnidadEjecutora, Integer anio, Cuatrimestre periodo,
             List<EstudioFilaAvancePAPDto> filas, String formato) {
-        ReporteAvanceFinancieroPapGenerator.Encabezado encabezado = new ReporteAvanceFinancieroPapGenerator.Encabezado(
+        var encabezado = new ReporteAvanceFinancieroPapGenerator.Encabezado(
                 nombreInstitucionEjecutora(idUnidadEjecutora), anio, periodo,
                 AvancePapSoporte.esActorInternoDgicp(actor),
                 AvancePapSoporte.esActorInternoDgicp(actor)

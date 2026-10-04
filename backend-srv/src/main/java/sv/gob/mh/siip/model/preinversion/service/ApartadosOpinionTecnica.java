@@ -54,11 +54,11 @@ public class ApartadosOpinionTecnica {
                 : contenidoIdentificacion(idProyecto);
         List<ApartadoOpinionTecnicaDto> filas = new ArrayList<>();
         for (ApartadoOpinionTecnica apartado : ApartadoOpinionTecnica.delFormulario(emergencia)) {
-            PantallaOrigenDto origen = new PantallaOrigenDto(apartado.getCasoUso());
+            var origen = new PantallaOrigenDto(apartado.getCasoUso());
             if (apartado.getRuta() != null) {
                 origen.setRuta("/preinversion/proyectos/" + idProyecto + "/" + apartado.getRuta());
             }
-            ApartadoOpinionTecnicaDto fila = new ApartadoOpinionTecnicaDto(apartado.getCodigo(), apartado.getNombre(),
+            var fila = new ApartadoOpinionTecnicaDto(apartado.getCodigo(), apartado.getNombre(),
                     apartado.getSeccion().getEtiquetaUi(), origen);
             fila.setContenido(contenidos.get(apartado));
             ComentarioOpinionTecnica comentario = comentarios.get(apartado.getCodigo());

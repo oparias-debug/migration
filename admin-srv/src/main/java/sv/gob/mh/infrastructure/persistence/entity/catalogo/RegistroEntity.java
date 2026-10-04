@@ -38,10 +38,10 @@ public class RegistroEntity {
     @JoinColumn(name = "ID_CATALOGO", nullable = false)
     private CatalogoEntity catalogo;
 
-    @Column(name = "CLAVE", nullable = false, length = 200)
+    @Column(name = "CLAVE", nullable = false, length = 255)
     private String clave;
 
-    /** Registro del catálogo padre al que se enlaza (Regla 23); {@code null} si el catálogo no tiene padre. */
+    /** Registro del catálogo padre al que se enlaza (RN-05); {@code null} si el catálogo no tiene padre. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_REGISTRO_PADRE")
     private RegistroEntity registroPadre;
@@ -59,7 +59,7 @@ public class RegistroEntity {
     @ElementCollection
     @CollectionTable(name = "REGISTRO_VALOR", joinColumns = @JoinColumn(name = "ID_REGISTRO"))
     @MapKeyColumn(name = "NOMBRE_CAMPO")
-    @Column(name = "VALOR", length = 1000)
+    @Column(name = "VALOR", length = 4000)
     private Map<String, String> valores = new HashMap<>();
 
     public Long getId() {

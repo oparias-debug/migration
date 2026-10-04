@@ -53,7 +53,7 @@ public class PresupuestoInversionEnsamblador {
         // FichaEmergencia, que solo existe para proyectos de emergencia (CU-PRE-03.5).
         List<Componente> filas = componentes.findByProyectoIdOrderByIdAsc(proyecto.getId());
         List<ProductoPresupuestoDto> ps = new ArrayList<>();
-        for (int i = 0; i < filas.size(); i++) {
+        for (var i = 0; i < filas.size(); i++) {
             List<MacroactividadDto> lista = porProducto.getOrDefault(i + 1, List.of());
             List<Double> totalProducto = totales(lista);
             ps.add(new ProductoPresupuestoDto(i + 1,
@@ -61,7 +61,7 @@ public class PresupuestoInversionEnsamblador {
                 .costoProductoTotal(sum(totalProducto)));
         }
         List<Double> total = totales(ps.stream().flatMap(x -> x.getMacroactividades().stream()).toList());
-        MontoPorPeriodoDto monto = new MontoPorPeriodoDto(total, sum(total));
+        var monto = new MontoPorPeriodoDto(total, sum(total));
         return new PresupuestoDto(proyecto.getId(), ps, monto, List.of(), sum(total))
         .periodosEstimados(p.getPeriodosEstimados());
     }
@@ -69,7 +69,7 @@ public class PresupuestoInversionEnsamblador {
     private static List<Double> totales(List<MacroactividadDto> xs) {
         int n = xs.stream().mapToInt(x -> x.getTotalPeriodoPrecioMercado().size()).max().orElse(0);
         List<Double> r = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
+        for (var i = 0; i < n; i++) {
             double s = 0;
             for (MacroactividadDto x : xs) {
                 if (i < x.getTotalPeriodoPrecioMercado().size()) {

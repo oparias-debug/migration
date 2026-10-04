@@ -54,7 +54,7 @@ public class ProyectoDatosRegistro {
      * @throws ValidacionNegocioException si algún catálogo no existe o falta un dato de emergencia.
      */
     public Proyecto nuevo(Usuario actor, ProyectoRequestDto request) {
-        Proyecto entidad = ProyectoReglas.nuevoEnRegistro(actor);
+        var entidad = ProyectoReglas.nuevoEnRegistro(actor);
         aplicarRequest(entidad, request);
         ProyectoReglas.validarReglaEmergencia(entidad);
         return entidad;

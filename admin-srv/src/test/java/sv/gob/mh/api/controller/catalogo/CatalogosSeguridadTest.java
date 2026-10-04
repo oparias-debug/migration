@@ -1,6 +1,7 @@
 package sv.gob.mh.api.controller.catalogo;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -60,17 +61,26 @@ class CatalogosSeguridadTest {
     }
 
     @Test
-    @DisplayName("El rol de realm ADMINISTRADOR_DE_CATALOGOS autoriza")
-    void administradorDeCatalogosAutorizado() throws Exception {
-        mockMvc.perform(get(CATALOGOS).with(tokenConRolesDeRealm("ADMINISTRADOR_DE_CATALOGOS")))
+    @DisplayName("RN-25: cualquier rol de realm autenticado consulta")
+    void cualquierRolConsulta() throws Exception {
+        mockMvc.perform(get(CATALOGOS).with(tokenConRolesDeRealm("TECNICO_PRE")))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @DisplayName("Un rol de realm sin permisos recibe 403 SIN_PERMISOS")
+    @DisplayName("El rol de realm ADMINISTRADOR_DE_CATALOGOS llega a la operación de mantenimiento")
+    void administradorDeCatalogosAutorizado() throws Exception {
+        mockMvc.perform(delete(CATALOGOS + "/PAIS").with(tokenConRolesDeRealm("ADMINISTRADOR_DE_CATALOGOS")))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.codigo").value("E-24"));
+    }
+
+    @Test
+    @DisplayName("E-25: un rol de realm sin permisos de mantenimiento recibe 403")
     void rolSinPermisos() throws Exception {
-        mockMvc.perform(get(CATALOGOS).with(tokenConRolesDeRealm("TECNICO_PRE")))
+        mockMvc.perform(delete(CATALOGOS + "/PAIS").with(tokenConRolesDeRealm("TECNICO_PRE")))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.codigo").value("SIN_PERMISOS"));
+                .andExpect(jsonPath("$.codigo").value("E-25"))
+                .andExpect(jsonPath("$.mensaje").value("No tiene permisos para modificar catálogos o registros."));
     }
 }

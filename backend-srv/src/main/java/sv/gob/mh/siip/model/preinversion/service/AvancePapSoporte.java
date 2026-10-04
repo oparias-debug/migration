@@ -2,7 +2,6 @@ package sv.gob.mh.siip.model.preinversion.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.time.Year;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -80,7 +79,7 @@ final class AvancePapSoporte {
 
     /** RN-A.a: "el cuatrimestre vigente" según el mes actual (I: ene-abr, II: may-ago, III: sep-dic). */
     static Cuatrimestre cuatrimestreVigente() {
-        Month mes = LocalDateTime.now(ZONA_EL_SALVADOR).getMonth();
+        var mes = LocalDateTime.now(ZONA_EL_SALVADOR).getMonth();
         if (mes.getValue() <= MES_FIN_PRIMER_CUATRIMESTRE) {
             return Cuatrimestre.CUATRIMESTRE_I;
         }

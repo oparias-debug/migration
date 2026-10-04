@@ -37,7 +37,7 @@ public class LecturaCalendarios {
     }
 
     public ResponseEntity<RangoFechasCalendarioResponseDto> consultarRangoFechas(String codigoCalendario) {
-        Calendario calendario = consultarCalendario.ejecutar(codigoCalendario);
+        var calendario = consultarCalendario.ejecutar(codigoCalendario);
         return ResponseEntity.ok(new RangoFechasCalendarioResponseDto()
                 .fechaDesde(calendario.getRango().desde())
                 .fechaHasta(calendario.getRango().hasta()));

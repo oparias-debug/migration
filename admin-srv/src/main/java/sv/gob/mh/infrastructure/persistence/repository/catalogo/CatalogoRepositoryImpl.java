@@ -2,6 +2,7 @@ package sv.gob.mh.infrastructure.persistence.repository.catalogo;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Repository;
 
@@ -30,23 +31,26 @@ public class CatalogoRepositoryImpl implements CatalogoRepository {
     }
 
     @Override
-    public boolean existeNombre(String nombreIgnorandoMayusculas) {
-        return jpa.existsByNombreIgnoreCase(nombreIgnorandoMayusculas);
-    }
-
-    @Override
     public List<Catalogo> listarPorCodigo() {
         return jpa.findAllByOrderByCodigoAsc().stream().map(CatalogoPersistenceMapper::aModelo).toList();
     }
 
     @Override
-    public List<Catalogo> listarHijos(String codigoPadre) {
-        return jpa.findByCatalogoPadre_CodigoOrderByCodigoAsc(codigoPadre).stream()
+    public List<Catalogo> buscar(String codigo, String nombre) {
+        Stream<CatalogoEntity> candidatos = codigo != null ? jpa.findByCodigo(codigo).stream()
+                : jpa.findByNombreIgnoreCaseOrderByCodigoAsc(nombre).stream();
+        return candidatos
+                .filter(catalogo -> nombre == null || catalogo.getNombre().equalsIgnoreCase(nombre))
                 .map(CatalogoPersistenceMapper::aModelo)
                 .toList();
     }
 
-    /** El padre llega por código (la existencia ya la verificó el caso de uso) y se enlaza por id. */
+    @Override
+    public Optional<Catalogo> buscarHijo(String codigoPadre) {
+        return jpa.findFirstByCatalogoPadre_CodigoOrderByCodigoAsc(codigoPadre).map(CatalogoPersistenceMapper::aModelo);
+    }
+
+    /** El padre llega por código (su existencia ya la verificó el caso de uso) y se enlaza por id. */
     @Override
     public Catalogo guardar(Catalogo catalogo) {
         CatalogoEntity entidad = catalogo.getId() == null ? new CatalogoEntity()

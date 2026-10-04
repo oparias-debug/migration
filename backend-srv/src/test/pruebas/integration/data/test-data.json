@@ -1,0 +1,67 @@
+{
+  "_nota": [
+    "Los permisos NO viajan en el token: el marco los pregunta al authorization-service.",
+    "Por eso aquí se declara el GRUPO del usuario, que es a quien se le conceden, y no una",
+    "lista de permisos dentro del propio usuario. El padrón que respalda estos grupos es",
+    "authz/ejemplo-authz.json, y se carga como explica docs/autorizacion.md."
+  ],
+  "test_users": [
+    {
+      "username": "usuario.admin",
+      "email": "admin@ejemplo.gob.sv",
+      "grupos": ["EJEMPLO_GRUPO_ADMIN"],
+      "puede": ["consultar expedientes", "eliminar expedientes"]
+    },
+    {
+      "username": "usuario.consulta",
+      "email": "consulta@ejemplo.gob.sv",
+      "grupos": ["EJEMPLO_GRUPO_CONSULTA"],
+      "puede": ["consultar expedientes"],
+      "no_puede": ["eliminar expedientes (DELETE denegado con effect = 0)"]
+    },
+    {
+      "username": "usuario.ajeno",
+      "email": "ajeno@ejemplo.gob.sv",
+      "grupos": ["OTRO_GRUPO"],
+      "puede": [],
+      "no_puede": ["nada del componente: no tiene ningún permiso concedido"]
+    }
+  ],
+  "test_scenarios": {
+    "publico": {
+      "endpoint": "/api/v1/demo/security/publico",
+      "requiere_sesion": false,
+      "estado_esperado": 200
+    },
+    "autenticado": {
+      "endpoint": "/api/v1/demo/security/autenticado",
+      "requiere_sesion": true,
+      "estado_sin_token": 401,
+      "estado_con_token": 200
+    },
+    "consulta_por_permiso": {
+      "endpoint": "/api/v1/demo/security/expedientes",
+      "metodo": "GET",
+      "requiere_sesion": true,
+      "operacion": "VIEW",
+      "recurso": "expedientes-consulta",
+      "estado_con_permiso": 200,
+      "estado_sin_permiso": 403
+    },
+    "borrado_por_permiso": {
+      "endpoint": "/api/v1/demo/security/expedientes/1",
+      "metodo": "DELETE",
+      "requiere_sesion": true,
+      "operacion": "DELETE",
+      "recurso": "expedientes-registro",
+      "estado_con_permiso": 200,
+      "estado_sin_permiso": 403
+    }
+  },
+  "tiempos_esperados_ms": {
+    "health_check": 2000,
+    "endpoint_publico": 2000,
+    "endpoint_autenticado": 3000,
+    "endpoint_con_permiso": 3000
+  }
+}

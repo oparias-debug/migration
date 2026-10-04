@@ -4,9 +4,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 
 import sv.gob.mh.shared.enums.EstadoVigencia;
-import sv.gob.mh.shared.exception.ErrorCatalogoException;
 
-/** Reglas de vigencia (8-14) comunes a catálogos y registros, evaluadas a la fecha de El Salvador. */
+/**
+ * Reglas de vigencia (RN-12, RN-15, RN-16) comunes a catálogos y registros, evaluadas a la fecha
+ * de El Salvador. La TO DATE es la fecha que sigue al ':' en la producción {@code valid}.
+ */
 public final class Vigencia {
 
     private static final ZoneId ZONA_EL_SALVADOR = ZoneId.of("America/El_Salvador");
@@ -18,37 +20,43 @@ public final class Vigencia {
         return LocalDate.now(ZONA_EL_SALVADOR);
     }
 
-    /** Regla 14: una {@code toDate} igual a hoy o pasada deja el elemento INACTIVE. */
+    /** RN-12b y RN-16: una TO DATE igual a hoy o pasada deja el elemento INACTIVE. */
     public static boolean vencido(LocalDate toDate) {
         return toDate != null && !toDate.isAfter(hoy());
     }
 
-    /** Reglas 13 y 14: ACTIVE por defecto, salvo que se pida INACTIVE o la {@code toDate} ya haya llegado. */
-    public static EstadoVigencia estadoInicial(EstadoVigencia estadoSolicitado, LocalDate toDate) {
-        if (vencido(toDate) || estadoSolicitado == EstadoVigencia.INACTIVE) {
-            return EstadoVigencia.INACTIVE;
-        }
-        return EstadoVigencia.ACTIVE;
-    }
-
-    /** Estado vigente hoy: INACTIVE si así se marcó o si su {@code toDate} ya llegó (Regla 14). */
+    /** RN-15 y RN-16: estado vigente hoy; INACTIVE si así se marcó o si su TO DATE ya llegó. */
     public static EstadoVigencia estadoEfectivo(EstadoVigencia estado, LocalDate toDate) {
         return estado == EstadoVigencia.INACTIVE || vencido(toDate) ? EstadoVigencia.INACTIVE : EstadoVigencia.ACTIVE;
     }
 
+    /** E-09: la FROM DATE no puede ser posterior a la TO DATE. */
+    public static void validarRango(LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw ErroresCatalogo.vigenciaInvalida();
+        }
+    }
+
     /**
-     * Regla 9: sin {@code toDate} la inactivación es a la fecha actual (9a); con {@code toDate},
-     * esta debe ser la actual o una pasada (9b).
+     * RN-12: TO DATE con que queda un elemento inactivado. Una TO DATE actual o pasada se conserva
+     * (12b); sin ella, o con una futura, la inactivación es a la fecha actual (12a).
      */
     public static LocalDate fechaInactivacion(LocalDate toDate) {
-        if (toDate == null) {
-            return hoy();
+        return vencido(toDate) ? toDate : hoy();
+    }
+
+    /** E-16: al reactivar, la TO DATE debe quedar vacía o futura. */
+    public static void validarFechaReactivacion(LocalDate toDate) {
+        if (vencido(toDate)) {
+            throw ErroresCatalogo.fechaVigenciaVencida();
         }
-        if (toDate.isAfter(hoy())) {
-            throw ErrorCatalogoException.reglaNegocio("FECHA_INACTIVACION_FUTURA",
-                    "La fecha de inactivación debe ser la fecha actual o una fecha pasada.", "toDate",
-                    toDate.toString());
-        }
-        return toDate;
+    }
+
+    /**
+     * TO DATE de un elemento inactivado en cascada (RN-06, RN-14): la fecha de la inactivación,
+     * salvo que ya tuviera una anterior.
+     */
+    public static LocalDate fechaHastaEnCascada(LocalDate actual, LocalDate fechaInactivacion) {
+        return actual != null && !actual.isAfter(fechaInactivacion) ? actual : fechaInactivacion;
     }
 }

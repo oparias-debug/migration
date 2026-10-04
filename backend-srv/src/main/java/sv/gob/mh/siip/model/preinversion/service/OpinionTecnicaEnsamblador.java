@@ -54,13 +54,13 @@ public class OpinionTecnicaEnsamblador {
      * @return la pantalla del Anexo A.1 para el actor del contexto
      */
     public OpinionTecnicaResponseDto pantalla(OpinionTecnicaContexto contexto) {
-        Proyecto proyecto = contexto.proyecto();
+        var proyecto = contexto.proyecto();
         OpinionTecnica gestion = contexto.gestion();
         boolean emergencia = contexto.esEmergencia();
         Map<String, ComentarioOpinionTecnica> porApartado = comentarios.porApartado(gestion);
         List<DocumentoOpinionTecnica> notasGestion = notas.listar(gestion.getId());
 
-        OpinionTecnicaResponseDto dto = new OpinionTecnicaResponseDto(gestion.getId(), proyecto.getId(),
+        var dto = new OpinionTecnicaResponseDto(gestion.getId(), proyecto.getId(),
                 TipoSolicitudOpinionTecnicaDto.valueOf(gestion.getTipoSolicitud().name()),
                 estadoGestion(gestion),
                 EstadoProyectoDto.valueOf(proyecto.getEstado().name()),
@@ -95,7 +95,7 @@ public class OpinionTecnicaEnsamblador {
      * @return la fila del listado de gestiones del proyecto
      */
     public ResumenOpinionTecnicaDto resumen(OpinionTecnica gestion) {
-        ResumenOpinionTecnicaDto dto = new ResumenOpinionTecnicaDto(gestion.getId(),
+        var dto = new ResumenOpinionTecnicaDto(gestion.getId(),
                 TipoSolicitudOpinionTecnicaDto.valueOf(gestion.getTipoSolicitud().name()), estadoGestion(gestion));
         dto.setFechaSolicitud(fecha(gestion.getFechaSolicitud()));
         dto.setEtapaActual(etiqueta(gestion.getEtapaActual()));
@@ -130,7 +130,7 @@ public class OpinionTecnicaEnsamblador {
     static EncabezadoProyectoOpinionTecnicaDto encabezado(Proyecto proyecto, OpinionTecnica gestion) {
         String unidadEjecutora = proyecto.getUnidadEjecutora() == null ? null
                 : proyecto.getUnidadEjecutora().getNombre();
-        EncabezadoProyectoOpinionTecnicaDto dto = new EncabezadoProyectoOpinionTecnicaDto(proyecto.getCup(),
+        var dto = new EncabezadoProyectoOpinionTecnicaDto(proyecto.getCup(),
                 proyecto.getNombre(), unidadEjecutora);
         dto.setEtapaActual(etiqueta(gestion.getEtapaActual()));
         dto.setEtapaFutura(etiqueta(gestion.getEtapaFutura()));

@@ -55,7 +55,7 @@ public class ViabilidadComentarios {
         revision.setObservacionesGenerales(observaciones);
         revisionRepository.save(revision);
 
-        GuardarComentariosViabilidadResponseDto respuesta = new GuardarComentariosViabilidadResponseDto(
+        var respuesta = new GuardarComentariosViabilidadResponseDto(
                 ViabilidadRespuestas.comentarios(revision), contexto.acciones());
         respuesta.setObservacionesGeneralesJustificacion(revision.getObservacionesGenerales());
         return respuesta;

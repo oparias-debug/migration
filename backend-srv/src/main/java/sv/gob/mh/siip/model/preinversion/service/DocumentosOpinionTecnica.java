@@ -116,7 +116,7 @@ public class DocumentosOpinionTecnica {
         Path soloNombre = nombre == null ? null : Path.of(nombre.replace('\\', '/')).getFileName();
         String limpio = soloNombre == null ? "" : soloNombre.toString();
         if (limpio.isBlank()) {
-            String mensaje = "El archivo debe tener nombre.";
+            var mensaje = "El archivo debe tener nombre.";
             throw new ValidacionNegocioException(DocumentosViabilidad.SOLICITUD_INVALIDA, mensaje,
                     List.of(new ErrorDetalleDto().campo(campo).mensaje(mensaje)));
         }

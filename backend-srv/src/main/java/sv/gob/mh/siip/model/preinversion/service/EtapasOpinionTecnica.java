@@ -52,7 +52,7 @@ public class EtapasOpinionTecnica {
     @Transactional(readOnly = true)
     public Etapas paraOpinionTecnica(Long idProyecto) {
         List<EtapaPreinversion> ruta = vigentes(idProyecto);
-        for (int i = 0; i < ruta.size(); i++) {
+        for (var i = 0; i < ruta.size(); i++) {
             if (!Boolean.TRUE.equals(ruta.get(i).getTieneOpinionTecnica())) {
                 return etapas(ruta, i);
             }
@@ -106,7 +106,7 @@ public class EtapasOpinionTecnica {
      * @param idProyecto identificador del proyecto
      */
     public void recalcularBloqueos(Long idProyecto) {
-        boolean hayAnteriorSinOt = false;
+        var hayAnteriorSinOt = false;
         for (EtapaPreinversion etapa : vigentes(idProyecto)) {
             boolean tieneOt = Boolean.TRUE.equals(etapa.getTieneOpinionTecnica());
             boolean bloqueada = Boolean.TRUE.equals(etapa.getBloqueadaPorModificacion());

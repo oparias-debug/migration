@@ -43,6 +43,7 @@ public class CatalogosController implements CatlogosRegistroDeProyectosApi {
      * @param tipo tipo de medida a consultar (GRD, GRC o ACC)
      * @return catálogo de medidas correspondiente al tipo solicitado
      */
+    /****** Borrar ****** */
     @Override
     public ResponseEntity<List<MedidaCatalogoDto>> listarMedidasCatalogo(TipoMedidaCatalogoDto tipo) {
         return ResponseEntity.ok(medidaCatalogoService.listar(tipo));

@@ -11,8 +11,8 @@ import sv.gob.mh.domain.repository.catalogo.CatalogoRepository;
 import sv.gob.mh.domain.repository.catalogo.RegistroRepository;
 
 /**
- * HU-ADM-01-11: los campos pedidos de todos los registros, o el primer campo no KEY si no se pide
- * ninguno (Regla 5). Errores: CATALOGO_INEXISTENTE y CAMPO_INEXISTENTE.
+ * HU-ADM-01-13 (SF-11, RN-08): todos los registros del catálogo, activos e inactivos, con los
+ * campos del Field Set. Errores: E-10 y E-21.
  */
 @Service
 public class BuscarRegistrosQuery {
@@ -26,11 +26,9 @@ public class BuscarRegistrosQuery {
     }
 
     @Transactional(readOnly = true)
-    public List<RegistroProyectado> ejecutar(String codigoCatalogo, List<String> nombresCampos) {
-        Catalogo catalogo = catalogoRepository.obtenerPorCodigo(codigoCatalogo);
-        List<CampoDefinicion> campos = catalogo.camposProyectados(nombresCampos);
-        return registroRepository.listarPorCatalogo(codigoCatalogo).stream()
-                .map(registro -> new RegistroProyectado(registro, campos))
-                .toList();
+    public ConjuntoResultado ejecutar(String codigoCatalogo, List<String> nombresCampos) {
+        var catalogo = catalogoRepository.obtenerPorCodigo(codigoCatalogo);
+        List<CampoDefinicion> campos = catalogo.conjuntoDeCampos(nombresCampos);
+        return ConjuntoResultado.de(campos, registroRepository.listarPorCatalogo(codigoCatalogo));
     }
 }

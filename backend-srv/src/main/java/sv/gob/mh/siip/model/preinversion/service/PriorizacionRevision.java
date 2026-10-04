@@ -66,7 +66,7 @@ public class PriorizacionRevision {
     public PriorizacionProyecto revisar(PriorizacionContexto contexto, TramoPriorizacion tramo) {
         contexto.exigirEnviada(tramo);
         PriorizacionProyecto priorizacion = contexto.priorizacion();
-        LocalDateTime ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
+        var ahora = LocalDateTime.now(ZONA_EL_SALVADOR);
         TramoCalificacionPriorizacion estado = priorizacion.tramo(tramo);
         estado.setEstado(EstadoTramoPriorizacion.REVISADA);
         estado.setCoordinador(contexto.actor());
@@ -109,7 +109,7 @@ public class PriorizacionRevision {
     /** RN07: guarda la "Prioridad del proyecto" y la registra para el Banco de Proyectos. */
     private void completar(PriorizacionProyecto priorizacion, LocalDateTime ahora) {
         BigDecimal prioridad = matriz.cargar(priorizacion).calcular().prioridad();
-        InterpretacionPriorizacion.Interpretacion rango = interpretacion.interpretar(prioridad);
+        var rango = interpretacion.interpretar(prioridad);
         priorizacion.setPrioridad(prioridad);
         priorizacion.setCategoria(rango == null ? null : rango.nombre());
         priorizacion.setFechaCompletada(ahora);

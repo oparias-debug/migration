@@ -19,8 +19,8 @@ public class UserContextService {
      * @return nombre del usuario autenticado, o "system" si no hay autenticación
      */
     public String getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String usuario = "system";
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        var usuario = "system";
         if (authentication != null && authentication.isAuthenticated()
                 && authentication.getPrincipal() != null) {
             // Si el principal es un JWT, extraer el subject/preferred_username
@@ -31,7 +31,7 @@ public class UserContextService {
     }
 
     private static String usuarioDelToken(Jwt jwt) {
-        String preferredUsername = jwt.getClaimAsString("preferred_username");
+        var preferredUsername = jwt.getClaimAsString("preferred_username");
         return preferredUsername != null && !preferredUsername.isEmpty() ? preferredUsername : jwt.getSubject();
     }
 }
