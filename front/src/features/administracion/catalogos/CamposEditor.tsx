@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import type { CampoDefinicion } from '../../../api/administracionApi';
 
 /** Un campo del catálogo tal como se edita en pantalla; la posición es su orden en la lista. */
 export interface CampoEditable {
@@ -29,8 +30,8 @@ export function problemaDeCampos(campos: readonly CampoEditable[]): string | nul
   return null;
 }
 
-export const aCampoContrato = (campos: readonly CampoEditable[]) =>
-  campos.map((c, i) => ({ name: c.nombre.trim(), qualifier: (c.clave ? 'KEY' : 'FIELD') as 'KEY' | 'FIELD', position: i + 1 }));
+export const aCampoContrato = (campos: readonly CampoEditable[]): CampoDefinicion[] =>
+  campos.map((c, i) => ({ nombre: c.nombre.trim(), calificador: c.clave ? 'KEY' : 'FIELD', posicion: i + 1 }));
 
 /** Lista editable de campos: nombre y si forma parte de la clave. */
 export function CamposEditor({

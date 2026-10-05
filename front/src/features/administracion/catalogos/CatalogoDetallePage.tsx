@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
-import { catalogosApi, type CatalogResponse, type CatalogChildResponse } from '../../../api/administracionApi';
+import { catalogosApi, type Catalogo, type ChildCatalogResult } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { useAuth } from '../../../auth/useAuth';
 import { FormRow } from '../../../components/form/FormRow';
@@ -14,10 +14,10 @@ import { cadenaDeAncestros, type Eslabon } from './cadenaDeCatalogos';
 
 const CLAVE = 'administracion.catalogos';
 
-const aCamposEditables = (catalogo: CatalogResponse): CampoEditable[] =>
-  [...(catalogo.fields ?? [])]
+const aCamposEditables = (catalogo: Catalogo): CampoEditable[] =>
+  [...(catalogo.campos ?? [])]
     .sort((a, b) => (a.posicion ?? 0) - (b.posicion ?? 0))
-    .map((f) => ({ nombre: f.name ?? '', clave: f.qualifier === 'KEY' }));
+    .map((f) => ({ nombre: f.nombre ?? '', clave: f.calificador === 'KEY' }));
 
 /**
  * Ficha de un catálogo (flujos alternativos del CU-ADM-01): sus datos, sus
@@ -31,7 +31,7 @@ export function CatalogoDetallePage() {
   const { hasRole } = useAuth();
   const navigate = useNavigate();
   const { codigo = '' } = useParams<{ codigo: string }>();
-  const [catalogo, setCatalogo] = useState<CatalogResponse | null>(null);
+  const [catalogo, setCatalogo] = useState<Catalogo | null>(null);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [nombre, setNombre] = useState('');
   const [padre, setPadre] = useState('');
@@ -40,12 +40,16 @@ export function CatalogoDetallePage() {
   const [hasta, setHasta] = useState('');
   const [campos, setCampos] = useState<CampoEditable[]>([]);
   /**
-   * Los catálogos que cuelgan de éste. Un catálogo jerárquico se veía igual que
-   * uno suelto: la ficha guardaba el código del padre pero no decía quiénes eran
-   * sus hijos, así que la jerarquía no se veía por ninguna parte
+   * El catálogo que cuelga de éste. Un catálogo jerárquico se veía igual que uno
+   * suelto: la ficha guardaba el código del padre pero no decía quién colgaba de
+   * él, así que la jerarquía no se veía por ninguna parte
    * (observación del 30/09/2026: "no se están visualizando los catálogos hijos").
+   *
+   * Desde el 05/10/2026 un catálogo tiene como máximo un hijo: con varios, al
+   * preguntar por los hijos de un registro saldrían registros de catálogos
+   * distintos y con campos distintos. Por eso es uno o ninguno, no una lista.
    */
-  const [hijos, setHijos] = useState<CatalogChildResponse[]>([]);
+  const [hijo, setHijo] = useState<ChildCatalogResult | null>(null);
   /**
    * Los catálogos por encima de éste, para la miga de pan. La banda de ruta de
    * arriba sale de la URL y no puede saber de quién cuelga un catálogo, que es
@@ -55,23 +59,24 @@ export function CatalogoDetallePage() {
 
   const cargar = useCallback(() => {
     catalogosApi
-      .consultarCatalogoPorCodigo({ code: codigo })
+      .consultarCatalogo({ codigo })
       .then(({ data }) => {
         setCatalogo(data);
-        setNombre(data.name ?? '');
-        setPadre(data.parent ?? '');
-        setActivo(data.active ?? 'ACTIVE');
-        setDesde(data.fromDate ?? '');
-        setHasta(data.toDate ?? '');
+        setNombre(data.nombre ?? '');
+        setPadre(data.padre ?? '');
+        setActivo(data.estado ?? 'ACTIVE');
+        setDesde(data.vigencia?.desde ?? '');
+        setHasta(data.vigencia?.hasta ?? '');
         setCampos(aCamposEditables(data));
         setErrorCarga(null);
       })
       .catch((error_) => setErrorCarga(mensajeDeError(toErrorApi(error_), t)));
-    // Los hijos son contexto: si no cargan, la ficha funciona igual.
+    // El hijo es contexto: si no carga, la ficha funciona igual. El contrato
+    // devuelve null cuando el catálogo no tiene ninguno.
     catalogosApi
-      .consultarCatalogosHijos({ code: codigo })
-      .then(({ data }) => setHijos(data))
-      .catch(() => setHijos([]));
+      .consultarCatalogoHijo({ codigo })
+      .then(({ data }) => setHijo(data ?? null))
+      .catch(() => setHijo(null));
   }, [codigo, t]);
 
   const puedeAdministrar = ROLES_ADMIN_CATALOGOS.some(hasRole);
@@ -79,7 +84,7 @@ export function CatalogoDetallePage() {
     if (puedeAdministrar) cargar();
   }, [cargar, puedeAdministrar]);
 
-  const codigoPadre = catalogo?.parent ?? null;
+  const codigoPadre = catalogo?.padre ?? null;
   useEffect(() => {
     let vigente = true;
     cadenaDeAncestros(codigoPadre).then((cadena) => {
@@ -114,14 +119,13 @@ export function CatalogoDetallePage() {
 
   const guardarDatos = () =>
     avisar(
-      catalogosApi.actualizarDescriptoresCatalogo({
-        code: codigo,
-        catalogDescriptorsUpdateRequest: {
-          name: nombre.trim(),
-          parent: padre.trim() || null,
-          active: activo,
-          fromDate: desde || null,
-          toDate: hasta || null,
+      catalogosApi.actualizarDescriptores({
+        codigo,
+        catalogoDescriptores: {
+          nombre: nombre.trim(),
+          padre: padre.trim() || null,
+          estado: activo,
+          vigencia: { desde: desde || null, hasta: hasta || null },
         },
       }),
       `${CLAVE}.datosGuardados`,
@@ -134,30 +138,35 @@ export function CatalogoDetallePage() {
       return;
     }
     await avisar(
-      catalogosApi.actualizarCamposCatalogo({ code: codigo, catalogFieldsUpdateRequest: { fields: aCampoContrato(campos) } }),
+      catalogosApi.actualizarCampos({ codigo, campoDefinicion: aCampoContrato(campos) }),
       `${CLAVE}.camposGuardados`,
     );
   };
 
+  /**
+   * Inactivar es un cambio de estado: la operación es la misma que reactiva, y
+   * en INACTIVE arrastra en cascada los registros del catálogo y su hijo
+   * (RN-06). La pantalla sólo ofrece inactivar, como antes.
+   */
   const inactivar = () =>
-    avisar(catalogosApi.inactivarCatalogo({ code: codigo, inactivationRequest: {} }), `${CLAVE}.inactivado`);
+    avisar(catalogosApi.cambiarEstadoCatalogo({ codigo, cambioEstado: { estado: 'INACTIVE' } }), `${CLAVE}.inactivado`);
 
 
   return (
     <div className="formcard">
       <div className="formhead">
-        <span>{catalogo.name} <span className="mono">· {catalogo.code}</span></span>
+        <span>{catalogo.nombre} <span className="mono">· {catalogo.codigo}</span></span>
       </div>
       <div className="miga-catalogo">
         <BandaRuta
           tramos={[
             { texto: t(`${CLAVE}.titulo`), ruta: '/catalogos-generales', literal: true },
             ...ancestros.map((a) => ({
-              texto: a.name,
-              ruta: `/catalogos-generales/${encodeURIComponent(a.code)}`,
+              texto: a.nombre,
+              ruta: `/catalogos-generales/${encodeURIComponent(a.codigo)}`,
               literal: true,
             })),
-            { texto: catalogo.name ?? codigo, literal: true },
+            { texto: catalogo.nombre ?? codigo, literal: true },
           ]}
         />
       </div>
@@ -172,7 +181,7 @@ export function CatalogoDetallePage() {
                 se veía el código del padre pero no el propio, así que parecía que
                 la ficha no lo trajera (observación del 30/09/2026). */}
             <FormRow label={t(`${CLAVE}.codigo`)} controlId="det-codigo">
-              <input id="det-codigo" className="mono" type="text" value={catalogo.code ?? ''} readOnly />
+              <input id="det-codigo" className="mono" type="text" value={catalogo.codigo ?? ''} readOnly />
             </FormRow>
             <FormRow label={t(`${CLAVE}.nombre`)} controlId="det-nombre" required>
               <input id="det-nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
@@ -182,12 +191,12 @@ export function CatalogoDetallePage() {
                 <input id="det-padre" type="text" value={padre} onChange={(e) => setPadre(e.target.value)} />
                 {/* La jerarquía se recorre en los dos sentidos: desde el hijo se
                     sube al padre igual que desde el padre se baja a los hijos. */}
-                {catalogo.parent && (
+                {catalogo.padre && (
                   <button
                     type="button"
                     className="btn secundario"
-                    aria-label={t(`${CLAVE}.abrirPadre`, { codigo: catalogo.parent })}
-                    onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(catalogo.parent as string)}`)}
+                    aria-label={t(`${CLAVE}.abrirPadre`, { codigo: catalogo.padre })}
+                    onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(catalogo.padre as string)}`)}
                   >
                     {t(`${CLAVE}.verPadre`)}
                   </button>
@@ -211,7 +220,7 @@ export function CatalogoDetallePage() {
             <button type="button" className="btn primario" onClick={guardarDatos}>
               {t(`${CLAVE}.guardarDatos`)}
             </button>
-            <button type="button" className="btn secundario" onClick={inactivar} disabled={catalogo.active === 'INACTIVE'}>
+            <button type="button" className="btn secundario" onClick={inactivar} disabled={catalogo.estado === 'INACTIVE'}>
               {t(`${CLAVE}.inactivar`)}
             </button>
           </div>
@@ -227,8 +236,8 @@ export function CatalogoDetallePage() {
         </section>
 
         <section>
-          <h2 className="seccion">{t(`${CLAVE}.hijos`)}</h2>
-          {hijos.length === 0 ? (
+          <h2 className="seccion">{t(`${CLAVE}.hijo`)}</h2>
+          {hijo === null ? (
             <p className="nota">{t(`${CLAVE}.sinHijos`)}</p>
           ) : (
             <div className="tabla-cont">
@@ -241,29 +250,27 @@ export function CatalogoDetallePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {hijos.map((h) => (
-                    <tr key={h.code}>
-                      <td className="mono">{h.code}</td>
-                      <td>{h.name}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn secundario"
-                          aria-label={t(`${CLAVE}.abrirCatalogo`, { nombre: h.name })}
-                          onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(h.code ?? '')}`)}
-                        >
-                          {t(`${CLAVE}.abrir`)}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  <tr>
+                    <td className="mono">{hijo.codigo}</td>
+                    <td>{hijo.nombre}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn secundario"
+                        aria-label={t(`${CLAVE}.abrirCatalogo`, { nombre: hijo.nombre })}
+                        onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(hijo.codigo ?? '')}`)}
+                      >
+                        {t(`${CLAVE}.abrir`)}
+                      </button>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           )}
         </section>
 
-        <RegistrosCatalogo codigo={codigo} campos={aCamposEditables(catalogo)} catalogoPadre={catalogo.parent} />
+        <RegistrosCatalogo codigo={codigo} campos={aCamposEditables(catalogo)} catalogoPadre={catalogo.padre} />
 
         <div className="acciones-form">
           <button type="button" className="btn neutro" onClick={() => navigate('/catalogos-generales')}>

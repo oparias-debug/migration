@@ -1,4 +1,4 @@
-import { AdministracionCatalogosApi } from './generated/administracion-catalogos-admin';
+import { CatalogosApi, RegistrosApi } from './generated/administracion-catalogos-admin';
 import { CalendariosConsultasApi, CalendariosGestinApi } from './generated/administracion-calendario';
 import { createHttpClient } from './httpClient';
 
@@ -24,22 +24,26 @@ const adminSrvAxios = createHttpClient('/admin/api/v1');
 const CATALOGOS_BASE = import.meta.env.VITE_CATALOGOS_BASE ?? '/admin/api/v1';
 const catalogosAxios = createHttpClient(CATALOGOS_BASE);
 
-// CU-ADM-01 (Administración de Catálogos). El contrato de admin-srv usa un solo
-// tag, así que el generador deja una sola clase: antes eran dos, una para los
-// catálogos y otra para sus registros. Se mantienen los dos nombres de siempre
-// para no renombrar en cada pantalla lo que es el mismo cliente.
-export const catalogosApi = new AdministracionCatalogosApi(undefined, undefined, catalogosAxios);
-export const registrosCatalogoApi = catalogosApi;
+// CU-ADM-01 (Administración de Catálogos). El contrato vuelve a traer un tag por
+// recurso, así que el generador deja dos clases: una para los catálogos y otra
+// para sus registros. Se mantienen los dos nombres de siempre en las pantallas.
+export const catalogosApi = new CatalogosApi(undefined, undefined, catalogosAxios);
+export const registrosCatalogoApi = new RegistrosApi(undefined, undefined, catalogosAxios);
 
-export { ActiveStatus, FieldQualifier } from './generated/administracion-catalogos-admin';
+export { Estado, Calificador } from './generated/administracion-catalogos-admin';
 export type {
-  CatalogResponse,
-  CatalogSummaryResponse,
-  CatalogChildResponse,
-  CatalogFieldResponse,
-  CatalogRecordFieldValuesResponse,
-  CatalogRecordValueResponse,
-  CatalogRecordResponse,
+  Catalogo,
+  CatalogoResumen,
+  CatalogoCreacion,
+  CatalogoDescriptores,
+  Campo,
+  CampoDefinicion,
+  ChildCatalogResult,
+  CatalogRecordsResult,
+  ResultRow,
+  Registro,
+  RegistroCreacion,
+  Vigencia,
 } from './generated/administracion-catalogos-admin';
 
 // CU-ADM-04 (Gestión de Calendario). El generador lo partió en dos clases, una

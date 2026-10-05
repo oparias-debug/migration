@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
-import { catalogosApi, type CatalogSummaryResponse } from '../../../api/administracionApi';
+import { catalogosApi, type CatalogoResumen } from '../../../api/administracionApi';
 import { mensajeDeError, toErrorApi } from '../../../api/apiError';
 import { coincide } from './busqueda';
 import { useAuth } from '../../../auth/useAuth';
@@ -19,9 +19,11 @@ import { CamposEditor, aCampoContrato, problemaDeCampos, type CampoEditable } fr
 export const ROLES_ADMIN_CATALOGOS = ['ADMINISTRADOR_DE_CATALOGOS', 'ADMINISTRADOR_DEL_SISTEMA'];
 const CLAVE = 'administracion.catalogos';
 /**
- * El contrato no pagina: `listarCatalogos` no recibe página ni tamaño y devuelve
- * la lista entera. Se pagina y se busca aquí, sobre lo recibido; un catálogo
- * maestro son decenas de entradas, no miles.
+ * El contrato no pagina: `buscarListarCatalogos` no recibe página ni tamaño y
+ * devuelve la lista entera. Se pagina aquí, sobre lo recibido; un catálogo
+ * maestro son decenas de entradas, no miles. Sí acepta filtrar por `codigo` o
+ * `nombre`, pero la búsqueda se sigue haciendo de este lado porque ignora
+ * tildes y busca por fracciones, que es lo que se pidió (30/09/2026).
  */
 const POR_PAGINA = 10;
 
@@ -34,7 +36,7 @@ export function CatalogosPage() {
   const { t } = useTranslation();
   const { hasRole } = useAuth();
   const navigate = useNavigate();
-  const [catalogos, setCatalogos] = useState<CatalogSummaryResponse[]>([]);
+  const [catalogos, setCatalogos] = useState<CatalogoResumen[]>([]);
   const [pagina, setPagina] = useState(0);
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
@@ -44,7 +46,7 @@ export function CatalogosPage() {
   const cargar = useCallback(() => {
     setCargando(true);
     catalogosApi
-      .listarCatalogos()
+      .buscarListarCatalogos()
       .then(({ data }) => {
         setCatalogos(data ?? []);
         setErrorCarga(null);
@@ -59,7 +61,7 @@ export function CatalogosPage() {
   }, [cargar, puedeAdministrar]);
 
   // La búsqueda mira el nombre y el código, por fracciones de palabra.
-  const filtrados = catalogos.filter((c) => coincide(busqueda, c.name, c.code, c.parent));
+  const filtrados = catalogos.filter((c) => coincide(busqueda, c.nombre, c.codigo, c.padre));
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginaVigente = Math.min(pagina, totalPaginas - 1);
   const enPagina = filtrados.slice(paginaVigente * POR_PAGINA, (paginaVigente + 1) * POR_PAGINA);
@@ -132,17 +134,17 @@ export function CatalogosPage() {
               </thead>
               <tbody>
                 {enPagina.map((c) => (
-                  <tr key={c.code}>
-                    <td className="mono">{c.code}</td>
-                    <td>{c.name}</td>
-                    <td className="mono">{c.parent ?? '—'}</td>
-                    <td>{t(`${CLAVE}.estados.${c.active}`)}</td>
+                  <tr key={c.codigo}>
+                    <td className="mono">{c.codigo}</td>
+                    <td>{c.nombre}</td>
+                    <td className="mono">{c.padre ?? '—'}</td>
+                    <td>{t(`${CLAVE}.estados.${c.estado}`)}</td>
                     <td>
                       <button
                         type="button"
                         className="btn secundario"
-                        aria-label={t(`${CLAVE}.abrirCatalogo`, { nombre: c.name })}
-                        onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(c.code ?? '')}`)}
+                        aria-label={t(`${CLAVE}.abrirCatalogo`, { nombre: c.nombre })}
+                        onClick={() => navigate(`/catalogos-generales/${encodeURIComponent(c.codigo ?? '')}`)}
                       >
                         {t(`${CLAVE}.abrir`)}
                       </button>
@@ -187,12 +189,16 @@ function NuevoCatalogo({ alCancelar, alCrear }: { readonly alCancelar: () => voi
   const [nombreEnUso, setNombreEnUso] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
-  // El CU pide avisar si el nombre ya existe antes de guardar.
+  /**
+  * El CU pide avisar si el nombre ya existe antes de guardar. Ya no hay una
+  * operación de existencia: se consulta la lista filtrando por nombre y una
+  * lista vacía significa que no existe (indicación del 05/10/2026).
+  */
   const verificarNombre = async () => {
     if (!nombre.trim()) return;
     try {
-      const { data } = await catalogosApi.verificarExistenciaCatalogo({ name: nombre.trim() });
-      setNombreEnUso(Boolean(data.exists));
+      const { data } = await catalogosApi.buscarListarCatalogos({ nombre: nombre.trim() });
+      setNombreEnUso((data ?? []).length > 0);
     } catch {
       setNombreEnUso(false);
     }
@@ -207,13 +213,13 @@ function NuevoCatalogo({ alCancelar, alCrear }: { readonly alCancelar: () => voi
     setGuardando(true);
     try {
       await catalogosApi.crearCatalogo({
-        catalogCreateRequest: {
-          code: codigo.trim(),
-          name: nombre.trim(),
-          parent: padre.trim() || undefined,
-          fromDate: desde || undefined,
-          toDate: hasta || undefined,
-          fields: aCampoContrato(campos),
+        catalogoCreacion: {
+          codigo: codigo.trim(),
+          nombre: nombre.trim(),
+          padre: padre.trim() || null,
+          estado: 'ACTIVE',
+          vigencia: { desde: desde || null, hasta: hasta || null },
+          campos: aCampoContrato(campos),
         },
       });
       await Swal.fire({ icon: 'success', text: t(`${CLAVE}.creado`) });

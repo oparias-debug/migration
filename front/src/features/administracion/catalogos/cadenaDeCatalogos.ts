@@ -2,8 +2,8 @@ import { catalogosApi } from '../../../api/administracionApi';
 
 /** Un eslabón de la jerarquía: lo justo para pintar la miga de pan. */
 export interface Eslabon {
-  readonly code: string;
-  readonly name: string;
+  readonly codigo: string;
+  readonly nombre: string;
 }
 
 /**
@@ -32,9 +32,9 @@ export async function cadenaDeAncestros(codigoPadre: string | null | undefined):
   while (actual && !vistos.has(actual) && ancestros.length < MAXIMO) {
     vistos.add(actual);
     try {
-      const { data } = await catalogosApi.consultarCatalogoPorCodigo({ code: actual });
-      ancestros.push({ code: data.code ?? actual, name: data.name ?? actual });
-      actual = data.parent?.trim() || null;
+      const { data } = await catalogosApi.consultarCatalogo({ codigo: actual });
+      ancestros.push({ codigo: data.codigo ?? actual, nombre: data.nombre ?? actual });
+      actual = data.padre?.trim() || null;
     } catch {
       break;
     }

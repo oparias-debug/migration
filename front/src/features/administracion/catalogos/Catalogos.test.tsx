@@ -6,13 +6,12 @@ import { CatalogosPage } from './CatalogosPage';
 import { CatalogoDetallePage } from './CatalogoDetallePage';
 import { problemaDeCampos } from './CamposEditor';
 
-const listarCatalogos = vi.fn();
+const buscarListarCatalogos = vi.fn();
 const crearCatalogo = vi.fn();
-const verificarExistenciaCatalogo = vi.fn();
-const consultarCatalogoPorCodigo = vi.fn();
-const actualizarDescriptoresCatalogo = vi.fn();
-const consultarCatalogosHijos = vi.fn();
-const buscarListaRegistros = vi.fn();
+const consultarCatalogo = vi.fn();
+const actualizarDescriptores = vi.fn();
+const consultarCatalogoHijo = vi.fn();
+const listarRegistros = vi.fn();
 const crearRegistro = vi.fn();
 const actualizarRegistro = vi.fn();
 const swalFire = vi.fn();
@@ -23,15 +22,14 @@ vi.mock('../../../api/administracionApi', async (importOriginal) => {
   return {
     ...actual,
     catalogosApi: {
-      listarCatalogos: (...a: unknown[]) => listarCatalogos(...a),
+      buscarListarCatalogos: (...a: unknown[]) => buscarListarCatalogos(...a),
       crearCatalogo: (...a: unknown[]) => crearCatalogo(...a),
-      verificarExistenciaCatalogo: (...a: unknown[]) => verificarExistenciaCatalogo(...a),
-      consultarCatalogoPorCodigo: (...a: unknown[]) => consultarCatalogoPorCodigo(...a),
-      actualizarDescriptoresCatalogo: (...a: unknown[]) => actualizarDescriptoresCatalogo(...a),
-      consultarCatalogosHijos: (...a: unknown[]) => consultarCatalogosHijos(...a),
+      consultarCatalogo: (...a: unknown[]) => consultarCatalogo(...a),
+      actualizarDescriptores: (...a: unknown[]) => actualizarDescriptores(...a),
+      consultarCatalogoHijo: (...a: unknown[]) => consultarCatalogoHijo(...a),
     },
     registrosCatalogoApi: {
-      buscarListaRegistros: (...a: unknown[]) => buscarListaRegistros(...a),
+      listarRegistros: (...a: unknown[]) => listarRegistros(...a),
       crearRegistro: (...a: unknown[]) => crearRegistro(...a),
       actualizarRegistro: (...a: unknown[]) => actualizarRegistro(...a),
     },
@@ -49,17 +47,33 @@ vi.mock('react-router-dom', async (importOriginal) => {
 });
 
 const CATALOGO = {
-  code: 'TIPO-DOC',
-  name: 'Tipos de documento',
-  parent: null,
-  active: 'ACTIVE',
-  fromDate: null,
-  toDate: null,
-  fields: [
-    { name: 'descripcion', qualifier: 'FIELD', posicion: 2 },
-    { name: 'codigo', qualifier: 'KEY', posicion: 1 },
+  codigo: 'TIPO-DOC',
+  nombre: 'Tipos de documento',
+  padre: null,
+  hijo: null,
+  estado: 'ACTIVE',
+  vigencia: { desde: null, hasta: null },
+  campos: [
+    { nombre: 'descripcion', calificador: 'FIELD', posicion: 2 },
+    { nombre: 'codigo', calificador: 'KEY', posicion: 1 },
   ],
 };
+
+/**
+ * El listado de registros llega como tabla: `fieldSet` con los nombres de
+ * columna y `resultSet` con una fila de valores en ese mismo orden. La clave no
+ * viene aparte: va en la columna del campo KEY, que el servidor siempre incluye.
+ */
+const comoTabla = (codigoCatalogo: string, fieldSet: readonly string[], filas: readonly (readonly string[])[]) => ({
+  data: {
+    codigoCatalogo,
+    fieldSet: [...fieldSet],
+    resultSet: filas.map((valores) => ({ valores: [...valores], estado: 'ACTIVE' })),
+  },
+});
+
+/** Las dos columnas del catálogo de ejemplo, en el orden en que las pide la ficha. */
+const COLUMNAS = ['codigo', 'descripcion'] as const;
 
 const montarLista = () =>
   render(
@@ -81,29 +95,21 @@ describe('CU-ADM-01 · catálogos', () => {
     vi.clearAllMocks();
     rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
     swalFire.mockResolvedValue({ isConfirmed: true });
-    listarCatalogos.mockResolvedValue({ data: [CATALOGO] });
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: CATALOGO });
-    buscarListaRegistros.mockResolvedValue({
-      data: [
-        {
-          keyValue: 'DUI',
-          active: 'ACTIVE',
-          values: [
-            { field: 'codigo', qualifier: 'KEY', valor: 'DUI' },
-            { field: 'descripcion', qualifier: 'FIELD', valor: 'Documento Único' },
-          ],
-        },
-      ],
-    });
-    verificarExistenciaCatalogo.mockResolvedValue({ data: { exists: false } });
-    consultarCatalogosHijos.mockResolvedValue({ data: [] });
+    consultarCatalogo.mockResolvedValue({ data: CATALOGO });
+    listarRegistros.mockResolvedValue(comoTabla('TIPO-DOC', COLUMNAS, [['DUI', 'Documento Único']]));
+    // La misma operación sirve para listar y para comprobar si un nombre ya está
+    // en uso: con `nombre`, una lista vacía significa que no existe.
+    buscarListarCatalogos.mockImplementation((peticion?: { nombre?: string }) =>
+      Promise.resolve({ data: peticion?.nombre ? [] : [CATALOGO] }),
+    );
+    consultarCatalogoHijo.mockResolvedValue({ data: null });
   });
 
   it('sin el rol del CU no muestra nada del catálogo', () => {
     rolesActivos = ['ADMINISTRADOR'];
     montarLista();
     expect(screen.getByRole('alert')).toHaveTextContent(/Administrador de Catálogos/);
-    expect(listarCatalogos).not.toHaveBeenCalled();
+    expect(buscarListarCatalogos).not.toHaveBeenCalled();
   });
 
   it('lista los catálogos y abre uno', async () => {
@@ -125,15 +131,16 @@ describe('CU-ADM-01 · catálogos', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Crear catálogo' }));
 
     await waitFor(() => expect(crearCatalogo).toHaveBeenCalled());
-    expect(crearCatalogo.mock.calls[0][0].catalogCreateRequest.fields).toEqual([
-      { name: 'codigo', qualifier: 'KEY', position: 1 },
-      { name: 'descripcion', qualifier: 'FIELD', position: 2 },
+    expect(crearCatalogo.mock.calls[0][0].catalogoCreacion.campos).toEqual([
+      { nombre: 'codigo', calificador: 'KEY', posicion: 1 },
+      { nombre: 'descripcion', calificador: 'FIELD', posicion: 2 },
     ]);
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('/catalogos-generales/TIPO-DOC'));
   });
 
   it('avisa si el nombre ya existe', async () => {
-    verificarExistenciaCatalogo.mockResolvedValue({ data: { exists: true } });
+    // Con `nombre`, una lista no vacía significa que ese nombre ya está tomado.
+    buscarListarCatalogos.mockResolvedValue({ data: [CATALOGO] });
     montarLista();
     fireEvent.click(await screen.findByRole('button', { name: 'Nuevo catálogo' }));
     fireEvent.change(screen.getByLabelText('Nombre*'), { target: { value: 'Sectores' } });
@@ -158,13 +165,8 @@ describe('CU-ADM-01 · catálogos', () => {
 
     await waitFor(() =>
       expect(crearRegistro).toHaveBeenCalledWith({
-        code: 'TIPO-DOC',
-        catalogRecordCreateRequest: {
-          values: [
-            { field: 'codigo', valor: 'NIT' },
-            { field: 'descripcion', valor: 'Tributario' },
-          ],
-        },
+        codigo: 'TIPO-DOC',
+        registroCreacion: { valores: { codigo: 'NIT', descripcion: 'Tributario' } },
       }),
     );
   });
@@ -180,9 +182,9 @@ describe('CU-ADM-01 · catálogos', () => {
 
     await waitFor(() =>
       expect(actualizarRegistro).toHaveBeenCalledWith({
-        code: 'TIPO-DOC',
-        keyValue: 'DUI',
-        catalogRecordUpdateRequest: { values: [{ field: 'descripcion', valor: 'Documento Único de Identidad' }] },
+        codigo: 'TIPO-DOC',
+        llave: 'DUI',
+        requestBody: { descripcion: 'Documento Único de Identidad' },
       }),
     );
   });
@@ -223,21 +225,21 @@ describe('problemaDeCampos', () => {
  * se veía por ninguna parte (observación del 30/09/2026).
  */
 describe('la jerarquía de catálogos se ve', () => {
-  const PADRE = { ...CATALOGO, code: 'PRUEBA', name: 'Catálogo de prueba' };
-  const HIJO = { code: 'JERARQUICO', name: 'Catálogo jerárquico' };
+  const PADRE = { ...CATALOGO, codigo: 'PRUEBA', nombre: 'Catálogo de prueba' };
+  const HIJO = { codigo: 'JERARQUICO', nombre: 'Catálogo jerárquico' };
 
   beforeEach(() => {
     vi.clearAllMocks();
     rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
     swalFire.mockResolvedValue({ isConfirmed: true });
-    buscarListaRegistros.mockResolvedValue({ data: [] });
-    consultarCatalogosHijos.mockResolvedValue({ data: [] });
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: PADRE });
-    listarCatalogos.mockResolvedValue({ data: [PADRE] });
+    listarRegistros.mockResolvedValue(comoTabla('TIPO-DOC', COLUMNAS, []));
+    consultarCatalogoHijo.mockResolvedValue({ data: null });
+    consultarCatalogo.mockResolvedValue({ data: PADRE });
+    buscarListarCatalogos.mockResolvedValue({ data: [PADRE] });
   });
 
   it('la ficha del padre lista sus hijos y los abre', async () => {
-    consultarCatalogosHijos.mockResolvedValue({ data: [HIJO] });
+    consultarCatalogoHijo.mockResolvedValue({ data: HIJO });
     montarFicha();
 
     expect(await screen.findByText('Catálogo jerárquico')).toBeInTheDocument();
@@ -247,12 +249,12 @@ describe('la jerarquía de catálogos se ve', () => {
 
   it('un catálogo sin hijos lo dice', async () => {
     montarFicha();
-    expect(await screen.findByText('Este catálogo no tiene catálogos hijos.')).toBeInTheDocument();
+    expect(await screen.findByText('Este catálogo no tiene catálogo hijo.')).toBeInTheDocument();
   });
 
   // La jerarquía se recorre en los dos sentidos.
   it('desde el hijo se sube al padre', async () => {
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: { ...CATALOGO, code: 'JERARQUICO', parent: 'PRUEBA' } });
+    consultarCatalogo.mockResolvedValue({ data: { ...CATALOGO, codigo: 'JERARQUICO', padre: 'PRUEBA' } });
     montarFicha();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir el catálogo padre PRUEBA' }));
@@ -261,13 +263,13 @@ describe('la jerarquía de catálogos se ve', () => {
 
   it('sin padre no se ofrece subir', async () => {
     montarFicha();
-    await screen.findByText('Este catálogo no tiene catálogos hijos.');
+    await screen.findByText('Este catálogo no tiene catálogo hijo.');
     expect(screen.queryByRole('button', { name: /Abrir el catálogo padre/ })).not.toBeInTheDocument();
   });
 
   it('la lista muestra de quién cuelga cada catálogo', async () => {
-    listarCatalogos.mockResolvedValue({
-      data: [PADRE, { ...CATALOGO, code: 'JERARQUICO', name: 'Catálogo jerárquico', parent: 'PRUEBA' }],
+    buscarListarCatalogos.mockResolvedValue({
+      data: [PADRE, { ...CATALOGO, codigo: 'JERARQUICO', nombre: 'Catálogo jerárquico', padre: 'PRUEBA' }],
     });
     montarLista();
 
@@ -277,9 +279,9 @@ describe('la jerarquía de catálogos se ve', () => {
 
   // Los hijos son contexto: si no cargan, la ficha sigue sirviendo.
   it('si los hijos no cargan, la ficha funciona igual', async () => {
-    consultarCatalogosHijos.mockRejectedValue(new Error('falla'));
+    consultarCatalogoHijo.mockRejectedValue(new Error('falla'));
     montarFicha();
-    expect(await screen.findByText('Este catálogo no tiene catálogos hijos.')).toBeInTheDocument();
+    expect(await screen.findByText('Este catálogo no tiene catálogo hijo.')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
@@ -295,9 +297,9 @@ describe('el código del catálogo se ve en sus datos', () => {
     vi.clearAllMocks();
     rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
     swalFire.mockResolvedValue({ isConfirmed: true });
-    buscarListaRegistros.mockResolvedValue({ data: [] });
-    consultarCatalogosHijos.mockResolvedValue({ data: [] });
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: { ...CATALOGO, code: 'JERARQUICO', parent: 'PRUEBA' } });
+    listarRegistros.mockResolvedValue(comoTabla('TIPO-DOC', COLUMNAS, []));
+    consultarCatalogoHijo.mockResolvedValue({ data: null });
+    consultarCatalogo.mockResolvedValue({ data: { ...CATALOGO, codigo: 'JERARQUICO', padre: 'PRUEBA' } });
   });
 
   it('lo muestra junto al nombre', async () => {
@@ -312,11 +314,11 @@ describe('el código del catálogo se ve en sus datos', () => {
     const codigo = await screen.findByLabelText('Código');
     expect(codigo).toHaveAttribute('readonly');
 
-    actualizarDescriptoresCatalogo.mockResolvedValue({ data: {} });
+    actualizarDescriptores.mockResolvedValue({ data: {} });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar datos' }));
-    await waitFor(() => expect(actualizarDescriptoresCatalogo).toHaveBeenCalled());
-    const enviado = actualizarDescriptoresCatalogo.mock.calls[0][0].catalogDescriptorsUpdateRequest;
-    expect(enviado).not.toHaveProperty('code');
+    await waitFor(() => expect(actualizarDescriptores).toHaveBeenCalled());
+    const enviado = actualizarDescriptores.mock.calls[0][0].catalogoDescriptores;
+    expect(enviado).not.toHaveProperty('codigo');
   });
 });
 
@@ -330,17 +332,17 @@ describe('la miga de pan dice en qué catálogo se está', () => {
     vi.clearAllMocks();
     rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
     swalFire.mockResolvedValue({ isConfirmed: true });
-    buscarListaRegistros.mockResolvedValue({ data: [] });
-    consultarCatalogosHijos.mockResolvedValue({ data: [] });
+    listarRegistros.mockResolvedValue(comoTabla('TIPO-DOC', COLUMNAS, []));
+    consultarCatalogoHijo.mockResolvedValue({ data: null });
   });
 
   it('nombra los catálogos por encima y deja volver a ellos', async () => {
     const arbol: Record<string, unknown> = {
-      'TIPO-DOC': { ...CATALOGO, name: 'Distrito', parent: 'DEPARTAMENTO' },
-      DEPARTAMENTO: { ...CATALOGO, code: 'DEPARTAMENTO', name: 'Departamento', parent: 'REGION' },
-      REGION: { ...CATALOGO, code: 'REGION', name: 'Región', parent: null },
+      'TIPO-DOC': { ...CATALOGO, nombre: 'Distrito', padre: 'DEPARTAMENTO' },
+      DEPARTAMENTO: { ...CATALOGO, codigo: 'DEPARTAMENTO', nombre: 'Departamento', padre: 'REGION' },
+      REGION: { ...CATALOGO, codigo: 'REGION', nombre: 'Región', padre: null },
     };
-    consultarCatalogoPorCodigo.mockImplementation(({ code }: { code: string }) => Promise.resolve({ data: arbol[code] }));
+    consultarCatalogo.mockImplementation(({ codigo }: { codigo: string }) => Promise.resolve({ data: arbol[codigo] }));
     montarFicha();
 
     const miga = await screen.findByRole('navigation', { name: /migas|ruta/i });
@@ -354,7 +356,7 @@ describe('la miga de pan dice en qué catálogo se está', () => {
   });
 
   it('un catálogo sin padre sólo se nombra a sí mismo', async () => {
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: CATALOGO });
+    consultarCatalogo.mockResolvedValue({ data: CATALOGO });
     montarFicha();
     const miga = await screen.findByRole('navigation', { name: /migas|ruta/i });
     expect(within(miga).queryAllByRole('link')).toHaveLength(1);
@@ -370,9 +372,9 @@ describe('la clave del catálogo es una sola', () => {
   it('marcar una desmarca la anterior', async () => {
     vi.clearAllMocks();
     rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
-    buscarListaRegistros.mockResolvedValue({ data: [] });
-    consultarCatalogosHijos.mockResolvedValue({ data: [] });
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: CATALOGO });
+    listarRegistros.mockResolvedValue(comoTabla('TIPO-DOC', COLUMNAS, []));
+    consultarCatalogoHijo.mockResolvedValue({ data: null });
+    consultarCatalogo.mockResolvedValue({ data: CATALOGO });
     montarFicha();
 
     const primera = await screen.findByLabelText('El campo 1 es clave');
@@ -404,23 +406,20 @@ describe('búsqueda en catálogos y registros', () => {
     vi.clearAllMocks();
     rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
     swalFire.mockResolvedValue({ isConfirmed: true });
-    consultarCatalogosHijos.mockResolvedValue({ data: [] });
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: CATALOGO });
-    buscarListaRegistros.mockResolvedValue({
-      data: DEPTOS.map((d) => ({
-        keyValue: d,
-        active: 'ACTIVE',
-        values: [
-          { field: 'codigo', qualifier: 'KEY', valor: d },
-          { field: 'descripcion', qualifier: 'FIELD', valor: `Departamento de ${d}` },
-        ],
-      })),
-    });
-    listarCatalogos.mockResolvedValue({
+    consultarCatalogoHijo.mockResolvedValue({ data: null });
+    consultarCatalogo.mockResolvedValue({ data: CATALOGO });
+    listarRegistros.mockResolvedValue(
+      comoTabla(
+        'TIPO-DOC',
+        COLUMNAS,
+        DEPTOS.map((d) => [d, `Departamento de ${d}`]),
+      ),
+    );
+    buscarListarCatalogos.mockResolvedValue({
       data: [
         CATALOGO,
-        { ...CATALOGO, code: 'DEPARTAMENTO', name: 'Departamentos', parent: 'REGION' },
-        { ...CATALOGO, code: 'UNIDAD_MEDIDA', name: 'Unidades de medida', parent: null },
+        { ...CATALOGO, codigo: 'DEPARTAMENTO', nombre: 'Departamentos', padre: 'REGION' },
+        { ...CATALOGO, codigo: 'UNIDAD_MEDIDA', nombre: 'Unidades de medida', padre: null },
       ],
     });
   });
@@ -485,12 +484,12 @@ describe('búsqueda en catálogos y registros', () => {
 describe('registro padre al crear en un catálogo jerárquico', () => {
   const DISTRITO = {
     ...CATALOGO,
-    code: 'DISTRITO',
-    name: 'Distritos',
-    parent: 'DEPARTAMENTO',
-    fields: [
-      { name: 'codigo', qualifier: 'KEY', posicion: 1 },
-      { name: 'descripcion', qualifier: 'FIELD', posicion: 2 },
+    codigo: 'DISTRITO',
+    nombre: 'Distritos',
+    padre: 'DEPARTAMENTO',
+    campos: [
+      { nombre: 'codigo', calificador: 'KEY', posicion: 1 },
+      { nombre: 'descripcion', calificador: 'FIELD', posicion: 2 },
     ],
   };
   const DEPTOS = ['Cundinamarca', 'Boyacá', 'Antioquia'];
@@ -499,23 +498,19 @@ describe('registro padre al crear en un catálogo jerárquico', () => {
     vi.clearAllMocks();
     rolesActivos = ['ADMINISTRADOR_DE_CATALOGOS'];
     swalFire.mockResolvedValue({ isConfirmed: true });
-    consultarCatalogosHijos.mockResolvedValue({ data: [] });
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: DISTRITO });
+    consultarCatalogoHijo.mockResolvedValue({ data: null });
+    consultarCatalogo.mockResolvedValue({ data: DISTRITO });
     crearRegistro.mockResolvedValue({ data: {} });
-    buscarListaRegistros.mockImplementation(({ code }: { code: string }) =>
-      Promise.resolve({
-        data:
-          code === 'DEPARTAMENTO'
-            ? DEPTOS.map((d) => ({
-                keyValue: d.slice(0, 3).toUpperCase(),
-                active: 'ACTIVE',
-                values: [
-                  { field: 'codigo', qualifier: 'KEY', valor: d.slice(0, 3).toUpperCase() },
-                  { field: 'descripcion', qualifier: 'FIELD', valor: d },
-                ],
-              }))
-            : [],
-      }),
+    listarRegistros.mockImplementation(({ codigo }: { codigo: string }) =>
+      Promise.resolve(
+        codigo === 'DEPARTAMENTO'
+          ? comoTabla(
+              'DEPARTAMENTO',
+              COLUMNAS,
+              DEPTOS.map((d) => [d.slice(0, 3).toUpperCase(), d]),
+            )
+          : comoTabla(codigo, COLUMNAS, []),
+      ),
     );
   });
 
@@ -553,13 +548,10 @@ describe('registro padre al crear en un catálogo jerárquico', () => {
     await waitFor(() =>
       expect(crearRegistro).toHaveBeenCalledWith({
         // El catálogo sale de la URL de la ficha, no del objeto.
-        code: 'TIPO-DOC',
-        catalogRecordCreateRequest: {
-          parentRecord: 'CUN',
-          values: [
-            { field: 'codigo', valor: 'GIR' },
-            { field: 'descripcion', valor: 'Girardot' },
-          ],
+        codigo: 'TIPO-DOC',
+        registroCreacion: {
+          registroPadre: 'CUN',
+          valores: { codigo: 'GIR', descripcion: 'Girardot' },
         },
       }),
     );
@@ -577,35 +569,30 @@ describe('registro padre al crear en un catálogo jerárquico', () => {
     expect(crearRegistro).not.toHaveBeenCalled();
   });
 
-  it('la tabla de registros muestra el registro padre de cada uno', async () => {
-    const departamentos = buscarListaRegistros.getMockImplementation()!;
-    buscarListaRegistros.mockImplementation((p: { code: string }) =>
-      p.code === 'TIPO-DOC'
-        ? Promise.resolve({
-            data: [
-              {
-                keyValue: 'GIR',
-                parentRecord: 'CUN',
-                active: 'ACTIVE',
-                values: [
-                  { field: 'codigo', qualifier: 'KEY', valor: 'GIR' },
-                  { field: 'descripcion', qualifier: 'FIELD', valor: 'Girardot' },
-                ],
-              },
-            ],
-          })
-        : departamentos(p),
+  /**
+   * La tabla llevaba una columna con el registro padre de cada fila. Desde el
+   * contrato del 05/10/2026 ninguna operación de lectura devuelve el
+   * `registroPadre` de un registro: ni `listarRegistros`, ni
+   * `buscarRegistroPorLlave`; sólo lo traen las respuestas de crear, actualizar
+   * y cambiar estado. Mientras siga así no hay de dónde sacarlo para pintarlo, y
+   * la columna no se muestra. Se elige igual al crear, que es lo que el contrato
+   * sí admite, y eso lo cubren las pruebas de arriba.
+   */
+  it('la tabla no muestra el registro padre, porque el contrato ya no lo devuelve al leer', async () => {
+    const departamentos = listarRegistros.getMockImplementation()!;
+    listarRegistros.mockImplementation((peticion: { codigo: string }) =>
+      peticion.codigo === 'TIPO-DOC'
+        ? Promise.resolve(comoTabla('TIPO-DOC', COLUMNAS, [['GIR', 'Girardot']]))
+        : departamentos(peticion),
     );
     montarFicha();
 
-    expect(await screen.findByRole('columnheader', { name: 'Registro padre en DEPARTAMENTO' })).toBeInTheDocument();
-    const fila = (await screen.findByRole('cell', { name: 'Girardot' })).closest('tr') as HTMLElement;
-    // Con los registros del padre ya cargados, la celda lleva también su descripción.
-    await waitFor(() => expect(within(fila).getByRole('cell', { name: 'CUN — Cundinamarca' })).toBeInTheDocument());
+    expect(await screen.findByRole('cell', { name: 'Girardot' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: /Registro padre en/ })).not.toBeInTheDocument();
   });
 
   it('un catálogo sin padre no pide registro padre', async () => {
-    consultarCatalogoPorCodigo.mockResolvedValue({ data: { ...CATALOGO, parent: null } });
+    consultarCatalogo.mockResolvedValue({ data: { ...CATALOGO, padre: null } });
     montarFicha();
     await screen.findByRole('button', { name: 'Guardar registro' });
     expect(screen.queryByLabelText(/Registro padre/)).not.toBeInTheDocument();
