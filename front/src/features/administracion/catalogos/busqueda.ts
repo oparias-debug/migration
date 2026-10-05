@@ -6,10 +6,13 @@
  * tildes: en estos catálogos se escribe tanto "JERÁRQUICO" como "JERARQUICO", y
  * quien busca no tiene por qué acertar con el acento.
  *
- * El contrato no tiene parámetro de búsqueda —ni `listarCatalogos` ni
- * `buscarListaRegistros` lo aceptan—, así que el filtro es de este lado, sobre
- * lo que se haya traído. Sirve para catálogos de cientos de registros; para los
- * de miles haría falta que el servidor buscara.
+ * El filtro es de este lado, sobre lo que se haya traído. `listarRegistros` no
+ * recibe nada con lo que buscar. `buscarListarCatalogos` sí acepta `codigo` y
+ * `nombre`, pero busca por el nombre completo —sus escenarios sólo cubren
+ * "Países" encontrando "Países", sin tildes de por medio ni fracciones— y aquí
+ * hace falta que "Cund" encuentre "Cundinamarca". Sirve para catálogos de
+ * cientos de registros; para los de miles haría falta que el servidor buscara
+ * así.
  */
 
 /** Sin tildes, sin mayúsculas y sin espacios de sobra. */
