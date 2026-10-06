@@ -37,8 +37,8 @@ interface Fila {
  */
 const aFilas = (res: CatalogRecordsResult, campoClave?: string): Fila[] => {
   const columnas = res.fieldSet ?? [];
-  const posicionClave = campoClave ? columnas.indexOf(campoClave) : 0;
-  const iClave = posicionClave >= 0 ? posicionClave : 0;
+  // Si el campo clave no está entre las columnas, indexOf da -1 y se cae a la primera.
+  const iClave = Math.max(campoClave ? columnas.indexOf(campoClave) : 0, 0);
   return (res.resultSet ?? [])
     .map((fila) => {
       const valores = fila.valores ?? [];
